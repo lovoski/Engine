@@ -1,0 +1,28 @@
+# ide
+/.vscode
+/.idea
+/.vs
+/.cache
+
+# binaries
+/build
+/Build
+/bin
+/Bin
+/Debug
+/Release
+
+*.exe
+*.pdb
+*.lib
+*.dll
+*.o
+*.a
+
+*.spv
+
+# imgui configuration
+imgui.ini
+
+# test render assets
+/assets/learnopengl
