@@ -1,5 +1,4 @@
-#ifndef EVENTS_HPP
-#define EVENTS_HPP
+#pragma once
 
 #include "global.hpp"
 
@@ -22,5 +21,3 @@ private:
 };
 
 static Events &Event = Events::Ref();
-
-#endif

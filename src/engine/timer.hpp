@@ -1,5 +1,4 @@
-#ifndef TIMER_HPP
-#define TIMER_HPP
+#pragma once
 
 #include "global.hpp"
 
@@ -24,5 +23,3 @@ private:
 };
 
 static tTimer &Timer = tTimer::Ref();
-
-#endif

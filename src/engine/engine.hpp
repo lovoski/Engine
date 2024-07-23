@@ -1,5 +1,4 @@
-#ifndef ENGINE_HPP
-#define ENGINE_HPP
+#pragma once
 
 #include "global.hpp"
 
@@ -35,5 +34,3 @@ private:
 };
 
 static Engine &Core = Engine::Ref();
-
-#endif

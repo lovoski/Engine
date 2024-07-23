@@ -1,5 +1,4 @@
-#ifndef RLN_GLOBAL_HPP
-#define RLN_GLOBAL_HPP
+#pragma once
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -10,6 +9,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <set>
+#include <map>
+#include <queue>
 #include <algorithm>
 #include <cassert>
 #include <functional>
@@ -26,5 +28,3 @@ using std::string;
 using std::vector;
 using std::cout;
 using std::endl;
-
-#endif
