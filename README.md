@@ -1,3 +1,3 @@
-# RobustLemonn
+# Engine
 
-An experimental realtime render engine.
+An experimental ECS game engine.
