@@ -10,8 +10,8 @@ public:
   virtual ~BaseComponent() = default;
   const EntityID GetID() const { return entityID; }
 
-private:
-  friend class Manager;
+protected:
+  friend class EntityManager;
   EntityID entityID;
 };
 
