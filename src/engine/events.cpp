@@ -1,5 +1,5 @@
-#include "events.hpp"
-#include "engine.hpp"
+#include "Events.hpp"
+#include "Engine.hpp"
 
 void WindowCloseCallback(GLFWwindow *window) {
   Core.Quit();

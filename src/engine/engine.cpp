@@ -1,5 +1,5 @@
-#include "engine.hpp"
-#include "ecs/systems/render/MeshRendererSystem.hpp"
+#include "Engine.hpp"
+#include "ecs/systems/render/RenderSystem.hpp"
 
 // the actual implementation of stb image
 #define STB_IMAGE_IMPLEMENTATION
@@ -33,7 +33,7 @@ Engine::~Engine() {
 
 void Engine::Initialize() {
   // register all the systems
-  ECS::Manager.RegisterSystem<MeshRendererSystem>();
+  ECS::Manager.RegisterSystem<RenderSystem>();
   // start all the systems
   ECS::Manager.Start();
 }

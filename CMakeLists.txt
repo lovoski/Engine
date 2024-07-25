@@ -19,9 +19,11 @@ include_directories(
 
 add_executable(${PROJECT_NAME} 
   src/main.cpp
-  src/engine/engine.cpp
-  src/engine/timer.cpp
-  src/engine/events.cpp
-  src/utils/Math.cpp)
+  src/engine/Engine.cpp
+  src/engine/Timer.cpp
+  src/engine/Events.cpp
+  src/utils/Math.cpp
+  src/resource/ResourceManager.cpp
+  src/ecs/systems/render/FrameBuffer.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw glad assimp stb json11 glm imgui)

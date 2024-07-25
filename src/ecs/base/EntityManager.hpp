@@ -37,21 +37,26 @@ public:
 
     void Destroy() { MGR->DestroyEntity(ID); }
 
-  protected:
     EntityID ID;
+    string name = "New Entity";
     Entity *parent = nullptr;
     vector<Entity *> children;
+
+  protected:
     EntityManager *MGR;
   };
 
   EntityManager() : entityCount(0) {
+    nullEntity = new Entity((EntityID)(-1), this);
     for (EntityID entity = 0u; entity < MAX_ENTITY_COUNT; ++entity) {
       availableEntities.push(entity);
     }
   }
   EntityManager(const EntityManager &) = delete;
   const EntityManager &operator=(EntityManager &) = delete;
-  ~EntityManager() {}
+  ~EntityManager() {
+    delete nullEntity;
+  }
 
   static EntityManager &Ref() {
     static EntityManager reference;
@@ -79,9 +84,33 @@ public:
     }
   }
 
-  const Entity AddNewEntity() {
+  // TODO: replace it with smart pointers
+  Entity *AddNewEntity() {
     const EntityID id = addNewEntity();
-    return Entity(id, this);
+    entities.insert(
+        std::make_pair(id, std::move(std::make_shared<Entity>(id, this))));
+    return &(*(entities[id]));
+  }
+
+  // TODO: replace it with smart pointers
+  Entity *EntityFromID(const EntityID entity) {
+    assert(entity < MAX_ENTITY_COUNT &&
+           "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
+    if (entities.count(entity) == 0) {
+      cout << "No entity match this id: " << entity << endl;
+      return nullEntity;
+    } else {
+      return &(*(entities.at(entity)));
+    }
+  }
+
+  // TODO: replace it with smart pointers
+  vector<Entity*> GetActiveEntities() {
+    vector<Entity*> result;
+    for (auto &entity : entities) {
+      result.push_back(&(*entity.second));
+    }
+    return result;
   }
 
   void DestroyEntity(const EntityID entity) {
@@ -89,6 +118,7 @@ public:
     assert(entitiesSignatures.find(entity) != entitiesSignatures.end() &&
            "Destroying entity do not exists");
     entitiesSignatures.erase(entity);
+    entities.erase(entity);
     for (auto &array : componentsArrays) {
       array.second->Erase(entity);
     }
@@ -146,10 +176,10 @@ public:
   template <typename T> const bool HasComponent(const EntityID entity) {
     assert(entity < MAX_ENTITY_COUNT &&
            "EntityID out of range (MAX_ENTITY_COUNT) during HasComponent");
-    const EntitySignature signature = entitiesSignatures.at(entity);
+    const EntitySignature signature = *(entitiesSignatures.at(entity));
     const ComponentTypeID compType = ComponentType<T>();
     auto it = std::find(signature.begin(), signature.end(), compType);
-    return it != signature.end()
+    return it != signature.end();
   }
 
   // register system at runtime
@@ -247,8 +277,10 @@ private:
 
   // how many entities have been created
   EntityID entityCount;
+  Entity *nullEntity;
   std::queue<EntityID> availableEntities;
   // every time a entity is created, a signature for it will also be created
+  std::map<EntityID, std::shared_ptr<Entity>> entities;
   std::map<EntityID, std::shared_ptr<EntitySignature>> entitiesSignatures;
   std::map<SystemTypeID, std::shared_ptr<BaseSystem>> registeredSystems;
   std::map<ComponentTypeID, std::shared_ptr<IComponentList>> componentsArrays;

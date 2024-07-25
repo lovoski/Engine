@@ -1,11 +1,11 @@
 #pragma once
 
-#include "object/Mesh.hpp"
-#include "object/Shader.hpp"
+#include "EngineConfig.h"
+#include "ResourceTypes.hpp"
+#include "Shader.hpp"
+#include "ecs/systems/render/Mesh.hpp"
 
 namespace Resource {
-
-enum PRIMITIVE_TYPE { CUBE, SPHERE, CYLINDER, PLANE };
 
 class tResourceManager {
 public:
@@ -19,49 +19,25 @@ public:
     return reference;
   }
 
-  // Graphics::Mesh GetPrimitive(PRIMITIVE_TYPE pType) {}
+  // Graphics::Mesh GetPrimitive(PRIMITIVE_TYPE pType);
 
-  unsigned int TextureFromFile(const char *path, const string &directory,
-                               bool gamma = false) {
-    string filename = string(path);
-    filename = directory + '/' + filename;
+  vector<Graphics::Mesh> GetModel(string);
 
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-
-    int width, height, nrComponents;
-    unsigned char *data =
-        stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
-    if (data) {
-      GLenum format;
-      if (nrComponents == 1)
-        format = GL_RED;
-      else if (nrComponents == 3)
-        format = GL_RGB;
-      else if (nrComponents == 4)
-        format = GL_RGBA;
-
-      glBindTexture(GL_TEXTURE_2D, textureID);
-      glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-                   GL_UNSIGNED_BYTE, data);
-      glGenerateMipmap(GL_TEXTURE_2D);
-
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                      GL_LINEAR_MIPMAP_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-      stbi_image_free(data);
-    } else {
-      std::cout << "Texture failed to load at path: " << path << std::endl;
-      stbi_image_free(data);
-    }
-
-    return textureID;
-  }
+  Shader *GetShader(string vertShaderPath, string fragShaderPath);
 
 private:
+  // stores all the loaded textures
+  vector<Texture> texturesLoaded;
+  // stores all the loaded shaders
+  vector<Shader> shaderLoaded;
+
+  unsigned int textureFromFile(string texturePath, bool gamma = false);
+
+  vector<Texture> loadMaterialTextures(aiMaterial *, aiTextureType, string);
+
+  Graphics::Mesh processMesh(aiMesh *, const aiScene *);
+
+  void processNode(aiNode *, const aiScene *, vector<Graphics::Mesh> &);
 };
 
 static tResourceManager &ResourceManager = tResourceManager::Ref();

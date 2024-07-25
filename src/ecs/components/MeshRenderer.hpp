@@ -1,12 +1,25 @@
 #pragma once
 
-#include "object/Mesh.hpp"
 #include "ecs/ecs.hpp"
+#include "ecs/components/Camera.hpp"
+#include "ecs/components/Transform.hpp"
+#include "ecs/components/Material.hpp"
+#include "ecs/systems/render/Mesh.hpp"
 
 class MeshRenderer : public ECS::BaseComponent {
 public:
   MeshRenderer() {}
   ~MeshRenderer() {}
 
-  std::shared_ptr<Graphics::Model> Renderer;
+  void Render(mat4 projMat, mat4 viewMat, Transform &transform, BaseMaterial &material) {
+    Resource::Shader *shader = material.GetShader();
+    shader->Use();
+    shader->SetMat4("projection", projMat);
+    shader->SetMat4("view", viewMat);
+    shader->SetMat4("model", transform.GetModelMatrix());
+    material.ActivateTextures();
+    meshData->Draw(*shader);
+  }
+
+  std::shared_ptr<Graphics::Mesh> meshData;
 };

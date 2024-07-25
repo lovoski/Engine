@@ -1,4 +1,4 @@
-#include "timer.hpp"
+#include "Timer.hpp"
 
 tTimer::tTimer() : deltaTime(0.0f), lastFrame(0.0f) {}
 tTimer::~tTimer() {}

@@ -1,16 +1,66 @@
 #pragma once
 
 #include "ecs/ecs.hpp"
-#include "object/Shader.hpp"
+#include "resource/ResourceManager.hpp"
+#include "resource/ResourceTypes.hpp"
+#include "resource/Shader.hpp"
 
-class Material : public ECS::BaseComponent {
+
+class BaseMaterial : public ECS::BaseComponent {
 public:
-  Material() {}
-  ~Material() {}
+  BaseMaterial() {
+    // load the default shaders
+    SetShader(REPO_SOURCE_DIR "/src/shaders/default/pbr.vert",
+              REPO_SOURCE_DIR "/src/shaders/default/pbr.frag");
+  }
+  ~BaseMaterial() {}
 
-  static Material DefaultMaterial() {
-    static Material defaultMaterial;
-    return defaultMaterial;
+  void SetShader(string vertShaderPath, string fragShaderPath) {
+    this->shader =
+        Resource::ResourceManager.GetShader(vertShaderPath, fragShaderPath);
+  }
+  Resource::Shader *GetShader() {
+    if (this->shader == nullptr) {
+      cout << "material has no valid shader" << endl;
+    }
+    return this->shader;
   }
 
+  void SetTextures(vector<Resource::Texture> textures) {
+    this->textures = textures;
+  }
+
+  void ActivateTextures() {
+    // bind appropriate textures
+    unsigned int diffuseNr = 1;
+    unsigned int specularNr = 1;
+    unsigned int normalNr = 1;
+    unsigned int heightNr = 1;
+    for (unsigned int i = 0; i < textures.size(); i++) {
+      glActiveTexture(GL_TEXTURE0 +
+                      i); // active proper texture unit before binding
+      // retrieve texture number (the N in diffuse_textureN)
+      string number;
+      string name = textures[i].type;
+      if (name == "texture_diffuse")
+        number = std::to_string(diffuseNr++);
+      else if (name == "texture_specular")
+        number =
+            std::to_string(specularNr++); // transfer unsigned int to string
+      else if (name == "texture_normal")
+        number = std::to_string(normalNr++); // transfer unsigned int to string
+      else if (name == "texture_height")
+        number = std::to_string(heightNr++); // transfer unsigned int to string
+
+      // now set the sampler to the correct texture unit
+      glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), i);
+      // and finally bind the texture
+      glBindTexture(GL_TEXTURE_2D, textures[i].id);
+    }
+  }
+
+protected:
+  vec3 albedo;
+  Resource::Shader *shader;
+  vector<Resource::Texture> textures;
 };
