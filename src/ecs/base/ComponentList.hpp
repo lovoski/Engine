@@ -1,7 +1,7 @@
 // Stores all the components in a compact array
 #pragma once
 
-#include "types.hpp"
+#include "Types.hpp"
 
 namespace ECS {
 

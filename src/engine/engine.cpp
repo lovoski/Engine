@@ -1,6 +1,12 @@
 #include "engine.hpp"
+#include "ecs/systems/render/MeshRendererSystem.hpp"
 
-Engine::Engine() : run(true), window(NULL), videoWidth(WIDTH), videoHeight(HEIGHT) {
+// the actual implementation of stb image
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+Engine::Engine()
+    : run(true), window(NULL), videoWidth(WIDTH), videoHeight(HEIGHT) {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -16,16 +22,23 @@ Engine::Engine() : run(true), window(NULL), videoWidth(WIDTH), videoHeight(HEIGH
   assert(window && "Failed to create GLFW window");
   glfwMakeContextCurrent(window);
 
-  assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) && "Failed to load GLAD");
+  assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) &&
+         "Failed to load GLAD");
 }
 
 Engine::~Engine() {
+  ECS::Manager.Destroy();
   glfwTerminate();
 }
 
-void Engine::Initialize() {}
+void Engine::Initialize() {
+  // register all the systems
+  ECS::Manager.RegisterSystem<MeshRendererSystem>();
+  // start all the systems
+  ECS::Manager.Start();
+}
 
-void Engine::Update() {}
+void Engine::Update() { ECS::Manager.Update(); }
 
 void Engine::Quit() {
   glfwSetWindowShouldClose(window, GLFW_TRUE);

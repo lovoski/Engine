@@ -1,6 +1,7 @@
 #pragma once
 
 #include "global.hpp"
+#include "ecs/ecs.hpp"
 
 const int WIDTH = 1920, HEIGHT = 1080;
 

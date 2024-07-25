@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.hpp"
+#include "Types.hpp"
 
 namespace ECS {
 
@@ -23,7 +23,6 @@ public:
 
   virtual void Start() {}
   virtual void Update() {}
-  virtual void Render() {}
   virtual void Destroy() {}
 
 protected:

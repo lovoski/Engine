@@ -11,7 +11,7 @@ add_subdirectory("ext/assimp")
 add_subdirectory("ext/glm")
 
 set(REPO_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-configure_file(config.h.in config.h)
+configure_file(config.h.in EngineConfig.h)
 
 include_directories(
   "${CMAKE_BINARY_DIR}"
@@ -21,6 +21,7 @@ add_executable(${PROJECT_NAME}
   src/main.cpp
   src/engine/engine.cpp
   src/engine/timer.cpp
-  src/engine/events.cpp)
+  src/engine/events.cpp
+  src/utils/Math.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw glad assimp stb json11 glm)
+target_link_libraries(${PROJECT_NAME} PRIVATE glfw glad assimp stb json11 glm imgui)

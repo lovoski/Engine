@@ -7,45 +7,87 @@
 // the same signature to it
 #pragma once
 
-#include "base_component.hpp"
-#include "base_system.hpp"
-#include "component_list.hpp"
+#include "BaseComponent.hpp"
+#include "BaseSystem.hpp"
+#include "ComponentList.hpp"
 #include "types.hpp"
 
 namespace ECS {
 
 class EntityManager {
 public:
+  class Entity {
+  public:
+    Entity(EntityID id, EntityManager *manager) : ID(id), MGR(manager) {}
+    ~Entity() {}
+
+    template <typename T, typename... Args> void AddComponent(Args &&...args) {
+      MGR->AddComponent<T>(ID, std::forward<Args>(args)...);
+    }
+
+    template <typename T> void RemoveComponent() {
+      MGR->RemoveComponent<T>(ID);
+    }
+
+    template <typename T> const bool HasComponent() {
+      return MGR->HasComponent<T>(ID);
+    }
+
+    template <typename T> T &GetComponent() { return MGR->GetComponent<T>(ID); }
+
+    void Destroy() { MGR->DestroyEntity(ID); }
+
+  protected:
+    EntityID ID;
+    Entity *parent = nullptr;
+    vector<Entity *> children;
+    EntityManager *MGR;
+  };
+
   EntityManager() : entityCount(0) {
     for (EntityID entity = 0u; entity < MAX_ENTITY_COUNT; ++entity) {
       availableEntities.push(entity);
     }
   }
+  EntityManager(const EntityManager &) = delete;
+  const EntityManager &operator=(EntityManager &) = delete;
   ~EntityManager() {}
 
+  static EntityManager &Ref() {
+    static EntityManager reference;
+    return reference;
+  }
+
+  // Call the start function of all the systems
+  void Start() {
+    for (auto &system : registeredSystems) {
+      system.second->Start();
+    }
+  }
+
+  // Update all the registered systems
   void Update() {
-    // Update all the registered systems
     for (auto &system : registeredSystems) {
       system.second->Update();
     }
   }
 
-  void Render() {
+  // Destroy all the registered systems
+  void Destroy() {
     for (auto &system : registeredSystems) {
-      system.second->Render();
+      system.second->Destroy();
     }
   }
 
-  const EntityID AddNewEntity() {
-    const EntityID id = availableEntities.front();
-    AddEntitySignature(id); // create a signature for the entity
-    availableEntities.pop();
-    entityCount++;
-    return id; // this entity can now access some components
+  const Entity AddNewEntity() {
+    const EntityID id = addNewEntity();
+    return Entity(id, this);
   }
 
   void DestroyEntity(const EntityID entity) {
     assert(entity < MAX_ENTITY_COUNT && "Destroying entity out of range");
+    assert(entitiesSignatures.find(entity) != entitiesSignatures.end() &&
+           "Destroying entity do not exists");
     entitiesSignatures.erase(entity);
     for (auto &array : componentsArrays) {
       array.second->Erase(entity);
@@ -120,7 +162,8 @@ public:
     for (EntityID entity = 0; entity < entityCount; ++entityCount) {
       AddEntityToSystem(entity, system.get());
     }
-    system->Start();
+    // don't start the system during registration
+    // system->Start();
     registeredSystems[systemType] = std::move(system);
   }
 
@@ -186,13 +229,20 @@ private:
   // mind that an entity can have more components than the system's requirement
   bool BelongToSystem(const EntityID entity,
                       const EntitySignature &systemSignature) {
-    // iterate through all the system by brute force
     for (const auto compType : systemSignature) {
       if (GetEntitySignature(entity)->count(compType) == 0) {
         return false;
       }
     }
     return true;
+  }
+
+  const EntityID addNewEntity() {
+    const EntityID id = availableEntities.front();
+    AddEntitySignature(id); // create a signature for the entity
+    availableEntities.pop();
+    entityCount++;
+    return id; // this entity can now access some components
   }
 
   // how many entities have been created
@@ -203,5 +253,8 @@ private:
   std::map<SystemTypeID, std::shared_ptr<BaseSystem>> registeredSystems;
   std::map<ComponentTypeID, std::shared_ptr<IComponentList>> componentsArrays;
 };
+
+using Entity = EntityManager::Entity;
+static EntityManager &Manager = EntityManager::Ref();
 
 }; // namespace ECS
