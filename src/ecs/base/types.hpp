@@ -15,15 +15,9 @@ using SystemTypeID = size_t;
 using ComponentTypeID = size_t;
 using EntitySignature = std::set<ComponentTypeID>;
 
-inline static const ComponentTypeID GetRuntimeComponentTypeID() {
-  static SystemTypeID typeID = 0u;
-  return typeID++;
-}
+const ComponentTypeID GetRuntimeComponentTypeID();
 
-inline static const SystemTypeID GetRuntimeSystemTypeID() {
-  static SystemTypeID typeID = 0u;
-  return typeID++;
-}
+const SystemTypeID GetRuntimeSystemTypeID();
 
 // attach type id to component class and return it
 template <typename T> inline static const ComponentTypeID ComponentType() noexcept {

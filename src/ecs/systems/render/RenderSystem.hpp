@@ -43,9 +43,6 @@ public:
   void Update() override {
     vec2 sceneAvailableSize = editorWindows.RenderStart(sceneBuffer);
     // adjust the size of framebuffer accordingly
-    // glViewport(0, 0, sceneAvailableSize.x, sceneAvailableSize.y);
-    // sceneBuffer->RescaleFrameBuffer(sceneAvailableSize.x,
-    // sceneAvailableSize.y);
     sceneBuffer->Bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     ECS::EntityID activeCamera;
