@@ -27,21 +27,21 @@ void EditorWindows::MainMenuBar() {}
 
 void EditorWindows::EntitiesWindow() {
   ImGui::Begin("Entities");
-  if (ImGui::Button("add entity", ImVec2(-1, 40))) {
-    ECS::Manager.AddNewEntity();
+  if (ImGui::Button("Add Entity", ImVec2(-1, 40))) {
+    Console.AddLog("[info]: what is this???\n");
   }
   auto entities = ECS::Manager.GetActiveEntities();
-  for (auto entity : entities) {
-    if (ImGui::TreeNode(entity->name.c_str())) {
-      ImGui::TreePop();
+  for (auto i = 0; i < entities.size(); ++i) {
+    if (ImGui::Selectable(entities[i]->name.c_str(), selectedEntityInd == i)) {
+      selectedEntityInd = i;
+      selectedEntity = entities[i]->ID;
     }
   }
   ImGui::End();
 }
 
 void EditorWindows::ConsoleWindow() {
-  ImGui::Begin("Console");
-  ImGui::End();
+  Console.Draw("Console");
 }
 
 void EditorWindows::AssetsWindow() {

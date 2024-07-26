@@ -11,6 +11,7 @@ add_subdirectory("ext/json11")
 add_subdirectory("ext/stb")
 add_subdirectory("ext/assimp")
 add_subdirectory("ext/glm")
+add_subdirectory("ext/rttr")
 
 if (BUILD_ENGINE_TEST)
   add_subdirectory("src/test")
@@ -19,7 +20,7 @@ endif()
 set(REPO_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 configure_file(config.h.in EngineConfig.h)
 
-set(ENGINE_DEPS glfw glad assimp stb json11 glm imgui)
+set(ENGINE_DEPS glfw glad assimp stb json11 glm imgui rttr_core)
 
 include_directories(
   "${CMAKE_BINARY_DIR}"
@@ -30,6 +31,7 @@ add_executable(${PROJECT_NAME}
   src/engine/Engine.cpp
   src/engine/Timer.cpp
   src/engine/Events.cpp
+  src/engine/Console.cpp
   src/utils/Math.cpp
   src/resource/ResourceManager.cpp
   src/ecs/base/Types.cpp

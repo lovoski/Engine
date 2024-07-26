@@ -32,7 +32,7 @@ public:
       camera = activeCamera;
       return true;
     } else {
-      cout << "There's no active camera" << endl;
+      Console.AddLog("[Info]: There's no active camera\n");
       camera = (ECS::EntityID)(-1);
       return false;
     }
@@ -46,7 +46,7 @@ public:
       activeCamera = camera;
       return true;
     } else {
-      cout << "Not a valid camera entity" << endl;
+      Console.AddLog("[error]: Not a valid camera entity: %ld\n", camera);
       // there could exist an active camera,
       // don't reset the hasActiveCamera flag
       return false;
@@ -60,5 +60,6 @@ private:
   ECS::EntityID activeCamera;
 
   bool hasSelectedEntity = false;
-  ECS::EntityID selectedEntity;
+  std::size_t selectedEntityInd = -1;
+  ECS::EntityID selectedEntity = -1;
 };

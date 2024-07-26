@@ -48,8 +48,7 @@ public:
         geometryCode = gShaderStream.str();
       }
     } catch (std::ifstream::failure &e) {
-      std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what()
-                << std::endl;
+      Console.AddLog("[error]::SHADER::FILE_NOT_SUCCESSFULLY_READ: %s\n", e.what());
     }
     const char *vShaderCode = vertexCode.c_str();
     const char *fShaderCode = fragmentCode.c_str();
@@ -138,24 +137,16 @@ private:
       glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
       if (!success) {
         glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-        std::cout
-            << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n"
-            << infoLog
-            << "\n -- --------------------------------------------------- -- "
-            << std::endl;
+        Console.AddLog("[error]::SHADER_COMPILATION_ERROR of type: %s\n%s\n", type.c_str(), infoLog);
       }
     } else {
       glGetProgramiv(shader, GL_LINK_STATUS, &success);
       if (!success) {
         glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-        std::cout
-            << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n"
-            << infoLog
-            << "\n -- --------------------------------------------------- -- "
-            << std::endl;
+        Console.AddLog("[error]::PROGRAM_LINKING_ERROR of type: %s\n%s\n", type.c_str(), infoLog);
       }
     }
   }
 };
 
-}; // namespace Graphics
+}; // namespace Resource

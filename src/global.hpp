@@ -33,6 +33,24 @@
 
 #include <stb_image.h>
 
+#include "engine/Console.hpp"
+
+#include <rttr/registration>
+#include <rttr/type>
+
+// Helper macro to automate the registration
+#define REGISTER_MEMBER(Class, Member) \
+    .property(#Member, &Class::Member)
+
+#define REGISTER_CLASS_BEGIN(Class) \
+    RTTR_REGISTRATION \
+    { \
+        rttr::registration::class_<Class>(#Class)
+
+#define REGISTER_CLASS_END \
+    ; \
+    }
+
 using std::cout;
 using std::endl;
 using std::string;

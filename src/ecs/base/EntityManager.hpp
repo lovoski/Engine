@@ -10,7 +10,7 @@
 #include "BaseComponent.hpp"
 #include "BaseSystem.hpp"
 #include "ComponentList.hpp"
-#include "types.hpp"
+#include "Types.hpp"
 
 namespace ECS {
 
@@ -88,6 +88,7 @@ public:
     const EntityID id = addNewEntity();
     entities.insert(
         std::make_pair(id, std::move(std::make_shared<Entity>(id, this))));
+    entities[id]->name += std::to_string(id);
     return &(*(entities[id]));
   }
 
@@ -95,7 +96,7 @@ public:
     assert(entity < MAX_ENTITY_COUNT &&
            "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
     if (entities.count(entity) == 0) {
-      cout << "No entity match this id: " << entity << endl;
+      Console.AddLog("[error]: No entity match this id: %ld\n", entity);
       return nullEntity;
     } else {
       return &(*(entities.at(entity)));
