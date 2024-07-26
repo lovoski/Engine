@@ -1,19 +1,52 @@
 #include "ResourceManager.hpp"
+#include "geometry/Mesh.hpp"
 
 namespace Resource {
+
+tResourceManager::tResourceManager() {
+  // initialize all the primitives
+  // plane
+  vector<Vertex> vertices;
+  vector<unsigned int> indices;
+  vertices.push_back({{1.0, 0.0, 1.0}, {0.0, 1.0, 0.0}, {1.0, 1.0}});
+  vertices.push_back({{1.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {1.0, 0.0}});
+  vertices.push_back({{-1.0, 0.0, 1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0}});
+  vertices.push_back({{-1.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 0.0}});
+  indices = {0, 2, 1, 1, 2, 3};
+  planePrimitive = new Graphics::Mesh(vertices, indices);
+  // sphere
+  vertices.clear();
+  indices.clear();
+  Geometry::Icosphere icosphere(2);
+  auto gVertices = icosphere.GetVertices();
+  auto gFaces = icosphere.GetFaces();
+  for (auto &v : gVertices) {
+    vec3 position = {v.x, v.y, v.z};
+    vertices.push_back({position, vec3(0.0f), vec2(0.0f)});
+  }
+  for (auto &f : gFaces) {
+    indices.push_back(f.v[0]);
+    indices.push_back(f.v[1]);
+    indices.push_back(f.v[2]);
+  }
+  spherePrimitive = new Graphics::Mesh(vertices, indices);
+  // cube
+  vertices.clear();
+  indices.clear();
+}
 
 Shader *tResourceManager::GetShader(string vertShaderPath,
                                     string fragShaderPath) {
   for (auto i = 0; i < shaderLoaded.size(); ++i) {
     if (shaderLoaded[i].vertexShaderPath == vertShaderPath &&
         shaderLoaded[i].fragShaderPath == fragShaderPath) {
-      return &shaderLoaded[i];
+      return &(shaderLoaded[i]);
     }
   }
   // the shader has not been loaded
   shaderLoaded.push_back(
       Shader(vertShaderPath.c_str(), fragShaderPath.c_str()));
-  return &(*shaderLoaded.end());
+  return &(shaderLoaded[shaderLoaded.size() - 1]);
 }
 
 unsigned int tResourceManager::textureFromFile(string texturePath, bool gamma) {
@@ -52,16 +85,17 @@ unsigned int tResourceManager::textureFromFile(string texturePath, bool gamma) {
   return textureID;
 }
 
-// Graphics::Mesh tResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
-//   switch (pType)
-//   {
-//   case PRIMITIVE_TYPE::PLANE:
-//     /* code */
-//     break;
-//   default:
-//     break;
-//   }
-// }
+Graphics::Mesh *tResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
+  if (pType == PRIMITIVE_TYPE::SPHERE) {
+    return spherePrimitive;
+  } else if (pType == PRIMITIVE_TYPE::CUBE) {
+    return cubePrimitive;
+  } else if (pType == PRIMITIVE_TYPE::PLANE) {
+    return planePrimitive;
+  } else {
+    return nullptr;
+  }
+}
 
 vector<Texture> tResourceManager::loadMaterialTextures(aiMaterial *mat,
                                                        aiTextureType type,
@@ -96,7 +130,6 @@ Graphics::Mesh tResourceManager::processMesh(aiMesh *mesh,
   // data to fill
   vector<Vertex> vertices;
   vector<unsigned int> indices;
-  vector<Texture> textures;
 
   // walk through each of the mesh's vertices
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
@@ -127,16 +160,16 @@ Graphics::Mesh tResourceManager::processMesh(aiMesh *mesh,
       vec.x = mesh->mTextureCoords[0][i].x;
       vec.y = mesh->mTextureCoords[0][i].y;
       vertex.TexCoords = vec;
-      // tangent
-      vector.x = mesh->mTangents[i].x;
-      vector.y = mesh->mTangents[i].y;
-      vector.z = mesh->mTangents[i].z;
-      vertex.Tangent = vector;
-      // bitangent
-      vector.x = mesh->mBitangents[i].x;
-      vector.y = mesh->mBitangents[i].y;
-      vector.z = mesh->mBitangents[i].z;
-      vertex.Bitangent = vector;
+      // // tangent
+      // vector.x = mesh->mTangents[i].x;
+      // vector.y = mesh->mTangents[i].y;
+      // vector.z = mesh->mTangents[i].z;
+      // vertex.Tangent = vector;
+      // // bitangent
+      // vector.x = mesh->mBitangents[i].x;
+      // vector.y = mesh->mBitangents[i].y;
+      // vector.z = mesh->mBitangents[i].z;
+      // vertex.Bitangent = vector;
     } else
       vertex.TexCoords = glm::vec2(0.0f, 0.0f);
 
@@ -159,25 +192,27 @@ Graphics::Mesh tResourceManager::processMesh(aiMesh *mesh,
   // specular: texture_specularN
   // normal: texture_normalN
 
-  // 1. diffuse maps
-  vector<Texture> diffuseMaps =
-      loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-  textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-  // 2. specular maps
-  vector<Texture> specularMaps = loadMaterialTextures(
-      material, aiTextureType_SPECULAR, "texture_specular");
-  textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-  // 3. normal maps
-  std::vector<Texture> normalMaps =
-      loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-  textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-  // 4. height maps
-  std::vector<Texture> heightMaps =
-      loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-  textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+  // // 1. diffuse maps
+  // vector<Texture> diffuseMaps =
+  //     loadMaterialTextures(material, aiTextureType_DIFFUSE,
+  //     "texture_diffuse");
+  // textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+  // // 2. specular maps
+  // vector<Texture> specularMaps = loadMaterialTextures(
+  //     material, aiTextureType_SPECULAR, "texture_specular");
+  // textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+  // // 3. normal maps
+  // std::vector<Texture> normalMaps =
+  //     loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+  // textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+  // // 4. height maps
+  // std::vector<Texture> heightMaps =
+  //     loadMaterialTextures(material, aiTextureType_AMBIENT,
+  //     "texture_height");
+  // textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
   // return a mesh object created from the extracted mesh data
-  return Graphics::Mesh(vertices, indices, textures);
+  return Graphics::Mesh(vertices, indices);
 }
 
 void tResourceManager::processNode(aiNode *node, const aiScene *scene,

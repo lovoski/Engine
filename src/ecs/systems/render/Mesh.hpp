@@ -14,15 +14,12 @@ public:
   // mesh Data
   vector<Vertex> vertices;
   vector<unsigned int> indices;
-  vector<Texture> textures;
   unsigned int VAO;
 
   // constructor
-  Mesh(vector<Vertex> vertices, vector<unsigned int> indices,
-       vector<Texture> textures) {
+  Mesh(vector<Vertex> vertices, vector<unsigned int> indices) {
     this->vertices = vertices;
     this->indices = indices;
-    this->textures = textures;
 
     // now that we have all the required data, set the vertex buffers and its
     // attribute pointers.
@@ -78,14 +75,14 @@ private:
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                           (void *)offsetof(Vertex, TexCoords));
-    // vertex tangent
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                          (void *)offsetof(Vertex, Tangent));
-    // vertex bitangent
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-                          (void *)offsetof(Vertex, Bitangent));
+    // // vertex tangent
+    // glEnableVertexAttribArray(3);
+    // glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    //                       (void *)offsetof(Vertex, Tangent));
+    // // vertex bitangent
+    // glEnableVertexAttribArray(4);
+    // glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    //                       (void *)offsetof(Vertex, Bitangent));
     glBindVertexArray(0);
   }
 };

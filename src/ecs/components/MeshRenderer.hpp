@@ -9,17 +9,22 @@
 class MeshRenderer : public ECS::BaseComponent {
 public:
   MeshRenderer() {}
+  MeshRenderer(Graphics::Mesh *mesh) : meshData(mesh) {}
   ~MeshRenderer() {}
 
-  void Render(mat4 projMat, mat4 viewMat, Transform &transform, BaseMaterial &material) {
-    Resource::Shader *shader = material.GetShader();
+  void Render(mat4 projMat, mat4 viewMat, Transform &transform, BaseMaterial *material) {
+    Resource::Shader *shader = material->GetShader();
     shader->Use();
     shader->SetMat4("projection", projMat);
     shader->SetMat4("view", viewMat);
     shader->SetMat4("model", transform.GetModelMatrix());
-    material.ActivateTextures();
+    material->ActivateTextures();
     meshData->Draw(*shader);
   }
 
-  std::shared_ptr<Graphics::Mesh> meshData;
+  void SetMeshData(Graphics::Mesh *mesh) {
+    meshData = mesh;
+  }
+
+  Graphics::Mesh *meshData = nullptr;
 };

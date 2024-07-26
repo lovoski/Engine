@@ -5,19 +5,16 @@
 #include "resource/ResourceTypes.hpp"
 #include "resource/Shader.hpp"
 
-
 class BaseMaterial : public ECS::BaseComponent {
 public:
-  BaseMaterial() {
-    // load the default shaders
-    SetShader(REPO_SOURCE_DIR "/src/shaders/default/pbr.vert",
-              REPO_SOURCE_DIR "/src/shaders/default/pbr.frag");
-  }
+  BaseMaterial() {}
   ~BaseMaterial() {}
 
-  void SetShader(string vertShaderPath, string fragShaderPath) {
-    this->shader =
-        Resource::ResourceManager.GetShader(vertShaderPath, fragShaderPath);
+  void SetShader(string vertShaderPath = REPO_SOURCE_DIR
+                 "/src/shaders/default/pbr.vert",
+                 string fragShaderPath = REPO_SOURCE_DIR
+                 "/src/shaders/default/pbr.frag") {
+    shader = Resource::ResourceManager.GetShader(vertShaderPath, fragShaderPath);
   }
   Resource::Shader *GetShader() {
     if (this->shader == nullptr) {
@@ -60,7 +57,7 @@ public:
   }
 
 protected:
-  vec3 albedo;
-  Resource::Shader *shader;
+  vec3 albedo = vec3(1.0f);
+  Resource::Shader *shader = nullptr;
   vector<Resource::Texture> textures;
 };

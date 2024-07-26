@@ -9,7 +9,7 @@ namespace Resource {
 
 class tResourceManager {
 public:
-  tResourceManager() {}
+  tResourceManager();
   tResourceManager(tResourceManager &) = delete;
   const tResourceManager &operator=(tResourceManager &) = delete;
   ~tResourceManager() {}
@@ -19,7 +19,7 @@ public:
     return reference;
   }
 
-  // Graphics::Mesh GetPrimitive(PRIMITIVE_TYPE pType);
+  Graphics::Mesh *GetPrimitive(PRIMITIVE_TYPE pType);
 
   vector<Graphics::Mesh> GetModel(string);
 
@@ -30,6 +30,10 @@ private:
   vector<Texture> texturesLoaded;
   // stores all the loaded shaders
   vector<Shader> shaderLoaded;
+
+  Graphics::Mesh *cubePrimitive;
+  Graphics::Mesh *planePrimitive;
+  Graphics::Mesh *spherePrimitive;
 
   unsigned int textureFromFile(string texturePath, bool gamma = false);
 

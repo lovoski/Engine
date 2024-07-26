@@ -84,7 +84,6 @@ public:
     }
   }
 
-  // TODO: replace it with smart pointers
   Entity *AddNewEntity() {
     const EntityID id = addNewEntity();
     entities.insert(
@@ -92,7 +91,6 @@ public:
     return &(*(entities[id]));
   }
 
-  // TODO: replace it with smart pointers
   Entity *EntityFromID(const EntityID entity) {
     assert(entity < MAX_ENTITY_COUNT &&
            "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
@@ -104,7 +102,6 @@ public:
     }
   }
 
-  // TODO: replace it with smart pointers
   vector<Entity*> GetActiveEntities() {
     vector<Entity*> result;
     for (auto &entity : entities) {
