@@ -21,6 +21,7 @@ public:
   void ConsoleWindow();
   void AssetsWindow();
   void ComponentsWindow() {
+    ImGui::Begin("Components");
     if (selectedEntity != (ECS::EntityID)(-1)) {
       if (ECS::Manager.HasComponent<Transform>(selectedEntity)) {
         // Console.AddLog("render transform component\n");
@@ -29,6 +30,7 @@ public:
         // Console.AddLog("render camera component\n");
       }
     }
+    ImGui::End();
   }
 
   // Define the gui layout, returns the available size for scene rendering

@@ -4,10 +4,21 @@ An experimental ECS game engine.
 
 ## Road maps
 
+### High level goals
+
 - Implement a opengl pbr render system.
 - Manage the layout system and gui system
 - Create easy to use animation system
 - Implement a home made physics system
+
+### Detailed goals
+
+- [ ] Create the camera system to manage the movement of camera
+- [ ] Polish the component gui section, create editor for transform and camera component
+- [ ] Create a basic material editor, write some actual shader code
+- [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
+- [ ] Create the animation system, write code to do the skinning and binding
+- [ ] Do the serilization to store the scene in some files
 
 ## ECS architecture
 
