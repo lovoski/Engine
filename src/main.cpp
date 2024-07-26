@@ -1,9 +1,5 @@
 #include "basics.hpp"
 
-#include "global.hpp"
-#include "ecs/components/Transform.hpp"
-#include "ecs/components/Camera.hpp"
-
 int main() {
   Core.Initialize();
   Timer.Initialize();

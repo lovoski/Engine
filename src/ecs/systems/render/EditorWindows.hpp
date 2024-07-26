@@ -20,7 +20,16 @@ public:
   void EntitiesWindow();
   void ConsoleWindow();
   void AssetsWindow();
-  void ComponentsWindow();
+  void ComponentsWindow() {
+    if (selectedEntity != (ECS::EntityID)(-1)) {
+      if (ECS::Manager.HasComponent<Transform>(selectedEntity)) {
+        // Console.AddLog("render transform component\n");
+      }
+      if (ECS::Manager.HasComponent<Camera>(selectedEntity)) {
+        // Console.AddLog("render camera component\n");
+      }
+    }
+  }
 
   // Define the gui layout, returns the available size for scene rendering
   vec2 RenderStart(Graphics::FrameBuffer *sceneBuffer);
@@ -59,7 +68,6 @@ private:
   bool hasActiveCamera = false;
   ECS::EntityID activeCamera;
 
-  bool hasSelectedEntity = false;
   std::size_t selectedEntityInd = -1;
   ECS::EntityID selectedEntity = -1;
 };

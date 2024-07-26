@@ -49,11 +49,6 @@ void EditorWindows::AssetsWindow() {
   ImGui::End();
 }
 
-void EditorWindows::ComponentsWindow() {
-  ImGui::Begin("Components");
-  ImGui::End();
-}
-
 vec2 EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
