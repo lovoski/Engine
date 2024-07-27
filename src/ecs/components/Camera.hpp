@@ -20,7 +20,7 @@ public:
   }
 
   mat4 GetProjMatrixPerspective(float width, float height) {
-    return glm::perspective(fovY, width/height, zNear, zFar);
+    return glm::perspective(glm::radians(fovY), width/height, zNear, zFar);
   }
 
   float fovY = 45.0f;

@@ -66,7 +66,7 @@ void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ImGui::EndChild();
   ImGui::End();
 
-  // ImGui::ShowDemoWindow();
+  ImGui::ShowDemoWindow();
 
   EntitiesWindow();
   ConsoleWindow();

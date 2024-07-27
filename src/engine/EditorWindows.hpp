@@ -71,7 +71,13 @@ public:
         }
       }
       if (ECS::Manager.HasComponent<Camera>(selectedEntity)) {
-        // Console.Log("render camera component\n");
+        auto &camera = ECS::Manager.GetComponent<Camera>(selectedEntity);
+        if (ImGui::TreeNode("Camera")) {
+          ImGui::DragFloat(" :Fov  Y", &camera.fovY, 1.0f, 0.0f, 150.0f);
+          ImGui::DragFloat(" :Z Near", &camera.zNear, 0.001f, 0.0000001f, 10.0f);
+          ImGui::DragFloat(" :Z  Far", &camera.zFar, 0.1f, 20.0f, 2000.0f);
+          ImGui::TreePop();
+        }
       }
     }
     ImGui::End();
