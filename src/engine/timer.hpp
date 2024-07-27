@@ -15,7 +15,7 @@ public:
 
   void Tick();
   void Initialize();
-  float DeltaTime() {}
+  float DeltaTime();
 
 private:
   tTimer();

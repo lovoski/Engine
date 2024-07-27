@@ -4,14 +4,14 @@ void EditorWindows::Initialize() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 
-  ImGuiIO &io = ImGui::GetIO();
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  io = &ImGui::GetIO();
+  io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
   ImFontConfig fontConfig;
   fontConfig.SizePixels = 20.0f;
-  io.Fonts->AddFontDefault(&fontConfig);
-  io.IniFilename = layoutFileName;
+  io->Fonts->AddFontDefault(&fontConfig);
+  io->IniFilename = layoutFileName;
 
   ImGui_ImplGlfw_InitForOpenGL(&Core.Window(), true);
   ImGui_ImplOpenGL3_Init("#version 460");
@@ -40,16 +40,14 @@ void EditorWindows::EntitiesWindow() {
   ImGui::End();
 }
 
-void EditorWindows::ConsoleWindow() {
-  Console.Draw("Console");
-}
+void EditorWindows::ConsoleWindow() { Console.Draw("Console"); }
 
 void EditorWindows::AssetsWindow() {
   ImGui::Begin("Assets");
   ImGui::End();
 }
 
-vec2 EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
+void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
@@ -60,7 +58,10 @@ vec2 EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ImGui::Begin("Scene");
   ImGui::BeginChild("GameRenderer");
   auto size = ImGui::GetContentRegionAvail();
-  ImGui::Image((void *)sceneBuffer->GetFrameTexture(), size);
+  auto pos = ImGui::GetWindowPos();
+  ImGui::Image((void *)sceneBuffer->GetFrameTexture(), size, ImVec2(1, 1), ImVec2(0, 0));
+  SceneWindowSize = {size.x, size.y};
+  SceneWindowPos = {pos.x, pos.y};
   ImGui::EndChild();
   ImGui::End();
 
@@ -70,8 +71,6 @@ vec2 EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ConsoleWindow();
   ComponentsWindow();
   AssetsWindow();
-
-  return vec2(size.x, size.y);
 }
 
 void EditorWindows::RenderComplete() {

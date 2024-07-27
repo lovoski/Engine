@@ -16,7 +16,18 @@ public:
   void Poll();
   void Initialize();
 
+  int GetKey(int key);
+  int GetMouseButton(int button);
+
+  vec2 MousePositionOffset = vec2(0.0f);
+  vec2 MouseCurrentPosition = vec2(0.0f);
+  vec2 MouseScrollOffset = vec2(0.0f);
+
+  bool mouseFirstMove = true;
+  vec2 mouseLastPosition = vec2(0.0f);
+
 private:
+
   Events();
 };
 

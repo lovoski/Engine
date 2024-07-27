@@ -9,3 +9,5 @@ void tTimer::Tick() {
   deltaTime = glfwGetTime() - lastFrame;
   lastFrame = glfwGetTime();
 }
+
+float tTimer::DeltaTime() { return deltaTime; }

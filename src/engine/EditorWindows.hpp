@@ -1,21 +1,22 @@
 #pragma once
 
-#include "FrameBuffer.hpp"
-#include "basics.hpp"
+#include "Engine.hpp"
 #include "ecs/components/Camera.hpp"
 #include "ecs/components/Material.hpp"
 #include "ecs/components/MeshRenderer.hpp"
+#include "ecs/systems/render/FrameBuffer.hpp"
 #include "global.hpp"
+
 
 class EditorWindows {
 public:
   EditorWindows() {}
   ~EditorWindows() {}
 
-  EditorWindows(const EditorWindows&) = delete;
-  const EditorWindows &operator=(const EditorWindows&) = delete;
+  EditorWindows(const EditorWindows &) = delete;
+  const EditorWindows &operator=(const EditorWindows &) = delete;
 
-  static EditorWindows& Ref() {
+  static EditorWindows &Ref() {
     static EditorWindows reference;
     return reference;
   }
@@ -42,7 +43,7 @@ public:
   }
 
   // Define the gui layout, returns the available size for scene rendering
-  vec2 RenderStart(Graphics::FrameBuffer *sceneBuffer);
+  void RenderStart(Graphics::FrameBuffer *sceneBuffer);
   void RenderComplete();
 
   // Get the active camera in the scene
@@ -71,6 +72,17 @@ public:
       return false;
     }
   }
+
+  bool InSceneWindow(float x, float y) {
+    return x >= SceneWindowPos.x && x <= SceneWindowPos.x + SceneWindowSize.x &&
+           y >= SceneWindowPos.y && y <= SceneWindowPos.y + SceneWindowSize.y;
+  }
+
+  // export imgui io to receive events
+  ImGuiIO *io = nullptr;
+
+  vec2 SceneWindowSize = vec2(0.0f);
+  vec2 SceneWindowPos = vec2(0.0f);
 
 private:
   const char *layoutFileName = "layout.ini";
