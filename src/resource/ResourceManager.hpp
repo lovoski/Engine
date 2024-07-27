@@ -12,7 +12,7 @@ public:
   tResourceManager();
   tResourceManager(tResourceManager &) = delete;
   const tResourceManager &operator=(tResourceManager &) = delete;
-  ~tResourceManager() {}
+  ~tResourceManager();
 
   static tResourceManager &Ref() {
     static tResourceManager reference;

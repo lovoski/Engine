@@ -8,21 +8,22 @@ tResourceManager::tResourceManager() {
   // plane
   vector<Vertex> vertices;
   vector<unsigned int> indices;
-  vertices.push_back({{1.0, 0.0, 1.0}, {0.0, 1.0, 0.0}, {1.0, 1.0}});
-  vertices.push_back({{1.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {1.0, 0.0}});
-  vertices.push_back({{-1.0, 0.0, 1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0}});
-  vertices.push_back({{-1.0, 0.0, -1.0}, {0.0, 1.0, 0.0}, {0.0, 0.0}});
-  indices = {0, 2, 1, 1, 2, 3};
+  vertices.push_back({{0.5f, 0.0f, 0.5f}, {0.0, 1.0, 0.0}, {1.0f, 1.0f}});
+  vertices.push_back({{0.5f, 0.0f, -0.5f}, {0.0, 1.0, 0.0}, {1.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.0f, -0.5f}, {0.0, 1.0, 0.0}, {0.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.0f, 0.5f}, {0.0, 1.0, 0.0}, {0.0f, 1.0f}});
+  indices = {0, 1, 3, 1, 2, 3};
   planePrimitive = new Graphics::Mesh(vertices, indices);
   // sphere
   vertices.clear();
   indices.clear();
-  Geometry::Icosphere icosphere(2);
+  Geometry::Icosphere icosphere(3);
   auto gVertices = icosphere.GetVertices();
   auto gFaces = icosphere.GetFaces();
   for (auto &v : gVertices) {
     vec3 position = {v.x, v.y, v.z};
-    vertices.push_back({position, vec3(0.0f), vec2(0.0f)});
+    vertices.push_back(
+        {position / 2.0f, normalize(position - vec3(0.0f)), vec2(0.0f)});
   }
   for (auto &f : gFaces) {
     indices.push_back(f.v[0]);
@@ -33,6 +34,57 @@ tResourceManager::tResourceManager() {
   // cube
   vertices.clear();
   indices.clear();
+  vertices.push_back(
+      {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}});
+  vertices.push_back(
+      {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}});
+  vertices.push_back(
+      {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back(
+      {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back(
+      {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});
+  vertices.push_back(
+      {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}});
+  for (int i = 0; i < 36; ++i)
+    indices.push_back(i);
+  cubePrimitive = new Graphics::Mesh(vertices, indices);
+}
+
+tResourceManager::~tResourceManager() {
+  delete planePrimitive;
+  delete spherePrimitive;
+  delete cubePrimitive;
 }
 
 Shader *tResourceManager::GetShader(string vertShaderPath,
@@ -78,7 +130,8 @@ unsigned int tResourceManager::textureFromFile(string texturePath, bool gamma) {
 
     stbi_image_free(data);
   } else {
-    Console.Log("[error]: Texture failed to load at path: %s\n", texturePath.c_str());
+    Console.Log("[error]: Texture failed to load at path: %s\n",
+                texturePath.c_str());
     stbi_image_free(data);
   }
 
