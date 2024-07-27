@@ -7,6 +7,7 @@
 #include "ecs/components/MeshRenderer.hpp"
 #include "ecs/systems/render/FrameBuffer.hpp"
 #include "global.hpp"
+#include "utils/Math.hpp"
 
 class EditorWindows {
 public:
@@ -31,9 +32,46 @@ public:
   void AssetsWindow();
   void ComponentsWindow() {
     ImGui::Begin("Components");
+    if (ImGui::Button("Add Component", {-1, 40})) {
+      Console.Log("add component\n");
+    }
     if (selectedEntity != (ECS::EntityID)(-1)) {
+      string entityName =
+          "Active Entity : " + ECS::Manager.EntityFromID(selectedEntity)->name;
+      ImGui::SeparatorText(entityName.c_str());
       if (ECS::Manager.HasComponent<Transform>(selectedEntity)) {
-        // Console.Log("render transform component\n");
+        auto &transform = ECS::Manager.GetComponent<Transform>(selectedEntity);
+        if (ImGui::TreeNode("Transform")) {
+          ImGui::SeparatorText("Position");
+          ImGui::DragFloat(" :pos.X", &transform.Position.x, 0.001f, -MAX_FLOAT,
+                           MAX_FLOAT);
+          ImGui::DragFloat(" :pos.Y", &transform.Position.y, 0.001f, -MAX_FLOAT,
+                           MAX_FLOAT);
+          ImGui::DragFloat(" :pos.Z", &transform.Position.z, 0.001f, -MAX_FLOAT,
+                           MAX_FLOAT);
+
+          ImGui::SeparatorText("Scale");
+          ImGui::DragFloat(" :scale.X", &transform.Scale.x, 0.001f, -MAX_FLOAT,
+                           MAX_FLOAT);
+          ImGui::DragFloat(" :scale.Y", &transform.Scale.y, 0.001f, -MAX_FLOAT,
+                           MAX_FLOAT);
+          ImGui::DragFloat(" :scale.Z", &transform.Scale.z, 0.001f, -MAX_FLOAT,
+                           MAX_FLOAT);
+
+          auto &rot = transform.Rotation;
+          vec3 euler = glm::eulerAngles(rot);
+          ImGui::SeparatorText("Rotation");
+          bool updateRotation = false;
+          updateRotation |= ImGui::DragFloat(" :rot.X", &euler.x, 0.001f,
+                                             -MAX_FLOAT, MAX_FLOAT);
+          updateRotation |= ImGui::DragFloat(" :rot.Y", &euler.y, 0.001f,
+                                             -MAX_FLOAT, MAX_FLOAT);
+          updateRotation |= ImGui::DragFloat(" :rot.Z", &euler.z, 0.001f,
+                                             -MAX_FLOAT, MAX_FLOAT);
+          if (updateRotation)
+            rot = quat(euler);
+          ImGui::TreePop();
+        }
       }
       if (ECS::Manager.HasComponent<Camera>(selectedEntity)) {
         // Console.Log("render camera component\n");

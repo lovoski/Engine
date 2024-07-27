@@ -28,8 +28,9 @@ void EditorWindows::MainMenuBar() {}
 void EditorWindows::EntitiesWindow() {
   ImGui::Begin("Entities");
   if (ImGui::Button("Add Entity", ImVec2(-1, 40))) {
-    Console.Log("[info]: what is this???\n");
+    Console.Log("add entity\n");
   }
+  ImGui::SeparatorText("Scene");
   auto entities = ECS::Manager.GetActiveEntities();
   for (auto i = 0; i < entities.size(); ++i) {
     if (ImGui::Selectable(entities[i]->name.c_str(), selectedEntityInd == i)) {

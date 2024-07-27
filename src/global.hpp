@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <limits>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -50,3 +51,5 @@ using glm::vec4;
 using glm::cross;
 using glm::dot;
 using glm::normalize;
+
+#define MAX_FLOAT std::numeric_limits<float>::max()

@@ -20,9 +20,9 @@ public:
 
   mat4 GetModelMatrix() {
     mat4 model = mat4(1.0f);
+    model = glm::translate(model, Position);
     model = model * glm::mat4_cast(Rotation);
     model = glm::scale(model, Scale);
-    model = glm::translate(model, Position);
     return model;
   }
 };

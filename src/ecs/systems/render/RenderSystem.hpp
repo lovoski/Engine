@@ -37,7 +37,7 @@ public:
     defaultObject->AddComponent<Transform>();
     defaultObject->AddComponent<MeshRenderer>(
         Resource::ResourceManager.GetPrimitive(
-            Resource::PRIMITIVE_TYPE::SPHERE));
+            Resource::PRIMITIVE_TYPE::CUBE));
   }
 
   void Update() override {

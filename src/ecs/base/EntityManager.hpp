@@ -38,7 +38,7 @@ public:
     void Destroy() { MGR->DestroyEntity(ID); }
 
     EntityID ID;
-    string name = "New Entity";
+    string name = "New Entity ";
     Entity *parent = nullptr;
     vector<Entity *> children;
 
