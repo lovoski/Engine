@@ -22,7 +22,7 @@ public:
 
   void Clear();
 
-  void AddLog(const char *fmt, ...) IM_FMTARGS(2);
+  void Log(const char *fmt, ...) IM_FMTARGS(2);
 
   void Draw(const char *title, bool *p_open = NULL);
 };

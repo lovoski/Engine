@@ -38,24 +38,26 @@ public:
         if (Event.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
           transform.Position -= movementDistance * cameraUp;
 
-        Console.AddLog("camera pos x=%f, y=%f, z=%f\n", transform.Position.x, transform.Position.y, transform.Position.z);
-
+        bool inSceneWindow = EditorContext.InSceneWindow(
+            Event.MouseCurrentPosition.x, Event.MouseCurrentPosition.y);
         // change rotation of camera
-        if (Event.GetMouseButton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS &&
-            EditorContext.InSceneWindow(Event.MouseCurrentPosition.x,
-                                        Event.MouseCurrentPosition.y)) {
-          float offsetLength =
-              Event.MousePositionOffset.x * Event.MousePositionOffset.x +
-              Event.MousePositionOffset.y * Event.MousePositionOffset.y;
-          if (offsetLength > 0.5f) {
-            vec2 mouseOffset = mouseSensitivity * Event.MousePositionOffset;
-            mouseOffset.y *= -1;
-            float xAddAngle = glm::radians(mouseOffset.x);
-            float yAddAngle = glm::radians(mouseOffset.y);
-            quat xAddRot(cos(xAddAngle / 2), sin(xAddAngle / 2) * cameraUp);
-            quat yAddRot(cos(yAddAngle / 2), sin(yAddAngle / 2) * cameraRight);
-            transform.Rotation = xAddRot * yAddRot * transform.Rotation;
+        if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+            EditorContext.LoopCursorInSceneWindow()) {
+          vec2 mouseCurrentPos = Event.MouseCurrentPosition;
+          if (mouseFirstMove) {
+            mouseLastPos = mouseCurrentPos;
+            mouseFirstMove = false;
           }
+          vec2 mouseOffset =
+              mouseSensitivity * (mouseCurrentPos - mouseLastPos);
+          float xAddAngle = glm::radians(mouseOffset.x);
+          float yAddAngle = glm::radians(mouseOffset.y);
+          quat xAddRot(cos(xAddAngle / 2), sin(xAddAngle / 2) * cameraUp);
+          quat yAddRot(cos(yAddAngle / 2), sin(yAddAngle / 2) * cameraRight);
+          transform.Rotation = xAddRot * yAddRot * transform.Rotation;
+          mouseLastPos = mouseCurrentPos;
+        } else {
+          mouseFirstMove = true;
         }
       }
     }
@@ -63,4 +65,7 @@ public:
 
 private:
   ECS::EntityID activeCamera;
+
+  bool mouseFirstMove = true;
+  vec2 mouseLastPos = vec2(0.0f);
 };

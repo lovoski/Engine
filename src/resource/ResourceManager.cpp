@@ -78,7 +78,7 @@ unsigned int tResourceManager::textureFromFile(string texturePath, bool gamma) {
 
     stbi_image_free(data);
   } else {
-    Console.AddLog("[error]: Texture failed to load at path: %s\n", texturePath.c_str());
+    Console.Log("[error]: Texture failed to load at path: %s\n", texturePath.c_str());
     stbi_image_free(data);
   }
 
@@ -243,7 +243,7 @@ vector<Graphics::Mesh> tResourceManager::GetModel(string modelPath) {
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       !scene->mRootNode) // if is Not Zero
   {
-    Console.AddLog("[error]: Assimp error: %s\n", importer.GetErrorString());
+    Console.Log("[error]: Assimp error: %s\n", importer.GetErrorString());
     return meshes;
   }
   // process ASSIMP's root node recursively

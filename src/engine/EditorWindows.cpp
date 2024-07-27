@@ -28,7 +28,7 @@ void EditorWindows::MainMenuBar() {}
 void EditorWindows::EntitiesWindow() {
   ImGui::Begin("Entities");
   if (ImGui::Button("Add Entity", ImVec2(-1, 40))) {
-    Console.AddLog("[info]: what is this???\n");
+    Console.Log("[info]: what is this???\n");
   }
   auto entities = ECS::Manager.GetActiveEntities();
   for (auto i = 0; i < entities.size(); ++i) {

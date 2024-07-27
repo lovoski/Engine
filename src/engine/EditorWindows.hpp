@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Engine.hpp"
+#include "Events.hpp"
 #include "ecs/components/Camera.hpp"
 #include "ecs/components/Material.hpp"
 #include "ecs/components/MeshRenderer.hpp"
 #include "ecs/systems/render/FrameBuffer.hpp"
 #include "global.hpp"
-
 
 class EditorWindows {
 public:
@@ -33,10 +33,10 @@ public:
     ImGui::Begin("Components");
     if (selectedEntity != (ECS::EntityID)(-1)) {
       if (ECS::Manager.HasComponent<Transform>(selectedEntity)) {
-        // Console.AddLog("render transform component\n");
+        // Console.Log("render transform component\n");
       }
       if (ECS::Manager.HasComponent<Camera>(selectedEntity)) {
-        // Console.AddLog("render camera component\n");
+        // Console.Log("render camera component\n");
       }
     }
     ImGui::End();
@@ -52,7 +52,7 @@ public:
       camera = activeCamera;
       return true;
     } else {
-      Console.AddLog("[Info]: There's no active camera\n");
+      Console.Log("[Info]: There's no active camera\n");
       camera = (ECS::EntityID)(-1);
       return false;
     }
@@ -66,7 +66,7 @@ public:
       activeCamera = camera;
       return true;
     } else {
-      Console.AddLog("[error]: Not a valid camera entity: %ld\n", camera);
+      Console.Log("[error]: Not a valid camera entity: %ld\n", camera);
       // there could exist an active camera,
       // don't reset the hasActiveCamera flag
       return false;
@@ -76,6 +76,25 @@ public:
   bool InSceneWindow(float x, float y) {
     return x >= SceneWindowPos.x && x <= SceneWindowPos.x + SceneWindowSize.x &&
            y >= SceneWindowPos.y && y <= SceneWindowPos.y + SceneWindowSize.y;
+  }
+
+  bool LoopCursorInSceneWindow() {
+    vec2 cursorPos = Event.MouseCurrentPosition;
+    if (!InSceneWindow(cursorPos.x, cursorPos.y)) {
+      cursorPos -= SceneWindowPos;
+      while (cursorPos.x < 0.0f)
+        cursorPos.x += SceneWindowSize.x;
+      while (cursorPos.x > SceneWindowSize.x)
+        cursorPos.x -= SceneWindowSize.x;
+      while (cursorPos.y < 0.0f)
+        cursorPos.y += SceneWindowSize.y;
+      while (cursorPos.y > SceneWindowSize.y)
+        cursorPos.y -= SceneWindowSize.y;
+      cursorPos += SceneWindowPos;
+      glfwSetCursorPos(&Core.Window(), cursorPos.x, cursorPos.y);
+      return false;
+    } else
+      return true;
   }
 
   // export imgui io to receive events

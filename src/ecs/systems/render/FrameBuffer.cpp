@@ -22,7 +22,7 @@ FrameBuffer::FrameBuffer(float width, float height) {
                             GL_RENDERBUFFER, RBO);
 
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    Console.AddLog("[error]: Framebuffer is not complete\n");
+    Console.Log("[error]: Framebuffer is not complete\n");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
   glBindRenderbuffer(GL_RENDERBUFFER, 0);

@@ -96,7 +96,7 @@ public:
     assert(entity < MAX_ENTITY_COUNT &&
            "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
     if (entities.count(entity) == 0) {
-      Console.AddLog("[error]: No entity match this id: %ld\n", entity);
+      Console.Log("[error]: No entity match this id: %ld\n", entity);
       return nullEntity;
     } else {
       return &(*(entities.at(entity)));

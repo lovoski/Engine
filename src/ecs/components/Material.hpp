@@ -18,7 +18,7 @@ public:
   }
   Resource::Shader *GetShader() {
     if (this->shader == nullptr) {
-      Console.AddLog("[error]: material has no valid shader\n");
+      Console.Log("[error]: material has no valid shader\n");
     }
     return this->shader;
   }

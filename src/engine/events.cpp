@@ -6,12 +6,6 @@ void WindowCloseCallback(GLFWwindow *window) { Core.Quit(); }
 
 void MouseMoveCallback(GLFWwindow *window, double xpos, double ypos) {
   vec2 currentPos = vec2(static_cast<float>(xpos), static_cast<float>(ypos));
-  if (Event.mouseFirstMove) {
-    Event.mouseLastPosition = currentPos;
-    Event.mouseFirstMove = false;
-  }
-  Event.MousePositionOffset = currentPos - Event.mouseLastPosition;
-  Event.mouseLastPosition = currentPos;
 
   EditorContext.io->AddMousePosEvent(currentPos.x, currentPos.y);
 }

@@ -26,6 +26,6 @@ public:
   float fovY = 45.0f;
   float zNear = 0.1f, zFar = 100.0f;
 
-  float movementSpeed = 2.5f, mouseSensitivity = 0.01f;
+  float movementSpeed = 2.5f, mouseSensitivity = 0.1f;
   MOVEMENT_STYLE moveScheme = MOVEMENT_STYLE::FPS_CAMERA;
 };
