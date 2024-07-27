@@ -17,12 +17,10 @@ public:
       float detltaTime = Timer.DeltaTime();
       float movementDistance = cameraComp.movementSpeed * detltaTime;
       float mouseSensitivity = cameraComp.mouseSensitivity;
-
-      vec3 cameraForward = transform.Rotation * Transform::WorldForward;
-      vec3 cameraUp = transform.Rotation * Transform::WorldUp;
-      vec3 cameraRight = transform.Rotation * Transform::WorldRight;
-
       if (cameraComp.moveScheme == Camera::MOVEMENT_STYLE::FPS_CAMERA) {
+        vec3 cameraForward = transform.Rotation() * Transform::WorldForward;
+        vec3 cameraUp = transform.Rotation() * Transform::WorldUp;
+        vec3 cameraRight = transform.Rotation() * Transform::WorldRight;
         // update the camera with predefined fps camera way
         bool inSceneWindow = EditorContext.InSceneWindow(
             Event.MouseCurrentPosition.x, Event.MouseCurrentPosition.y);
@@ -58,11 +56,8 @@ public:
           }
           vec2 mouseOffset =
               mouseSensitivity * (mouseCurrentPos - mouseLastPos);
-          float xAddAngle = glm::radians(mouseOffset.x);
-          float yAddAngle = glm::radians(mouseOffset.y);
-          quat xAddRot(cos(xAddAngle / 2), sin(xAddAngle / 2) * cameraUp);
-          quat yAddRot(cos(yAddAngle / 2), sin(yAddAngle / 2) * cameraRight);
-          transform.Rotation = xAddRot * yAddRot * transform.Rotation;
+          transform.EulerAngles.y += glm::radians(mouseOffset.x);
+          transform.EulerAngles.x += glm::radians(mouseOffset.y);
           mouseLastPos = mouseCurrentPos;
         } else {
           mouseFirstMove = true;
@@ -76,4 +71,6 @@ private:
 
   bool mouseFirstMove = true;
   vec2 mouseLastPos = vec2(0.0f);
+
+  float fpsCameraYaw, fpsCameraPitch;
 };

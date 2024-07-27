@@ -58,8 +58,7 @@ public:
           ImGui::DragFloat(" :scale.Z", &transform.Scale.z, 0.001f, -MAX_FLOAT,
                            MAX_FLOAT);
 
-          auto &rot = transform.Rotation;
-          vec3 euler = glm::eulerAngles(rot);
+          auto &euler = transform.EulerAngles;
           ImGui::SeparatorText("Rotation");
           bool updateRotation = false;
           updateRotation |= ImGui::DragFloat(" :rot.X", &euler.x, 0.001f,
@@ -68,8 +67,6 @@ public:
                                              -MAX_FLOAT, MAX_FLOAT);
           updateRotation |= ImGui::DragFloat(" :rot.Z", &euler.z, 0.001f,
                                              -MAX_FLOAT, MAX_FLOAT);
-          if (updateRotation)
-            rot = quat(euler);
           ImGui::TreePop();
         }
       }

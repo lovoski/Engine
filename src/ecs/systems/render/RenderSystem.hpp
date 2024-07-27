@@ -29,7 +29,7 @@ public:
     // create the default test scene
     ECS::Entity *cameraEntity = ECS::Manager.AddNewEntity();
     cameraEntity->name = "Main Camera";
-    cameraEntity->AddComponent<Transform>(vec3(0.0f, 0.0f, 3.0f), vec3(1.0f), quat(0.0f, vec3(0.0f, 1.0f, 0.0f)));
+    cameraEntity->AddComponent<Transform>(vec3(0.0f, 0.0f, 3.0f), vec3(1.0f), vec3(0.0f, glm::radians(180.0f), 0.0f));
     cameraEntity->AddComponent<Camera>();
     EditorContext.SetActiveCamera(cameraEntity->ID);
 

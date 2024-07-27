@@ -14,8 +14,8 @@ public:
   };
 
   mat4 GetViewMatrix(Transform &transform) {
-    vec3 forward = transform.Rotation * Transform::WorldForward;
-    vec3 up = transform.Rotation * Transform::WorldUp;
+    vec3 forward = transform.Rotation() * Transform::WorldForward;
+    vec3 up = transform.Rotation() * Transform::WorldUp;
     return glm::lookAt(transform.Position, transform.Position + forward, up);
   }
 
