@@ -19,7 +19,7 @@ public:
     sceneBuffer =
         new Graphics::FrameBuffer(Core.VideoWdith(), Core.VideoHeight());
     // initialize the gui system
-    editorWindows.Initialize();
+    EditorContext.Initialize();
     // initialize the defualt material
     defaultMaterial.SetShader();
 
@@ -31,7 +31,7 @@ public:
     cameraEntity->name = "Main Camera";
     cameraEntity->AddComponent<Transform>(vec3(0.0f, 0.0f, 3.0f));
     cameraEntity->AddComponent<Camera>();
-    editorWindows.SetActiveCamera(cameraEntity->ID);
+    EditorContext.SetActiveCamera(cameraEntity->ID);
 
     auto defaultObject = ECS::Manager.AddNewEntity();
     defaultObject->AddComponent<Transform>();
@@ -41,12 +41,12 @@ public:
   }
 
   void Update() override {
-    vec2 sceneAvailableSize = editorWindows.RenderStart(sceneBuffer);
+    vec2 sceneAvailableSize = EditorContext.RenderStart(sceneBuffer);
     // adjust the size of framebuffer accordingly
     sceneBuffer->Bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     ECS::EntityID activeCamera;
-    if (editorWindows.GetActiveCamera(activeCamera)) {
+    if (EditorContext.GetActiveCamera(activeCamera)) {
       // draw all the entities if there's an active camera
       Camera cameraComp = ECS::Manager.GetComponent<Camera>(activeCamera);
       Transform cameraTrans =
@@ -66,7 +66,7 @@ public:
     }
     sceneBuffer->Unbind();
 
-    editorWindows.RenderComplete();
+    EditorContext.RenderComplete();
     glfwSwapBuffers(&Core.Window());
   }
 
@@ -74,6 +74,5 @@ public:
 
 private:
   Graphics::FrameBuffer *sceneBuffer;
-  EditorWindows editorWindows;
   BaseMaterial defaultMaterial;
 };

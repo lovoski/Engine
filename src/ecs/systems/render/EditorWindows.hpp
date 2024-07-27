@@ -12,6 +12,14 @@ public:
   EditorWindows() {}
   ~EditorWindows() {}
 
+  EditorWindows(const EditorWindows&) = delete;
+  const EditorWindows &operator=(const EditorWindows&) = delete;
+
+  static EditorWindows& Ref() {
+    static EditorWindows reference;
+    return reference;
+  }
+
   void Initialize();
 
   void Destroy();
@@ -73,3 +81,5 @@ private:
   std::size_t selectedEntityInd = -1;
   ECS::EntityID selectedEntity = -1;
 };
+
+static EditorWindows &EditorContext = EditorWindows::Ref();
