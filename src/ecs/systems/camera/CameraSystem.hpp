@@ -14,6 +14,14 @@ public:
       // update the position of this active camera
       auto &cameraComp = ECS::Manager.GetComponent<Camera>(activeCamera);
       auto &transform = ECS::Manager.GetComponent<Transform>(activeCamera);
+      float detltaTime = Timer.DeltaTime();
+      float movementDistance = cameraComp.movementSpeed * detltaTime;
+      float mouseSensitivity = cameraComp.mouseSensitivity;
+
+      vec3 cameraForward = transform.Rotation * Transform::WorldForward;
+      vec3 cameraUp = transform.Rotation * Transform::WorldUp;
+      vec3 cameraRight = transform.Rotation * Transform::WorldRight;
+
       if (cameraComp.moveScheme == Camera::MOVEMENT_STYLE::FPS_CAMERA) {
         // update the camera with predefined fps camera way
         bool inSceneWindow = EditorContext.InSceneWindow(
@@ -26,14 +34,6 @@ public:
               cameraComp.fovY += glm::radians(scrollOffset.y);
             }
           }
-          float detltaTime = Timer.DeltaTime();
-          float movementDistance = cameraComp.movementSpeed * detltaTime;
-          float mouseSensitivity = cameraComp.mouseSensitivity;
-
-          vec3 cameraForward = transform.Rotation * Transform::WorldForward;
-          vec3 cameraUp = transform.Rotation * Transform::WorldUp;
-          vec3 cameraRight = transform.Rotation * Transform::WorldRight;
-
           // change position of camera
           if (Event.GetKey(GLFW_KEY_W) == GLFW_PRESS)
             transform.Position += movementDistance * cameraForward;
@@ -47,26 +47,25 @@ public:
             transform.Position += movementDistance * cameraUp;
           if (Event.GetKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
             transform.Position -= movementDistance * cameraUp;
-
-          // change rotation of camera
-          if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-              EditorContext.LoopCursorInSceneWindow()) {
-            vec2 mouseCurrentPos = Event.MouseCurrentPosition;
-            if (mouseFirstMove) {
-              mouseLastPos = mouseCurrentPos;
-              mouseFirstMove = false;
-            }
-            vec2 mouseOffset =
-                mouseSensitivity * (mouseCurrentPos - mouseLastPos);
-            float xAddAngle = glm::radians(mouseOffset.x);
-            float yAddAngle = glm::radians(mouseOffset.y);
-            quat xAddRot(cos(xAddAngle / 2), sin(xAddAngle / 2) * cameraUp);
-            quat yAddRot(cos(yAddAngle / 2), sin(yAddAngle / 2) * cameraRight);
-            transform.Rotation = xAddRot * yAddRot * transform.Rotation;
+        }
+        // change rotation of camera
+        if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+            EditorContext.LoopCursorInSceneWindow()) {
+          vec2 mouseCurrentPos = Event.MouseCurrentPosition;
+          if (mouseFirstMove) {
             mouseLastPos = mouseCurrentPos;
-          } else {
-            mouseFirstMove = true;
+            mouseFirstMove = false;
           }
+          vec2 mouseOffset =
+              mouseSensitivity * (mouseCurrentPos - mouseLastPos);
+          float xAddAngle = glm::radians(mouseOffset.x);
+          float yAddAngle = glm::radians(mouseOffset.y);
+          quat xAddRot(cos(xAddAngle / 2), sin(xAddAngle / 2) * cameraUp);
+          quat yAddRot(cos(yAddAngle / 2), sin(yAddAngle / 2) * cameraRight);
+          transform.Rotation = xAddRot * yAddRot * transform.Rotation;
+          mouseLastPos = mouseCurrentPos;
+        } else {
+          mouseFirstMove = true;
         }
       }
     }
