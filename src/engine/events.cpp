@@ -11,16 +11,17 @@ void MouseMoveCallback(GLFWwindow *window, double xpos, double ypos) {
 }
 
 void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
-  vec2 currentOffset = vec2(static_cast<float>(xoffset), static_cast<float>(yoffset));
-  Event.MouseScrollOffset = currentOffset;
-
-  EditorContext.io->AddMouseWheelEvent(currentOffset.x, currentOffset.y);
+  Event._currentScrollOffset = vec2(static_cast<float>(xoffset), static_cast<float>(yoffset));
+  // Console.Log("push to actions, scorll offset y=%f\n", yoffset);
+  Event.actions.push_back({Action::ActionType::MOUSE_SCROLL, &Event._currentScrollOffset});
+  EditorContext.io->AddMouseWheelEvent(Event._currentScrollOffset.x, Event._currentScrollOffset.y);
 }
 
 Events::Events() {}
 Events::~Events() {}
 
 void Events::Poll() {
+  actions.clear();
   glfwPollEvents();
 
   double xpos, ypos;

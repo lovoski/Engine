@@ -2,6 +2,21 @@
 
 #include "global.hpp"
 
+class Action {
+public:
+  enum ActionType {
+    MOUSE_SCROLL
+  };
+
+  Action(ActionType type, void *data) {
+    Type = type;
+    Data = data;
+  }
+
+  ActionType Type;
+  void *Data = nullptr;
+};
+
 class Events {
 public:
   Events(const Events &) = delete;
@@ -20,7 +35,11 @@ public:
   int GetMouseButton(int button);
 
   vec2 MouseCurrentPosition = vec2(0.0f);
-  vec2 MouseScrollOffset = vec2(0.0f);
+
+  vector<Action> actions;
+
+  // don't call these variables
+  vec2 _currentScrollOffset = vec2(0.0f);
 
 private:
 

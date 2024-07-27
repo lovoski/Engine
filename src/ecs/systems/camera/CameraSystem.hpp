@@ -40,6 +40,15 @@ public:
 
         bool inSceneWindow = EditorContext.InSceneWindow(
             Event.MouseCurrentPosition.x, Event.MouseCurrentPosition.y);
+        if (inSceneWindow) {
+          // check action queue for mouse scroll event
+          for (auto action : Event.actions) {
+            if (action.Type == Action::ActionType::MOUSE_SCROLL) {
+              vec2 scrollOffset = (*(vec2*)action.Data);
+              cameraComp.fovY += glm::radians(scrollOffset.y);
+            }
+          }
+        }
         // change rotation of camera
         if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
             EditorContext.LoopCursorInSceneWindow()) {

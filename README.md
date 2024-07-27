@@ -13,7 +13,7 @@ An experimental ECS game engine.
 
 ### Detailed goals
 
-- [ ] Create the camera system to manage the movement of camera
+- [x] Create the camera system to manage the movement of camera
 - [ ] Polish the component gui section, create editor for transform and camera component
 - [ ] Create a basic material editor, write some actual shader code
 - [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
