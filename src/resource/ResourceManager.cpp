@@ -322,6 +322,7 @@ ECS::Entity *ResourceManager::GetModelEntity(string path) {
       childObject->AddComponent<Transform>();
       childObject->AddComponent<MeshRenderer>(mesh);
       childObject->AddComponent<BaseMaterial>();
+      childObject->parent = parentObject;
       parentObject->children.push_back(childObject);
     }
     return parentObject;

@@ -19,7 +19,10 @@ public:
   class Entity {
   public:
     Entity(EntityID id, EntityManager *manager) : ID(id), MGR(manager) {}
-    ~Entity() {}
+    ~Entity() {
+      parent = nullptr;
+      children.clear();
+    }
 
     template <typename T, typename... Args> void AddComponent(Args &&...args) {
       MGR->AddComponent<T>(ID, std::forward<Args>(args)...);

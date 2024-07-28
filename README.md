@@ -16,7 +16,9 @@ An experimental ECS game engine.
 - [x] Create the camera system to manage the movement of camera
 - [x] Polish the component gui section, create editor for transform and camera component
 - [x] Create a basic material editor, write some actual shader code
+- [ ] Create hierarchy system for the scene to update all the local transforms
 - [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
+- [ ] More realistic render effects (PBR, IBL, BRDF ... )
 - [ ] Create the animation system, write code to do the skinning and binding
 - [ ] Do the serilization to store the scene in some files
 
@@ -27,6 +29,64 @@ ECS (Entity Component System) atchitecture is a very important thinking in devel
 Take rendering as an example, each renderable mesh object shold have a `MeshRenderer` component storing the actual mesh data. The texture and other parameters are defined in the component `Material`. When we want to render the entity. We would call the `Update` function defined in `RenderSystem`, use the `EntityManager` singleton to retrieve all the components related to this entity.
 
 The advantage of ECS architecture is that, the component can be stored in a more compact (memory efficient) way. Special mechanics can also be designed to update components with specific types easily.
+
+## The main loop
+
+The main loop can be found at `main`:
+
+```cpp
+Core.Initialize();
+Timer.Initialize();
+Event.Initialize();
+
+while (Core.Run()) {
+  Timer.Tick();
+  Event.Poll();
+  Core.Update();
+}
+```
+
+After initialization to the `Core`, `Timer` and `Event` singleton instances, the main loop calls `Timer.Tick()` to capture the `DeltaTime` needed by some systems, `Event.Poll()` to poll all glfw events and custom actions, clear the queue from last loop and push new actions, `Core.Update()` to do the main update.
+
+The detail about `Core.Update()` can be found at `engine/Engine`:
+
+```cpp
+void Engine::Initialize() {
+  // register all the systems
+  ECS::EManager.RegisterSystem<BaseLightSystem>();
+  ECS::EManager.RegisterSystem<RenderSystem>();
+  ECS::EManager.RegisterSystem<CameraSystem>();
+  // start all the systems
+  ECS::EManager.Start();
+}
+
+void Engine::Update() {
+  ECS::EManager.Update();
+}
+
+void Engine::Quit() {
+  glfwSetWindowShouldClose(window, GLFW_TRUE);
+  run = false;
+}
+```
+
+So the initialization register all the known systems and create instances for each of them. The `Update` function calls another update function defined in the `EntityManager` to perform the update of all the registered systems:
+
+```cpp
+class EntityManager {
+public:
+  ...
+  // Update all the registered systems
+  void Update() {
+    for (auto &system : registeredSystems) {
+      system.second->Update();
+    }
+  }
+  ...
+};
+```
+
+Currently, the order of system registration can determine the system's order in the member variable `registeredSystems`, so be careful with the order of registration in case some system depends on the result of another system.
 
 ## The rendering
 
@@ -96,6 +156,38 @@ To support multiple kinds of materials and render pipeline is still an issue. Do
 
 ## The gui layout
 
+The gui system is based on [imgui](https://github.com/ocornut/imgui) docking branch. The layouts are defined in the file `engine/EditorWindows`. All the layouts are rendered in the `RenderSystem` by the singleton class `EditorContext` as follows:
+
+```cpp
+class RenderSystem : public ECS::BaseSystem {
+public:
+  RenderSystem() {
+    AddComponentSignature<Transform>();
+    AddComponentSignature<MeshRenderer>();
+  }
+  ~RenderSystem() {}
+  ...
+  void Update() override {
+    EditorContext.RenderStart(sceneBuffer);
+    sceneBuffer->Bind();
+    // ...
+    // the main rendering
+    // ...
+    sceneBuffer->Unbind();
+
+    EditorContext.RenderComplete();
+    glfwSwapBuffers(&Core.Window());
+  }
+  ...
+};
+```
+
+The member variable `sceneBuffer` is a opengl framebuffer object on which all the rendering of the scene occours. After the scene is rendered into a texture. The texture will be displayed with a `ImGui::Image` at the position of the `scene` window.
+
 ## The animation
 
+...
+
 ## The physics
+
+...

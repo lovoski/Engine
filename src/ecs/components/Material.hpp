@@ -13,9 +13,9 @@ public:
   ~BaseMaterial() {}
 
   void SetShader(string vertShaderPath = REPO_SOURCE_DIR
-                 "/src/shaders/default/pbr.vert",
+                 "/src/shaders/default/base.vert",
                  string fragShaderPath = REPO_SOURCE_DIR
-                 "/src/shaders/default/pbr.frag") {
+                 "/src/shaders/default/base.frag") {
     shader = Resource::RManager.GetShader(vertShaderPath, fragShaderPath);
     VertShader = vertShaderPath;
     FragShader = fragShaderPath;
@@ -33,10 +33,8 @@ public:
 
   void ActivateTextures() {
     // bind appropriate textures
-    unsigned int diffuseNr = 0;
-    unsigned int specularNr = 0;
-    unsigned int normalNr = 0;
-    unsigned int heightNr = 0;
+    unsigned int diffuseNr = 0, specularNr = 0, normalNr = 0, heightNr = 0;
+    unsigned int imageTexCounter = 0;
     for (unsigned int i = 0; i < textures.size(); i++) {
       glActiveTexture(GL_TEXTURE0 +
                       i); // active proper texture unit before binding
@@ -52,6 +50,8 @@ public:
         number = std::to_string(normalNr++); // transfer unsigned int to string
       else if (name == "texture_height")
         number = std::to_string(heightNr++); // transfer unsigned int to string
+      else if (name == "imageTex") // custom loaded image texture
+        number = std::to_string(imageTexCounter++);
 
       // now set the sampler to the correct texture unit
       glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), i);
