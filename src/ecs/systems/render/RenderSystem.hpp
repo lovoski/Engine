@@ -37,36 +37,17 @@ public:
     directionalLight->AddComponent<Transform>(vec3(3.0f, 3.0f, 3.0f));
     directionalLight->AddComponent<BaseLight>(BaseLight::LIGHT_TYPE::DIRECTIONAL_LIGHT);
 
-    auto cubeObject = ECS::EManager.AddNewEntity();
-    cubeObject->name = "cube primitive";
-    cubeObject->AddComponent<Transform>(vec3(3.0f, 0.0f, 0.0f));
-    cubeObject->AddComponent<MeshRenderer>(
-        Resource::RManager.GetPrimitive(
-            Resource::PRIMITIVE_TYPE::CUBE));
-    cubeObject->AddComponent<BaseMaterial>();
+    auto cubeObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::CUBE);
+    cubeObject->GetComponent<Transform>().Position = vec3(3.0f, 0.0f, 0.0f);
 
-    auto sphereObject = ECS::EManager.AddNewEntity();
-    sphereObject->name = "sphere primitive";
-    sphereObject->AddComponent<Transform>(vec3(-3.0f, 0.0f, 0.0f));
-    sphereObject->AddComponent<MeshRenderer>(
-        Resource::RManager.GetPrimitive(
-            Resource::PRIMITIVE_TYPE::SPHERE));
-    sphereObject->AddComponent<BaseMaterial>();
+    auto sphereObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::SPHERE);
+    sphereObject->GetComponent<Transform>().Position = vec3(-3.0f, 0.0f, 0.0f);
 
-    auto planeObject = ECS::EManager.AddNewEntity();
-    planeObject->name = "plane primitive";
-    planeObject->AddComponent<Transform>(vec3(0.0f, -3.0f, 0.0f), vec3(10.0f, 1.0f, 5.0f));
-    planeObject->AddComponent<MeshRenderer>(
-        Resource::RManager.GetPrimitive(
-            Resource::PRIMITIVE_TYPE::PLANE));
-    planeObject->AddComponent<BaseMaterial>();
+    auto planeObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::PLANE);
+    planeObject->GetComponent<Transform>().Position = vec3(0.0f, -3.0f, 0.0f);
+    planeObject->GetComponent<Transform>().Scale = vec3(10.0f, 1.0f, 5.0f);
 
-    auto loadedMeshes = Resource::RManager.GetModel(REPO_SOURCE_DIR "/assets/learnopengl/objects/backpack/backpack.obj");
-    for (auto mesh : loadedMeshes) {
-      auto nObject = ECS::EManager.AddNewEntity();
-      nObject->AddComponent<Transform>(vec3(0.0f), vec3(0.5f));
-      nObject->AddComponent<MeshRenderer>(mesh);
-    }
+    auto modelEntity = Resource::RManager.GetModelEntity(REPO_SOURCE_DIR "/assets/learnopengl/objects/backpack/backpack.obj");
   }
 
   void Update() override {

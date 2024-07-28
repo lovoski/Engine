@@ -3,6 +3,7 @@
 #include "EngineConfig.h"
 #include "ResourceTypes.hpp"
 #include "Shader.hpp"
+#include "ecs/ecs.hpp"
 #include "ecs/systems/render/Mesh.hpp"
 
 namespace Resource {
@@ -21,9 +22,15 @@ public:
     return reference;
   }
 
+  // returns the plane mesh data of a primitive
   Mesh *GetPrimitive(PRIMITIVE_TYPE pType);
-
+  // returns the plane mesh data of a model
   vector<Mesh *> GetModel(string);
+
+  // create render ready primitive
+  ECS::Entity *GetModelEntity(string path);
+  // create render ready primitive
+  ECS::Entity *GetPrimitiveEntity(PRIMITIVE_TYPE pType);
 
   Shader *GetShader(string vertShaderPath, string fragShaderPath);
 

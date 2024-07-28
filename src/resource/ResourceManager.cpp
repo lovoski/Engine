@@ -1,5 +1,8 @@
 #include "ResourceManager.hpp"
+#include "ecs/components/Material.hpp"
+#include "ecs/components/MeshRenderer.hpp"
 #include "geometry/Mesh.hpp"
+
 
 namespace Resource {
 
@@ -14,6 +17,7 @@ ResourceManager::ResourceManager() {
   vertices.push_back({{-0.5f, 0.0f, 0.5f}, {0.0, 1.0, 0.0}, {0.0f, 1.0f}});
   indices = {0, 1, 3, 1, 2, 3};
   planePrimitive = new Graphics::Mesh(vertices, indices);
+  planePrimitive->name = "plane";
   // sphere
   vertices.clear();
   indices.clear();
@@ -31,6 +35,7 @@ ResourceManager::ResourceManager() {
     indices.push_back(f.v[2]);
   }
   spherePrimitive = new Graphics::Mesh(vertices, indices);
+  spherePrimitive->name = "sphere";
   // cube
   vertices.clear();
   indices.clear();
@@ -79,6 +84,7 @@ ResourceManager::ResourceManager() {
   for (int i = 0; i < 36; ++i)
     indices.push_back(i);
   cubePrimitive = new Graphics::Mesh(vertices, indices);
+  cubePrimitive->name = "cube";
 }
 
 ResourceManager::~ResourceManager() {
@@ -277,6 +283,7 @@ Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene) {
       loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 
   Mesh *loadedMesh = new Mesh(vertices, indices);
+  loadedMesh->name = string(mesh->mName.C_Str());
   meshLoaded.push_back(loadedMesh);
 
   return loadedMesh;
@@ -297,6 +304,47 @@ void ResourceManager::processNode(aiNode *node, const aiScene *scene,
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
     processNode(node->mChildren[i], scene, meshes);
   }
+}
+
+ECS::Entity *ResourceManager::GetModelEntity(string path) {
+  auto meshes = GetModel(path);
+  if (meshes.size() > 0) {
+    // flatten all meshes to a common parent
+    auto parentObject = ECS::EManager.AddNewEntity();
+    parentObject->name = path.substr(path.find_last_of("/\\") + 1);
+    // the parent transform only need a transform component
+    // the render system only renders the entities with MeshRenderer component
+    // in an list with no order (TODO: add order of rendering)
+    parentObject->AddComponent<Transform>();
+    for (auto mesh : meshes) {
+      auto childObject = ECS::EManager.AddNewEntity();
+      childObject->name = mesh->name;
+      childObject->AddComponent<Transform>();
+      childObject->AddComponent<MeshRenderer>(mesh);
+      childObject->AddComponent<BaseMaterial>();
+      parentObject->children.push_back(childObject);
+    }
+    return parentObject;
+  } else
+    return nullptr;
+}
+
+ECS::Entity *ResourceManager::GetPrimitiveEntity(PRIMITIVE_TYPE pType) {
+  auto primitiveObject = ECS::EManager.AddNewEntity();
+  primitiveObject->AddComponent<Transform>();
+  primitiveObject->AddComponent<BaseMaterial>();
+  if (pType == PRIMITIVE_TYPE::CUBE) {
+    primitiveObject->AddComponent<MeshRenderer>(cubePrimitive);
+    primitiveObject->name = "Cube";
+  } else if (pType == PRIMITIVE_TYPE::SPHERE) {
+    primitiveObject->AddComponent<MeshRenderer>(spherePrimitive);
+    primitiveObject->name = "Sphere";
+  } else if (pType == PRIMITIVE_TYPE::PLANE) {
+    primitiveObject->AddComponent<MeshRenderer>(planePrimitive);
+    primitiveObject->name = "Plane";
+  } else
+    return nullptr;
+  return primitiveObject;
 }
 
 vector<Mesh *> ResourceManager::GetModel(string modelPath) {
