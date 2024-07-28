@@ -89,6 +89,9 @@ public:
       } else if (light.Type == BaseLight::SPOT_LIGHT) {
       }
     }
+    if (dirLightCounter == 0) {
+      Console.Log("[error]: At least one directional light needed for the default shader\n");
+    }
   }
 
   float Albedo[3] = {1.0f, 1.0f, 1.0f};

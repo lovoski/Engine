@@ -97,6 +97,8 @@ Currently, the rendering is divided into the following sections:
 3. `ecs/systems/light/LightSystem`: Maintain the `activeBaseLights` array in `RenderSystem`
 4. `engine/EditorWindows`: Plots the GUI
 
+The declaration of shader variable and assets variable can be found at `ecs/systems/render/README`.
+
 ### 2024.07.28
 
 Here's a breif view of this engine at this stage.
