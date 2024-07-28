@@ -111,7 +111,27 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   // Console.Log("vertex shader: %s\nfragment shader: %s\n",
   //             material.VertShader.c_str(), material.FragShader.c_str());
   if (ImGui::TreeNode("Base Material")) {
+    ImGui::Separator();
     ImGui::ColorEdit3("Albedo", material.Albedo);
+
+    ImGui::Separator();
+    ImGui::SliderFloat("Ambient", &material.Ambient, 0.0f, 1.0f);
+
+    ImGui::TreePop();
+  }
+}
+
+inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
+  auto &light = ECS::EManager.GetComponent<BaseLight>(selectedEntity);
+  if (ImGui::TreeNode("Base Light")) {
+    const char *comboItems[] = {"Directional light", "Point light", "Spot light"};
+    static int baseLightGUIComboItemIndex = 0;
+    ImGui::Combo("Light Type", &baseLightGUIComboItemIndex, comboItems, 3);
+    if (baseLightGUIComboItemIndex == 0) {
+      ImGui::ColorEdit3("Light Color", light.LightColor);
+    } else if (baseLightGUIComboItemIndex == 1) {
+    } else if (baseLightGUIComboItemIndex == 2) {
+    }
     ImGui::TreePop();
   }
 }
@@ -133,6 +153,8 @@ void EditorWindows::ComponentsWindow() {
       DrawCameraGUI(selectedEntity);
     if (ECS::EManager.HasComponent<BaseMaterial>(selectedEntity))
       DrawBaseMaterialGUI(selectedEntity);
+    if (ECS::EManager.HasComponent<BaseLight>(selectedEntity))
+      DrawBaseLightGUI(selectedEntity);
     ImGui::EndChild();
   }
   ImGui::End();
@@ -157,7 +179,7 @@ void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ImGui::EndChild();
   ImGui::End();
 
-  ImGui::ShowDemoWindow();
+  // ImGui::ShowDemoWindow();
 
   EntitiesWindow();
   ConsoleWindow();

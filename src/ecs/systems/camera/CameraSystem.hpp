@@ -4,9 +4,13 @@
 #include "ecs/components/Camera.hpp"
 #include "ecs/ecs.hpp"
 
+// controls the movement of camera
 class CameraSystem : public ECS::BaseSystem {
 public:
-  CameraSystem() { AddComponentSignature<Camera>(); }
+  CameraSystem() {
+    AddComponentSignature<Transform>();
+    AddComponentSignature<Camera>();
+  }
   ~CameraSystem() {}
 
   void Update() {

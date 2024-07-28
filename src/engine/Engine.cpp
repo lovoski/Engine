@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 #include "ecs/systems/render/RenderSystem.hpp"
 #include "ecs/systems/camera/CameraSystem.hpp"
+#include "ecs/systems/light/LightSystem.hpp"
 
 // the actual implementation of stb image
 #define STB_IMAGE_IMPLEMENTATION
@@ -39,6 +40,7 @@ Engine::~Engine() {
 
 void Engine::Initialize() {
   // register all the systems
+  ECS::EManager.RegisterSystem<BaseLightSystem>();
   ECS::EManager.RegisterSystem<RenderSystem>();
   ECS::EManager.RegisterSystem<CameraSystem>();
   // start all the systems

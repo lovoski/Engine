@@ -203,6 +203,13 @@ public:
     registeredSystems.erase(systemType);
   }
 
+  template <typename T> T *GetSystemInstance() {
+    const SystemTypeID systemType = SystemType<T>();
+    if (registeredSystems.count(systemType) == 0)
+      throw std::runtime_error("System not registered");
+    return (T*)(registeredSystems[systemType].get());
+  }
+
 private:
   // create a component list that stores a specified type of components
   template <typename T> void AddComponentList() {

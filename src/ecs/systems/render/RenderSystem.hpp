@@ -4,6 +4,7 @@
 #include "ecs/components/Material.hpp"
 #include "ecs/components/MeshRenderer.hpp"
 #include "ecs/components/Transform.hpp"
+#include "ecs/components/Lights.hpp"
 #include "ecs/ecs.hpp"
 #include "basics.hpp"
 
@@ -30,6 +31,11 @@ public:
     cameraEntity->AddComponent<Transform>(vec3(0.0f, 0.0f, 6.0f), vec3(1.0f), vec3(0.0f, glm::radians(180.0f), 0.0f));
     cameraEntity->AddComponent<Camera>();
     EditorContext.SetActiveCamera(cameraEntity->ID);
+
+    auto directionalLight = ECS::EManager.AddNewEntity();
+    directionalLight->name = "directional light 0";
+    directionalLight->AddComponent<Transform>(vec3(3.0f, 3.0f, 3.0f));
+    directionalLight->AddComponent<BaseLight>(BaseLight::LIGHT_TYPE::DIRECTIONAL_LIGHT);
 
     auto cubeObject = ECS::EManager.AddNewEntity();
     cubeObject->name = "cube primitive";
@@ -84,7 +90,7 @@ public:
             ECS::EManager.HasComponent<BaseMaterial>(entity)
                 ? &ECS::EManager.GetComponent<BaseMaterial>(entity)
                 : &defaultMaterial;
-        renderer.Render(projMatrix, viewMatrix, transform, material);
+        renderer.Render(projMatrix, viewMatrix, transform, material, activeBaseLights);
       }
     }
     sceneBuffer->Unbind();
@@ -94,6 +100,10 @@ public:
   }
 
   void Destroy() override { delete sceneBuffer; }
+
+  // array storing all the information of active lights in the scene
+  // this array is maintained by the light system
+  vector<BaseLight> activeBaseLights;
 
 private:
   Graphics::FrameBuffer *sceneBuffer;

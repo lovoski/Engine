@@ -15,7 +15,7 @@ An experimental ECS game engine.
 
 - [x] Create the camera system to manage the movement of camera
 - [x] Polish the component gui section, create editor for transform and camera component
-- [ ] Create a basic material editor, write some actual shader code
+- [x] Create a basic material editor, write some actual shader code
 - [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
 - [ ] Create the animation system, write code to do the skinning and binding
 - [ ] Do the serilization to store the scene in some files
@@ -29,6 +29,70 @@ Take rendering as an example, each renderable mesh object shold have a `MeshRend
 The advantage of ECS architecture is that, the component can be stored in a more compact (memory efficient) way. Special mechanics can also be designed to update components with specific types easily.
 
 ## The rendering
+
+Currently, the rendering is divided into the following sections:
+
+1. `ecs/systems/camera/CameraSystem`: Manipulates the movement of camera
+2. `ecs/systems/render/RenderSystem`: Render the renderable objects (with `MeshRenderer` component)
+3. `ecs/systems/light/LightSystem`: Maintain the `activeBaseLights` array in `RenderSystem`
+4. `engine/EditorWindows`: Plots the GUI
+
+### 2024.07.28
+
+Here's a breif view of this engine at this stage.
+
+<center>
+<img src="assets/records/20240728.png" style="width:50%; height:auto;">
+</center>
+
+The logic behind the system is that, the components stores the data and the system update related components in some `Update` function.
+
+Take `CameraSystem` as an example. This system defines how would the camera respond to user input, of course this system should only have effect on the entities possessing the `Camera` component and a `Transform` component. So we need to do the registration at the initialization of this system:
+
+```cpp
+class CameraSystem : public ECS::BaseSystem {
+public:
+  CameraSystem() {
+    AddComponentSignature<Transform>();
+    AddComponentSignature<Camera>();
+  }
+
+  void Update() {...}
+}
+```
+
+After calling the function `AddComponentSignature` defined in `CameraSystem`'s base class `ECS::BaseSystem`, we can inform the EntityManager that the `CameraSystem` should only update the states of some specific camera entities.
+
+To respond the user input, we kept record of a `activeCamera` in the editor and process keybord and mouse events accordingly.
+
+When it comes to the rendering, we has `RenderSystem` maintaining an array of entities with `MeshRenderer` component in which we keep a pointer to the actual Mesh data structure. All the meshes, textures and shaders are maintained by the `resource/ResourceManager`. We can have the ResourceManager load and store some assets by calling `GetXXX` function. After the function call the ResourceManager would load the asset if it has not been loaded before, and returns a pointer to the asset data.
+
+The `MeshRenderer` component take the `MVP matrix`, `activeLights` and a `BaseMaterial` instance as its paramter for the `Render` function. The `MVP matrix` can be computed from the `activeCamera` maintained by `EditorWindows`, while the `activeLights` is an array inside the `RenderSystem` maintained by `LightSystem`. The `BaseMaterial` should be a component of the renderable entity, however, if no material is found to the renderable entity, a default material will be assigned.
+
+The `BaseMaterial` is a component maintaining the neccessary variables and textures needed for the rendering. It kept a pointer to an active shader loaded by the ResourceManager, and has other neccessary variables like `albedo`, `smoothness` as its public member variable.
+
+The render pipeline is very simple and straight forward:
+
+```cpp
+class MeshRenderer : public ECS::BaseComponent {
+public:
+  ...
+  void Render(mat4 projMat, mat4 viewMat, Transform &transform, BaseMaterial *material, vector<BaseLight> &lights) {
+    Resource::Shader *shader = material->GetShader();
+    shader->Use();
+    shader->SetMat4("projection", projMat);
+    shader->SetMat4("view", viewMat);
+    shader->SetMat4("model", transform.GetModelMatrix());
+    material->SetFixedVariables();
+    material->SetBaseLights(lights);
+    material->ActivateTextures();
+    meshData->Draw(*shader);
+  }
+  ...
+};
+```
+
+To support multiple kinds of materials and render pipeline is still an issue. Doing that would require writing a new `MeshRenderer-ish` component and a new `BaseMaterial-ish` component.
 
 ## The gui layout
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Lights.hpp"
+#include "Transform.hpp"
 #include "ecs/ecs.hpp"
 #include "resource/ResourceManager.hpp"
 #include "resource/ResourceTypes.hpp"
@@ -31,10 +33,10 @@ public:
 
   void ActivateTextures() {
     // bind appropriate textures
-    unsigned int diffuseNr = 1;
-    unsigned int specularNr = 1;
-    unsigned int normalNr = 1;
-    unsigned int heightNr = 1;
+    unsigned int diffuseNr = 0;
+    unsigned int specularNr = 0;
+    unsigned int normalNr = 0;
+    unsigned int heightNr = 0;
     for (unsigned int i = 0; i < textures.size(); i++) {
       glActiveTexture(GL_TEXTURE0 +
                       i); // active proper texture unit before binding
@@ -58,14 +60,43 @@ public:
     }
   }
 
-  void SetVariables() {
+  void SetFixedVariables() {
     shader->SetVec3("Albedo", vec3(Albedo[0], Albedo[1], Albedo[2]));
+    shader->SetFloat("Ambient", Ambient);
+  }
+
+  void SetBaseLights(vector<BaseLight> &lights) {
+    unsigned int dirLightCounter = 0;
+    unsigned int pointLightCounter = 0;
+    unsigned int spotLightCounter = 0;
+    // set the properties of different lights
+    for (auto &light : lights) {
+      if (light.Type == BaseLight::DIRECTIONAL_LIGHT) {
+        string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
+        string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
+        shader->SetVec3(lightDirName, light.LightDir);
+        shader->SetVec3(lightColorName, vec3(light.LightColor[0], light.LightColor[1], light.LightColor[2]));
+        dirLightCounter++;
+      } else if (light.Type == BaseLight::POINT_LIGHT) {
+        string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
+        string lightColorName =
+            "pLightColor" + std::to_string(pointLightCounter);
+        shader->SetVec3(
+            lightPosName,
+            ECS::EManager.GetComponent<Transform>(light.GetID()).Position);
+        shader->SetVec3(lightColorName, vec3(light.LightColor[0], light.LightColor[1], light.LightColor[2]));
+        pointLightCounter++;
+      } else if (light.Type == BaseLight::SPOT_LIGHT) {
+      }
+    }
   }
 
   float Albedo[3] = {1.0f, 1.0f, 1.0f};
+  float Ambient = 0.1f;
+
+
   Resource::Shader *shader = nullptr;
   vector<Resource::Texture> textures;
 
   string VertShader, FragShader;
-
 };
