@@ -1,5 +1,6 @@
-#include "roboto.h"
 #include "EditorWindows.hpp"
+#include "roboto.h"
+
 
 void EditorWindows::Initialize() {
   IMGUI_CHECKVERSION();
@@ -9,7 +10,8 @@ void EditorWindows::Initialize() {
   io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  io->Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len, 20.0f);
+  io->Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len,
+                                  20.0f);
 
   io->IniFilename = layoutFileName;
 
@@ -38,14 +40,14 @@ void EditorWindows::EntitiesWindow() {
       selectedEntityInd = i;
       selectedEntity = entities[i]->ID;
     }
-    // TODO: refine this menu
     if (ImGui::BeginPopupContextItem((entities[i]->name + " popup").c_str(),
                                      ImGuiPopupFlags_MouseButtonRight)) {
-      if (ImGui::Button("remove")) {
-        Console.Log("remove entity\n");
+      ImGui::SeparatorText("Entity Options");
+      if (ImGui::MenuItem("Remove")) {
+        Console.Log("[info]: Destroy entity %s\n", entities[i]->name.c_str());
         ECS::EManager.DestroyEntity(entities[i]->ID);
         selectedEntity = (ECS::EntityID)(-1);
-        selectedEntityInd = -1;
+        selectedEntityInd = (unsigned int)(-1);
         ImGui::CloseCurrentPopup();
       }
       ImGui::EndPopup();
@@ -104,6 +106,16 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
   }
 }
 
+inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
+  auto &material = ECS::EManager.GetComponent<BaseMaterial>(selectedEntity);
+  // Console.Log("vertex shader: %s\nfragment shader: %s\n",
+  //             material.VertShader.c_str(), material.FragShader.c_str());
+  if (ImGui::TreeNode("Base Material")) {
+    ImGui::ColorEdit3("Albedo", material.Albedo);
+    ImGui::TreePop();
+  }
+}
+
 void EditorWindows::ComponentsWindow() {
   ImGui::Begin("Components");
   if (ImGui::Button("Add Component", {-1, 40})) {
@@ -119,6 +131,8 @@ void EditorWindows::ComponentsWindow() {
       DrawTransformGUI(selectedEntity);
     if (ECS::EManager.HasComponent<Camera>(selectedEntity))
       DrawCameraGUI(selectedEntity);
+    if (ECS::EManager.HasComponent<BaseMaterial>(selectedEntity))
+      DrawBaseMaterialGUI(selectedEntity);
     ImGui::EndChild();
   }
   ImGui::End();

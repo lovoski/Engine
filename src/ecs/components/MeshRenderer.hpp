@@ -18,6 +18,7 @@ public:
     shader->SetMat4("projection", projMat);
     shader->SetMat4("view", viewMat);
     shader->SetMat4("model", transform.GetModelMatrix());
+    material->SetVariables();
     material->ActivateTextures();
     meshData->Draw(*shader);
   }

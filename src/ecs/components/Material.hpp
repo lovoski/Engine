@@ -15,6 +15,8 @@ public:
                  string fragShaderPath = REPO_SOURCE_DIR
                  "/src/shaders/default/pbr.frag") {
     shader = Resource::RManager.GetShader(vertShaderPath, fragShaderPath);
+    VertShader = vertShaderPath;
+    FragShader = fragShaderPath;
   }
   Resource::Shader *GetShader() {
     if (this->shader == nullptr) {
@@ -56,8 +58,14 @@ public:
     }
   }
 
-protected:
-  vec3 albedo = vec3(1.0f);
+  void SetVariables() {
+    shader->SetVec3("Albedo", vec3(Albedo[0], Albedo[1], Albedo[2]));
+  }
+
+  float Albedo[3] = {1.0f, 1.0f, 1.0f};
   Resource::Shader *shader = nullptr;
   vector<Resource::Texture> textures;
+
+  string VertShader, FragShader;
+
 };
