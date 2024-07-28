@@ -32,7 +32,8 @@ public:
   T &Get(const EntityID entity) {
     auto comp = std::find_if(data.begin(), data.end(),
                              [&](const T &c) { return c.GetID() == entity; });
-    assert(comp != data.end() && "Trying to get non-existing component");
+    // if (comp == data.end())
+    //   throw std::runtime_error("Trying to get non-existing component");
     return *comp;
   }
 

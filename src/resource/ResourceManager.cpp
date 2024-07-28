@@ -3,7 +3,7 @@
 
 namespace Resource {
 
-tResourceManager::tResourceManager() {
+ResourceManager::ResourceManager() {
   // initialize all the primitives
   // plane
   vector<Vertex> vertices;
@@ -81,27 +81,31 @@ tResourceManager::tResourceManager() {
   cubePrimitive = new Graphics::Mesh(vertices, indices);
 }
 
-tResourceManager::~tResourceManager() {
+ResourceManager::~ResourceManager() {
+  for (int i = 0; i < meshLoaded.size(); ++i)
+    delete meshLoaded[i];
+  for (int i = 0; i < shaderLoaded.size(); ++i)
+    delete shaderLoaded[i];
   delete planePrimitive;
   delete spherePrimitive;
   delete cubePrimitive;
 }
 
-Shader *tResourceManager::GetShader(string vertShaderPath,
+Shader *ResourceManager::GetShader(string vertShaderPath,
                                     string fragShaderPath) {
   for (auto i = 0; i < shaderLoaded.size(); ++i) {
-    if (shaderLoaded[i].vertexShaderPath == vertShaderPath &&
-        shaderLoaded[i].fragShaderPath == fragShaderPath) {
-      return &(shaderLoaded[i]);
+    if (shaderLoaded[i]->vertexShaderPath == vertShaderPath &&
+        shaderLoaded[i]->fragShaderPath == fragShaderPath) {
+      return shaderLoaded[i];
     }
   }
   // the shader has not been loaded
-  shaderLoaded.push_back(
-      Shader(vertShaderPath.c_str(), fragShaderPath.c_str()));
-  return &(shaderLoaded[shaderLoaded.size() - 1]);
+  Shader *loadedShader = new Shader(vertShaderPath.c_str(), fragShaderPath.c_str());
+  shaderLoaded.push_back(loadedShader);
+  return loadedShader;
 }
 
-unsigned int tResourceManager::textureFromFile(string texturePath, bool gamma) {
+unsigned int ResourceManager::textureFromFile(string texturePath, bool gamma) {
   unsigned int textureID;
   glGenTextures(1, &textureID);
 
@@ -138,7 +142,7 @@ unsigned int tResourceManager::textureFromFile(string texturePath, bool gamma) {
   return textureID;
 }
 
-Graphics::Mesh *tResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
+Mesh *ResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
   if (pType == PRIMITIVE_TYPE::SPHERE) {
     return spherePrimitive;
   } else if (pType == PRIMITIVE_TYPE::CUBE) {
@@ -150,7 +154,7 @@ Graphics::Mesh *tResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
   }
 }
 
-vector<Texture> tResourceManager::loadMaterialTextures(aiMaterial *mat,
+vector<Texture> ResourceManager::loadMaterialTextures(aiMaterial *mat,
                                                        aiTextureType type,
                                                        string typeName) {
   vector<Texture> textures;
@@ -168,7 +172,7 @@ vector<Texture> tResourceManager::loadMaterialTextures(aiMaterial *mat,
     }
     if (!skip) { // if texture hasn't been loaded already, load it
       Texture texture;
-      texture.id = Resource::ResourceManager.textureFromFile(str.C_Str());
+      texture.id = Resource::RManager.textureFromFile(str.C_Str());
       texture.type = typeName;
       texture.path = str.C_Str();
       textures.push_back(texture);
@@ -178,7 +182,7 @@ vector<Texture> tResourceManager::loadMaterialTextures(aiMaterial *mat,
   return textures;
 }
 
-Graphics::Mesh tResourceManager::processMesh(aiMesh *mesh,
+Mesh* ResourceManager::processMesh(aiMesh *mesh,
                                              const aiScene *scene) {
   // data to fill
   vector<Vertex> vertices;
@@ -264,12 +268,14 @@ Graphics::Mesh tResourceManager::processMesh(aiMesh *mesh,
   //     "texture_height");
   // textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-  // return a mesh object created from the extracted mesh data
-  return Graphics::Mesh(vertices, indices);
+  Mesh *loadedMesh = new Mesh(vertices, indices);
+  meshLoaded.push_back(loadedMesh);
+
+  return loadedMesh;
 }
 
-void tResourceManager::processNode(aiNode *node, const aiScene *scene,
-                                   vector<Graphics::Mesh> &meshes) {
+void ResourceManager::processNode(aiNode *node, const aiScene *scene,
+                                   vector<Graphics::Mesh*> &meshes) {
   // process each mesh located at the current node
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     // the node object only contains indices to index the actual objects in
@@ -285,10 +291,10 @@ void tResourceManager::processNode(aiNode *node, const aiScene *scene,
   }
 }
 
-vector<Graphics::Mesh> tResourceManager::GetModel(string modelPath) {
+vector<Mesh*> ResourceManager::GetModel(string modelPath) {
   // read file via ASSIMP
   Assimp::Importer importer;
-  vector<Graphics::Mesh> meshes;
+  vector<Mesh*> meshes;
   const aiScene *scene = importer.ReadFile(
       modelPath.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals |
                              aiProcess_FlipUVs | aiProcess_CalcTangentSpace);

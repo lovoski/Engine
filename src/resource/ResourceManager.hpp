@@ -7,21 +7,23 @@
 
 namespace Resource {
 
-class tResourceManager {
-public:
-  tResourceManager();
-  tResourceManager(tResourceManager &) = delete;
-  const tResourceManager &operator=(tResourceManager &) = delete;
-  ~tResourceManager();
+using Graphics::Mesh;
 
-  static tResourceManager &Ref() {
-    static tResourceManager reference;
+class ResourceManager {
+public:
+  ResourceManager();
+  ResourceManager(ResourceManager &) = delete;
+  const ResourceManager &operator=(ResourceManager &) = delete;
+  ~ResourceManager();
+
+  static ResourceManager &Ref() {
+    static ResourceManager reference;
     return reference;
   }
 
-  Graphics::Mesh *GetPrimitive(PRIMITIVE_TYPE pType);
+  Mesh *GetPrimitive(PRIMITIVE_TYPE pType);
 
-  vector<Graphics::Mesh> GetModel(string);
+  vector<Mesh*> GetModel(string);
 
   Shader *GetShader(string vertShaderPath, string fragShaderPath);
 
@@ -29,21 +31,23 @@ private:
   // stores all the loaded textures
   vector<Texture> texturesLoaded;
   // stores all the loaded shaders
-  vector<Shader> shaderLoaded;
+  vector<Shader*> shaderLoaded;
+  // stores all the loaded meshes
+  vector<Mesh*> meshLoaded;
 
-  Graphics::Mesh *cubePrimitive;
-  Graphics::Mesh *planePrimitive;
-  Graphics::Mesh *spherePrimitive;
+  Mesh *cubePrimitive;
+  Mesh *planePrimitive;
+  Mesh *spherePrimitive;
 
   unsigned int textureFromFile(string texturePath, bool gamma = false);
 
   vector<Texture> loadMaterialTextures(aiMaterial *, aiTextureType, string);
 
-  Graphics::Mesh processMesh(aiMesh *, const aiScene *);
+  Graphics::Mesh* processMesh(aiMesh *, const aiScene *);
 
-  void processNode(aiNode *, const aiScene *, vector<Graphics::Mesh> &);
+  void processNode(aiNode *, const aiScene *, vector<Graphics::Mesh*> &);
 };
 
-static tResourceManager &ResourceManager = tResourceManager::Ref();
+static ResourceManager &RManager = ResourceManager::Ref();
 
 }; // namespace Resource

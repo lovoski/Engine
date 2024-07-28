@@ -14,7 +14,7 @@ An experimental ECS game engine.
 ### Detailed goals
 
 - [x] Create the camera system to manage the movement of camera
-- [ ] Polish the component gui section, create editor for transform and camera component
+- [x] Polish the component gui section, create editor for transform and camera component
 - [ ] Create a basic material editor, write some actual shader code
 - [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
 - [ ] Create the animation system, write code to do the skinning and binding
@@ -27,8 +27,6 @@ ECS (Entity Component System) atchitecture is a very important thinking in devel
 Take rendering as an example, each renderable mesh object shold have a `MeshRenderer` component storing the actual mesh data. The texture and other parameters are defined in the component `Material`. When we want to render the entity. We would call the `Update` function defined in `RenderSystem`, use the `EntityManager` singleton to retrieve all the components related to this entity.
 
 The advantage of ECS architecture is that, the component can be stored in a more compact (memory efficient) way. Special mechanics can also be designed to update components with specific types easily.
-
-The main implementation is defined in `src/ecs/base`. The system utilized static variable defined in header files to identify different types. **So functions like `HasComponent` and `GetComponent` can only be called in header files in case the static variables has multiple copies.**
 
 ## The rendering
 

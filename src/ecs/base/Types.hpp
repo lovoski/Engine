@@ -1,3 +1,4 @@
+// inline function would be unwrapped into plain code after compilation, these functions has only one copy in all hear files
 #pragma once
 
 #include "global.hpp"
@@ -15,12 +16,18 @@ using SystemTypeID = size_t;
 using ComponentTypeID = size_t;
 using EntitySignature = std::set<ComponentTypeID>;
 
-const ComponentTypeID GetRuntimeComponentTypeID();
+inline ComponentTypeID GetRuntimeComponentTypeID() {
+  static ComponentTypeID typeID = 0u;
+  return typeID++;
+}
 
-const SystemTypeID GetRuntimeSystemTypeID();
+inline SystemTypeID GetRuntimeSystemTypeID() {
+  static SystemTypeID typeID = 0u;
+  return typeID++;
+}
 
 // attach type id to component class and return it
-template <typename T> inline static const ComponentTypeID ComponentType() noexcept {
+template <typename T> inline ComponentTypeID ComponentType() noexcept {
   // the class should be inferented from component, but not the class itself
   static_assert((std::is_base_of<BaseComponent, T>::value &&
                  !std::is_same<BaseComponent, T>::value),
@@ -30,7 +37,7 @@ template <typename T> inline static const ComponentTypeID ComponentType() noexce
 }
 
 // attach type id to system class and return it
-template <typename T> inline static const SystemTypeID SystemType() noexcept {
+template <typename T> inline SystemTypeID SystemType() noexcept {
   static_assert(
       (std::is_base_of<BaseSystem, T>::value && !std::is_same<BaseSystem, T>::value),
       "Invalid template type");

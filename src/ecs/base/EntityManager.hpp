@@ -93,8 +93,8 @@ public:
   }
 
   Entity *EntityFromID(const EntityID entity) {
-    assert(entity < MAX_ENTITY_COUNT &&
-           "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
+    if (entity >= MAX_ENTITY_COUNT)
+      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
     if (entities.count(entity) == 0) {
       Console.Log("[error]: No entity match this id: %ld\n", entity);
       return nullEntity;
@@ -112,9 +112,10 @@ public:
   }
 
   void DestroyEntity(const EntityID entity) {
-    assert(entity < MAX_ENTITY_COUNT && "Destroying entity out of range");
-    assert(entitiesSignatures.find(entity) != entitiesSignatures.end() &&
-           "Destroying entity do not exists");
+    if (entity >= MAX_ENTITY_COUNT)
+      throw std::runtime_error("Destroying entity out of range");
+    if (entitiesSignatures.find(entity) == entitiesSignatures.end())
+      throw std::runtime_error("Destroying entity do not exists");
     entitiesSignatures.erase(entity);
     entities.erase(entity);
     for (auto &array : componentsArrays) {
@@ -130,10 +131,10 @@ public:
 
   template <typename T, typename... Args>
   void AddComponent(const EntityID entity, Args &&...args) {
-    assert(entity < MAX_ENTITY_COUNT &&
-           "EntityID out of range (MAX_ENTITY_COUNT) during AddComponent");
-    assert(entitiesSignatures[entity].get()->size() < MAX_COMPONENT_COUNT &&
-           "Component count limit reached (MAX_COMPONENT_COUNT)");
+    if (entity >= MAX_ENTITY_COUNT)
+      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during AddComponent");
+    if (entitiesSignatures[entity].get()->size() >= MAX_COMPONENT_COUNT)
+      throw std::runtime_error("Component count limit reached (MAX_COMPONENT_COUNT)");
 
     // create the component with parameters
     T component(std::forward<Args>(args)...);
@@ -150,8 +151,8 @@ public:
   }
 
   template <typename T> void RemoveComponent(const EntityID entity) {
-    assert(entity < MAX_ENTITY_COUNT &&
-           "EntityID out of range (MAX_ENTITY_COUNT) during RemoveComponent");
+    if (entity >= MAX_ENTITY_COUNT)
+      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during RemoveComponent");
     const ComponentTypeID compType = ComponentType<T>();
     // each entity has only one component of a specified componenet type
     entitiesSignatures.at(entity).get()->erase(compType);
@@ -163,8 +164,8 @@ public:
 
   // find the component belongs to some entity
   template <typename T> T &GetComponent(const EntityID entity) {
-    assert(entity < MAX_ENTITY_COUNT &&
-           "EntityID out of range (MAX_ENTITY_COUNT) during GetComponent");
+    if (entity >= MAX_ENTITY_COUNT)
+      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during GetComponent");
     const ComponentTypeID compType = ComponentType<T>();
     return GetComponentList<T>()->Get(entity);
   }
@@ -172,8 +173,8 @@ public:
   // iterate through the signature of the entity to find the component with
   // indicated type
   template <typename T> const bool HasComponent(const EntityID entity) {
-    assert(entity < MAX_ENTITY_COUNT &&
-           "EntityID out of range (MAX_ENTITY_COUNT) during HasComponent");
+    if (entity >= MAX_ENTITY_COUNT)
+      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during HasComponent");
     const EntitySignature signature = *(entitiesSignatures.at(entity));
     const ComponentTypeID compType = ComponentType<T>();
     auto it = std::find(signature.begin(), signature.end(), compType);
@@ -183,8 +184,8 @@ public:
   // register system at runtime
   template <typename T> void RegisterSystem() {
     const SystemTypeID systemType = SystemType<T>();
-    assert(registeredSystems.count(systemType) == 0 &&
-           "System already registered");
+    if (registeredSystems.count(systemType) != 0)
+      throw std::runtime_error("System already registered");
     auto system = std::make_shared<T>();
     // add entities that might belongs to the system
     for (EntityID entity = 0; entity < entityCount; ++entityCount) {
@@ -197,7 +198,8 @@ public:
 
   template <typename T> void UnRegisterSystem() {
     const SystemTypeID systemType = SystemType<T>();
-    assert(registeredSystems.count(systemType) != 0 && "System not registered");
+    if (registeredSystems.count(systemType) == 0)
+      throw std::runtime_error("System not registered");
     registeredSystems.erase(systemType);
   }
 
@@ -205,8 +207,8 @@ private:
   // create a component list that stores a specified type of components
   template <typename T> void AddComponentList() {
     const ComponentTypeID compType = ComponentType<T>();
-    assert(componentsArrays.find(compType) == componentsArrays.end() &&
-           "Component list already registered");
+    if (componentsArrays.find(compType) != componentsArrays.end())
+      throw std::runtime_error("Component list already registered");
     componentsArrays[compType] =
         std::move(std::make_shared<ComponentList<T>>());
   }
@@ -223,15 +225,15 @@ private:
   }
 
   void AddEntitySignature(const EntityID entity) {
-    assert(entitiesSignatures.find(entity) == entitiesSignatures.end() &&
-           "Signature not found");
+    if (entitiesSignatures.find(entity) != entitiesSignatures.end())
+      throw std::runtime_error("Signature not found");
     entitiesSignatures[entity] = std::move(std::make_shared<EntitySignature>());
   }
 
   std::shared_ptr<EntitySignature> GetEntitySignature(const EntityID entity) {
     // assert will be triggered when the condition is false
-    assert(entitiesSignatures.find(entity) != entitiesSignatures.end() &&
-           "Signature not found");
+    if (entitiesSignatures.find(entity) == entitiesSignatures.end())
+      throw std::runtime_error("Signature not found");
     return entitiesSignatures.at(entity);
   }
 
@@ -285,6 +287,6 @@ private:
 };
 
 using Entity = EntityManager::Entity;
-static EntityManager &Manager = EntityManager::Ref();
+static EntityManager &EManager = EntityManager::Ref();
 
 }; // namespace ECS

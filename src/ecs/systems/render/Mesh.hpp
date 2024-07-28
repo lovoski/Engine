@@ -26,6 +26,12 @@ public:
     setupMesh();
   }
 
+  ~Mesh() {
+    glDeleteBuffers(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+  }
+
   // render the mesh
   void Draw(Resource::Shader &shader) {
     // draw mesh

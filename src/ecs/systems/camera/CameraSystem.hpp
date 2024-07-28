@@ -12,8 +12,8 @@ public:
   void Update() {
     if (EditorContext.GetActiveCamera(activeCamera)) {
       // update the position of this active camera
-      auto &cameraComp = ECS::Manager.GetComponent<Camera>(activeCamera);
-      auto &transform = ECS::Manager.GetComponent<Transform>(activeCamera);
+      auto &cameraComp = ECS::EManager.GetComponent<Camera>(activeCamera);
+      auto &transform = ECS::EManager.GetComponent<Transform>(activeCamera);
       float detltaTime = Timer.DeltaTime();
       float movementDistance = cameraComp.movementSpeed * detltaTime;
       float mouseSensitivity = cameraComp.mouseSensitivity;

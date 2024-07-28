@@ -20,27 +20,32 @@ Engine::Engine()
   glfwWindowHint(GLFW_REFRESH_RATE, monitor.refreshRate);
 
   window = glfwCreateWindow(videoWidth, videoHeight, "Engine", NULL, NULL);
-  assert(window && "Failed to create GLFW window");
+  if (!window) {
+    cout << "Failed to create GLFW window" << endl;
+    return;
+  }
   glfwMakeContextCurrent(window);
 
-  assert(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) &&
-         "Failed to load GLAD");
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    cout << "Failed to load GLAD" << endl;
+    return;
+  }
 }
 
 Engine::~Engine() {
-  ECS::Manager.Destroy();
+  ECS::EManager.Destroy();
   glfwTerminate();
 }
 
 void Engine::Initialize() {
   // register all the systems
-  ECS::Manager.RegisterSystem<RenderSystem>();
-  ECS::Manager.RegisterSystem<CameraSystem>();
+  ECS::EManager.RegisterSystem<RenderSystem>();
+  ECS::EManager.RegisterSystem<CameraSystem>();
   // start all the systems
-  ECS::Manager.Start();
+  ECS::EManager.Start();
 }
 
-void Engine::Update() { ECS::Manager.Update(); }
+void Engine::Update() { ECS::EManager.Update(); }
 
 void Engine::Quit() {
   glfwSetWindowShouldClose(window, GLFW_TRUE);

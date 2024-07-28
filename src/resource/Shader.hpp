@@ -48,7 +48,8 @@ public:
         geometryCode = gShaderStream.str();
       }
     } catch (std::ifstream::failure &e) {
-      Console.Log("[error]::SHADER::FILE_NOT_SUCCESSFULLY_READ: %s\n", e.what());
+      Console.Log("[error]::SHADER::FILE_NOT_SUCCESSFULLY_READ: %s\n",
+                  e.what());
     }
     const char *vShaderCode = vertexCode.c_str();
     const char *fShaderCode = fragmentCode.c_str();
@@ -88,6 +89,9 @@ public:
     if (geometryPath != nullptr)
       glDeleteShader(geometry);
   }
+
+  ~Shader() { glDeleteProgram(ID); }
+
   void Use() { glUseProgram(ID); }
   void SetBool(const std::string &name, bool value) const {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
@@ -137,13 +141,15 @@ private:
       glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
       if (!success) {
         glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-        Console.Log("[error]::SHADER_COMPILATION_ERROR of type: %s\n%s\n", type.c_str(), infoLog);
+        Console.Log("[error]::SHADER_COMPILATION_ERROR of type: %s\n%s\n",
+                    type.c_str(), infoLog);
       }
     } else {
       glGetProgramiv(shader, GL_LINK_STATUS, &success);
       if (!success) {
         glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-        Console.Log("[error]::PROGRAM_LINKING_ERROR of type: %s\n%s\n", type.c_str(), infoLog);
+        Console.Log("[error]::PROGRAM_LINKING_ERROR of type: %s\n%s\n",
+                    type.c_str(), infoLog);
       }
     }
   }

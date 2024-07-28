@@ -7,14 +7,14 @@
 
 class BaseMaterial : public ECS::BaseComponent {
 public:
-  BaseMaterial() {}
+  BaseMaterial() { SetShader(); }
   ~BaseMaterial() {}
 
   void SetShader(string vertShaderPath = REPO_SOURCE_DIR
                  "/src/shaders/default/pbr.vert",
                  string fragShaderPath = REPO_SOURCE_DIR
                  "/src/shaders/default/pbr.frag") {
-    shader = Resource::ResourceManager.GetShader(vertShaderPath, fragShaderPath);
+    shader = Resource::RManager.GetShader(vertShaderPath, fragShaderPath);
   }
   Resource::Shader *GetShader() {
     if (this->shader == nullptr) {
