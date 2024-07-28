@@ -1,3 +1,4 @@
+#include "roboto.h"
 #include "EditorWindows.hpp"
 
 void EditorWindows::Initialize() {
@@ -8,9 +9,8 @@ void EditorWindows::Initialize() {
   io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  ImFontConfig fontConfig;
-  fontConfig.SizePixels = 20.0f;
-  io->Fonts->AddFontDefault(&fontConfig);
+  io->Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len, 20.0f);
+
   io->IniFilename = layoutFileName;
 
   ImGui_ImplGlfw_InitForOpenGL(&Core.Window(), true);
