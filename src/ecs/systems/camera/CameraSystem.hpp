@@ -29,7 +29,7 @@ public:
           for (auto action : Event.actions) {
             if (action.Type == Action::ActionType::MOUSE_SCROLL) {
               vec2 scrollOffset = (*(vec2 *)action.Data);
-              cameraComp.fovY += glm::radians(scrollOffset.y);
+              cameraComp.fovY += scrollOffset.y;
             }
           }
           // change position of camera
