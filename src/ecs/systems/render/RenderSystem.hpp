@@ -20,8 +20,6 @@ public:
         new Graphics::FrameBuffer(Core.VideoWdith(), Core.VideoHeight());
     // initialize the gui system
     EditorContext.Initialize();
-    // initialize the defualt material
-    defaultMaterial.SetShader();
 
     // enable opengl features
     glEnable(GL_DEPTH_TEST);
@@ -33,12 +31,27 @@ public:
     cameraEntity->AddComponent<Camera>();
     EditorContext.SetActiveCamera(cameraEntity->ID);
 
-    auto defaultObject = ECS::EManager.AddNewEntity();
-    defaultObject->AddComponent<Transform>();
-    defaultObject->AddComponent<MeshRenderer>(
+    auto cubeObject = ECS::EManager.AddNewEntity();
+    cubeObject->name = "cube primitive";
+    cubeObject->AddComponent<Transform>(vec3(4.0f, 0.0f, 0.0f));
+    cubeObject->AddComponent<MeshRenderer>(
         Resource::RManager.GetPrimitive(
             Resource::PRIMITIVE_TYPE::CUBE));
-    
+
+    auto sphereObject = ECS::EManager.AddNewEntity();
+    sphereObject->name = "sphere primitive";
+    sphereObject->AddComponent<Transform>(vec3(-4.0f, 0.0f, 0.0f));
+    sphereObject->AddComponent<MeshRenderer>(
+        Resource::RManager.GetPrimitive(
+            Resource::PRIMITIVE_TYPE::SPHERE));
+
+    auto planeObject = ECS::EManager.AddNewEntity();
+    planeObject->name = "plane primitive";
+    planeObject->AddComponent<Transform>(vec3(0.0f, -3.0f, 0.0f), vec3(5.0f, 1.0f, 5.0f));
+    planeObject->AddComponent<MeshRenderer>(
+        Resource::RManager.GetPrimitive(
+            Resource::PRIMITIVE_TYPE::PLANE));
+
     auto loadedMeshes = Resource::RManager.GetModel(REPO_SOURCE_DIR "/assets/learnopengl/objects/backpack/backpack.obj");
     for (auto mesh : loadedMeshes) {
       auto nObject = ECS::EManager.AddNewEntity();

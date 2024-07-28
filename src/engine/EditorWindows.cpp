@@ -31,13 +31,27 @@ void EditorWindows::EntitiesWindow() {
     Console.Log("add entity\n");
   }
   ImGui::SeparatorText("Scene");
+  ImGui::BeginChild("Entities List", {-1, ImGui::GetContentRegionAvail().y});
   auto entities = ECS::EManager.GetActiveEntities();
   for (auto i = 0; i < entities.size(); ++i) {
     if (ImGui::Selectable(entities[i]->name.c_str(), selectedEntityInd == i)) {
       selectedEntityInd = i;
       selectedEntity = entities[i]->ID;
     }
+    // TODO: refine this menu
+    if (ImGui::BeginPopupContextItem((entities[i]->name + " popup").c_str(),
+                                     ImGuiPopupFlags_MouseButtonRight)) {
+      if (ImGui::Button("remove")) {
+        Console.Log("remove entity\n");
+        ECS::EManager.DestroyEntity(entities[i]->ID);
+        selectedEntity = (ECS::EntityID)(-1);
+        selectedEntityInd = -1;
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::EndPopup();
+    }
   }
+  ImGui::EndChild();
   ImGui::End();
 }
 
@@ -46,6 +60,48 @@ void EditorWindows::ConsoleWindow() { Console.Draw("Console"); }
 void EditorWindows::AssetsWindow() {
   ImGui::Begin("Assets");
   ImGui::End();
+}
+
+inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
+  auto &transform = ECS::EManager.GetComponent<Transform>(selectedEntity);
+  if (ImGui::TreeNode("Transform")) {
+    ImGui::SeparatorText("Position");
+    ImGui::DragFloat(" :pos.X", &transform.Position.x, 0.001f, -MAX_FLOAT,
+                     MAX_FLOAT);
+    ImGui::DragFloat(" :pos.Y", &transform.Position.y, 0.001f, -MAX_FLOAT,
+                     MAX_FLOAT);
+    ImGui::DragFloat(" :pos.Z", &transform.Position.z, 0.001f, -MAX_FLOAT,
+                     MAX_FLOAT);
+
+    ImGui::SeparatorText("Scale");
+    ImGui::DragFloat(" :scale.X", &transform.Scale.x, 0.001f, -MAX_FLOAT,
+                     MAX_FLOAT);
+    ImGui::DragFloat(" :scale.Y", &transform.Scale.y, 0.001f, -MAX_FLOAT,
+                     MAX_FLOAT);
+    ImGui::DragFloat(" :scale.Z", &transform.Scale.z, 0.001f, -MAX_FLOAT,
+                     MAX_FLOAT);
+
+    auto &euler = transform.EulerAngles;
+    ImGui::SeparatorText("Rotation");
+    bool updateRotation = false;
+    updateRotation |=
+        ImGui::DragFloat(" :rot.X", &euler.x, 0.001f, -MAX_FLOAT, MAX_FLOAT);
+    updateRotation |=
+        ImGui::DragFloat(" :rot.Y", &euler.y, 0.001f, -MAX_FLOAT, MAX_FLOAT);
+    updateRotation |=
+        ImGui::DragFloat(" :rot.Z", &euler.z, 0.001f, -MAX_FLOAT, MAX_FLOAT);
+    ImGui::TreePop();
+  }
+}
+
+inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
+  auto &camera = ECS::EManager.GetComponent<Camera>(selectedEntity);
+  if (ImGui::TreeNode("Camera")) {
+    ImGui::DragFloat(" :Fov  Y", &camera.fovY, 1.0f, 0.0f, 150.0f);
+    ImGui::DragFloat(" :Z Near", &camera.zNear, 0.001f, 0.0000001f, 10.0f);
+    ImGui::DragFloat(" :Z  Far", &camera.zFar, 0.1f, 20.0f, 2000.0f);
+    ImGui::TreePop();
+  }
 }
 
 void EditorWindows::ComponentsWindow() {
@@ -57,46 +113,13 @@ void EditorWindows::ComponentsWindow() {
     string entityName =
         "Active Entity : " + ECS::EManager.EntityFromID(selectedEntity)->name;
     ImGui::SeparatorText(entityName.c_str());
-    if (ECS::EManager.HasComponent<Transform>(selectedEntity)) {
-      auto &transform = ECS::EManager.GetComponent<Transform>(selectedEntity);
-      if (ImGui::TreeNode("Transform")) {
-        ImGui::SeparatorText("Position");
-        ImGui::DragFloat(" :pos.X", &transform.Position.x, 0.001f, -MAX_FLOAT,
-                         MAX_FLOAT);
-        ImGui::DragFloat(" :pos.Y", &transform.Position.y, 0.001f, -MAX_FLOAT,
-                         MAX_FLOAT);
-        ImGui::DragFloat(" :pos.Z", &transform.Position.z, 0.001f, -MAX_FLOAT,
-                         MAX_FLOAT);
-
-        ImGui::SeparatorText("Scale");
-        ImGui::DragFloat(" :scale.X", &transform.Scale.x, 0.001f, -MAX_FLOAT,
-                         MAX_FLOAT);
-        ImGui::DragFloat(" :scale.Y", &transform.Scale.y, 0.001f, -MAX_FLOAT,
-                         MAX_FLOAT);
-        ImGui::DragFloat(" :scale.Z", &transform.Scale.z, 0.001f, -MAX_FLOAT,
-                         MAX_FLOAT);
-
-        auto &euler = transform.EulerAngles;
-        ImGui::SeparatorText("Rotation");
-        bool updateRotation = false;
-        updateRotation |= ImGui::DragFloat(" :rot.X", &euler.x, 0.001f,
-                                           -MAX_FLOAT, MAX_FLOAT);
-        updateRotation |= ImGui::DragFloat(" :rot.Y", &euler.y, 0.001f,
-                                           -MAX_FLOAT, MAX_FLOAT);
-        updateRotation |= ImGui::DragFloat(" :rot.Z", &euler.z, 0.001f,
-                                           -MAX_FLOAT, MAX_FLOAT);
-        ImGui::TreePop();
-      }
-    }
-    if (ECS::EManager.HasComponent<Camera>(selectedEntity)) {
-      auto &camera = ECS::EManager.GetComponent<Camera>(selectedEntity);
-      if (ImGui::TreeNode("Camera")) {
-        ImGui::DragFloat(" :Fov  Y", &camera.fovY, 1.0f, 0.0f, 150.0f);
-        ImGui::DragFloat(" :Z Near", &camera.zNear, 0.001f, 0.0000001f, 10.0f);
-        ImGui::DragFloat(" :Z  Far", &camera.zFar, 0.1f, 20.0f, 2000.0f);
-        ImGui::TreePop();
-      }
-    }
+    ImGui::BeginChild("Components List",
+                      {-1, ImGui::GetContentRegionAvail().y});
+    if (ECS::EManager.HasComponent<Transform>(selectedEntity))
+      DrawTransformGUI(selectedEntity);
+    if (ECS::EManager.HasComponent<Camera>(selectedEntity))
+      DrawCameraGUI(selectedEntity);
+    ImGui::EndChild();
   }
   ImGui::End();
 }

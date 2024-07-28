@@ -92,7 +92,7 @@ ResourceManager::~ResourceManager() {
 }
 
 Shader *ResourceManager::GetShader(string vertShaderPath,
-                                    string fragShaderPath) {
+                                   string fragShaderPath) {
   for (auto i = 0; i < shaderLoaded.size(); ++i) {
     if (shaderLoaded[i]->vertexShaderPath == vertShaderPath &&
         shaderLoaded[i]->fragShaderPath == fragShaderPath) {
@@ -100,9 +100,24 @@ Shader *ResourceManager::GetShader(string vertShaderPath,
     }
   }
   // the shader has not been loaded
-  Shader *loadedShader = new Shader(vertShaderPath.c_str(), fragShaderPath.c_str());
+  Shader *loadedShader =
+      new Shader(vertShaderPath.c_str(), fragShaderPath.c_str());
   shaderLoaded.push_back(loadedShader);
   return loadedShader;
+}
+
+Texture ResourceManager::GetTextureFromImage(string imageFilePath) {
+  for (auto texture : texturesLoaded) {
+    if (std::strcmp(texture.path.c_str(), imageFilePath.c_str()) == 0) {
+      return texture;
+    }
+  }
+  Texture texture;
+  texture.id = textureFromFile(imageFilePath);
+  texture.type = "imageTex";
+  texture.path = imageFilePath;
+  texturesLoaded.push_back(texture);
+  return texture;
 }
 
 unsigned int ResourceManager::textureFromFile(string texturePath, bool gamma) {
@@ -155,8 +170,8 @@ Mesh *ResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
 }
 
 vector<Texture> ResourceManager::loadMaterialTextures(aiMaterial *mat,
-                                                       aiTextureType type,
-                                                       string typeName) {
+                                                      aiTextureType type,
+                                                      string typeName) {
   vector<Texture> textures;
   for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
     aiString str;
@@ -172,7 +187,7 @@ vector<Texture> ResourceManager::loadMaterialTextures(aiMaterial *mat,
     }
     if (!skip) { // if texture hasn't been loaded already, load it
       Texture texture;
-      texture.id = Resource::RManager.textureFromFile(str.C_Str());
+      texture.id = textureFromFile(str.C_Str());
       texture.type = typeName;
       texture.path = str.C_Str();
       textures.push_back(texture);
@@ -182,8 +197,7 @@ vector<Texture> ResourceManager::loadMaterialTextures(aiMaterial *mat,
   return textures;
 }
 
-Mesh* ResourceManager::processMesh(aiMesh *mesh,
-                                             const aiScene *scene) {
+Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene) {
   // data to fill
   vector<Vertex> vertices;
   vector<unsigned int> indices;
@@ -249,24 +263,18 @@ Mesh* ResourceManager::processMesh(aiMesh *mesh,
   // specular: texture_specularN
   // normal: texture_normalN
 
-  // // 1. diffuse maps
-  // vector<Texture> diffuseMaps =
-  //     loadMaterialTextures(material, aiTextureType_DIFFUSE,
-  //     "texture_diffuse");
-  // textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-  // // 2. specular maps
-  // vector<Texture> specularMaps = loadMaterialTextures(
-  //     material, aiTextureType_SPECULAR, "texture_specular");
-  // textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-  // // 3. normal maps
-  // std::vector<Texture> normalMaps =
-  //     loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-  // textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-  // // 4. height maps
-  // std::vector<Texture> heightMaps =
-  //     loadMaterialTextures(material, aiTextureType_AMBIENT,
-  //     "texture_height");
-  // textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+  // 1. diffuse maps
+  vector<Texture> diffuseMaps =
+      loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+  // 2. specular maps
+  vector<Texture> specularMaps = loadMaterialTextures(
+      material, aiTextureType_SPECULAR, "texture_specular");
+  // 3. normal maps
+  std::vector<Texture> normalMaps =
+      loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+  // 4. height maps
+  std::vector<Texture> heightMaps =
+      loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 
   Mesh *loadedMesh = new Mesh(vertices, indices);
   meshLoaded.push_back(loadedMesh);
@@ -275,7 +283,7 @@ Mesh* ResourceManager::processMesh(aiMesh *mesh,
 }
 
 void ResourceManager::processNode(aiNode *node, const aiScene *scene,
-                                   vector<Graphics::Mesh*> &meshes) {
+                                  vector<Graphics::Mesh *> &meshes) {
   // process each mesh located at the current node
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     // the node object only contains indices to index the actual objects in
@@ -291,10 +299,10 @@ void ResourceManager::processNode(aiNode *node, const aiScene *scene,
   }
 }
 
-vector<Mesh*> ResourceManager::GetModel(string modelPath) {
+vector<Mesh *> ResourceManager::GetModel(string modelPath) {
   // read file via ASSIMP
   Assimp::Importer importer;
-  vector<Mesh*> meshes;
+  vector<Mesh *> meshes;
   const aiScene *scene = importer.ReadFile(
       modelPath.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals |
                              aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
