@@ -14,6 +14,13 @@ public:
   // position under world axis
   vec3 Position;
 
+  // scale relative to its parent's axis
+  vec3 localScale = vec3(1.0f);
+  // rotation relative to its parent's axis
+  quat localRotation = quat(1.0f, vec3(0.0f));
+  // position relative to its parent's axis
+  vec3 localPosition = vec3(0.0f);
+
   static vec3 WorldUp, WorldRight, WorldForward;
 
   Transform(const vec3 translate = vec3(0.0f), const vec3 scale = vec3(1.0f),

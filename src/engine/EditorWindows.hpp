@@ -61,7 +61,6 @@ private:
   bool hasActiveCamera = false;
   ECS::EntityID activeCamera;
 
-  std::size_t selectedEntityInd = -1;
   ECS::EntityID selectedEntity = -1;
 };
 

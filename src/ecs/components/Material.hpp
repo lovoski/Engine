@@ -97,6 +97,8 @@ public:
   float Albedo[3] = {1.0f, 1.0f, 1.0f};
   float Ambient = 0.1f;
 
+  bool forceChildSameMaterial = false;
+  bool materialDisabled = false;
 
   Resource::Shader *shader = nullptr;
   vector<Resource::Texture> textures;

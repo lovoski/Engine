@@ -1,6 +1,6 @@
 #include "EditorWindows.hpp"
+#include "ecs/systems/hierarchy/HierarchySystem.hpp"
 #include "roboto.h"
-
 
 void EditorWindows::Initialize() {
   IMGUI_CHECKVERSION();
@@ -27,31 +27,63 @@ void EditorWindows::Destroy() {
 
 void EditorWindows::MainMenuBar() {}
 
+inline void DrawHierarchyGUI(ECS::Entity *entity, ECS::EntityID &selectedEntity,
+                             ImGuiTreeNodeFlags nodeFlag) {
+  bool isSelected = selectedEntity == entity->ID;
+  bool nodeOpen = ImGui::TreeNodeEx(
+      (void *)(intptr_t)entity->ID,
+      isSelected ? nodeFlag | ImGuiTreeNodeFlags_Selected : nodeFlag,
+      entity->name.c_str());
+  if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+    selectedEntity = entity->ID;
+  // drag drop control
+  if (ImGui::BeginDragDropSource()) {
+    ImGui::SetDragDropPayload("CHANGE_ENTITY_HIERARCHY", &entity, sizeof(ECS::Entity*));
+    ImGui::Text("What should be in this text");
+    ImGui::EndDragDropSource();
+  }
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("CHANGE_ENTITY_HIERARCHY")) {
+      ECS::Entity *newChild = *(ECS::Entity **)payload->Data;
+      ECS::EManager.GetSystemInstance<HierarchySystem>()
+          ->AttachNewChildToParent(newChild, entity);
+    }
+    ImGui::EndDragDropTarget();
+  }
+  // right click context menu
+  if (ImGui::BeginPopupContextItem((entity->name + " popup").c_str(),
+                                   ImGuiPopupFlags_MouseButtonRight)) {
+    ImGui::SeparatorText("Entity Options");
+    if (ImGui::MenuItem("Remove")) {
+      if (entity->children.size() > 0)
+        Console.Log("[info]: Destroy entity %s and all its children\n", entity->name.c_str());
+      else
+        Console.Log("[info]: Destroy entity %s\n", entity->name.c_str());
+      ECS::EManager.DestroyEntity(entity->ID);
+      selectedEntity = (ECS::EntityID)(-1);
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndPopup();
+  }
+  if (nodeOpen) {
+    for (auto child : entity->children)
+      DrawHierarchyGUI(child, selectedEntity, nodeFlag);
+    ImGui::TreePop();
+  }
+}
+
 void EditorWindows::EntitiesWindow() {
   ImGui::Begin("Entities");
-  if (ImGui::Button("Add Entity", ImVec2(-1, 40))) {
-    Console.Log("add entity\n");
-  }
   ImGui::SeparatorText("Scene");
   ImGui::BeginChild("Entities List", {-1, ImGui::GetContentRegionAvail().y});
-  auto entities = ECS::EManager.GetActiveEntities();
+  auto entities =
+      ECS::EManager.GetSystemInstance<HierarchySystem>()->hierarchyEntityRoots;
+  static ImGuiTreeNodeFlags guiTreeNodeFlags =
+      ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
+      ImGuiTreeNodeFlags_SpanAvailWidth;
   for (auto i = 0; i < entities.size(); ++i) {
-    if (ImGui::Selectable(entities[i]->name.c_str(), selectedEntityInd == i)) {
-      selectedEntityInd = i;
-      selectedEntity = entities[i]->ID;
-    }
-    if (ImGui::BeginPopupContextItem((entities[i]->name + " popup").c_str(),
-                                     ImGuiPopupFlags_MouseButtonRight)) {
-      ImGui::SeparatorText("Entity Options");
-      if (ImGui::MenuItem("Remove")) {
-        Console.Log("[info]: Destroy entity %s\n", entities[i]->name.c_str());
-        ECS::EManager.DestroyEntity(entities[i]->ID);
-        selectedEntity = (ECS::EntityID)(-1);
-        selectedEntityInd = (unsigned int)(-1);
-        ImGui::CloseCurrentPopup();
-      }
-      ImGui::EndPopup();
-    }
+    DrawHierarchyGUI(entities[i], selectedEntity, guiTreeNodeFlags);
   }
   ImGui::EndChild();
   ImGui::End();
@@ -112,6 +144,9 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   //             material.VertShader.c_str(), material.FragShader.c_str());
   if (ImGui::TreeNode("Base Material")) {
     ImGui::Separator();
+    // ImGui::Checkbox("Pass to children", &material.forceChildSameMaterial);
+
+    ImGui::Separator();
     ImGui::ColorEdit3("Albedo", material.Albedo);
 
     ImGui::Separator();
@@ -124,7 +159,8 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
 inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
   auto &light = ECS::EManager.GetComponent<BaseLight>(selectedEntity);
   if (ImGui::TreeNode("Base Light")) {
-    const char *comboItems[] = {"Directional light", "Point light", "Spot light"};
+    const char *comboItems[] = {"Directional light", "Point light",
+                                "Spot light"};
     static int baseLightGUIComboItemIndex = 0;
     ImGui::Combo("Light Type", &baseLightGUIComboItemIndex, comboItems, 3);
     if (baseLightGUIComboItemIndex == 0) {
@@ -179,7 +215,7 @@ void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ImGui::EndChild();
   ImGui::End();
 
-  // ImGui::ShowDemoWindow();
+  ImGui::ShowDemoWindow();
 
   EntitiesWindow();
   ConsoleWindow();

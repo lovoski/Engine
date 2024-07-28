@@ -20,7 +20,12 @@ public:
   public:
     Entity(EntityID id, EntityManager *manager) : ID(id), MGR(manager) {}
     ~Entity() {
-      parent = nullptr;
+      if (parent != nullptr) {
+        auto self = std::find(parent->children.begin(), parent->children.end(), this);
+        if (self != parent->children.end())
+          parent->children.erase(self);
+        parent = nullptr;
+      }
       children.clear();
     }
 
@@ -39,6 +44,13 @@ public:
     template <typename T> T &GetComponent() { return MGR->GetComponent<T>(ID); }
 
     void Destroy() { MGR->DestroyEntity(ID); }
+
+    void AddChild(Entity *c) {
+      if (c == nullptr)
+        throw std::runtime_error("can't set null pointer as child");
+      children.push_back(c);
+      c->parent = this;
+    }
 
     EntityID ID;
     string name = "New Entity ";
@@ -114,11 +126,13 @@ public:
     return result;
   }
 
+  // if one entity with children is destroyed, all its children entities will also be destroyed
   void DestroyEntity(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
       throw std::runtime_error("Destroying entity out of range");
     if (entitiesSignatures.find(entity) == entitiesSignatures.end())
       throw std::runtime_error("Destroying entity do not exists");
+    auto children = entities[entity]->children;
     entitiesSignatures.erase(entity);
     entities.erase(entity);
     for (auto &array : componentsArrays) {
@@ -130,6 +144,8 @@ public:
     }
     entityCount--;
     availableEntities.push(entity);
+    for (auto child : children)
+      DestroyEntity(child->ID);
   }
 
   template <typename T, typename... Args>
