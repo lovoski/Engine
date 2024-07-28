@@ -30,16 +30,20 @@ void EditorWindows::MainMenuBar() {}
 inline void DrawHierarchyGUI(ECS::Entity *entity, ECS::EntityID &selectedEntity,
                              ImGuiTreeNodeFlags nodeFlag) {
   bool isSelected = selectedEntity == entity->ID;
-  bool nodeOpen = ImGui::TreeNodeEx(
-      (void *)(intptr_t)entity->ID,
-      isSelected ? nodeFlag | ImGuiTreeNodeFlags_Selected : nodeFlag,
-      entity->name.c_str());
+  ImGuiTreeNodeFlags finalFlag = nodeFlag;
+  if (isSelected)
+    finalFlag |= ImGuiTreeNodeFlags_Selected;
+  if (entity->children.size() == 0)
+    finalFlag |= ImGuiTreeNodeFlags_Bullet;
+  bool nodeOpen = ImGui::TreeNodeEx((void *)(intptr_t)entity->ID, finalFlag,
+                                    entity->name.c_str());
   if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
     selectedEntity = entity->ID;
   // drag drop control
   if (ImGui::BeginDragDropSource()) {
-    ImGui::SetDragDropPayload("CHANGE_ENTITY_HIERARCHY", &entity, sizeof(ECS::Entity*));
-    ImGui::Text("What should be in this text");
+    ImGui::SetDragDropPayload("CHANGE_ENTITY_HIERARCHY", &entity,
+                              sizeof(ECS::Entity *));
+    ImGui::Text("Drag drop to change hierarchy");
     ImGui::EndDragDropSource();
   }
   if (ImGui::BeginDragDropTarget()) {
@@ -57,7 +61,8 @@ inline void DrawHierarchyGUI(ECS::Entity *entity, ECS::EntityID &selectedEntity,
     ImGui::SeparatorText("Entity Options");
     if (ImGui::MenuItem("Remove")) {
       if (entity->children.size() > 0)
-        Console.Log("[info]: Destroy entity %s and all its children\n", entity->name.c_str());
+        Console.Log("[info]: Destroy entity %s and all its children\n",
+                    entity->name.c_str());
       else
         Console.Log("[info]: Destroy entity %s\n", entity->name.c_str());
       ECS::EManager.DestroyEntity(entity->ID);
