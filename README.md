@@ -16,7 +16,7 @@ An experimental ECS game engine.
 - [x] Create the camera system to manage the movement of camera
 - [x] Polish the component gui section, create editor for transform and camera component
 - [x] Create a basic material editor, write some actual shader code
-- [ ] Create hierarchy system for the scene to update all the local transforms
+- [x] Create hierarchy system for the scene to update all the local transforms
 - [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
 - [ ] More realistic render effects (PBR, IBL, BRDF ... )
 - [ ] Create the animation system, write code to do the skinning and binding
@@ -87,6 +87,48 @@ public:
 ```
 
 Currently, the order of system registration can determine the system's order in the member variable `registeredSystems`, so be careful with the order of registration in case some system depends on the result of another system.
+
+Another special design is the `Transform` and `Entity`, in previous version, these are different class, `Transform` acts as a component that can be attached to a `Entity` and get updated from some `BaseSystem` derived systems. However, I find it hard to easily maintain the hierarchy structure of entities with these two seperated. So I combined these two classes into one in the file `ecs/base/EntityManager`, `Transform` is now an alias to `Entity`.
+
+## The hierarchy
+
+As can be found in the `Entity` class, each entity now holds a pointer to its parent and an array of pointer to all its direct children:
+
+```cpp
+class Entity {
+public:
+  ...
+  Entity *parent = nullptr;
+  vector<Entity *> children;
+  ...
+};
+```
+
+As Transform and Entity are the same class now, each entity hold the transform data `position`, `scale` and `rotation`. At the start of each loop, the global properties are updated with the local properties. All local properties are relative to this entity's parent axis, some special notes includes:
+
+```
+self.globalRot = parent.globalRot * self.localRot
+
+M_p.inv * M * (self.globalPos - parent.globalPos) = self.localPos
+M.inv * M_p * localPos + parent.globalPos = self.globalPos
+
+self.globalScale = parent.globalScale * self.localScale
+```
+
+These update process can be found at `ecs/base/EntityManager`:
+
+```cpp
+  void Update() {
+    // update the transforms first
+    recomputeLocalAxis();
+    rebuildHierarchyStructure();
+
+    // update all the registered systems
+    for (auto &system : registeredSystems) {
+      system.second->Update();
+    }
+  }
+```
 
 ## The rendering
 
