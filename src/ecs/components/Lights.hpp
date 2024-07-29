@@ -19,7 +19,7 @@ public:
   LIGHT_TYPE Type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
 
   // basic properties
-  float LightColor[3] = {1.0f, 1.0f, 1.0f};
+  vec3 LightColor = vec3(0.5f);
 
   // directional light properties
   vec3 LightDir = vec3(-1.0f);

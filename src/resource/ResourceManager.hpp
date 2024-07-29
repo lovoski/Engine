@@ -28,9 +28,9 @@ public:
   vector<Mesh *> GetModel(string);
 
   // create render ready primitive
-  ECS::Entity *GetModelEntity(string path);
+  Entity *GetModelEntity(string path);
   // create render ready primitive
-  ECS::Entity *GetPrimitiveEntity(PRIMITIVE_TYPE pType);
+  Entity *GetPrimitiveEntity(PRIMITIVE_TYPE pType);
 
   Shader *GetShader(string vertShaderPath, string fragShaderPath);
 

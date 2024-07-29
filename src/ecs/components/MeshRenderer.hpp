@@ -2,7 +2,6 @@
 
 #include "ecs/ecs.hpp"
 #include "ecs/components/Camera.hpp"
-#include "ecs/components/Transform.hpp"
 #include "ecs/components/Material.hpp"
 #include "ecs/systems/render/Mesh.hpp"
 #include "ecs/components/Lights.hpp"

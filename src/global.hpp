@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <stack>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -40,6 +41,8 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
+using std::queue;
+using std::stack;
 
 using glm::mat3;
 using glm::mat4;
@@ -53,3 +56,8 @@ using glm::dot;
 using glm::normalize;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
+
+inline std::ostream &operator<<(std::ostream &out, vec3 v) {
+  out << "x:" << v.x << ",y:" << v.y << ",z:" << v.z;
+  return out;
+}

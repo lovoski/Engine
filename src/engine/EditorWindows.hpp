@@ -47,6 +47,8 @@ public:
            y >= SceneWindowPos.y && y <= SceneWindowPos.y + SceneWindowSize.y;
   }
 
+  // Loop the coursor in the scene window range, returns whether the cursor
+  // leaves the scene window at this frame or not
   bool LoopCursorInSceneWindow();
 
   // export imgui io to receive events

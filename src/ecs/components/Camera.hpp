@@ -2,7 +2,6 @@
 
 #include "global.hpp"
 #include "ecs/ecs.hpp"
-#include "ecs/components/Transform.hpp"
 
 class Camera : public ECS::BaseComponent {
 public:
@@ -13,10 +12,9 @@ public:
     FPS_CAMERA
   };
 
+  // The camera looks at -LocalForward direction
   mat4 GetViewMatrix(Transform &transform) {
-    vec3 forward = transform.Rotation() * Transform::WorldForward;
-    vec3 up = transform.Rotation() * Transform::WorldUp;
-    return glm::lookAt(transform.Position, transform.Position + forward, up);
+    return glm::lookAt(transform.Position(), transform.Position() - transform.LocalForward, transform.LocalUp);
   }
 
   mat4 GetProjMatrixPerspective(float width, float height) {

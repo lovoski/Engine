@@ -34,7 +34,7 @@ add_executable(${PROJECT_NAME}
   src/engine/EditorWindows.cpp
   src/utils/Math.cpp
   src/resource/ResourceManager.cpp
-  src/ecs/components/Transform.cpp
+  src/ecs/base/Library.cpp
   src/ecs/systems/render/FrameBuffer.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${ENGINE_DEPS})

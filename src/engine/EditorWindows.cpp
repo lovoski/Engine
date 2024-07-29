@@ -1,5 +1,4 @@
 #include "EditorWindows.hpp"
-#include "ecs/systems/hierarchy/HierarchySystem.hpp"
 #include "roboto.h"
 
 void EditorWindows::Initialize() {
@@ -27,7 +26,7 @@ void EditorWindows::Destroy() {
 
 void EditorWindows::MainMenuBar() {}
 
-inline void DrawHierarchyGUI(ECS::Entity *entity, ECS::EntityID &selectedEntity,
+inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
                              ImGuiTreeNodeFlags nodeFlag) {
   bool isSelected = selectedEntity == entity->ID;
   ImGuiTreeNodeFlags finalFlag = nodeFlag;
@@ -42,16 +41,15 @@ inline void DrawHierarchyGUI(ECS::Entity *entity, ECS::EntityID &selectedEntity,
   // drag drop control
   if (ImGui::BeginDragDropSource()) {
     ImGui::SetDragDropPayload("CHANGE_ENTITY_HIERARCHY", &entity,
-                              sizeof(ECS::Entity *));
+                              sizeof(Entity *));
     ImGui::Text("Drag drop to change hierarchy");
     ImGui::EndDragDropSource();
   }
   if (ImGui::BeginDragDropTarget()) {
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("CHANGE_ENTITY_HIERARCHY")) {
-      ECS::Entity *newChild = *(ECS::Entity **)payload->Data;
-      ECS::EManager.GetSystemInstance<HierarchySystem>()
-          ->AttachNewChildToParent(newChild, entity);
+      Entity *newChild = *(Entity **)payload->Data;
+      ECS::EManager.EntityFromID(entity->ID)->AssignChild(newChild);
     }
     ImGui::EndDragDropTarget();
   }
@@ -82,8 +80,7 @@ void EditorWindows::EntitiesWindow() {
   ImGui::Begin("Entities");
   ImGui::SeparatorText("Scene");
   ImGui::BeginChild("Entities List", {-1, ImGui::GetContentRegionAvail().y});
-  auto entities =
-      ECS::EManager.GetSystemInstance<HierarchySystem>()->hierarchyEntityRoots;
+  auto entities = ECS::EManager.HierarchyRoots;
   static ImGuiTreeNodeFlags guiTreeNodeFlags =
       ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
       ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -102,33 +99,43 @@ void EditorWindows::AssetsWindow() {
 }
 
 inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
-  auto &transform = ECS::EManager.GetComponent<Transform>(selectedEntity);
+  auto transform = ECS::EManager.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
     ImGui::SeparatorText("Position");
-    ImGui::DragFloat(" :pos.X", &transform.Position.x, 0.001f, -MAX_FLOAT,
+    vec3 position = transform->Position();
+    vec3 scale = transform->Scale();
+    vec3 angles = transform->EulerAnglesDegree();
+    bool updatePosition = false;
+    updatePosition |= ImGui::DragFloat(" :pos.X", &position.x, 0.01f, -MAX_FLOAT,
                      MAX_FLOAT);
-    ImGui::DragFloat(" :pos.Y", &transform.Position.y, 0.001f, -MAX_FLOAT,
+    updatePosition |= ImGui::DragFloat(" :pos.Y", &position.y, 0.01f, -MAX_FLOAT,
                      MAX_FLOAT);
-    ImGui::DragFloat(" :pos.Z", &transform.Position.z, 0.001f, -MAX_FLOAT,
+    updatePosition |= ImGui::DragFloat(" :pos.Z", &position.z, 0.01f, -MAX_FLOAT,
                      MAX_FLOAT);
+    if (updatePosition)
+      transform->SetGlobalPosition(position);
 
+    bool updateScale = false;
     ImGui::SeparatorText("Scale");
-    ImGui::DragFloat(" :scale.X", &transform.Scale.x, 0.001f, -MAX_FLOAT,
+    updateScale |= ImGui::DragFloat(" :scale.X", &scale.x, 0.01f, -MAX_FLOAT,
                      MAX_FLOAT);
-    ImGui::DragFloat(" :scale.Y", &transform.Scale.y, 0.001f, -MAX_FLOAT,
+    updateScale |= ImGui::DragFloat(" :scale.Y", &scale.y, 0.01f, -MAX_FLOAT,
                      MAX_FLOAT);
-    ImGui::DragFloat(" :scale.Z", &transform.Scale.z, 0.001f, -MAX_FLOAT,
+    updateScale |= ImGui::DragFloat(" :scale.Z", &scale.z, 0.01f, -MAX_FLOAT,
                      MAX_FLOAT);
+    if (updateScale)
+      transform->SetGlobalScale(scale);
 
-    auto &euler = transform.EulerAngles;
     ImGui::SeparatorText("Rotation");
     bool updateRotation = false;
     updateRotation |=
-        ImGui::DragFloat(" :rot.X", &euler.x, 0.001f, -MAX_FLOAT, MAX_FLOAT);
+        ImGui::DragFloat(" :rot.X", &angles.x, 1.0f, -180.0f, 180.0f, "%.f");
     updateRotation |=
-        ImGui::DragFloat(" :rot.Y", &euler.y, 0.001f, -MAX_FLOAT, MAX_FLOAT);
+        ImGui::DragFloat(" :rot.Y", &angles.y, 1.0f, -180.0f, 180.0f, "%.f");
     updateRotation |=
-        ImGui::DragFloat(" :rot.Z", &euler.z, 0.001f, -MAX_FLOAT, MAX_FLOAT);
+        ImGui::DragFloat(" :rot.Z", &angles.z, 1.0f, -180.0f, 180.0f, "%.f");
+    if (updateRotation)
+      transform->SetGlobalRotationDegree(angles);
     ImGui::TreePop();
   }
 }
@@ -168,11 +175,15 @@ inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
                                 "Spot light"};
     static int baseLightGUIComboItemIndex = 0;
     ImGui::Combo("Light Type", &baseLightGUIComboItemIndex, comboItems, 3);
+    float lightColor[3] = {light.LightColor.x, light.LightColor.y, light.LightColor.z};
     if (baseLightGUIComboItemIndex == 0) {
-      ImGui::ColorEdit3("Light Color", light.LightColor);
+      ImGui::ColorEdit3("Light Color", lightColor);
     } else if (baseLightGUIComboItemIndex == 1) {
     } else if (baseLightGUIComboItemIndex == 2) {
     }
+    light.LightColor.x = lightColor[0];
+    light.LightColor.y = lightColor[1];
+    light.LightColor.z = lightColor[2];
     ImGui::TreePop();
   }
 }
@@ -188,8 +199,7 @@ void EditorWindows::ComponentsWindow() {
     ImGui::SeparatorText(entityName.c_str());
     ImGui::BeginChild("Components List",
                       {-1, ImGui::GetContentRegionAvail().y});
-    if (ECS::EManager.HasComponent<Transform>(selectedEntity))
-      DrawTransformGUI(selectedEntity);
+    DrawTransformGUI(selectedEntity);
     if (ECS::EManager.HasComponent<Camera>(selectedEntity))
       DrawCameraGUI(selectedEntity);
     if (ECS::EManager.HasComponent<BaseMaterial>(selectedEntity))
@@ -213,8 +223,8 @@ void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
   ImGui::BeginChild("GameRenderer");
   auto size = ImGui::GetContentRegionAvail();
   auto pos = ImGui::GetWindowPos();
-  ImGui::Image((void *)sceneBuffer->GetFrameTexture(), size, ImVec2(1, 1),
-               ImVec2(0, 0));
+  ImGui::Image((void *)sceneBuffer->GetFrameTexture(), size, ImVec2(0, 1),
+               ImVec2(1, 0));
   SceneWindowSize = {size.x, size.y};
   SceneWindowPos = {pos.x, pos.y};
   ImGui::EndChild();
@@ -248,13 +258,11 @@ bool EditorWindows::LoopCursorInSceneWindow() {
     cursorPos += SceneWindowPos;
     glfwSetCursorPos(&Core.Window(), cursorPos.x, cursorPos.y);
     return false;
-  } else
-    return true;
+  } else return true;
 }
 
 bool EditorWindows::SetActiveCamera(ECS::EntityID camera) {
-  if (ECS::EManager.HasComponent<Camera>(camera) &&
-      ECS::EManager.HasComponent<Transform>(camera)) {
+  if (ECS::EManager.HasComponent<Camera>(camera)) {
     hasActiveCamera = true;
     activeCamera = camera;
     return true;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Lights.hpp"
-#include "Transform.hpp"
 #include "ecs/ecs.hpp"
 #include "resource/ResourceManager.hpp"
 #include "resource/ResourceTypes.hpp"
@@ -75,7 +74,7 @@ public:
         string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
         string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
         shader->SetVec3(lightDirName, light.LightDir);
-        shader->SetVec3(lightColorName, vec3(light.LightColor[0], light.LightColor[1], light.LightColor[2]));
+        shader->SetVec3(lightColorName, light.LightColor);
         dirLightCounter++;
       } else if (light.Type == BaseLight::POINT_LIGHT) {
         string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
@@ -83,8 +82,8 @@ public:
             "pLightColor" + std::to_string(pointLightCounter);
         shader->SetVec3(
             lightPosName,
-            ECS::EManager.GetComponent<Transform>(light.GetID()).Position);
-        shader->SetVec3(lightColorName, vec3(light.LightColor[0], light.LightColor[1], light.LightColor[2]));
+            ECS::EManager.EntityFromID(light.GetID())->Position());
+        shader->SetVec3(lightColorName, light.LightColor);
         pointLightCounter++;
       } else if (light.Type == BaseLight::SPOT_LIGHT) {
       }

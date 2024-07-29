@@ -306,32 +306,28 @@ void ResourceManager::processNode(aiNode *node, const aiScene *scene,
   }
 }
 
-ECS::Entity *ResourceManager::GetModelEntity(string path) {
+Entity *ResourceManager::GetModelEntity(string path) {
   auto meshes = GetModel(path);
   if (meshes.size() > 0) {
     // flatten all meshes to a common parent
     auto parentObject = ECS::EManager.AddNewEntity();
     parentObject->name = path.substr(path.find_last_of("/\\") + 1);
-    // the parent transform only need a transform component
     // the render system only renders the entities with MeshRenderer component
     // in an list with no order (TODO: add order of rendering)
-    parentObject->AddComponent<Transform>();
     for (auto mesh : meshes) {
       auto childObject = ECS::EManager.AddNewEntity();
       childObject->name = mesh->name;
-      childObject->AddComponent<Transform>();
       childObject->AddComponent<MeshRenderer>(mesh);
       childObject->AddComponent<BaseMaterial>();
-      parentObject->AddChild(childObject);
+      parentObject->AssignChild(childObject);
     }
     return parentObject;
   } else
     return nullptr;
 }
 
-ECS::Entity *ResourceManager::GetPrimitiveEntity(PRIMITIVE_TYPE pType) {
+Entity *ResourceManager::GetPrimitiveEntity(PRIMITIVE_TYPE pType) {
   auto primitiveObject = ECS::EManager.AddNewEntity();
-  primitiveObject->AddComponent<Transform>();
   primitiveObject->AddComponent<BaseMaterial>();
   if (pType == PRIMITIVE_TYPE::CUBE) {
     primitiveObject->AddComponent<MeshRenderer>(cubePrimitive);

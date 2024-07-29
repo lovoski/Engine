@@ -18,15 +18,147 @@ class EntityManager {
 public:
   class Entity {
   public:
-    Entity(EntityID id, EntityManager *manager) : ID(id), MGR(manager) {}
+
+    friend class EntityManager;
+
+    Entity(EntityID id, EntityManager *manager) : ID(id), MGR(manager) {
+      m_scale = vec3(1.0f);
+      m_position = vec3(0.0f);
+      m_eulerAngles = vec3(0.0f);
+    }
     ~Entity() {
-      if (parent != nullptr) {
-        auto self = std::find(parent->children.begin(), parent->children.end(), this);
-        if (self != parent->children.end())
-          parent->children.erase(self);
-        parent = nullptr;
-      }
+      parent = nullptr;
       children.clear();
+    }
+
+    // global scale
+    const vec3 Scale() { return m_scale; };
+    // global rotation (pitch, yaw, roll) = (x, y, z)
+    // in radians
+    const vec3 EulerAngles() { return m_eulerAngles; }
+    // euler angles in degree
+    const vec3 EulerAnglesDegree() { return glm::degrees(m_eulerAngles); }
+    // global rotation
+    const quat Rotation() { return glm::quat(m_eulerAngles); }
+    // position under world axis
+    const vec3 Position() { return m_position; }
+
+    // scale relative to its parent's axis
+    vec3 localScale = vec3(1.0f);
+    // rotation relative to its parent's axis
+    quat localRotation = quat(1.0f, vec3(0.0f));
+    // position relative to its parent's axis
+    vec3 localPosition = vec3(0.0f);
+
+    static vec3 WorldUp, WorldLeft, WorldForward;
+
+    // local axis are updated at the start of each loop
+    vec3 LocalUp, LocalLeft, LocalForward;
+
+    // set global position
+    void SetGlobalPosition(vec3 p) {
+      // change global position, modify local position to satisfy the global
+      // position 
+      m_position = p;
+      // the local axis will be updated in GlobalToLocal function call
+      localPosition = GlobalToLocal(p);
+    }
+    // set global rotation (pitch, yaw, roll) = (x, y, z)
+    // in degrees
+    void SetGlobalRotationDegree(vec3 a) {
+      a = glm::radians(a);
+      SetGlobalRotation(a);
+    }
+    // set global rotation (pitch, yaw, roll) = (x, y, z)
+    // in radians
+    void SetGlobalRotation(vec3 a) {
+      quat parentOrien = GetParentOrientation();
+      localRotation = glm::inverse(parentOrien) * quat(a);
+      m_eulerAngles = a;
+      UpdateLocalAxis();
+    }
+    // set global rotation
+    void SetGlobalRotation(quat q) {
+      quat parentOrien = GetParentOrientation();
+      localRotation = glm::inverse(parentOrien) * q;
+      m_eulerAngles = glm::eulerAngles(q);
+      UpdateLocalAxis();
+    }
+    // set global scale
+    void SetGlobalScale(vec3 s) {
+      localScale = s / GetParentScale();
+      m_scale = s;
+    }
+
+    void UpdateLocalAxis() {
+      quat q = GetParentOrientation() * localRotation;
+      LocalForward = q * WorldForward;
+      LocalLeft = q * WorldLeft;
+      LocalUp = q * WorldUp;
+    }
+
+    // global position to the local position relative to its parent
+    const vec3 GlobalToLocal(vec3 globalPos) {
+      vec3 pLocalForward, pLocalLeft, pLocalUp;
+      GetParentLocalAxis(pLocalForward, pLocalLeft, pLocalUp);
+      // mat3 M_p = mat3(pLocalLeft.x, pLocalUp.x, pLocalForward.x,
+      //                 pLocalLeft.y, pLocalUp.y, pLocalForward.y,
+      //                 pLocalLeft.z, pLocalUp.z, pLocalForward.z);
+      // mat3 M = mat3(WorldLeft.x, WorldUp.x, WorldForward.x,
+      //               WorldLeft.y, WorldUp.y, WorldForward.y,
+      //               WorldLeft.z, WorldUp.z, WorldForward.z);
+      // TODO: always remembers how to intiailize a matrix
+      mat3 M_p(pLocalLeft, pLocalUp, pLocalForward);
+      mat3 M(WorldLeft, WorldUp, WorldForward);
+      return glm::inverse(M_p) * M * (globalPos - GetParentPosition());
+    }
+    // localposition relative to its parent to global position
+    const vec3 LocalToGlobal(vec3 localPos) {
+      vec3 pLocalForward, pLocalLeft, pLocalUp;
+      GetParentLocalAxis(pLocalForward, pLocalLeft, pLocalUp);
+      mat3 M_p(pLocalLeft, pLocalUp, pLocalForward);
+      mat3 M(WorldLeft, WorldUp, WorldForward);
+      return (glm::inverse(M) * M_p * localPos) + GetParentPosition();
+    }
+
+    const vec3 GetParentScale() {
+      if (parent == nullptr) return vec3(1.0f);
+      else return parent->m_scale;
+    }
+
+    const vec3 GetParentPosition() {
+      if (parent == nullptr) return vec3(0.0f);
+      else return parent->m_position;
+    }
+
+    // (self.orien = parent.orien * self.localRot)
+    // or (self.globalRot = parent.globalRot * self.localRot)
+    const quat GetParentOrientation() {
+      Entity *current = parent;
+      quat q(1.0f, vec3(0.0f)); // root.parent.orien
+      stack<quat> s;
+      while (current != nullptr) {
+        s.push(current->localRotation); // cur.localRot
+        current = current->parent;
+      }
+      while (!s.empty()) {
+        q = q * s.top();
+        s.pop();
+      }
+      return q;
+    }
+
+    void GetParentLocalAxis(vec3 &pLocalForward, vec3 &pLocalLeft, vec3 &pLocalUp) {
+      if (parent == nullptr) {
+        pLocalForward = WorldForward;
+        pLocalLeft = WorldLeft;
+        pLocalUp = WorldUp;
+      } else {
+        parent->UpdateLocalAxis();
+        pLocalForward = parent->LocalForward;
+        pLocalLeft = parent->LocalLeft;
+        pLocalUp = parent->LocalUp;
+      }
     }
 
     template <typename T, typename... Args> void AddComponent(Args &&...args) {
@@ -45,11 +177,31 @@ public:
 
     void Destroy() { MGR->DestroyEntity(ID); }
 
-    void AddChild(Entity *c) {
+    void AssignChild(Entity *c) {
       if (c == nullptr)
         throw std::runtime_error("can't set null pointer as child");
+      if (std::find(children.begin(), children.end(), c) != children.end()) {
+        printf("entity %d is already the child of entity %d", (unsigned int)c->ID, (unsigned int)ID);
+        return;
+      }
+      if (c->parent != nullptr) {
+        // remove c from its parent's list
+        auto it = std::find(c->parent->children.begin(), c->parent->children.end(), c);
+        if (it == c->parent->children.end())
+          throw std::runtime_error("entity is not a child of its parent");
+        c->parent->children.erase(it);
+      }
       children.push_back(c);
       c->parent = this;
+      // update the local properties with global properties
+      c->SetGlobalPosition(c->Position());
+      c->SetGlobalRotation(c->Rotation());
+      c->SetGlobalScale(c->Scale());
+    }
+
+    mat4 GetModelMatrix() {
+      return glm::translate(mat4(1.0f), m_position) * glm::mat4_cast(Rotation()) * glm::scale(mat4(1.0f), m_scale);
+      // return glm::translate(mat4(1.0f), m_position) * glm::transpose(glm::mat4_cast(Rotation())) * glm::scale(mat4(1.0f), m_scale);
     }
 
     EntityID ID;
@@ -59,6 +211,11 @@ public:
 
   protected:
     EntityManager *MGR;
+
+    vec3 m_position;
+    vec3 m_scale;
+    vec3 m_eulerAngles;
+
   };
 
   EntityManager() : entityCount(0) {
@@ -66,12 +223,11 @@ public:
     for (EntityID entity = 0u; entity < MAX_ENTITY_COUNT; ++entity) {
       availableEntities.push(entity);
     }
+    HierarchyRoots.reserve(MAX_ENTITY_COUNT);
   }
   EntityManager(const EntityManager &) = delete;
   const EntityManager &operator=(EntityManager &) = delete;
-  ~EntityManager() {
-    delete nullEntity;
-  }
+  ~EntityManager() { delete nullEntity; }
 
   static EntityManager &Ref() {
     static EntityManager reference;
@@ -87,6 +243,11 @@ public:
 
   // Update all the registered systems
   void Update() {
+    // update the transforms first
+    recomputeLocalAxis();
+    rebuildHierarchyStructure();
+
+    // other systems
     for (auto &system : registeredSystems) {
       system.second->Update();
     }
@@ -109,7 +270,8 @@ public:
 
   Entity *EntityFromID(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
-      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
+      throw std::runtime_error(
+          "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
     if (entities.count(entity) == 0) {
       Console.Log("[error]: No entity match this id: %ld\n", entity);
       return nullEntity;
@@ -118,15 +280,16 @@ public:
     }
   }
 
-  vector<Entity*> GetActiveEntities() {
-    vector<Entity*> result;
+  vector<Entity *> GetActiveEntities() {
+    vector<Entity *> result;
     for (auto &entity : entities) {
       result.push_back(&(*entity.second));
     }
     return result;
   }
 
-  // if one entity with children is destroyed, all its children entities will also be destroyed
+  // if one entity with children is destroyed, all its children entities will
+  // also be destroyed
   void DestroyEntity(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
       throw std::runtime_error("Destroying entity out of range");
@@ -151,9 +314,11 @@ public:
   template <typename T, typename... Args>
   void AddComponent(const EntityID entity, Args &&...args) {
     if (entity >= MAX_ENTITY_COUNT)
-      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during AddComponent");
+      throw std::runtime_error(
+          "EntityID out of range (MAX_ENTITY_COUNT) during AddComponent");
     if (entitiesSignatures[entity].get()->size() >= MAX_COMPONENT_COUNT)
-      throw std::runtime_error("Component count limit reached (MAX_COMPONENT_COUNT)");
+      throw std::runtime_error(
+          "Component count limit reached (MAX_COMPONENT_COUNT)");
 
     // create the component with parameters
     T component(std::forward<Args>(args)...);
@@ -171,7 +336,8 @@ public:
 
   template <typename T> void RemoveComponent(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
-      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during RemoveComponent");
+      throw std::runtime_error(
+          "EntityID out of range (MAX_ENTITY_COUNT) during RemoveComponent");
     const ComponentTypeID compType = ComponentType<T>();
     // each entity has only one component of a specified componenet type
     entitiesSignatures.at(entity).get()->erase(compType);
@@ -184,7 +350,8 @@ public:
   // find the component belongs to some entity
   template <typename T> T &GetComponent(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
-      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during GetComponent");
+      throw std::runtime_error(
+          "EntityID out of range (MAX_ENTITY_COUNT) during GetComponent");
     const ComponentTypeID compType = ComponentType<T>();
     return GetComponentList<T>()->Get(entity);
   }
@@ -193,7 +360,8 @@ public:
   // indicated type
   template <typename T> const bool HasComponent(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
-      throw std::runtime_error("EntityID out of range (MAX_ENTITY_COUNT) during HasComponent");
+      throw std::runtime_error(
+          "EntityID out of range (MAX_ENTITY_COUNT) during HasComponent");
     const EntitySignature signature = *(entitiesSignatures.at(entity));
     const ComponentTypeID compType = ComponentType<T>();
     auto it = std::find(signature.begin(), signature.end(), compType);
@@ -226,8 +394,10 @@ public:
     const SystemTypeID systemType = SystemType<T>();
     if (registeredSystems.count(systemType) == 0)
       throw std::runtime_error("System not registered");
-    return (T*)(registeredSystems[systemType].get());
+    return (T *)(registeredSystems[systemType].get());
   }
+
+  vector<Entity *> HierarchyRoots;
 
 private:
   // create a component list that stores a specified type of components
@@ -301,6 +471,36 @@ private:
     return id; // this entity can now access some components
   }
 
+  // the first
+  void recomputeLocalAxis() {
+    for (auto entity : entities) {
+      entity.second->UpdateLocalAxis();
+    }
+  }
+
+  // the second
+  void rebuildHierarchyStructure() {
+    HierarchyRoots.clear();
+    queue<Entity*> q;
+    for (auto entity : entities) {
+      if (entity.second->parent == nullptr) {
+        q.push(entity.second.get());
+        HierarchyRoots.push_back(entity.second.get());
+      }
+    }
+    while (!q.empty()) {
+      auto ent = q.front();
+      q.pop();
+      for (auto child : ent->children) {
+        // update global positions with local positions
+        child->m_position = child->LocalToGlobal(child->localPosition);
+        child->m_eulerAngles = glm::eulerAngles(child->GetParentOrientation() * child->localRotation);
+        child->m_scale = child->parent->m_scale * child->localScale;
+        q.push(child);
+      }
+    }
+  }
+
   // how many entities have been created
   EntityID entityCount;
   Entity *nullEntity;
@@ -312,7 +512,10 @@ private:
   std::map<ComponentTypeID, std::shared_ptr<IComponentList>> componentsArrays;
 };
 
-using Entity = EntityManager::Entity;
 static EntityManager &EManager = EntityManager::Ref();
 
 }; // namespace ECS
+
+using Entity = ECS::EntityManager::Entity;
+// alias to entity
+using Transform = ECS::EntityManager::Entity;
