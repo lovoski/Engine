@@ -150,19 +150,32 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
   }
 }
 
+// temporary solution to make life easier
+void CopyBaseMaterialToAllChildren(Entity *parent, BaseMaterial *material) {
+  for (auto child : parent->children) {
+    if (child->HasComponent<BaseMaterial>())
+      child->GetComponent<BaseMaterial>().base = material;
+    CopyBaseMaterialToAllChildren(child, material);
+  }
+}
+
 inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   auto &material = ECS::EManager.GetComponent<BaseMaterial>(selectedEntity);
   // Console.Log("vertex shader: %s\nfragment shader: %s\n",
   //             material.VertShader.c_str(), material.FragShader.c_str());
   if (ImGui::TreeNode("Base Material")) {
     ImGui::Separator();
-    // ImGui::Checkbox("Pass to children", &material.forceChildSameMaterial);
+    if (ImGui::Checkbox("Pass to children", &material.forceChildSameMaterial)) {
+      CopyBaseMaterialToAllChildren(ECS::EManager.EntityFromID(selectedEntity), &material);
+    }
 
     ImGui::Separator();
     ImGui::ColorEdit3("Albedo", material.Albedo);
+    ImGui::ColorEdit3("Specular", material.Specular);
 
     ImGui::Separator();
     ImGui::SliderFloat("Ambient", &material.Ambient, 0.0f, 1.0f);
+    ImGui::SliderFloat("Smoothness", &material.Smoothness, 1.0f, 64.0f);
 
     ImGui::TreePop();
   }

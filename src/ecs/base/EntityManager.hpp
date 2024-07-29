@@ -27,7 +27,13 @@ public:
       m_eulerAngles = vec3(0.0f);
     }
     ~Entity() {
-      parent = nullptr;
+      if (parent != nullptr) {
+        // remove this child from its parent's child list
+        auto it = std::find(parent->children.begin(), parent->children.end(), this);
+        if (it != parent->children.end())
+          parent->children.erase(it);
+        parent = nullptr;
+      }
       children.clear();
     }
 

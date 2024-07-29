@@ -312,6 +312,7 @@ Entity *ResourceManager::GetModelEntity(string path) {
     // flatten all meshes to a common parent
     auto parentObject = ECS::EManager.AddNewEntity();
     parentObject->name = path.substr(path.find_last_of("/\\") + 1);
+    parentObject->AddComponent<BaseMaterial>();
     // the render system only renders the entities with MeshRenderer component
     // in an list with no order (TODO: add order of rendering)
     for (auto mesh : meshes) {

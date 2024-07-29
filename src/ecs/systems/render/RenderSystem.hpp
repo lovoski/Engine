@@ -35,6 +35,8 @@ public:
     directionalLight->SetGlobalPosition(vec3(3.0f, 3.0f, 3.0f));
     directionalLight->AddComponent<BaseLight>(BaseLight::LIGHT_TYPE::DIRECTIONAL_LIGHT);
 
+    auto modelEntity = Resource::RManager.GetModelEntity(REPO_SOURCE_DIR "/assets/learnopengl/objects/backpack/backpack.obj");
+
     auto cubeObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::CUBE);
     cubeObject->SetGlobalPosition(vec3(3.0f, 0.0f, 0.0f));
 
@@ -44,8 +46,6 @@ public:
     auto planeObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::PLANE);
     planeObject->SetGlobalPosition(vec3(0.0f, -3.0f, 0.0f));
     planeObject->SetGlobalScale(vec3(10.0f, 1.0f, 5.0f));
-
-    auto modelEntity = Resource::RManager.GetModelEntity(REPO_SOURCE_DIR "/assets/learnopengl/objects/backpack/backpack.obj");
   }
 
   void Update() override {
@@ -57,8 +57,9 @@ public:
     if (EditorContext.GetActiveCamera(activeCamera)) {
       // draw all the entities if there's an active camera
       Camera cameraComp = ECS::EManager.GetComponent<Camera>(activeCamera);
-      Transform *cameraTrans = ECS::EManager.EntityFromID(activeCamera);
-      mat4 viewMatrix = cameraComp.GetViewMatrix(*cameraTrans);
+      Transform *camera = ECS::EManager.EntityFromID(activeCamera);
+      vec3 viewDir = -camera->LocalForward;
+      mat4 viewMatrix = cameraComp.GetViewMatrix(*camera);
       mat4 projMatrix = cameraComp.GetProjMatrixPerspective(
           EditorContext.SceneWindowSize.x, EditorContext.SceneWindowSize.y);
       for (auto entity : entities) {
@@ -68,7 +69,7 @@ public:
             ECS::EManager.HasComponent<BaseMaterial>(entity)
                 ? &ECS::EManager.GetComponent<BaseMaterial>(entity)
                 : &defaultMaterial;
-        renderer.Render(projMatrix, viewMatrix, *transform, material, activeBaseLights);
+        renderer.Render(projMatrix, viewMatrix, camera, transform, material, activeBaseLights);
       }
     }
     sceneBuffer->Unbind();

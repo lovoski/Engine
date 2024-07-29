@@ -62,6 +62,8 @@ public:
   void SetFixedVariables() {
     shader->SetVec3("Albedo", vec3(Albedo[0], Albedo[1], Albedo[2]));
     shader->SetFloat("Ambient", Ambient);
+    shader->SetFloat("Smoothness", Smoothness);
+    shader->SetVec3("Specular", vec3(Specular[0], Specular[1], Specular[2]));
   }
 
   void SetBaseLights(vector<BaseLight> &lights) {
@@ -94,13 +96,17 @@ public:
   }
 
   float Albedo[3] = {1.0f, 1.0f, 1.0f};
+  float Specular[3] = {1.0f, 1.0f, 1.0f};
   float Ambient = 0.1f;
+  float Smoothness = 32.0f;
 
   bool forceChildSameMaterial = false;
   bool materialDisabled = false;
 
   Resource::Shader *shader = nullptr;
   vector<Resource::Texture> textures;
+
+  BaseMaterial *base = nullptr;
 
   string VertShader, FragShader;
 };

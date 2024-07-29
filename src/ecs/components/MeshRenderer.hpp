@@ -12,12 +12,15 @@ public:
   MeshRenderer(Graphics::Mesh *mesh) : meshData(mesh) {}
   ~MeshRenderer() {}
 
-  void Render(mat4 projMat, mat4 viewMat, Transform &transform, BaseMaterial *material, vector<BaseLight> &lights) {
+  void Render(mat4 projMat, mat4 viewMat, Transform *camera, Transform *object, BaseMaterial *material, vector<BaseLight> &lights) {
+    // TODO: this is a temporary solution. fix latter
+    if (material->base != nullptr) material = material->base;
     Resource::Shader *shader = material->GetShader();
     shader->Use();
+    shader->SetVec3("ViewDir", -camera->LocalForward);
     shader->SetMat4("projection", projMat);
     shader->SetMat4("view", viewMat);
-    shader->SetMat4("model", transform.GetModelMatrix());
+    shader->SetMat4("model", object->GetModelMatrix());
     material->SetFixedVariables();
     material->SetBaseLights(lights);
     material->ActivateTextures();
