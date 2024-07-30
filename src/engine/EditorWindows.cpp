@@ -24,7 +24,24 @@ void EditorWindows::Destroy() {
   ImGui::DestroyContext();
 }
 
-void EditorWindows::MainMenuBar() {}
+void DrawProfiler() {}
+
+void EditorWindows::MainMenuBar() {
+  if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("File")) {
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Tools")) {
+      // if (ImGui::MenuItem("Show Profiler")) {
+      //   DrawProfiler();
+      // }
+      // if (ImGui::MenuItem("Show Style Editor")) {
+      //   ImGui::ShowStyleEditor();
+      // }
+      ImGui::EndMenu();
+    }
+  }
+}
 
 inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
                              ImGuiTreeNodeFlags nodeFlag) {
