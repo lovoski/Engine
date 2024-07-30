@@ -17,10 +17,12 @@ An experimental ECS game engine.
 - [x] Polish the component gui section, create editor for transform and camera component
 - [x] Create a basic material editor, write some actual shader code
 - [x] Create hierarchy system for the scene to update all the local transforms
-- [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
+- [ ] Test the reflection library, store the scene in some files
+- [ ] Update the material class, introduce reflection to offer more custom material designs
+- [ ] Support multi-pass rendering, allow user control from the material pannel
 - [ ] More realistic render effects (PBR, IBL, BRDF ... )
+- [ ] Integrate imgui gizmos library, make it easier to manipulate the scene
 - [ ] Create the animation system, write code to do the skinning and binding
-- [ ] Do the serilization to store the scene in some files
 
 ## ECS architecture
 
