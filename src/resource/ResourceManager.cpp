@@ -23,75 +23,24 @@ ResourceManager::ResourceManager() {
   planePrimitive = new Graphics::Mesh(vertices, indices);
   planePrimitive->name = "plane";
   // sphere
-  vertices.clear();
-  indices.clear();
-  Geometry::Icosphere icosphere(3);
-  auto gVertices = icosphere.GetVertices();
-  auto gFaces = icosphere.GetFaces();
-  for (auto &v : gVertices) {
-    vec3 position = {v.x, v.y, v.z};
-    vertices.push_back(
-        {position / 2.0f, normalize(position - vec3(0.0f)), vec2(0.0f)});
-  }
-  for (auto &f : gFaces) {
-    indices.push_back(f.v[0]);
-    indices.push_back(f.v[1]);
-    indices.push_back(f.v[2]);
-  }
-  spherePrimitive = new Graphics::Mesh(vertices, indices);
+  auto sphereMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/sphere.obj");
+  spherePrimitive = new Graphics::Mesh(sphereMesh[0]->vertices, sphereMesh[0]->indices);
   spherePrimitive->name = "sphere";
   // cube
-  vertices.clear();
-  indices.clear();
-  vertices.push_back(
-      {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}});
-  vertices.push_back(
-      {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}});
-  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}});
-  vertices.push_back(
-      {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
-  vertices.push_back(
-      {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
-  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
-  vertices.push_back({{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
-  vertices.push_back({{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back(
-      {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}});
-  vertices.push_back({{0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{-0.5f, -0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});
-  vertices.push_back(
-      {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}});
-  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}});
-  vertices.push_back({{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}});
-  for (int i = 0; i < 36; ++i)
-    indices.push_back(i);
-  cubePrimitive = new Graphics::Mesh(vertices, indices);
+  auto cubeMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/cube.obj");
+  cubePrimitive = new Graphics::Mesh(cubeMesh[0]->vertices, cubeMesh[0]->indices);
   cubePrimitive->name = "cube";
+  // cylinder
+  auto cylinderMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/cylinder.obj");
+  cylinderPrimitive = new Graphics::Mesh(cylinderMesh[0]->vertices, cylinderMesh[0]->indices);
+  cylinderPrimitive->name = "cylinder";
+  // cone
+  auto coneMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/cone.obj");
+  conePrimitive = new Graphics::Mesh(coneMesh[0]->vertices, coneMesh[0]->indices);
+  conePrimitive->name = "cone";
 
   // load icon library with specified order
-  iconTextures.push_back(textureFromFile(REPO_SOURCE_DIR "/src/icons/NULL.png"));
+  iconTextures.push_back(textureFromFile(REPO_SOURCE_DIR "/src/default/icons/NULL.png"));
 }
 
 ResourceManager::~ResourceManager() {
@@ -101,9 +50,16 @@ ResourceManager::~ResourceManager() {
     delete shaderLoaded[i];
   for (auto matData : matDataLoaded)
     delete matData.second;
-  delete planePrimitive;
-  delete spherePrimitive;
-  delete cubePrimitive;
+  if (planePrimitive)
+    delete planePrimitive;
+  if (spherePrimitive)
+    delete spherePrimitive;
+  if (cubePrimitive)
+    delete cubePrimitive;
+  if (cylinderPrimitive)
+    delete cylinderPrimitive;
+  if (conePrimitive)
+    delete conePrimitive;
 }
 
 void ResourceManager::DumpProjectConfigFile(string projectConfigPath) {
@@ -242,9 +198,11 @@ Mesh *ResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
     return cubePrimitive;
   } else if (pType == PRIMITIVE_TYPE::PLANE) {
     return planePrimitive;
-  } else {
-    return nullptr;
-  }
+  } else if (pType == PRIMITIVE_TYPE::CYLINDER) {
+    return cylinderPrimitive;
+  } else if (pType == PRIMITIVE_TYPE::CONE) {
+    return conePrimitive;
+  } else return nullptr;
 }
 
 vector<Texture> ResourceManager::loadMaterialTextures(aiMaterial *mat,
@@ -412,8 +370,13 @@ Entity *ResourceManager::GetPrimitiveEntity(PRIMITIVE_TYPE pType) {
   } else if (pType == PRIMITIVE_TYPE::PLANE) {
     primitiveObject->AddComponent<MeshRenderer>(planePrimitive);
     primitiveObject->name = "Plane";
-  } else
-    return nullptr;
+  } else if (pType == PRIMITIVE_TYPE::CYLINDER) {
+    primitiveObject->AddComponent<MeshRenderer>(cylinderPrimitive);
+    primitiveObject->name = "Cylinder";
+  } else if (pType == PRIMITIVE_TYPE::CONE) {
+    primitiveObject->AddComponent<MeshRenderer>(conePrimitive);
+    primitiveObject->name = "Cone";
+  } else return nullptr;
   return primitiveObject;
 }
 

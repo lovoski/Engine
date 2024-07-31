@@ -65,6 +65,8 @@ private:
   Mesh *cubePrimitive;
   Mesh *planePrimitive;
   Mesh *spherePrimitive;
+  Mesh *cylinderPrimitive;
+  Mesh *conePrimitive;
 
   unsigned int textureFromFile(string texturePath, bool gamma = false);
 

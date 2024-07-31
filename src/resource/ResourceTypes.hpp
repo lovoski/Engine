@@ -19,7 +19,7 @@ struct Texture {
   string name;
 };
 
-enum PRIMITIVE_TYPE { CUBE, SPHERE, CYLINDER, PLANE };
+enum PRIMITIVE_TYPE { CUBE, SPHERE, CYLINDER, PLANE, CONE };
 
 enum ICON_TYPE { NULL_TYPE };
 

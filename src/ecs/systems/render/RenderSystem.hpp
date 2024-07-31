@@ -46,6 +46,12 @@ public:
     auto planeObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::PLANE);
     planeObject->SetGlobalPosition(vec3(0.0f, -3.0f, 0.0f));
     planeObject->SetGlobalScale(vec3(10.0f, 1.0f, 5.0f));
+
+    auto cylinderObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::CYLINDER);
+    cylinderObject->SetGlobalPosition(vec3(0.0f, 0.0f, -3.0f));
+
+    auto coneObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::CONE);
+    coneObject->SetGlobalPosition(vec3(0.0f, 0.0f, 3.0f));
   }
 
   void Update() override {
