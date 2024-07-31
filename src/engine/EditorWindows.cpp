@@ -9,6 +9,8 @@ void EditorWindows::Initialize() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 
+  ImGui::StyleColorsLight();
+
   io = &ImGui::GetIO();
   io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -158,6 +160,15 @@ void EditorWindows::EntitiesWindow() {
     DrawHierarchyGUI(entities[i], selectedEntity, guiTreeNodeFlags);
   }
   ImGui::EndChild();
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("IMPORT_MODEL_ASSETS")) {
+      char *modelPath = (char *)payload->Data;
+      // Console.Log(modelPath);
+      auto modelEntity = Resource::RManager.GetModelEntity(modelPath);
+    }
+    ImGui::EndDragDropTarget();
+  }
   ImGui::End();
 }
 
@@ -183,19 +194,33 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
     if (!isDirectory) {
       if (fileExtension == ".material") {
         if (ImGui::BeginDragDropSource()) {
+          char matFilenameBuffer[100] = {0};
+          std::strcpy(matFilenameBuffer, entry.path().string().c_str());
           ImGui::SetDragDropPayload("MATERIAL_OVERRIDE",
-                                    entry.path().string().c_str(),
-                                    entry.path().string().size());
+                                    matFilenameBuffer,
+                                    sizeof(matFilenameBuffer));
           ImGui::Text("Drop at a material component to override");
           ImGui::EndDragDropSource();
         }
       } else if (fileExtension == ".obj" || fileExtension == ".fbx" ||
                  fileExtension == ".gltf") {
         if (ImGui::BeginDragDropSource()) {
+          char modelFilenameBuffer[100] = {0};
+          std::strcpy(modelFilenameBuffer, entry.path().string().c_str());
           ImGui::SetDragDropPayload("IMPORT_MODEL_ASSETS",
-                                    entry.path().string().c_str(),
-                                    entry.path().string().size());
+                                    modelFilenameBuffer,
+                                    sizeof(modelFilenameBuffer));
           ImGui::Text("Drop at the entity window to import");
+          ImGui::EndDragDropSource();
+        }
+      } else if (fileExtension == ".png" || fileExtension == ".bmp" || fileExtension == ".jpg") {
+        if (ImGui::BeginDragDropSource()) {
+          char textureFilenameBuffer[100] = {0};
+          std::strcpy(textureFilenameBuffer, entry.path().string().c_str());
+          ImGui::SetDragDropPayload("LOAD_TEXTURE",
+                                    textureFilenameBuffer,
+                                    sizeof(textureFilenameBuffer));
+          ImGui::Text("Drop at the material texture spot to load");
           ImGui::EndDragDropSource();
         }
       }
@@ -315,12 +340,55 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       }
       ImGui::EndDragDropTarget();
     }
-    // shader information
-    ImGui::Text("Vertex Shader: %s", material.VertShaderPath.c_str());
-    ImGui::Text("Fragment Shader: %s", material.FragShaderPath.c_str());
+
+    // // shader information
+    // ImGui::Text("Vertex Shader: %s", material.VertShaderPath.c_str());
+    // ImGui::Text("Fragment Shader: %s", material.FragShaderPath.c_str());
+
     // get the pointer
     auto ptr = material.matData;
     // construct dynamic material editor from the maps
+    if (ImGui::Button("New Variable", {-1, 30})) {
+      ImGui::OpenPopup("AddNewVariable");
+    }
+    if (ImGui::BeginPopup("AddNewVariable")) {
+      static char newVariableName[100];
+      static int selectedNewVariableType = 0;
+      const char *newVariableTypes[] = {"int", "float", "vec2", "vec3", "vec4", "texture"};
+      ImGui::SeparatorText("Create New Variable");
+      ImGui::Combo("New Variable Type", &selectedNewVariableType, newVariableTypes, 6);
+      ImGui::InputText("Variable Name", newVariableName, sizeof(newVariableName));
+      // float
+      static float minAndMax[2] = {0.0f, 1.0f};
+      if (selectedNewVariableType == 1) {
+        ImGui::InputFloat2("Min & Max", minAndMax);
+      }
+      if (ImGui::Button("Create", {-1, 30})) {
+        if (strlen(newVariableName) == 0) {
+          Console.Log("[error]: variable name can't be null\n");
+        } else {
+          if (selectedNewVariableType == 0) {
+            material.matData->AddVariable(newVariableName, 0);
+          } else if (selectedNewVariableType == 1) {
+            material.matData->AddVariable(newVariableName, 0.0f);
+          } else if (selectedNewVariableType == 2) {
+            material.matData->AddVariable(newVariableName, vec2(0.0f));
+          } else if (selectedNewVariableType == 3) {
+            material.matData->AddVariable(newVariableName, vec3(0.0f));
+          } else if (selectedNewVariableType == 4) {
+            material.matData->AddVariable(newVariableName, vec4(0.0f));
+          } else if (selectedNewVariableType == 5) {
+            Resource::Texture newTex;
+            newTex.type = "null";
+            material.matData->AddVariable(newVariableName, newTex);
+          }
+          std::strcpy(newVariableName, "");
+        }
+        ImGui::CloseCurrentPopup(); // close the popup after creating one variable
+      }
+      ImGui::EndPopup();
+    }
+    // int variables
     if (ptr->intVariables.size() > 0)
       ImGui::SeparatorText("Int Variables");
     for (auto &intVar : ptr->intVariables) {
@@ -330,6 +398,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       ImGui::SameLine();
       ImGui::InputInt(name.c_str(), &intVar.second);
     }
+    // float variables
     if (ptr->floatVariables.size() > 0)
       ImGui::SeparatorText("Float Variables");
     for (auto &floatVar : ptr->floatVariables) {
@@ -346,6 +415,8 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       ImGui::SameLine();
       ImGui::SliderFloat(name.c_str(), &floatVar.second, minRange, maxRange);
     }
+    static char floatVariableName[50];
+    // vec2 variable
     if (ptr->vec2Variables.size() > 0)
       ImGui::SeparatorText("Vec2 Variables");
     for (auto &vec2Var : ptr->vec2Variables) {
@@ -357,6 +428,8 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       if (ImGui::DragFloat2(name.c_str(), vec2Value))
         ptr->vec2Variables[vec2Var.first] = vec2(vec2Value[0], vec2Value[1]);
     }
+    static char vec2VariableName[50];
+    // vec3 variable
     if (ptr->vec3Variables.size() > 0)
       ImGui::SeparatorText("Vec3 Variables");
     for (auto &vec3Var : ptr->vec3Variables) {
@@ -376,6 +449,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
               vec3(vec3Value[0], vec3Value[1], vec3Value[2]);
       }
     }
+    // vec4 variable
     if (ptr->vec4Variables.size() > 0)
       ImGui::SeparatorText("Vec4 Variables");
     for (auto &vec4Var : ptr->vec4Variables) {
@@ -396,6 +470,35 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       }
     }
     ImGui::TreePop();
+    // texture variable
+    if (ptr->texVariables.size() > 0)
+      ImGui::SeparatorText("Texture Variable");
+    const int textureSize = 128;
+    for (auto &texVar : ptr->texVariables) {
+      string name = ptr->variableNames[texVar.first];
+      if (ImGui::Button(("X##" + name).c_str()))
+        ptr->RemoveVariable<Resource::Texture>(name);
+      ImGui::SameLine();
+      if (texVar.second.type == "null") {
+        // can be replaced with new texture
+        ImGui::Image((void *)Resource::RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE), {textureSize, textureSize});
+        if (ImGui::BeginDragDropTarget()) {
+          if (const ImGuiPayload *payload =
+                  ImGui::AcceptDragDropPayload("LOAD_TEXTURE")) {
+            char *texturePath = (char *)payload->Data;
+            auto newTexture = Resource::RManager.GetTextureFromImage(texturePath);
+            texVar.second = newTexture; // replace upload texture with actual loaded texture
+          }
+          ImGui::EndDragDropTarget();
+        }
+        ImGui::SameLine();
+        ImGui::Text("Drop Texture Here");
+      } else {
+        ImGui::Image((void *)texVar.second.id, {textureSize, textureSize});
+        ImGui::SameLine();
+        ImGui::Text(ptr->variableNames[texVar.first].c_str());
+      }
+    }
   }
 }
 
@@ -420,7 +523,7 @@ inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
   }
 }
 
-void EditorWindows::ComponentsWindow() {
+void EditorWindows::InspectorWindow() {
   ImGui::Begin("Components");
   if (ImGui::Button("Add Component", {-1, 40})) {
     Console.Log("add component\n");
@@ -466,7 +569,7 @@ void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
 
   EntitiesWindow();
   ConsoleWindow();
-  ComponentsWindow();
+  InspectorWindow();
   AssetsWindow();
 }
 

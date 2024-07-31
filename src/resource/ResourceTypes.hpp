@@ -16,8 +16,11 @@ struct Texture {
   unsigned int id;
   string type;
   string path;
+  string name;
 };
 
 enum PRIMITIVE_TYPE { CUBE, SPHERE, CYLINDER, PLANE };
+
+enum ICON_TYPE { NULL_TYPE };
 
 }; // namespace Resource

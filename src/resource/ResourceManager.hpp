@@ -50,6 +50,8 @@ public:
   void DumpProjectConfigFile(string projectConfigPath);
   void LoadProjectConfigFile(string projectConfigPath);
 
+  unsigned int GetIcon(ICON_TYPE iconType) { return iconTextures[(unsigned int)iconType]; }
+
 private:
   // stores all the loaded textures
   vector<Texture> texturesLoaded;
@@ -78,6 +80,8 @@ private:
   // the project settings
 
   string projectRootDir = REPO_SOURCE_DIR "/assets";
+
+  vector<unsigned int> iconTextures;
 
 };
 

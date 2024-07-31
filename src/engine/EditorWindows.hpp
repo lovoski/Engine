@@ -30,7 +30,7 @@ public:
   void EntitiesWindow();
   void ConsoleWindow();
   void AssetsWindow();
-  void ComponentsWindow();
+  void InspectorWindow();
 
   // Define the gui layout, returns the available size for scene rendering
   void RenderStart(Graphics::FrameBuffer *sceneBuffer);
@@ -64,6 +64,11 @@ private:
   ECS::EntityID activeCamera;
 
   ECS::EntityID selectedEntity = -1;
+
+  bool showEntityWindow = true;
+  bool showAssetsWindow = true;
+  bool showConsoleWindow = true;
+  bool showInspectorWindow = true;
 };
 
 static EditorWindows &EditorContext = EditorWindows::Ref();
