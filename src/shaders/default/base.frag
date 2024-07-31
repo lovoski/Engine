@@ -6,8 +6,8 @@ uniform vec3 dLightColor0;
 
 uniform vec3 ViewDir;
 
+uniform int Smoothness;
 uniform float Ambient;
-uniform float Smoothness;
 uniform vec3 Specular;
 
 in vec2 texCoord;
@@ -30,7 +30,7 @@ void main() {
   float spec = pow(max(dot(ViewDir, reflectDir), 0.0), Smoothness);
   vec3 specular = dLightColor0 * (spec * Specular);
 
-  vec3 result = ambient + diffuse + specular;
+  vec3 result = ambient + diffuse;
 
   FragColor = vec4(result, 1.0);
 }

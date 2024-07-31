@@ -2,7 +2,7 @@
 #include "ecs/components/Material.hpp"
 #include "ecs/components/MeshRenderer.hpp"
 #include "geometry/Mesh.hpp"
-
+#include "utils/Reflection.hpp"
 
 namespace Resource {
 
@@ -92,16 +92,79 @@ ResourceManager::~ResourceManager() {
     delete meshLoaded[i];
   for (int i = 0; i < shaderLoaded.size(); ++i)
     delete shaderLoaded[i];
+  for (auto matData : matDataLoaded)
+    delete matData.second;
   delete planePrimitive;
   delete spherePrimitive;
   delete cubePrimitive;
 }
 
-Shader *ResourceManager::GetShader(string vertShaderPath,
-                                   string fragShaderPath) {
+void ResourceManager::DumpProjectConfigFile(string projectConfigPath) {
+  Json json;
+
+  // dump project settings
+
+  // locations to the scene files
+
+  std::ofstream projectConfigOutput(projectConfigPath);
+  if (!projectConfigOutput.is_open()) {
+    cout << "error dumping project config file" << endl;
+    return;
+  }
+  projectConfigOutput << json;
+  projectConfigOutput.close();
+}
+
+void ResourceManager::LoadProjectConfigFile(string projectConfigPath) {
+  Json json;
+  std::ifstream projectConfigInput(projectConfigPath);
+  if (!projectConfigInput.is_open()) {
+    cout << "error loading project config file" << endl;
+    return;
+  }
+  projectConfigInput >> json;
+  projectConfigInput.close();
+
+  projectRootDir = projectConfigPath.substr(0, projectConfigPath.find_last_of("\\/"));
+  cout << "Load project at : " << projectRootDir << endl;
+  cout << "Project settings: \n" << json << endl;
+}
+
+
+vector<string> ResourceManager::GetAvailableMaterials() {
+  vector<string> materialIdentifiers;
+  for (auto ele : matDataNameToID) {
+    materialIdentifiers.push_back(ele.first);
+  }
+  return materialIdentifiers;
+}
+
+MaterialData *ResourceManager::GetMaterialData(string identifier) {
+  if (matDataNameToID.find(identifier) == matDataNameToID.end()) {
+    // create the new material data
+    MaterialData *matData = new MaterialData();
+    matData->identifier = matDataCounter;
+    // setup the default material properties
+    matData->SetDefaultMaterial();
+    matDataNameToID[identifier] = matDataCounter;
+    matDataLoaded[matDataCounter] = matData;
+    matDataCounter++;
+    return matData;
+  } else {
+    auto id = matDataNameToID[identifier];
+    return matDataLoaded[id];
+  }
+}
+
+Shader *ResourceManager::GetShader(string vertShaderPath, string fragShaderPath,
+                                   bool forceReload) {
   for (auto i = 0; i < shaderLoaded.size(); ++i) {
     if (shaderLoaded[i]->vertexShaderPath == vertShaderPath &&
         shaderLoaded[i]->fragShaderPath == fragShaderPath) {
+      // reload the shader if specified
+      if (forceReload)
+        shaderLoaded[i]->LoadAndCompileShader(vertShaderPath.c_str(),
+                                              fragShaderPath.c_str());
       return shaderLoaded[i];
     }
   }

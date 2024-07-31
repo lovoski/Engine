@@ -45,7 +45,6 @@ public:
     }
   }
 
-private:
   vector<T> data;
 };
 

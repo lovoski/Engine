@@ -5,10 +5,15 @@
 #include "resource/ResourceManager.hpp"
 #include "resource/ResourceTypes.hpp"
 #include "resource/Shader.hpp"
+#include "resource/MaterialData.hpp"
 
 class BaseMaterial : public ECS::BaseComponent {
+  SerializableType(BaseMaterial);
 public:
-  BaseMaterial() { SetShader(); }
+  BaseMaterial() {
+    SetShader();
+    SetMaterialData();
+  }
   ~BaseMaterial() {}
 
   void SetShader(string vertShaderPath = REPO_SOURCE_DIR
@@ -16,54 +21,28 @@ public:
                  string fragShaderPath = REPO_SOURCE_DIR
                  "/src/shaders/default/base.frag") {
     shader = Resource::RManager.GetShader(vertShaderPath, fragShaderPath);
-    VertShader = vertShaderPath;
-    FragShader = fragShaderPath;
+    VertShaderPath = vertShaderPath;
+    FragShaderPath = fragShaderPath;
+  }
+  void SetMaterialData(string identifier="base material") {
+    matData = Resource::RManager.GetMaterialData(identifier);
+    matIdentifier = identifier;
   }
   Resource::Shader *GetShader() {
-    if (this->shader == nullptr) {
+    if (shader == nullptr)
       Console.Log("[error]: material has no valid shader\n");
-    }
-    return this->shader;
+    return shader;
+  }
+  MaterialData *GetMaterialData() {
+    if (matData == nullptr)
+      Console.Log("[error]: material has no valid material data\n");
+    return matData;
   }
 
-  void SetTextures(vector<Resource::Texture> textures) {
-    this->textures = textures;
-  }
-
-  void ActivateTextures() {
-    // bind appropriate textures
-    unsigned int diffuseNr = 0, specularNr = 0, normalNr = 0, heightNr = 0;
-    unsigned int imageTexCounter = 0;
-    for (unsigned int i = 0; i < textures.size(); i++) {
-      glActiveTexture(GL_TEXTURE0 +
-                      i); // active proper texture unit before binding
-      // retrieve texture number (the N in diffuse_textureN)
-      string number;
-      string name = textures[i].type;
-      if (name == "texture_diffuse")
-        number = std::to_string(diffuseNr++);
-      else if (name == "texture_specular")
-        number =
-            std::to_string(specularNr++); // transfer unsigned int to string
-      else if (name == "texture_normal")
-        number = std::to_string(normalNr++); // transfer unsigned int to string
-      else if (name == "texture_height")
-        number = std::to_string(heightNr++); // transfer unsigned int to string
-      else if (name == "imageTex") // custom loaded image texture
-        number = std::to_string(imageTexCounter++);
-
-      // now set the sampler to the correct texture unit
-      glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), i);
-      // and finally bind the texture
-      glBindTexture(GL_TEXTURE_2D, textures[i].id);
-    }
-  }
-
-  void SetFixedVariables() {
-    shader->SetVec3("Albedo", vec3(Albedo[0], Albedo[1], Albedo[2]));
-    shader->SetFloat("Ambient", Ambient);
-    shader->SetFloat("Smoothness", Smoothness);
-    shader->SetVec3("Specular", vec3(Specular[0], Specular[1], Specular[2]));
+  // pass variables and textures to shaders
+  void SetBaseVariables() {
+    setFixedVariables();
+    activateTextures();
   }
 
   void SetBaseLights(vector<BaseLight> &lights) {
@@ -95,18 +74,59 @@ public:
     }
   }
 
-  float Albedo[3] = {1.0f, 1.0f, 1.0f};
-  float Specular[3] = {1.0f, 1.0f, 1.0f};
-  float Ambient = 0.1f;
-  float Smoothness = 32.0f;
-
-  bool forceChildSameMaterial = false;
-  bool materialDisabled = false;
-
   Resource::Shader *shader = nullptr;
-  vector<Resource::Texture> textures;
+  string VertShaderPath, FragShaderPath;
 
-  BaseMaterial *base = nullptr;
+  MaterialData *matData = nullptr;
+  string matIdentifier;
+private:
 
-  string VertShader, FragShader;
+  // if there's any changes in these properties, these variables must be updated
+  void setFixedVariables() {
+    for (auto intVar : matData->intVariables)
+      shader->SetInt(matData->variableNames[intVar.first], intVar.second);
+    for (auto floatVar : matData->floatVariables)
+      shader->SetFloat(matData->variableNames[floatVar.first], floatVar.second);
+    for (auto vec2Var : matData->vec2Variables)
+      shader->SetVec2(matData->variableNames[vec2Var.first], vec2Var.second);
+    for (auto vec3Var : matData->vec3Variables)
+      shader->SetVec3(matData->variableNames[vec3Var.first], vec3Var.second);
+    for (auto vec4Var : matData->vec4Variables)
+      shader->SetVec4(matData->variableNames[vec4Var.first], vec4Var.second);
+    for (auto mat3Var : matData->mat3Variables)
+      shader->SetMat3(matData->variableNames[mat3Var.first], mat3Var.second);
+    for (auto mat4Var : matData->mat4Variables)
+      shader->SetMat4(matData->variableNames[mat4Var.first], mat4Var.second);
+  }
+
+  void activateTextures() {
+    // bind appropriate textures
+    unsigned int diffuseNr = 0, specularNr = 0, normalNr = 0, heightNr = 0;
+    unsigned int imageTexCounter = 0;
+    unsigned int texCounter = 0;
+    for (auto tex : matData->texVariables) {
+      glActiveTexture(GL_TEXTURE0 +
+                      texCounter); // active proper texture unit before binding
+      // retrieve texture number (the N in diffuse_textureN)
+      string number;
+      string name = tex.second.type;
+      if (name == "texture_diffuse")
+        number = std::to_string(diffuseNr++);
+      else if (name == "texture_specular")
+        number =
+            std::to_string(specularNr++); // transfer unsigned int to string
+      else if (name == "texture_normal")
+        number = std::to_string(normalNr++); // transfer unsigned int to string
+      else if (name == "texture_height")
+        number = std::to_string(heightNr++); // transfer unsigned int to string
+      else if (name == "imageTex") // custom loaded image texture
+        number = std::to_string(imageTexCounter++);
+
+      // now set the sampler to the correct texture unit
+      glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), texCounter);
+      // and finally bind the texture
+      glBindTexture(GL_TEXTURE_2D, tex.second.id);
+      texCounter++;
+    }
+  }
 };

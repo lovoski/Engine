@@ -7,11 +7,21 @@ namespace Resource {
 class Shader {
 public:
   string vertexShaderPath, fragShaderPath;
-  unsigned int ID;
+  unsigned int ID = 0;
   // constructor generates the shader on the fly
   // ------------------------------------------------------------------------
   Shader(const char *vertexPath, const char *fragmentPath,
          const char *geometryPath = nullptr) {
+    LoadAndCompileShader(vertexPath, fragmentPath, geometryPath);
+  }
+
+  ~Shader() { glDeleteProgram(ID); }
+
+  void LoadAndCompileShader(const char *vertexPath, const char *fragmentPath,
+                            const char *geometryPath = nullptr) {
+    // delete previous program if exists
+    if (ID != 0)
+      glDeleteProgram(ID);
     // 1. retrieve the vertex/fragment source code from filePath
     vertexShaderPath = vertexPath;
     fragShaderPath = fragmentPath;
@@ -89,8 +99,6 @@ public:
     if (geometryPath != nullptr)
       glDeleteShader(geometry);
   }
-
-  ~Shader() { glDeleteProgram(ID); }
 
   void Use() { glUseProgram(ID); }
   void SetBool(const std::string &name, bool value) const {

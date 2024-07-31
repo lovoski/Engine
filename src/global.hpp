@@ -23,6 +23,7 @@
 #include <vector>
 #include <limits>
 #include <stack>
+#include <tuple>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

@@ -31,14 +31,24 @@ public:
   Entity *GetModelEntity(string path);
   // create render ready primitive
   Entity *GetPrimitiveEntity(PRIMITIVE_TYPE pType);
+  // shaders are identified by their vertex and fragment shader path
+  Shader *GetShader(string vertShaderPath, string fragShaderPath, bool forceReload=false);
+  // materials are identified by a string identifier
+  MaterialData *GetMaterialData(string identifier);
 
-  Shader *GetShader(string vertShaderPath, string fragShaderPath);
+  // get all the identifiers of available materials
+  vector<string> GetAvailableMaterials();
+
+  string GetProjectRootDir() { return projectRootDir; }
 
   vector<Texture> GetAllLoadedTextures() { return texturesLoaded; }
   vector<Mesh *> GetAllLoadedMeshes() { return meshLoaded; }
   vector<Shader *> GetAllLoadedShaders() { return shaderLoaded; }
 
   Texture GetTextureFromImage(string imageFilePath);
+
+  void DumpProjectConfigFile(string projectConfigPath);
+  void LoadProjectConfigFile(string projectConfigPath);
 
 private:
   // stores all the loaded textures
@@ -47,6 +57,8 @@ private:
   vector<Shader *> shaderLoaded;
   // stores all the loaded meshes
   vector<Mesh *> meshLoaded;
+  // stores all the loaded material data
+  std::map<unsigned int, MaterialData *> matDataLoaded;
 
   Mesh *cubePrimitive;
   Mesh *planePrimitive;
@@ -59,6 +71,14 @@ private:
   Graphics::Mesh *processMesh(aiMesh *, const aiScene *);
 
   void processNode(aiNode *, const aiScene *, vector<Graphics::Mesh *> &);
+
+  unsigned int matDataCounter = 0;
+  std::map<string, unsigned int> matDataNameToID;
+
+  // the project settings
+
+  string projectRootDir = REPO_SOURCE_DIR "/assets";
+
 };
 
 static ResourceManager &RManager = ResourceManager::Ref();

@@ -1,5 +1,9 @@
 #include "EditorWindows.hpp"
+#include "resource/MaterialData.hpp"
 #include "roboto.h"
+
+// c++ 17 feature
+#include <filesystem>
 
 void EditorWindows::Initialize() {
   IMGUI_CHECKVERSION();
@@ -29,17 +33,29 @@ void DrawProfiler() {}
 void EditorWindows::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
+      ImGui::SeparatorText("Project");
+      if (ImGui::MenuItem("Load Project")) {
+      }
+      if (ImGui::MenuItem("Save Project")) {
+      }
+      // ImGui::SeparatorText("Scene");
+      // if (ImGui::MenuItem("Save Scene")) {
+      //   std::ofstream jsonOut("test_scene.json");
+      //   jsonOut << ECS::EManager.CaptureStatesAsScene() << endl;
+      //   jsonOut.close();
+      // }
+
       ImGui::EndMenu();
     }
-    if (ImGui::BeginMenu("Tools")) {
-      // if (ImGui::MenuItem("Show Profiler")) {
-      //   DrawProfiler();
-      // }
-      // if (ImGui::MenuItem("Show Style Editor")) {
-      //   ImGui::ShowStyleEditor();
-      // }
-      ImGui::EndMenu();
-    }
+    // if (ImGui::BeginMenu("Tools")) {
+    //   // if (ImGui::MenuItem("Show Profiler")) {
+    //   //   DrawProfiler();
+    //   // }
+    //   // if (ImGui::MenuItem("Show Style Editor")) {
+    //   //   ImGui::ShowStyleEditor();
+    //   // }
+    //   ImGui::EndMenu();
+    // }
   }
 }
 
@@ -110,49 +126,91 @@ void EditorWindows::EntitiesWindow() {
 
 void EditorWindows::ConsoleWindow() { Console.Draw("Console"); }
 
+void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
+                       ImGuiTreeNodeFlags parentFlag, int &selectedFile) {
+  for (const auto &entry : std::filesystem::directory_iterator(parentPath)) {
+    ImGuiTreeNodeFlags finalFlags = parentFlag;
+    bool isDirectory = std::filesystem::is_directory(entry);
+    if (!isDirectory)
+      finalFlags |= ImGuiTreeNodeFlags_Bullet;
+    if (selectedFile == parentTreeNodeInd)
+      finalFlags |= ImGuiTreeNodeFlags_Selected;
+    bool isOpen = ImGui::TreeNodeEx((entry.path().filename().string() + "##" +
+                         std::to_string(parentTreeNodeInd++))
+                            .c_str(), finalFlags);
+    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+      selectedFile = parentTreeNodeInd-1;
+    // judge the file type from its extension
+    string fileExtension = entry.path().extension().string();
+    if (!isDirectory && fileExtension == ".material") {
+      if (ImGui::BeginDragDropSource()) {
+        ImGui::SetDragDropPayload("MATERIAL_OVERRIDE", entry.path().string().c_str(),
+                                  entry.path().string().size());
+        ImGui::Text("Drop at a material component to override");
+        ImGui::EndDragDropSource();
+      }
+    }
+    if (!isDirectory && (fileExtension == ".obj" || fileExtension == ".fbx" || fileExtension == ".gltf")) {
+      if (ImGui::BeginDragDropSource()) {
+        ImGui::SetDragDropPayload("IMPORT_MODEL_ASSETS", entry.path().string().c_str(),
+                                  entry.path().string().size());
+        ImGui::Text("Drop at the entity window to import");
+        ImGui::EndDragDropSource();
+      }
+    }
+    if (isOpen) {
+      if (isDirectory) {
+        // draw a diretory
+        DrawFileHierarchy(entry.path().string(), parentTreeNodeInd, parentFlag, selectedFile);
+      }
+      ImGui::TreePop();
+    }
+  }
+}
+
 void EditorWindows::AssetsWindow() {
   ImGui::Begin("Assets");
+  const string rootDir = Resource::RManager.GetProjectRootDir();
+  if (!std::filesystem::exists(rootDir) ||
+      !std::filesystem::is_directory(rootDir)) {
+    cout << "project root dir don't exists or isn't a directory (From "
+            "AssetsWindow)"
+         << endl;
+    return;
+  }
+  ImGui::SeparatorText("File Hierarchy");
+  ImGui::BeginChild("File Hierarchy List", {-1, ImGui::GetContentRegionAvail().y});
+  static int treeNodeInd = 0, selectedFile = 0;
+  treeNodeInd = 0;
+  ImGuiTreeNodeFlags parentFlag = ImGuiTreeNodeFlags_OpenOnArrow |
+                                  ImGuiTreeNodeFlags_OpenOnDoubleClick |
+                                  ImGuiTreeNodeFlags_SpanAvailWidth;
+  DrawFileHierarchy(rootDir, treeNodeInd, parentFlag, selectedFile);
+  ImGui::EndChild();
   ImGui::End();
 }
 
 inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
   auto transform = ECS::EManager.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
-    ImGui::SeparatorText("Position");
+    ImGui::SeparatorText("Global Properties");
     vec3 position = transform->Position();
     vec3 scale = transform->Scale();
     vec3 angles = transform->EulerAnglesDegree();
-    bool updatePosition = false;
-    updatePosition |= ImGui::DragFloat(" :pos.X", &position.x, 0.01f, -MAX_FLOAT,
-                     MAX_FLOAT);
-    updatePosition |= ImGui::DragFloat(" :pos.Y", &position.y, 0.01f, -MAX_FLOAT,
-                     MAX_FLOAT);
-    updatePosition |= ImGui::DragFloat(" :pos.Z", &position.z, 0.01f, -MAX_FLOAT,
-                     MAX_FLOAT);
-    if (updatePosition)
-      transform->SetGlobalPosition(position);
-
-    bool updateScale = false;
-    ImGui::SeparatorText("Scale");
-    updateScale |= ImGui::DragFloat(" :scale.X", &scale.x, 0.01f, -MAX_FLOAT,
-                     MAX_FLOAT);
-    updateScale |= ImGui::DragFloat(" :scale.Y", &scale.y, 0.01f, -MAX_FLOAT,
-                     MAX_FLOAT);
-    updateScale |= ImGui::DragFloat(" :scale.Z", &scale.z, 0.01f, -MAX_FLOAT,
-                     MAX_FLOAT);
-    if (updateScale)
-      transform->SetGlobalScale(scale);
-
-    ImGui::SeparatorText("Rotation");
-    bool updateRotation = false;
-    updateRotation |=
-        ImGui::DragFloat(" :rot.X", &angles.x, 1.0f, -180.0f, 180.0f, "%.f");
-    updateRotation |=
-        ImGui::DragFloat(" :rot.Y", &angles.y, 1.0f, -180.0f, 180.0f, "%.f");
-    updateRotation |=
-        ImGui::DragFloat(" :rot.Z", &angles.z, 1.0f, -180.0f, 180.0f, "%.f");
-    if (updateRotation)
-      transform->SetGlobalRotationDegree(angles);
+    float positions[3] = {position.x, position.y, position.z};
+    float scales[3] = {scale.x, scale.y, scale.z};
+    float rotations[3] = {angles.x, angles.y, angles.z};
+    if (ImGui::DragFloat3("Position", positions, 0.01f, -MAX_FLOAT, MAX_FLOAT))
+      ;
+    transform->SetGlobalPosition(
+        vec3(positions[0], positions[1], positions[2]));
+    if (ImGui::DragFloat3("Rotation", rotations, 1.0f, -180.0f, 180.0f))
+      ;
+    transform->SetGlobalRotationDegree(
+        vec3(rotations[0], rotations[1], rotations[2]));
+    if (ImGui::DragFloat3("Scale", scales, 0.01f, -MAX_FLOAT, MAX_FLOAT))
+      ;
+    transform->SetGlobalScale(vec3(scales[0], scales[1], scales[2]));
     ImGui::TreePop();
   }
 }
@@ -167,33 +225,101 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
   }
 }
 
-// temporary solution to make life easier
-void CopyBaseMaterialToAllChildren(Entity *parent, BaseMaterial *material) {
-  for (auto child : parent->children) {
-    if (child->HasComponent<BaseMaterial>())
-      child->GetComponent<BaseMaterial>().base = material;
-    CopyBaseMaterialToAllChildren(child, material);
-  }
-}
-
 inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   auto &material = ECS::EManager.GetComponent<BaseMaterial>(selectedEntity);
-  // Console.Log("vertex shader: %s\nfragment shader: %s\n",
-  //             material.VertShader.c_str(), material.FragShader.c_str());
   if (ImGui::TreeNode("Base Material")) {
-    ImGui::Separator();
-    if (ImGui::Checkbox("Pass to children", &material.forceChildSameMaterial)) {
-      CopyBaseMaterialToAllChildren(ECS::EManager.EntityFromID(selectedEntity), &material);
+    ImGui::SeparatorText(("Material Name: " + material.matIdentifier).c_str());
+    // change the texture in use by drag and drop
+    if (ImGui::BeginDragDropTarget()) {
+      if (const ImGuiPayload *payload =
+              ImGui::AcceptDragDropPayload("MATERIAL_OVERRIDE")) {
+        char *info = (char *)payload->Data;
+        Console.Log(info);
+        // ECS::EManager.EntityFromID(entity->ID)->AssignChild(newChild);
+      }
+      ImGui::EndDragDropTarget();
     }
-
-    ImGui::Separator();
-    ImGui::ColorEdit3("Albedo", material.Albedo);
-    ImGui::ColorEdit3("Specular", material.Specular);
-
-    ImGui::Separator();
-    ImGui::SliderFloat("Ambient", &material.Ambient, 0.0f, 1.0f);
-    ImGui::SliderFloat("Smoothness", &material.Smoothness, 1.0f, 64.0f);
-
+    // shader information
+    ImGui::Text("Vertex Shader: %s", material.VertShaderPath.c_str());
+    ImGui::Text("Fragment Shader: %s", material.FragShaderPath.c_str());
+    // get the pointer
+    auto ptr = material.matData;
+    // construct dynamic material editor from the maps
+    if (ptr->intVariables.size() > 0)
+      ImGui::SeparatorText("Int Variables");
+    for (auto &intVar : ptr->intVariables) {
+      string name = ptr->variableNames[intVar.first];
+      if (ImGui::Button(("X##"+name).c_str()))
+        ptr->RemoveVariable<int>(name);
+      ImGui::SameLine();
+      ImGui::InputInt(name.c_str(), &intVar.second);
+    }
+    if (ptr->floatVariables.size() > 0)
+      ImGui::SeparatorText("Float Variables");
+    for (auto &floatVar : ptr->floatVariables) {
+      float minRange = -10000.0f, maxRange = 10000.0f;
+      if (ptr->floatVariablesRange.find(floatVar.first) !=
+          ptr->floatVariablesRange.end()) {
+        auto range = ptr->floatVariablesRange[floatVar.first];
+        minRange = range.first;
+        maxRange = range.second;
+      }
+      string name = ptr->variableNames[floatVar.first];
+      if (ImGui::Button(("X##"+name).c_str()))
+        ptr->RemoveVariable<float>(name);
+      ImGui::SameLine();
+      ImGui::SliderFloat(name.c_str(),
+                         &floatVar.second, minRange, maxRange);
+    }
+    if (ptr->vec2Variables.size() > 0)
+      ImGui::SeparatorText("Vec2 Variables");
+    for (auto &vec2Var : ptr->vec2Variables) {
+      string name = ptr->variableNames[vec2Var.first];
+      float vec2Value[2] = {vec2Var.second.x, vec2Var.second.y};
+      if (ImGui::Button(("X##"+name).c_str()))
+        ptr->RemoveVariable<vec2>(name);
+      ImGui::SameLine();
+      if (ImGui::DragFloat2(name.c_str(), vec2Value))
+        ptr->vec2Variables[vec2Var.first] = vec2(vec2Value[0], vec2Value[1]);
+    }
+    if (ptr->vec3Variables.size() > 0)
+      ImGui::SeparatorText("Vec3 Variables");
+    for (auto &vec3Var : ptr->vec3Variables) {
+      string name = ptr->variableNames[vec3Var.first];
+      float vec3Value[3] = {vec3Var.second.x, vec3Var.second.y,
+                            vec3Var.second.z};
+      if (ImGui::Button(("X##"+name).c_str()))
+        ptr->RemoveVariable<vec3>(name);
+      ImGui::SameLine();
+      if (name == "Albedo" || name == "Specular") {
+        if (ImGui::ColorEdit3(name.c_str(), vec3Value))
+          ptr->vec3Variables[vec3Var.first] =
+              vec3(vec3Value[0], vec3Value[1], vec3Value[2]);
+      } else {
+        if (ImGui::DragFloat3(name.c_str(), vec3Value, 0.01f))
+          ptr->vec3Variables[vec3Var.first] =
+              vec3(vec3Value[0], vec3Value[1], vec3Value[2]);
+      }
+    }
+    if (ptr->vec4Variables.size() > 0)
+      ImGui::SeparatorText("Vec4 Variables");
+    for (auto &vec4Var : ptr->vec4Variables) {
+      string name = ptr->variableNames[vec4Var.first];
+      float vec4Value[4] = {vec4Var.second.x, vec4Var.second.y,
+                            vec4Var.second.z, vec4Var.second.w};
+      if (ImGui::Button(("X##"+name).c_str()))
+        ptr->RemoveVariable<vec4>(name);
+      ImGui::SameLine();
+      if (name == "Albedo" || name == "Specular") {
+        if (ImGui::ColorEdit4(name.c_str(), vec4Value))
+          ptr->vec4Variables[vec4Var.first] =
+              vec4(vec4Value[0], vec4Value[1], vec4Value[2], vec4Value[3]);
+      } else {
+        if (ImGui::DragFloat4(name.c_str(), vec4Value, 0.01f))
+          ptr->vec4Variables[vec4Var.first] =
+              vec4(vec4Value[0], vec4Value[1], vec4Value[2], vec4Value[3]);
+      }
+    }
     ImGui::TreePop();
   }
 }
@@ -205,7 +331,8 @@ inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
                                 "Spot light"};
     static int baseLightGUIComboItemIndex = 0;
     ImGui::Combo("Light Type", &baseLightGUIComboItemIndex, comboItems, 3);
-    float lightColor[3] = {light.LightColor.x, light.LightColor.y, light.LightColor.z};
+    float lightColor[3] = {light.LightColor.x, light.LightColor.y,
+                           light.LightColor.z};
     if (baseLightGUIComboItemIndex == 0) {
       ImGui::ColorEdit3("Light Color", lightColor);
     } else if (baseLightGUIComboItemIndex == 1) {
@@ -288,7 +415,8 @@ bool EditorWindows::LoopCursorInSceneWindow() {
     cursorPos += SceneWindowPos;
     glfwSetCursorPos(&Core.Window(), cursorPos.x, cursorPos.y);
     return false;
-  } else return true;
+  } else
+    return true;
 }
 
 bool EditorWindows::SetActiveCamera(ECS::EntityID camera) {

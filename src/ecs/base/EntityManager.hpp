@@ -5,6 +5,8 @@
 
 // systems update with the information in the entities have
 // the same signature to it
+
+// (EntityID)(-1) is a reserved null entity
 #pragma once
 
 #include "BaseComponent.hpp"
@@ -12,13 +14,16 @@
 #include "ComponentList.hpp"
 #include "Types.hpp"
 
+#include "utils/Reflection.hpp"
+
 namespace ECS {
 
 class EntityManager {
 public:
   class Entity {
-  public:
+    SerializableType(Entity);
 
+  public:
     friend class EntityManager;
 
     Entity(EntityID id, EntityManager *manager) : ID(id), MGR(manager) {
@@ -29,7 +34,8 @@ public:
     ~Entity() {
       if (parent != nullptr) {
         // remove this child from its parent's child list
-        auto it = std::find(parent->children.begin(), parent->children.end(), this);
+        auto it =
+            std::find(parent->children.begin(), parent->children.end(), this);
         if (it != parent->children.end())
           parent->children.erase(it);
         parent = nullptr;
@@ -64,7 +70,7 @@ public:
     // set global position
     void SetGlobalPosition(vec3 p) {
       // change global position, modify local position to satisfy the global
-      // position 
+      // position
       m_position = p;
       // the local axis will be updated in GlobalToLocal function call
       localPosition = GlobalToLocal(p);
@@ -128,13 +134,17 @@ public:
     }
 
     const vec3 GetParentScale() {
-      if (parent == nullptr) return vec3(1.0f);
-      else return parent->m_scale;
+      if (parent == nullptr)
+        return vec3(1.0f);
+      else
+        return parent->m_scale;
     }
 
     const vec3 GetParentPosition() {
-      if (parent == nullptr) return vec3(0.0f);
-      else return parent->m_position;
+      if (parent == nullptr)
+        return vec3(0.0f);
+      else
+        return parent->m_position;
     }
 
     // (self.orien = parent.orien * self.localRot)
@@ -154,7 +164,8 @@ public:
       return q;
     }
 
-    void GetParentLocalAxis(vec3 &pLocalForward, vec3 &pLocalLeft, vec3 &pLocalUp) {
+    void GetParentLocalAxis(vec3 &pLocalForward, vec3 &pLocalLeft,
+                            vec3 &pLocalUp) {
       if (parent == nullptr) {
         pLocalForward = WorldForward;
         pLocalLeft = WorldLeft;
@@ -187,12 +198,14 @@ public:
       if (c == nullptr)
         throw std::runtime_error("can't set null pointer as child");
       if (std::find(children.begin(), children.end(), c) != children.end()) {
-        printf("entity %d is already the child of entity %d", (unsigned int)c->ID, (unsigned int)ID);
+        printf("entity %d is already the child of entity %d",
+               (unsigned int)c->ID, (unsigned int)ID);
         return;
       }
       if (c->parent != nullptr) {
         // remove c from its parent's list
-        auto it = std::find(c->parent->children.begin(), c->parent->children.end(), c);
+        auto it = std::find(c->parent->children.begin(),
+                            c->parent->children.end(), c);
         if (it == c->parent->children.end())
           throw std::runtime_error("entity is not a child of its parent");
         c->parent->children.erase(it);
@@ -206,12 +219,16 @@ public:
     }
 
     mat4 GetModelMatrix() {
-      return glm::translate(mat4(1.0f), m_position) * glm::mat4_cast(Rotation()) * glm::scale(mat4(1.0f), m_scale);
-      // return glm::translate(mat4(1.0f), m_position) * glm::transpose(glm::mat4_cast(Rotation())) * glm::scale(mat4(1.0f), m_scale);
+      return glm::translate(mat4(1.0f), m_position) *
+             glm::mat4_cast(Rotation()) * glm::scale(mat4(1.0f), m_scale);
+      // return glm::translate(mat4(1.0f), m_position) *
+      // glm::transpose(glm::mat4_cast(Rotation())) * glm::scale(mat4(1.0f),
+      // m_scale);
     }
 
     EntityID ID;
     string name = "New Entity ";
+    SerializableField(name);
     Entity *parent = nullptr;
     vector<Entity *> children;
 
@@ -219,9 +236,11 @@ public:
     EntityManager *MGR;
 
     vec3 m_position;
+    SerializableField(m_position);
     vec3 m_scale;
+    SerializableField(m_scale);
     vec3 m_eulerAngles;
-
+    SerializableField(m_eulerAngles);
   };
 
   EntityManager() : entityCount(0) {
@@ -405,6 +424,12 @@ public:
 
   vector<Entity *> HierarchyRoots;
 
+  // stores current states in a scene file
+  Json CaptureStatesAsScene();
+
+  // restore states from a json object
+  void InitializeFromScene(Json json);
+
 private:
   // create a component list that stores a specified type of components
   template <typename T> void AddComponentList() {
@@ -487,7 +512,7 @@ private:
   // the second
   void rebuildHierarchyStructure() {
     HierarchyRoots.clear();
-    queue<Entity*> q;
+    queue<Entity *> q;
     for (auto entity : entities) {
       if (entity.second->parent == nullptr) {
         q.push(entity.second.get());
@@ -500,7 +525,8 @@ private:
       for (auto child : ent->children) {
         // update global positions with local positions
         child->m_position = child->LocalToGlobal(child->localPosition);
-        child->m_eulerAngles = glm::eulerAngles(child->GetParentOrientation() * child->localRotation);
+        child->m_eulerAngles = glm::eulerAngles(child->GetParentOrientation() *
+                                                child->localRotation);
         child->m_scale = child->parent->m_scale * child->localScale;
         q.push(child);
       }

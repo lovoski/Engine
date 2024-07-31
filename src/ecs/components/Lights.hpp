@@ -4,6 +4,7 @@
 #include "ecs/ecs.hpp"
 
 class BaseLight : public ECS::BaseComponent {
+  SerializableType(BaseLight);
 public:
 
   enum LIGHT_TYPE {
@@ -20,9 +21,11 @@ public:
 
   // basic properties
   vec3 LightColor = vec3(0.5f);
+  SerializableField(LightColor);
 
   // directional light properties
   vec3 LightDir = vec3(-1.0f);
+  SerializableField(LightDir);
 
   // point light properties
 

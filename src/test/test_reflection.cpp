@@ -4,6 +4,7 @@
 #include "EngineConfig.h"
 
 #include <iomanip>
+#include <tuple>
 #include <iostream>
 
 
@@ -117,22 +118,106 @@ template <typename T> bool Serialize(Json &json, T instance) {
   }
 }
 
+using EntityID = size_t;
+using ComponentTypeID = size_t;
+
+inline ComponentTypeID GetRuntimeComponentTypeID() {
+  static ComponentTypeID typeID = 0u;
+  return typeID++;
+}
+
+// attach type id to component class and return it
+template <typename T> inline std::tuple<ComponentTypeID, T> ComponentType() noexcept {
+  // the class should be inferented from component, but not the class itself
+  static const ComponentTypeID typeID = GetRuntimeComponentTypeID();
+  static T instance;
+  return std::make_tuple(typeID, instance);
+}
+
+class ComponentA {
+public:
+  ComponentA() {}
+  ~ComponentA() {}
+
+  int prop1;
+};
+
+class BC {
+public:
+  BC() {}
+  virtual ~BC() = default;
+};
+
+typedef std::map<std::string, BC*(*)()> mapType;
+static mapType registerMap;
+
+template<typename T>
+inline BC *createInstance() { return new T; }
+
+template<typename T>
+void RegisterType() {
+  if (tref::is_reflected_v<T>) {
+    registerMap[string(tref::class_info<T>().name)] = &createInstance<T>;
+  } else {
+    std::cout << "can't register type without reflection" << std::endl;
+  }
+}
+
+class CompA : public BC {
+  SerializableType(CompA);
+
+  int a = 10;
+  int b = 20;
+};
+class CompB : public BC {
+  SerializableType(CompB);
+
+  int c = 10;
+};
+class CompC : public BC {
+  // SerializableType(CompC);
+};
+
 int main() {
-  BaseComponent bc;
-  bc.a = 10;
-  bc.b = 1.0f;
-  bc.ss.a = 1123.123f;
-  bc.ss.b = 43212.64f;
+  // BaseComponent bc;
+  // bc.a = 10;
+  // bc.b = 1.0f;
+  // bc.ss.a = 1123.123f;
+  // bc.ss.b = 43212.64f;
 
-  Json source;
-  Serialize(source, bc);
+  // Json source;
+  // Serialize(source, bc);
 
-  cout << source << endl;;
+  // cout << source << endl;;
 
-  BaseComponent nbc;
-  Deserialize(source, nbc);
+  // BaseComponent nbc;
+  // Deserialize(source, nbc);
 
-  int a = 0;
+  // int a = 0;
+
+  // auto [id, instance] = ComponentType<ComponentA>();
+
+  // if (std::is_same_v<decltype(instance), ComponentA>) {
+  //   cout << "instance is componentA" << endl;
+  // } else cout << "instance is not componentA" << endl;
+
+  // RegisterType<CompA>();
+  // RegisterType<CompB>();
+  // // RegisterType<CompC>();
+
+  // auto ptr1 = registerMap["CompA"]();
+
+  // cout << ((CompA*)ptr1)->a << endl;
+
+  // if (std::is_same_v<decltype(*ptr1), CompA>) cout << "111" << endl;
+  // else cout << "222" << endl;
+
+  // auto ptr2 = registerMap["CompB"]();
+
+  // int a = 10;
+  // while (a-- > 0) {
+  //   cout << "!" << endl;
+  // }
 
   return 0;
 }
