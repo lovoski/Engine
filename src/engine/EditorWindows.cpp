@@ -112,6 +112,43 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
 void EditorWindows::EntitiesWindow() {
   ImGui::Begin("Entities");
   ImGui::SeparatorText("Scene");
+  // Right-click context menu for the parent window
+  if (!ImGui::IsAnyItemHovered() &&
+      ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) {
+    // open the window context menu
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+      ImGui::OpenPopup("EntitiesWindowContextMenu");
+    // unselect entities
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+      selectedEntity = (ECS::EntityID)(-1);
+  }
+  if (ImGui::BeginPopup("EntitiesWindowContextMenu")) {
+    ImGui::SeparatorText("Window Options");
+    if (ImGui::BeginMenu("Create Entity")) {
+      ImGui::SeparatorText("Entity Types");
+      if (ImGui::MenuItem("Null Entity")) {
+        ECS::EManager.AddNewEntity();
+      }
+      ImGui::Separator();
+      if (ImGui::MenuItem("Cube Primitive")) {
+        auto cube = ECS::EManager.AddNewEntity();
+        cube->AddComponent<BaseMaterial>();
+        cube->AddComponent<MeshRenderer>(Resource::RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
+      }
+      if (ImGui::MenuItem("Plane Primitive")) {
+        auto plane = ECS::EManager.AddNewEntity();
+        plane->AddComponent<BaseMaterial>();
+        plane->AddComponent<MeshRenderer>(Resource::RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
+      }
+      if (ImGui::MenuItem("Sphere Primitive")) {
+        auto sphere = ECS::EManager.AddNewEntity();
+        sphere->AddComponent<BaseMaterial>();
+        sphere->AddComponent<MeshRenderer>(Resource::RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
+      }
+      ImGui::EndMenu();
+    }
+    ImGui::EndPopup();
+  }
   ImGui::BeginChild("Entities List", {-1, ImGui::GetContentRegionAvail().y});
   auto entities = ECS::EManager.HierarchyRoots;
   static ImGuiTreeNodeFlags guiTreeNodeFlags =
@@ -136,32 +173,47 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
     if (selectedFile == parentTreeNodeInd)
       finalFlags |= ImGuiTreeNodeFlags_Selected;
     bool isOpen = ImGui::TreeNodeEx((entry.path().filename().string() + "##" +
-                         std::to_string(parentTreeNodeInd++))
-                            .c_str(), finalFlags);
+                                     std::to_string(parentTreeNodeInd++))
+                                        .c_str(),
+                                    finalFlags);
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-      selectedFile = parentTreeNodeInd-1;
+      selectedFile = parentTreeNodeInd - 1;
     // judge the file type from its extension
     string fileExtension = entry.path().extension().string();
-    if (!isDirectory && fileExtension == ".material") {
-      if (ImGui::BeginDragDropSource()) {
-        ImGui::SetDragDropPayload("MATERIAL_OVERRIDE", entry.path().string().c_str(),
-                                  entry.path().string().size());
-        ImGui::Text("Drop at a material component to override");
-        ImGui::EndDragDropSource();
+    if (!isDirectory) {
+      if (fileExtension == ".material") {
+        if (ImGui::BeginDragDropSource()) {
+          ImGui::SetDragDropPayload("MATERIAL_OVERRIDE",
+                                    entry.path().string().c_str(),
+                                    entry.path().string().size());
+          ImGui::Text("Drop at a material component to override");
+          ImGui::EndDragDropSource();
+        }
+      } else if (fileExtension == ".obj" || fileExtension == ".fbx" ||
+                 fileExtension == ".gltf") {
+        if (ImGui::BeginDragDropSource()) {
+          ImGui::SetDragDropPayload("IMPORT_MODEL_ASSETS",
+                                    entry.path().string().c_str(),
+                                    entry.path().string().size());
+          ImGui::Text("Drop at the entity window to import");
+          ImGui::EndDragDropSource();
+        }
       }
     }
-    if (!isDirectory && (fileExtension == ".obj" || fileExtension == ".fbx" || fileExtension == ".gltf")) {
-      if (ImGui::BeginDragDropSource()) {
-        ImGui::SetDragDropPayload("IMPORT_MODEL_ASSETS", entry.path().string().c_str(),
-                                  entry.path().string().size());
-        ImGui::Text("Drop at the entity window to import");
-        ImGui::EndDragDropSource();
+    // right click context menu
+    if (ImGui::BeginPopupContextItem((entry.path().string() + " popup").c_str(),
+                                     ImGuiPopupFlags_MouseButtonRight)) {
+      ImGui::SeparatorText("File Options");
+      if (ImGui::MenuItem("Remove")) {
+        Console.Log("Remove file : %s\n", entry.path().string().c_str());
       }
+      ImGui::EndPopup();
     }
     if (isOpen) {
       if (isDirectory) {
         // draw a diretory
-        DrawFileHierarchy(entry.path().string(), parentTreeNodeInd, parentFlag, selectedFile);
+        DrawFileHierarchy(entry.path().string(), parentTreeNodeInd, parentFlag,
+                          selectedFile);
       }
       ImGui::TreePop();
     }
@@ -170,6 +222,8 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
 
 void EditorWindows::AssetsWindow() {
   ImGui::Begin("Assets");
+  static int treeNodeInd = 0, selectedFile = 0;
+  treeNodeInd = 0;
   const string rootDir = Resource::RManager.GetProjectRootDir();
   if (!std::filesystem::exists(rootDir) ||
       !std::filesystem::is_directory(rootDir)) {
@@ -179,9 +233,32 @@ void EditorWindows::AssetsWindow() {
     return;
   }
   ImGui::SeparatorText("File Hierarchy");
-  ImGui::BeginChild("File Hierarchy List", {-1, ImGui::GetContentRegionAvail().y});
-  static int treeNodeInd = 0, selectedFile = 0;
-  treeNodeInd = 0;
+  // Right-click context menu for the parent window
+  if (!ImGui::IsAnyItemHovered() &&
+      ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) {
+    // show the right click file context menu
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+      ImGui::OpenPopup("AssetsWindowContextMenu");
+    // unselect file
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+      selectedFile = -1;
+  }
+  // the right click file context menu
+  if (ImGui::BeginPopup("AssetsWindowContextMenu")) {
+    ImGui::SeparatorText("File Options");
+    if (ImGui::BeginMenu("Create")) {
+      ImGui::SeparatorText("File Types");
+      if (ImGui::BeginMenu("Render")) {
+        if (ImGui::MenuItem("Base Material")) {
+        }
+        ImGui::EndMenu();
+      }
+      ImGui::EndMenu();
+    }
+    ImGui::EndPopup();
+  }
+  ImGui::BeginChild("File Hierarchy List",
+                    {-1, ImGui::GetContentRegionAvail().y});
   ImGuiTreeNodeFlags parentFlag = ImGuiTreeNodeFlags_OpenOnArrow |
                                   ImGuiTreeNodeFlags_OpenOnDoubleClick |
                                   ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -200,16 +277,15 @@ inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
     float positions[3] = {position.x, position.y, position.z};
     float scales[3] = {scale.x, scale.y, scale.z};
     float rotations[3] = {angles.x, angles.y, angles.z};
-    if (ImGui::DragFloat3("Position", positions, 0.01f, -MAX_FLOAT, MAX_FLOAT))
-      ;
+    if (ImGui::DragFloat3("Position", positions, 0.01f, -MAX_FLOAT, MAX_FLOAT));
     transform->SetGlobalPosition(
         vec3(positions[0], positions[1], positions[2]));
-    if (ImGui::DragFloat3("Rotation", rotations, 1.0f, -180.0f, 180.0f))
-      ;
+    ImGui::Separator();
+    if (ImGui::DragFloat3("Rotation", rotations, 1.0f, -180.0f, 180.0f));
     transform->SetGlobalRotationDegree(
         vec3(rotations[0], rotations[1], rotations[2]));
-    if (ImGui::DragFloat3("Scale", scales, 0.01f, -MAX_FLOAT, MAX_FLOAT))
-      ;
+    ImGui::Separator();
+    if (ImGui::DragFloat3("Scale", scales, 0.01f, 0.0f, MAX_FLOAT));
     transform->SetGlobalScale(vec3(scales[0], scales[1], scales[2]));
     ImGui::TreePop();
   }
@@ -249,7 +325,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       ImGui::SeparatorText("Int Variables");
     for (auto &intVar : ptr->intVariables) {
       string name = ptr->variableNames[intVar.first];
-      if (ImGui::Button(("X##"+name).c_str()))
+      if (ImGui::Button(("X##" + name).c_str()))
         ptr->RemoveVariable<int>(name);
       ImGui::SameLine();
       ImGui::InputInt(name.c_str(), &intVar.second);
@@ -265,18 +341,17 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
         maxRange = range.second;
       }
       string name = ptr->variableNames[floatVar.first];
-      if (ImGui::Button(("X##"+name).c_str()))
+      if (ImGui::Button(("X##" + name).c_str()))
         ptr->RemoveVariable<float>(name);
       ImGui::SameLine();
-      ImGui::SliderFloat(name.c_str(),
-                         &floatVar.second, minRange, maxRange);
+      ImGui::SliderFloat(name.c_str(), &floatVar.second, minRange, maxRange);
     }
     if (ptr->vec2Variables.size() > 0)
       ImGui::SeparatorText("Vec2 Variables");
     for (auto &vec2Var : ptr->vec2Variables) {
       string name = ptr->variableNames[vec2Var.first];
       float vec2Value[2] = {vec2Var.second.x, vec2Var.second.y};
-      if (ImGui::Button(("X##"+name).c_str()))
+      if (ImGui::Button(("X##" + name).c_str()))
         ptr->RemoveVariable<vec2>(name);
       ImGui::SameLine();
       if (ImGui::DragFloat2(name.c_str(), vec2Value))
@@ -288,7 +363,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       string name = ptr->variableNames[vec3Var.first];
       float vec3Value[3] = {vec3Var.second.x, vec3Var.second.y,
                             vec3Var.second.z};
-      if (ImGui::Button(("X##"+name).c_str()))
+      if (ImGui::Button(("X##" + name).c_str()))
         ptr->RemoveVariable<vec3>(name);
       ImGui::SameLine();
       if (name == "Albedo" || name == "Specular") {
@@ -307,7 +382,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       string name = ptr->variableNames[vec4Var.first];
       float vec4Value[4] = {vec4Var.second.x, vec4Var.second.y,
                             vec4Var.second.z, vec4Var.second.w};
-      if (ImGui::Button(("X##"+name).c_str()))
+      if (ImGui::Button(("X##" + name).c_str()))
         ptr->RemoveVariable<vec4>(name);
       ImGui::SameLine();
       if (name == "Albedo" || name == "Specular") {

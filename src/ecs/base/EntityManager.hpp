@@ -197,8 +197,19 @@ public:
     void AssignChild(Entity *c) {
       if (c == nullptr)
         throw std::runtime_error("can't set null pointer as child");
+      // make sure c is not a ancestor of current entity
+      if (parent != nullptr) {
+        auto current = parent;
+        while (current != nullptr) {
+          if (current == c) {
+            printf("can't set directly revert ancestor child relation\n");
+            return;
+          }
+          current = current->parent;
+        }
+      }
       if (std::find(children.begin(), children.end(), c) != children.end()) {
-        printf("entity %d is already the child of entity %d",
+        printf("entity %d is already the child of entity %d\n",
                (unsigned int)c->ID, (unsigned int)ID);
         return;
       }
