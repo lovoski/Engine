@@ -17,7 +17,7 @@ An experimental ECS game engine.
 - [x] Polish the component gui section, create editor for transform and camera component
 - [x] Create a basic material editor, write some actual shader code
 - [x] Create hierarchy system for the scene to update all the local transforms
-- [ ] Test the reflection library, store the scene in some files
+- [ ] Design the filesystem carefully
 - [ ] Update the material class, introduce reflection to offer more custom material designs
 - [ ] Support multi-pass rendering, allow user control from the material pannel
 - [ ] More realistic render effects (PBR, IBL, BRDF ... )
