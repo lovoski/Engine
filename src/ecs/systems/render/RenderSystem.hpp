@@ -35,22 +35,40 @@ public:
     directionalLight->SetGlobalPosition(vec3(3.0f, 3.0f, 3.0f));
     directionalLight->AddComponent<BaseLight>(BaseLight::LIGHT_TYPE::DIRECTIONAL_LIGHT);
 
-    auto modelEntity = Resource::RManager.GetModelEntity(REPO_SOURCE_DIR "/assets/learnopengl/objects/backpack/backpack.obj");
+    auto modelMeshes = Core.RManager.GetModel(REPO_SOURCE_DIR "/assets/learnopengl/objects/backpack/backpack.obj");
+    auto modelParent = ECS::EManager.AddNewEntity();
+    modelParent->name = "model";
+    for (auto modelMesh : modelMeshes) {
+      auto modelChild = ECS::EManager.AddNewEntity();
+      modelChild->AddComponent<MeshRenderer>(modelMesh);
+      modelChild->AddComponent<BaseMaterial>();
+      modelParent->AssignChild(modelChild);
+    }
 
-    auto cubeObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::CUBE);
+    auto cubeObject = ECS::EManager.AddNewEntity();
+    cubeObject->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
+    cubeObject->AddComponent<BaseMaterial>();
     cubeObject->SetGlobalPosition(vec3(3.0f, 0.0f, 0.0f));
 
-    auto sphereObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::SPHERE);
+    auto sphereObject = ECS::EManager.AddNewEntity();
+    sphereObject->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
+    sphereObject->AddComponent<BaseMaterial>();
     sphereObject->SetGlobalPosition(vec3(-3.0f, 0.0f, 0.0f));
 
-    auto planeObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::PLANE);
+    auto planeObject = ECS::EManager.AddNewEntity();
+    planeObject->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
+    planeObject->AddComponent<BaseMaterial>();
     planeObject->SetGlobalPosition(vec3(0.0f, -3.0f, 0.0f));
     planeObject->SetGlobalScale(vec3(10.0f, 1.0f, 5.0f));
 
-    auto cylinderObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::CYLINDER);
+    auto cylinderObject = ECS::EManager.AddNewEntity();
+    cylinderObject->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CYLINDER));
+    cylinderObject->AddComponent<BaseMaterial>();
     cylinderObject->SetGlobalPosition(vec3(0.0f, 0.0f, -3.0f));
 
-    auto coneObject = Resource::RManager.GetPrimitiveEntity(Resource::PRIMITIVE_TYPE::CONE);
+    auto coneObject = ECS::EManager.AddNewEntity();
+    coneObject->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CONE));
+    coneObject->AddComponent<BaseMaterial>();
     coneObject->SetGlobalPosition(vec3(0.0f, 0.0f, 3.0f));
   }
 

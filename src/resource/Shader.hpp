@@ -6,7 +6,8 @@ namespace Resource {
 
 class Shader {
 public:
-  string vertexShaderPath, fragShaderPath;
+  string vertexShaderPath, fragShaderPath, geomShaderPath;
+  string identifier;
   unsigned int ID = 0;
   // constructor generates the shader on the fly
   // ------------------------------------------------------------------------
@@ -25,6 +26,7 @@ public:
     // 1. retrieve the vertex/fragment source code from filePath
     vertexShaderPath = vertexPath;
     fragShaderPath = fragmentPath;
+    geomShaderPath = geometryPath == nullptr ? "" : geometryPath;
     string vertexCode;
     string fragmentCode;
     string geometryCode;
@@ -50,7 +52,7 @@ public:
       vertexCode = vShaderStream.str();
       fragmentCode = fShaderStream.str();
       // if geometry shader path is present, also load a geometry shader
-      if (geometryPath != nullptr) {
+      if (geometryPath != nullptr && strcmp(geometryPath, "none") != 0) {
         gShaderFile.open(geometryPath);
         std::stringstream gShaderStream;
         gShaderStream << gShaderFile.rdbuf();
@@ -77,7 +79,7 @@ public:
     checkCompileErrors(fragment, "FRAGMENT");
     // if geometry shader is given, compile geometry shader
     unsigned int geometry;
-    if (geometryPath != nullptr) {
+    if (geometryPath != nullptr && strcmp(geometryPath, "none") != 0) {
       const char *gShaderCode = geometryCode.c_str();
       geometry = glCreateShader(GL_GEOMETRY_SHADER);
       glShaderSource(geometry, 1, &gShaderCode, NULL);

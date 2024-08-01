@@ -12,11 +12,12 @@ struct Vertex {
   // vec3 Bitangent;
 };
 
+enum TEXTURE_TYPE { ICON_TEXTURE, IMAGE_TEXTURE };
+
 struct Texture {
   unsigned int id;
-  string type;
   string path;
-  string name;
+  TEXTURE_TYPE type;
 };
 
 enum PRIMITIVE_TYPE { CUBE, SPHERE, CYLINDER, PLANE, CONE };

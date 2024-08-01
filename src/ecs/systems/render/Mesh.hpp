@@ -16,7 +16,7 @@ public:
   vector<unsigned int> indices;
   unsigned int VAO;
 
-  string name = "";
+  string identifier;
 
   // constructor
   Mesh(vector<Vertex> vertices, vector<unsigned int> indices) {

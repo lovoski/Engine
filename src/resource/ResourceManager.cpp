@@ -1,12 +1,52 @@
 #include "ResourceManager.hpp"
+#include "MaterialData.hpp"
 #include "ecs/components/Material.hpp"
 #include "ecs/components/MeshRenderer.hpp"
-#include "MaterialData.hpp"
 #include "geometry/Mesh.hpp"
 
 namespace Resource {
 
-ResourceManager::ResourceManager() {
+ResourceManager::ResourceManager() {}
+
+ResourceManager::~ResourceManager() {
+  for (auto texture : allTextures) {
+    if (texture.second) {
+      glDeleteTextures(1, &texture.second->id);
+      delete texture.second;
+    }
+  }
+  for (auto shader : allShaders) {
+    if (shader) {
+      delete shader;
+    }
+  }
+  for (auto meshEle : allMeshes) {
+    for (auto mesh : meshEle.second)
+      if (mesh)
+        delete mesh;
+  }
+  for (auto icon : allIcons)
+    if (icon.second) {
+      glDeleteTextures(1, &icon.second->id);
+      delete icon.second;
+    }
+  for (auto mat : allMaterials) {
+    if (mat.second)
+      delete mat.second;
+  }
+  if (planePrimitive)
+    delete planePrimitive;
+  if (spherePrimitive)
+    delete spherePrimitive;
+  if (cubePrimitive)
+    delete cubePrimitive;
+  if (cylinderPrimitive)
+    delete cylinderPrimitive;
+  if (conePrimitive)
+    delete conePrimitive;
+}
+
+void ResourceManager::Initialize() {
 
   // stb image library setup
   stbi_set_flip_vertically_on_load(true);
@@ -21,174 +61,146 @@ ResourceManager::ResourceManager() {
   vertices.push_back({{-0.5f, 0.0f, 0.5f}, {0.0, 1.0, 0.0}, {0.0f, 1.0f}});
   indices = {0, 1, 3, 1, 2, 3};
   planePrimitive = new Graphics::Mesh(vertices, indices);
-  planePrimitive->name = "plane";
+  planePrimitive->identifier = "plane";
   // sphere
-  auto sphereMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/sphere.obj");
-  spherePrimitive = new Graphics::Mesh(sphereMesh[0]->vertices, sphereMesh[0]->indices);
-  spherePrimitive->name = "sphere";
+  auto sphereMesh =
+      getModel(REPO_SOURCE_DIR "/src/default/primitives/sphere.obj");
+  spherePrimitive =
+      new Graphics::Mesh(sphereMesh[0]->vertices, sphereMesh[0]->indices);
+  spherePrimitive->identifier = "sphere";
   // cube
-  auto cubeMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/cube.obj");
-  cubePrimitive = new Graphics::Mesh(cubeMesh[0]->vertices, cubeMesh[0]->indices);
-  cubePrimitive->name = "cube";
+  auto cubeMesh = getModel(REPO_SOURCE_DIR "/src/default/primitives/cube.obj");
+  cubePrimitive =
+      new Graphics::Mesh(cubeMesh[0]->vertices, cubeMesh[0]->indices);
+  cubePrimitive->identifier = "cube";
   // cylinder
-  auto cylinderMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/cylinder.obj");
-  cylinderPrimitive = new Graphics::Mesh(cylinderMesh[0]->vertices, cylinderMesh[0]->indices);
-  cylinderPrimitive->name = "cylinder";
+  auto cylinderMesh =
+      getModel(REPO_SOURCE_DIR "/src/default/primitives/cylinder.obj");
+  cylinderPrimitive =
+      new Graphics::Mesh(cylinderMesh[0]->vertices, cylinderMesh[0]->indices);
+  cylinderPrimitive->identifier = "cylinder";
   // cone
-  auto coneMesh = GetModel(REPO_SOURCE_DIR "/src/default/primitives/cone.obj");
-  conePrimitive = new Graphics::Mesh(coneMesh[0]->vertices, coneMesh[0]->indices);
-  conePrimitive->name = "cone";
+  auto coneMesh = getModel(REPO_SOURCE_DIR "/src/default/primitives/cone.obj");
+  conePrimitive =
+      new Graphics::Mesh(coneMesh[0]->vertices, coneMesh[0]->indices);
+  conePrimitive->identifier = "cone";
 
-  // load icon library with specified order
-  iconTextures.push_back(textureFromFile(REPO_SOURCE_DIR "/src/default/icons/NULL.png"));
+  // load icons
+  Texture *nullIcon = new Texture();
+  nullIcon->type = TEXTURE_TYPE::ICON_TEXTURE;
+  nullIcon->id = textureFromFile(REPO_SOURCE_DIR "/src/default/icons/NULL.png");
+  allIcons.insert(std::make_pair(ICON_TYPE::NULL_TYPE, nullIcon));
+  // load default shaders
+  Shader *baseShader =
+      new Shader(REPO_SOURCE_DIR "/src/default/shaders/base.vert",
+                 REPO_SOURCE_DIR "/src/default/shaders/base.frag");
+  baseShader->identifier = "base shader";
+  allShaders.push_back(baseShader);
 }
 
-ResourceManager::~ResourceManager() {
-  for (int i = 0; i < meshLoaded.size(); ++i)
-    delete meshLoaded[i];
-  for (int i = 0; i < shaderLoaded.size(); ++i)
-    delete shaderLoaded[i];
-  for (auto matData : matDataLoaded)
-    delete matData.second;
-  if (planePrimitive)
-    delete planePrimitive;
-  if (spherePrimitive)
-    delete spherePrimitive;
-  if (cubePrimitive)
-    delete cubePrimitive;
-  if (cylinderPrimitive)
-    delete cylinderPrimitive;
-  if (conePrimitive)
-    delete conePrimitive;
+MaterialData *ResourceManager::GetMaterialData(string path) {
+  if (allMaterials.find(path) == allMaterials.end()) {
+    // create a new material
+    MaterialData *newMat = new MaterialData();
+    if (path == "::base") {
+      newMat->identifier = "base material";
+      newMat->SetDefaultMaterial(); // set to default material
+    } else {                        // load from file
+      std::ifstream input(path);
+      if (!input.is_open()) {
+        cout << "can't open material data file " << path << endl;
+        return nullptr;
+      }
+      Json json;
+      input >> json;
+      newMat->identifier = path;
+      newMat->Deserialize(json);
+      vector<int> texIndices = json["texVariables"]["indices"];
+      vector<string> texPathes = json["texVariables"]["pathes"];
+      for (int i = 0; i < texIndices.size(); ++i) {
+        newMat->texVariables.insert(
+            std::make_pair(texIndices[i], GetTexture(texPathes[i])));
+      }
+      input.close();
+    }
+    allMaterials.insert(std::make_pair(path, newMat));
+    return newMat;
+  } else
+    return allMaterials[path];
 }
 
-void ResourceManager::DumpProjectConfigFile(string projectConfigPath) {
-  Json json;
-
-  // dump project settings
-
-  // locations to the scene files
-
-  std::ofstream projectConfigOutput(projectConfigPath);
-  if (!projectConfigOutput.is_open()) {
-    cout << "error dumping project config file" << endl;
-    return;
-  }
-  projectConfigOutput << json;
-  projectConfigOutput.close();
-}
-
-void ResourceManager::LoadProjectConfigFile(string projectConfigPath) {
-  Json json;
-  std::ifstream projectConfigInput(projectConfigPath);
-  if (!projectConfigInput.is_open()) {
-    cout << "error loading project config file" << endl;
-    return;
-  }
-  projectConfigInput >> json;
-  projectConfigInput.close();
-
-  projectRootDir = projectConfigPath.substr(0, projectConfigPath.find_last_of("\\/"));
-  cout << "Load project at : " << projectRootDir << endl;
-  cout << "Project settings: \n" << json << endl;
-}
-
-
-vector<string> ResourceManager::GetAvailableMaterials() {
-  vector<string> materialIdentifiers;
-  for (auto ele : matDataNameToID) {
-    materialIdentifiers.push_back(ele.first);
-  }
-  return materialIdentifiers;
-}
-
-MaterialData *ResourceManager::GetMaterialData(string identifier) {
-  if (matDataNameToID.find(identifier) == matDataNameToID.end()) {
-    // create the new material data
-    MaterialData *matData = new MaterialData();
-    matData->identifier = matDataCounter;
-    // setup the default material properties
-    matData->SetDefaultMaterial();
-    matDataNameToID[identifier] = matDataCounter;
-    matDataLoaded[matDataCounter] = matData;
-    matDataCounter++;
-    return matData;
+Texture *ResourceManager::GetTexture(string path, bool forceReload) {
+  if (allTextures.find(path) == allTextures.end()) {
+    Texture *newTex = new Texture();
+    newTex->id = textureFromFile(path);
+    newTex->path = path;
+    newTex->type = TEXTURE_TYPE::IMAGE_TEXTURE;
+    allTextures.insert(std::make_pair(path, newTex));
+    return newTex;
   } else {
-    auto id = matDataNameToID[identifier];
-    return matDataLoaded[id];
+    auto ptr = allTextures[path];
+    if (forceReload) {
+      glDeleteTextures(1, &ptr->id);
+      ptr->id = textureFromFile(path);
+    }
+    return ptr;
+  }
+}
+
+vector<Mesh *> ResourceManager::GetModel(string path) {
+  if (allMeshes.find(path) == allMeshes.end()) {
+    auto meshes = getModel(path);
+    allMeshes.insert(std::make_pair(path, meshes));
+    return meshes;
+  } else {
+    return allMeshes[path];
+  }
+}
+
+Mesh *ResourceManager::GetMesh(string path, string identifier) {
+  if (allMeshes.find(path) == allMeshes.end()) {
+    // the model has not been loaded
+    auto meshes = getModel(path);
+    allMeshes.insert(std::make_pair(path, meshes));
+    for (auto mesh : meshes) {
+      if (identifier == mesh->identifier) {
+        return mesh;
+      }
+    }
+    printf(
+        "the model has now been loaded, but no mesh named %s has been found\n",
+        identifier.c_str());
+    return nullptr;
+  } else {
+    auto meshes = allMeshes[path];
+    for (auto mesh : meshes) {
+      if (identifier == mesh->identifier) {
+        return mesh;
+      }
+    }
+    printf("the model was loaded before, but no mesh named %s has been found\n",
+           identifier.c_str());
+    return nullptr;
   }
 }
 
 Shader *ResourceManager::GetShader(string vertShaderPath, string fragShaderPath,
-                                   bool forceReload) {
-  for (auto i = 0; i < shaderLoaded.size(); ++i) {
-    if (shaderLoaded[i]->vertexShaderPath == vertShaderPath &&
-        shaderLoaded[i]->fragShaderPath == fragShaderPath) {
+                                   string geomShaderPath, bool forceReload) {
+  for (auto i = 0; i < allShaders.size(); ++i) {
+    if (allShaders[i]->vertexShaderPath == vertShaderPath &&
+        allShaders[i]->fragShaderPath == fragShaderPath) {
       // reload the shader if specified
       if (forceReload)
-        shaderLoaded[i]->LoadAndCompileShader(vertShaderPath.c_str(),
-                                              fragShaderPath.c_str());
-      return shaderLoaded[i];
+        allShaders[i]->LoadAndCompileShader(vertShaderPath.c_str(),
+                                            fragShaderPath.c_str(),
+                                            geomShaderPath.c_str());
+      return allShaders[i];
     }
   }
-  // the shader has not been loaded
-  Shader *loadedShader =
-      new Shader(vertShaderPath.c_str(), fragShaderPath.c_str());
-  shaderLoaded.push_back(loadedShader);
+  Shader *loadedShader = new Shader(
+      vertShaderPath.c_str(), fragShaderPath.c_str(), geomShaderPath.c_str());
+  allShaders.push_back(loadedShader);
   return loadedShader;
-}
-
-Texture ResourceManager::GetTextureFromImage(string imageFilePath) {
-  for (auto texture : texturesLoaded) {
-    if (std::strcmp(texture.path.c_str(), imageFilePath.c_str()) == 0) {
-      return texture;
-    }
-  }
-  Texture texture;
-  texture.id = textureFromFile(imageFilePath);
-  texture.type = "imageTex";
-  texture.path = imageFilePath;
-  texturesLoaded.push_back(texture);
-  return texture;
-}
-
-unsigned int ResourceManager::textureFromFile(string texturePath, bool gamma) {
-  unsigned int textureID;
-  glGenTextures(1, &textureID);
-
-  int width, height, nrComponents;
-  unsigned char *data =
-      stbi_load(texturePath.c_str(), &width, &height, &nrComponents, 0);
-  if (data) {
-    GLenum format;
-    if (nrComponents == 1)
-      format = GL_RED;
-    else if (nrComponents == 3)
-      format = GL_RGB;
-    else if (nrComponents == 4)
-      format = GL_RGBA;
-
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-                 GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    stbi_image_free(data);
-  } else {
-    // printf("[error]: Texture failed to load at path: %s\n",
-    //             texturePath.c_str());
-    Console.Log("[error]: Texture failed to load at path: %s\n",
-                texturePath.c_str());
-    stbi_image_free(data);
-  }
-
-  return textureID;
 }
 
 Mesh *ResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
@@ -202,49 +214,36 @@ Mesh *ResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
     return cylinderPrimitive;
   } else if (pType == PRIMITIVE_TYPE::CONE) {
     return conePrimitive;
-  } else return nullptr;
+  } else
+    return nullptr;
 }
 
-vector<Texture> ResourceManager::loadMaterialTextures(aiMaterial *mat,
-                                                      aiTextureType type,
-                                                      string typeName) {
-  vector<Texture> textures;
-  for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
-    aiString str;
-    mat->GetTexture(type, i, &str);
-    bool skip = false;
-    for (unsigned int j = 0; j < texturesLoaded.size(); j++) {
-      if (std::strcmp(texturesLoaded[j].path.data(), str.C_Str()) == 0) {
-        // duplicate texture found
-        textures.push_back(texturesLoaded[j]);
-        skip = true;
-        break;
-      }
-    }
-    if (!skip) { // if texture hasn't been loaded already, load it
-      Texture texture;
-      texture.id = textureFromFile(str.C_Str());
-      texture.type = typeName;
-      texture.path = str.C_Str();
-      textures.push_back(texture);
-      texturesLoaded.push_back(texture);
-    }
+vector<Mesh *> ResourceManager::getModel(string modelPath) {
+  // read file via ASSIMP
+  Assimp::Importer importer;
+  vector<Mesh *> meshes;
+  const aiScene *scene = importer.ReadFile(
+      modelPath.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+                             aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+  // check for errors
+  if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
+      !scene->mRootNode) // if is Not Zero
+  {
+    Console.Log("[error]: Assimp error: %s\n", importer.GetErrorString());
+    return meshes;
   }
-  return textures;
+  // process ASSIMP's root node recursively
+  processNode(scene->mRootNode, scene, meshes);
+  return meshes;
 }
 
 Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene) {
-  // data to fill
   vector<Vertex> vertices;
   vector<unsigned int> indices;
-
   // walk through each of the mesh's vertices
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
     Vertex vertex;
-    glm::vec3 vector; // we declare a placeholder vector since assimp uses its
-                      // own vector class that doesn't directly convert to
-                      // glm's vec3 class so we transfer the data to this
-                      // placeholder glm::vec3 first.
+    glm::vec3 vector;
     // positions
     vector.x = mesh->mVertices[i].x;
     vector.y = mesh->mVertices[i].y;
@@ -290,34 +289,50 @@ Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene) {
     for (unsigned int j = 0; j < face.mNumIndices; j++)
       indices.push_back(face.mIndices[j]);
   }
-  // process materials
-  aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-  // we assume a convention for sampler names in the shaders. Each diffuse
-  // texture should be named as 'texture_diffuseN' where N is a sequential
-  // number ranging from 1 to MAX_SAMPLER_NUMBER. Same applies to other
-  // texture as the following list summarizes: diffuse: texture_diffuseN
-  // specular: texture_specularN
-  // normal: texture_normalN
-
-  // don't load the texture with the mesh
-  // // 1. diffuse maps
-  // vector<Texture> diffuseMaps =
-  //     loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-  // // 2. specular maps
-  // vector<Texture> specularMaps = loadMaterialTextures(
-  //     material, aiTextureType_SPECULAR, "texture_specular");
-  // // 3. normal maps
-  // std::vector<Texture> normalMaps =
-  //     loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-  // // 4. height maps
-  // std::vector<Texture> heightMaps =
-  //     loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 
   Mesh *loadedMesh = new Mesh(vertices, indices);
-  loadedMesh->name = string(mesh->mName.C_Str());
-  meshLoaded.push_back(loadedMesh);
+  loadedMesh->identifier = string(mesh->mName.C_Str());
 
   return loadedMesh;
+}
+
+unsigned int ResourceManager::textureFromFile(string texturePath, bool gamma) {
+  unsigned int textureID;
+  glGenTextures(1, &textureID);
+
+  int width, height, nrComponents;
+  unsigned char *data =
+      stbi_load(texturePath.c_str(), &width, &height, &nrComponents, 0);
+  if (data) {
+    GLenum format;
+    if (nrComponents == 1)
+      format = GL_RED;
+    else if (nrComponents == 3)
+      format = GL_RGB;
+    else if (nrComponents == 4)
+      format = GL_RGBA;
+
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
+                 GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                    GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
+  } else {
+    // printf("[error]: Texture failed to load at path: %s\n",
+    //             texturePath.c_str());
+    Console.Log("[error]: Texture failed to load at path: %s\n",
+                texturePath.c_str());
+    stbi_image_free(data);
+  }
+
+  return textureID;
 }
 
 void ResourceManager::processNode(aiNode *node, const aiScene *scene,
@@ -335,68 +350,6 @@ void ResourceManager::processNode(aiNode *node, const aiScene *scene,
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
     processNode(node->mChildren[i], scene, meshes);
   }
-}
-
-Entity *ResourceManager::GetModelEntity(string path) {
-  auto meshes = GetModel(path);
-  if (meshes.size() > 0) {
-    // flatten all meshes to a common parent
-    auto parentObject = ECS::EManager.AddNewEntity();
-    parentObject->name = path.substr(path.find_last_of("/\\") + 1);
-    parentObject->AddComponent<BaseMaterial>();
-    // the render system only renders the entities with MeshRenderer component
-    // in an list with no order (TODO: add order of rendering)
-    for (auto mesh : meshes) {
-      auto childObject = ECS::EManager.AddNewEntity();
-      childObject->name = mesh->name;
-      childObject->AddComponent<MeshRenderer>(mesh);
-      childObject->AddComponent<BaseMaterial>();
-      parentObject->AssignChild(childObject);
-    }
-    return parentObject;
-  } else
-    return nullptr;
-}
-
-Entity *ResourceManager::GetPrimitiveEntity(PRIMITIVE_TYPE pType) {
-  auto primitiveObject = ECS::EManager.AddNewEntity();
-  primitiveObject->AddComponent<BaseMaterial>();
-  if (pType == PRIMITIVE_TYPE::CUBE) {
-    primitiveObject->AddComponent<MeshRenderer>(cubePrimitive);
-    primitiveObject->name = "Cube";
-  } else if (pType == PRIMITIVE_TYPE::SPHERE) {
-    primitiveObject->AddComponent<MeshRenderer>(spherePrimitive);
-    primitiveObject->name = "Sphere";
-  } else if (pType == PRIMITIVE_TYPE::PLANE) {
-    primitiveObject->AddComponent<MeshRenderer>(planePrimitive);
-    primitiveObject->name = "Plane";
-  } else if (pType == PRIMITIVE_TYPE::CYLINDER) {
-    primitiveObject->AddComponent<MeshRenderer>(cylinderPrimitive);
-    primitiveObject->name = "Cylinder";
-  } else if (pType == PRIMITIVE_TYPE::CONE) {
-    primitiveObject->AddComponent<MeshRenderer>(conePrimitive);
-    primitiveObject->name = "Cone";
-  } else return nullptr;
-  return primitiveObject;
-}
-
-vector<Mesh *> ResourceManager::GetModel(string modelPath) {
-  // read file via ASSIMP
-  Assimp::Importer importer;
-  vector<Mesh *> meshes;
-  const aiScene *scene = importer.ReadFile(
-      modelPath.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-                             aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-  // check for errors
-  if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
-      !scene->mRootNode) // if is Not Zero
-  {
-    Console.Log("[error]: Assimp error: %s\n", importer.GetErrorString());
-    return meshes;
-  }
-  // process ASSIMP's root node recursively
-  processNode(scene->mRootNode, scene, meshes);
-  return meshes;
 }
 
 }; // namespace Resource

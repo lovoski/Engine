@@ -89,7 +89,7 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
     ImGui::EndDragDropTarget();
   }
   // right click context menu
-  if (ImGui::BeginPopupContextItem((entity->name + " popup").c_str(),
+  if (ImGui::BeginPopupContextItem((entity->name + std::to_string((unsigned int)entity->ID)).c_str(),
                                    ImGuiPopupFlags_MouseButtonRight)) {
     ImGui::SeparatorText("Entity Options");
     if (ImGui::MenuItem("Remove")) {
@@ -133,19 +133,19 @@ void EditorWindows::EntitiesWindow() {
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Cube Primitive")) {
-        auto cube = ECS::EManager.AddNewEntity();
-        cube->AddComponent<BaseMaterial>();
-        cube->AddComponent<MeshRenderer>(Resource::RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
+        // auto cube = ECS::EManager.AddNewEntity();
+        // cube->AddComponent<BaseMaterial>();
+        // cube->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
       }
       if (ImGui::MenuItem("Plane Primitive")) {
-        auto plane = ECS::EManager.AddNewEntity();
-        plane->AddComponent<BaseMaterial>();
-        plane->AddComponent<MeshRenderer>(Resource::RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
+        // auto plane = ECS::EManager.AddNewEntity();
+        // plane->AddComponent<BaseMaterial>();
+        // plane->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
       }
       if (ImGui::MenuItem("Sphere Primitive")) {
-        auto sphere = ECS::EManager.AddNewEntity();
-        sphere->AddComponent<BaseMaterial>();
-        sphere->AddComponent<MeshRenderer>(Resource::RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
+        // auto sphere = ECS::EManager.AddNewEntity();
+        // sphere->AddComponent<BaseMaterial>();
+        // sphere->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
       }
       ImGui::EndMenu();
     }
@@ -165,7 +165,7 @@ void EditorWindows::EntitiesWindow() {
             ImGui::AcceptDragDropPayload("IMPORT_MODEL_ASSETS")) {
       char *modelPath = (char *)payload->Data;
       // Console.Log(modelPath);
-      auto modelEntity = Resource::RManager.GetModelEntity(modelPath);
+      // auto modelEntity =Core.RManager.GetModelEntity(modelPath);
     }
     ImGui::EndDragDropTarget();
   }
@@ -249,7 +249,7 @@ void EditorWindows::AssetsWindow() {
   ImGui::Begin("Assets");
   static int treeNodeInd = 0, selectedFile = 0;
   treeNodeInd = 0;
-  const string rootDir = Resource::RManager.GetProjectRootDir();
+  const string rootDir = Core.RManager.GetProjectRootDir();
   if (!std::filesystem::exists(rootDir) ||
       !std::filesystem::is_directory(rootDir)) {
     cout << "project root dir don't exists or isn't a directory (From "
@@ -329,7 +329,7 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
 inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   auto &material = ECS::EManager.GetComponent<BaseMaterial>(selectedEntity);
   if (ImGui::TreeNode("Base Material")) {
-    ImGui::SeparatorText(("Material Name: " + material.matIdentifier).c_str());
+    ImGui::SeparatorText(("Material Name: " + material.matData->identifier).c_str());
     // change the texture in use by drag and drop
     if (ImGui::BeginDragDropTarget()) {
       if (const ImGuiPayload *payload =
@@ -378,9 +378,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
           } else if (selectedNewVariableType == 4) {
             material.matData->AddVariable(newVariableName, vec4(0.0f));
           } else if (selectedNewVariableType == 5) {
-            Resource::Texture newTex;
-            newTex.type = "null";
-            material.matData->AddVariable(newVariableName, newTex);
+            material.matData->AddVariable(newVariableName, Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE));
           }
           std::strcpy(newVariableName, "");
         }
@@ -477,22 +475,22 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     for (auto &texVar : ptr->texVariables) {
       string name = ptr->variableNames[texVar.first];
       if (ImGui::Button(("X##" + name).c_str()))
-        ptr->RemoveVariable<Resource::Texture>(name);
+        ptr->RemoveVariable<Resource::Texture*>(name);
       ImGui::SameLine();
-      if (texVar.second.type == "null") {
+      if (texVar.second->type == Resource::TEXTURE_TYPE::ICON_TEXTURE) {
         // can be replaced with new texture
-        ImGui::Image((void *)Resource::RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE), {textureSize, textureSize});
+        ImGui::Image((void *)Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE)->id, {textureSize, textureSize});
         if (ImGui::BeginDragDropTarget()) {
           if (const ImGuiPayload *payload =
                   ImGui::AcceptDragDropPayload("LOAD_TEXTURE")) {
             char *texturePath = (char *)payload->Data;
-            auto newTexture = Resource::RManager.GetTextureFromImage(texturePath);
+            auto newTexture = Core.RManager.GetTexture(texturePath);
             texVar.second = newTexture; // replace upload texture with actual loaded texture
           }
           ImGui::EndDragDropTarget();
         }
       } else {
-        ImGui::Image((void *)texVar.second.id, {textureSize, textureSize});
+        ImGui::Image((void *)texVar.second->id, {textureSize, textureSize});
       }
       ImGui::SameLine();
       ImGui::Text(ptr->variableNames[texVar.first].c_str());

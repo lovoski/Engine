@@ -3,6 +3,8 @@
 #include "global.hpp"
 #include "ecs/ecs.hpp"
 
+#include "resource/ResourceManager.hpp"
+
 const int WIDTH = 1920, HEIGHT = 1080;
 
 class Engine {
@@ -26,6 +28,8 @@ public:
   GLFWwindow &Window() { return *window; }
   const float VideoWdith() const { return videoWidth; }
   const float VideoHeight() const { return videoHeight; }
+
+  Resource::ResourceManager RManager;
 
 private:
   Engine();

@@ -16,12 +16,9 @@ public:
   std::map<int, vec2> vec2Variables;
   std::map<int, vec3> vec3Variables;
   std::map<int, vec4> vec4Variables;
-  std::map<int, mat3> mat3Variables;
-  std::map<int, mat4> mat4Variables;
   // textures
-  std::map<int, Resource::Texture> texVariables;
+  std::map<int, Resource::Texture*> texVariables;
 
-  std::map<int, std::pair<int, int>> intVariablesRange;
   std::map<int, std::pair<float, float>> floatVariablesRange;
 
   template<typename T>
@@ -33,7 +30,35 @@ public:
   template<typename T>
   bool SetVariableRange(string name, T min, T max);
 
-  unsigned int identifier;
+  string identifier;
+
+  void Serialize(Json &json) {
+    json["variableNames"] = variableNames;
+    json["intVariables"] = intVariables;
+    json["floatVariables"] = floatVariables;
+    json["vec2Variables"] = vec2Variables;
+    json["vec3Variables"] = vec3Variables;
+    json["vec4Variables"] = vec4Variables;
+    json["floatVariablesRange"] = floatVariablesRange;
+    vector<string> texturePathes;
+    vector<int> textureIndex;
+    for (auto tex : texVariables) {
+      textureIndex.push_back(tex.first);
+      texturePathes.push_back(tex.second->path);
+    }
+    json["texVariables"]["indices"] = textureIndex;
+    json["texVariables"]["pathes"] = texturePathes;
+  }
+
+  void Deserialize(Json &json) {
+    variableNames = json["variableNames"];
+    intVariables = json["intVariables"];
+    floatVariables = json["floatVariables"];
+    vec2Variables = json["vec2Variables"];
+    vec3Variables = json["vec3Variables"];
+    vec4Variables = json["vec4Variables"];
+    floatVariablesRange = json["floatVariablesRange"];
+  }
 
 private:
   int idCounter = 0;
@@ -59,11 +84,7 @@ bool MaterialData::AddVariable(std::string name, T value) {
     vec3Variables[idCounter] = value;
   } else if constexpr (std::is_same_v<T, vec4>) {
     vec4Variables[idCounter] = value;
-  } else if constexpr (std::is_same_v<T, mat3>) {
-    mat3Variables[idCounter] = value;
-  } else if constexpr (std::is_same_v<T, mat4>) {
-    mat4Variables[idCounter] = value;
-  } else if constexpr (std::is_same_v<T, Resource::Texture>) {
+  } else if constexpr (std::is_same_v<T, Resource::Texture*>) {
     texVariables[idCounter] = value;
   } else {
     std::cout << "Setting unsupported type to material data, type: "
@@ -93,11 +114,7 @@ template <typename T> bool MaterialData::RemoveVariable(string name) {
     vec3Variables.erase(idTBR);
   } else if constexpr (std::is_same_v<T, vec4>) {
     vec4Variables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, mat3>) {
-    mat3Variables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, mat4>) {
-    mat4Variables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, Resource::Texture>) {
+  } else if constexpr (std::is_same_v<T, Resource::Texture*>) {
     texVariables.erase(idTBR);
   } else {
     cout << "removing unsupported type to material data, type: "

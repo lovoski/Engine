@@ -39,6 +39,8 @@ Engine::~Engine() {
 }
 
 void Engine::Initialize() {
+  RManager.Initialize();
+
   // register all the systems
   ECS::EManager.RegisterSystem<BaseLightSystem>();
   ECS::EManager.RegisterSystem<RenderSystem>();

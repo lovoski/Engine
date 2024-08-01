@@ -7,6 +7,8 @@
 #include "resource/Shader.hpp"
 #include "resource/MaterialData.hpp"
 
+#include "engine/Engine.hpp"
+
 class BaseMaterial : public ECS::BaseComponent {
 public:
   BaseMaterial() {
@@ -16,16 +18,15 @@ public:
   ~BaseMaterial() {}
 
   void SetShader(string vertShaderPath = REPO_SOURCE_DIR
-                 "/src/shaders/default/base.vert",
+                 "/src/default/shaders/base.vert",
                  string fragShaderPath = REPO_SOURCE_DIR
-                 "/src/shaders/default/base.frag") {
-    shader = Resource::RManager.GetShader(vertShaderPath, fragShaderPath);
+                 "/src/default/shaders/base.frag") {
+    shader = Core.RManager.GetShader(vertShaderPath, fragShaderPath);
     VertShaderPath = vertShaderPath;
     FragShaderPath = fragShaderPath;
   }
-  void SetMaterialData(string identifier="base material") {
-    matData = Resource::RManager.GetMaterialData(identifier);
-    matIdentifier = identifier;
+  void SetMaterialData(string path="::base") {
+    matData = Core.RManager.GetMaterialData(path);
   }
   Resource::Shader *GetShader() {
     if (shader == nullptr)
@@ -77,7 +78,6 @@ public:
   string VertShaderPath, FragShaderPath;
 
   MaterialData *matData = nullptr;
-  string matIdentifier;
 private:
 
   // if there's any changes in these properties, these variables must be updated
@@ -92,24 +92,22 @@ private:
       shader->SetVec3(matData->variableNames[vec3Var.first], vec3Var.second);
     for (auto vec4Var : matData->vec4Variables)
       shader->SetVec4(matData->variableNames[vec4Var.first], vec4Var.second);
-    for (auto mat3Var : matData->mat3Variables)
-      shader->SetMat3(matData->variableNames[mat3Var.first], mat3Var.second);
-    for (auto mat4Var : matData->mat4Variables)
-      shader->SetMat4(matData->variableNames[mat4Var.first], mat4Var.second);
   }
 
   void activateTextures() {
     unsigned int texCounter = 0;
     for (auto tex : matData->texVariables) {
-      glActiveTexture(GL_TEXTURE0 +
-                      texCounter); // active proper texture unit before binding
-      // retrieve texture number (the N in diffuse_textureN)
-      string name = matData->variableNames[tex.first];
-      // now set the sampler to the correct texture unit
-      glUniform1i(glGetUniformLocation(shader->ID, name.c_str()), texCounter);
-      // and finally bind the texture
-      glBindTexture(GL_TEXTURE_2D, tex.second.id);
-      texCounter++;
+      if (tex.second->type != Resource::TEXTURE_TYPE::ICON_TEXTURE) { // don't render icon texture
+        glActiveTexture(GL_TEXTURE0 +
+                        texCounter); // active proper texture unit before binding
+        // retrieve texture number (the N in diffuse_textureN)
+        string name = matData->variableNames[tex.first];
+        // now set the sampler to the correct texture unit
+        glUniform1i(glGetUniformLocation(shader->ID, name.c_str()), texCounter);
+        // and finally bind the texture
+        glBindTexture(GL_TEXTURE_2D, tex.second->id);
+        texCounter++;
+      }
     }
   }
 };
