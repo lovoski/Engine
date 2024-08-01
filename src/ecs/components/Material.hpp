@@ -8,7 +8,6 @@
 #include "resource/MaterialData.hpp"
 
 class BaseMaterial : public ECS::BaseComponent {
-  SerializableType(BaseMaterial);
 public:
   BaseMaterial() {
     SetShader();
@@ -100,30 +99,14 @@ private:
   }
 
   void activateTextures() {
-    // bind appropriate textures
-    unsigned int diffuseNr = 0, specularNr = 0, normalNr = 0, heightNr = 0;
-    unsigned int imageTexCounter = 0;
     unsigned int texCounter = 0;
     for (auto tex : matData->texVariables) {
       glActiveTexture(GL_TEXTURE0 +
                       texCounter); // active proper texture unit before binding
       // retrieve texture number (the N in diffuse_textureN)
-      string number;
-      string name = tex.second.type;
-      if (name == "texture_diffuse")
-        number = std::to_string(diffuseNr++);
-      else if (name == "texture_specular")
-        number =
-            std::to_string(specularNr++); // transfer unsigned int to string
-      else if (name == "texture_normal")
-        number = std::to_string(normalNr++); // transfer unsigned int to string
-      else if (name == "texture_height")
-        number = std::to_string(heightNr++); // transfer unsigned int to string
-      else if (name == "imageTex") // custom loaded image texture
-        number = std::to_string(imageTexCounter++);
-
+      string name = matData->variableNames[tex.first];
       // now set the sampler to the correct texture unit
-      glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), texCounter);
+      glUniform1i(glGetUniformLocation(shader->ID, name.c_str()), texCounter);
       // and finally bind the texture
       glBindTexture(GL_TEXTURE_2D, tex.second.id);
       texCounter++;

@@ -1,5 +1,4 @@
 #include "MaterialData.hpp"
-#include "utils/Reflection.hpp"
 
 void MaterialData::SetDefaultMaterial() {
   AddVariable("Albedo", vec3(1.0f));

@@ -4,7 +4,6 @@
 #include "ecs/ecs.hpp"
 
 class Camera : public ECS::BaseComponent {
-  SerializableType(Camera);
 public:
   Camera() {}
   ~Camera() {}
@@ -23,14 +22,9 @@ public:
   }
 
   float fovY = 45.0f;
-  SerializableField(fovY);
   float zNear = 0.1f, zFar = 100.0f;
-  SerializableField(zNear);
-  SerializableField(zFar);
 
   float movementSpeed = 2.5f, mouseSensitivity = 0.1f;
-  SerializableField(movementSpeed);
-  SerializableField(mouseSensitivity);
 
   MOVEMENT_STYLE moveScheme = MOVEMENT_STYLE::FPS_CAMERA;
 };

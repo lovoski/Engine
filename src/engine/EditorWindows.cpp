@@ -491,13 +491,11 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
           }
           ImGui::EndDragDropTarget();
         }
-        ImGui::SameLine();
-        ImGui::Text("Drop Texture Here");
       } else {
         ImGui::Image((void *)texVar.second.id, {textureSize, textureSize});
-        ImGui::SameLine();
-        ImGui::Text(ptr->variableNames[texVar.first].c_str());
       }
+      ImGui::SameLine();
+      ImGui::Text(ptr->variableNames[texVar.first].c_str());
     }
   }
 }

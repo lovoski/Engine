@@ -1,8 +1,8 @@
 #include "ResourceManager.hpp"
 #include "ecs/components/Material.hpp"
 #include "ecs/components/MeshRenderer.hpp"
+#include "MaterialData.hpp"
 #include "geometry/Mesh.hpp"
-#include "utils/Reflection.hpp"
 
 namespace Resource {
 

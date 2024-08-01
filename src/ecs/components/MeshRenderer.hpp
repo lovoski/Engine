@@ -7,7 +7,6 @@
 #include "ecs/components/Lights.hpp"
 
 class MeshRenderer : public ECS::BaseComponent {
-  SerializableType(MeshRenderer);
 public:
   MeshRenderer() {}
   MeshRenderer(Graphics::Mesh *mesh) : meshData(mesh) {}

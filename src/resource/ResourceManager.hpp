@@ -4,6 +4,7 @@
 #include "ResourceTypes.hpp"
 #include "Shader.hpp"
 #include "ecs/ecs.hpp"
+#include "MaterialData.hpp"
 #include "ecs/systems/render/Mesh.hpp"
 
 namespace Resource {

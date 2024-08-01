@@ -14,15 +14,11 @@
 #include "ComponentList.hpp"
 #include "Types.hpp"
 
-#include "utils/Reflection.hpp"
-
 namespace ECS {
 
 class EntityManager {
 public:
   class Entity {
-    SerializableType(Entity);
-
   public:
     friend class EntityManager;
 
@@ -239,7 +235,6 @@ public:
 
     EntityID ID;
     string name = "New Entity ";
-    SerializableField(name);
     Entity *parent = nullptr;
     vector<Entity *> children;
 
@@ -247,11 +242,8 @@ public:
     EntityManager *MGR;
 
     vec3 m_position;
-    SerializableField(m_position);
     vec3 m_scale;
-    SerializableField(m_scale);
     vec3 m_eulerAngles;
-    SerializableField(m_eulerAngles);
   };
 
   EntityManager() : entityCount(0) {
