@@ -27,6 +27,8 @@ public:
   // get the collection of mesh from its model path
   vector<Mesh *> GetModel(string path);
 
+  Entity *GetModelEntity(string path);
+
   // shaders are identified by their vertex and fragment shader path
   Shader *GetShader(string vertShaderPath, string fragShaderPath, string geomShaderPath = "none", bool forceReload=false);
   // materials are identified by a string identifier
@@ -36,6 +38,12 @@ public:
   Texture *GetIcon(ICON_TYPE iconType) { return allIcons[iconType]; }
 
   string GetProjectRootDir() { return projectRootDir; }
+
+  Json GetDefaultMaterialJson() {
+    Json json;
+    allMaterials["::base"]->Serialize(json);
+    return json;
+  }
 
 private:
 

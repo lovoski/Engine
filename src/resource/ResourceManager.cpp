@@ -4,6 +4,10 @@
 #include "ecs/components/MeshRenderer.hpp"
 #include "geometry/Mesh.hpp"
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 namespace Resource {
 
 ResourceManager::ResourceManager() {}
@@ -96,6 +100,8 @@ void ResourceManager::Initialize() {
                  REPO_SOURCE_DIR "/src/default/shaders/base.frag");
   baseShader->identifier = "base shader";
   allShaders.push_back(baseShader);
+  // load default material
+  GetMaterialData("::base");
 }
 
 MaterialData *ResourceManager::GetMaterialData(string path) {
@@ -294,6 +300,19 @@ Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene) {
   loadedMesh->identifier = string(mesh->mName.C_Str());
 
   return loadedMesh;
+}
+
+Entity *ResourceManager::GetModelEntity(string path) {
+  auto meshes = GetModel(path);
+  auto parentObject = ECS::EManager.AddNewEntity();
+  parentObject->name = fs::path(path).filename().string();
+  for (auto mesh : meshes) {
+    auto childObject = ECS::EManager.AddNewEntity();
+    parentObject->AssignChild(childObject);
+    childObject->AddComponent<MeshRenderer>(mesh);
+    childObject->AddComponent<BaseMaterial>();
+  }
+  return parentObject;
 }
 
 unsigned int ResourceManager::textureFromFile(string texturePath, bool gamma) {
