@@ -42,6 +42,19 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
       selectedEntity = (ECS::EntityID)(-1);
       ImGui::CloseCurrentPopup();
     }
+    if (ImGui::BeginMenu("Rename")) {
+      ImGui::MenuItem("Entity Name", nullptr, nullptr, false);
+      ImGui::PushItemWidth(120);
+      static char entityNewName[50] = {0};
+      ImGui::InputText("##renameentity", entityNewName, sizeof(entityNewName));
+      if (ImGui::Button("Confirm")) {
+        ECS::EManager.EntityFromID(selectedEntity)->name = entityNewName;
+        std::strcpy(entityNewName, "");
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::PopItemWidth();
+      ImGui::EndMenu();
+    }
     ImGui::EndPopup();
   }
   if (nodeOpen) {
@@ -101,6 +114,33 @@ void EditorWindows::EntitiesWindow() {
         cone->AddComponent<BaseMaterial>();
         cone->AddComponent<MeshRenderer>(
             Core.RManager.GetMesh("::conePrimitive"));
+      }
+      ImGui::Separator();
+      if (ImGui::MenuItem("Camera")) {
+        auto camera = ECS::EManager.AddNewEntity();
+        camera->name = "Camera";
+        camera->AddComponent<Camera>();
+        SetActiveCamera(camera->ID);
+      }
+      ImGui::Separator();
+      if (ImGui::MenuItem("Directional Light")) {
+        auto dLight = ECS::EManager.AddNewEntity();
+        dLight->name = "Light";
+        dLight->SetGlobalRotationDegree(vec3(180.0f, 0.0f, 0.0f));
+        dLight->AddComponent<BaseLight>();
+        dLight->GetComponent<BaseLight>().Type = BaseLight::LIGHT_TYPE::DIRECTIONAL_LIGHT;
+      }
+      if (ImGui::MenuItem("Point Light")) {
+        auto pLight = ECS::EManager.AddNewEntity();
+        pLight->name = "Point light";
+        pLight->AddComponent<BaseLight>();
+        pLight->GetComponent<BaseLight>().Type = BaseLight::LIGHT_TYPE::POINT_LIGHT;
+      }
+      if (ImGui::MenuItem("Spot Light")) {
+        auto sLight = ECS::EManager.AddNewEntity();
+        sLight->name = "Spot light";
+        sLight->AddComponent<BaseLight>();
+        sLight->GetComponent<BaseLight>().Type = BaseLight::LIGHT_TYPE::SPOT_LIGHT;
       }
       ImGui::EndMenu();
     }

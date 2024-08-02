@@ -75,7 +75,7 @@ private:
 
   // the project settings
 
-  string projectRootDir = REPO_SOURCE_DIR "/assets";
+  string projectRootDir = REPO_SOURCE_DIR "/assets/learnopengl";
 };
 
 }; // namespace Resource

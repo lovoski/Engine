@@ -40,20 +40,33 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
 inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   auto &material = ECS::EManager.GetComponent<BaseMaterial>(selectedEntity);
   if (ImGui::TreeNode("Base Material")) {
+    const ImVec2 sizeAvailable = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("BaseMaterialEditor",
-                      {-1, ImGui::GetContentRegionAvail().y});
-    ImGui::SeparatorText(
-        ("Material Name: " + material.matData->identifier).c_str());
+                      {-1, sizeAvailable.y});
+    ImGui::MenuItem(
+        ("Material: " + material.matData->identifier).c_str(), nullptr, nullptr, false);
+    if (ImGui::Button("Save", {-1, 30})) {
+      std::ofstream materialOut(material.matData->path);
+      if (!materialOut.is_open()) {
+        Console.Log("[error]: can't save material to %s\n", material.matData->path.c_str());
+      } else {
+        Json output;
+        material.matData->Serialize(output);
+        materialOut << output;
+        Console.Log("[info]: save material to %s\n", material.matData->path.c_str());
+      }
+      materialOut.close();
+    }
     // shader information
     ImGui::BeginGroup();
     ImGui::MenuItem(
         ("Shaders: " + material.matData->shader->identifier).c_str(), nullptr,
         nullptr, false);
-    if (ImGui::Button("Reset")) {
+    if (ImGui::Button("Reset", {sizeAvailable.x/2, 30})) {
       material.matData->SetShader(); // reset to defualt shader
     }
     ImGui::SameLine();
-    if (ImGui::Button("Reload")) {
+    if (ImGui::Button("Reload", {-1, 30})) {
       material.matData->shader = Core.RManager.GetShader(
           material.matData->shader->vertexShaderPath,
           material.matData->shader->fragShaderPath, "none", true);
@@ -104,6 +117,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
             material.matData->AddVariable(newVariableName, 0);
           } else if (selectedNewVariableType == 1) {
             material.matData->AddVariable(newVariableName, 0.0f);
+            material.matData->SetVariableRange(newVariableName, minAndMax[0], minAndMax[1]);
           } else if (selectedNewVariableType == 2) {
             material.matData->AddVariable(newVariableName, vec2(0.0f));
           } else if (selectedNewVariableType == 3) {
@@ -221,13 +235,12 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
           char *texturePath = (char *)payload->Data;
           auto newTexture = Core.RManager.GetTexture(texturePath);
           // replace null texture with the actual texture
-          texVar.second =
-              newTexture; // replace upload texture with actual loaded texture
+          texVar.second = newTexture; // replace upload texture with actual loaded texture
         }
         ImGui::EndDragDropTarget();
       }
       ImGui::SameLine();
-      ImGui::Text(ptr->variableNames[texVar.first].c_str());
+      ImGui::Text(name.c_str());
     }
     ImGui::EndChild();
     if (ImGui::BeginDragDropTarget()) {
@@ -267,6 +280,20 @@ inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
 
 void EditorWindows::InspectorWindow() {
   ImGui::Begin("Components");
+  // // Right-click context menu for the parent window
+  // if (!ImGui::IsAnyItemHovered() &&
+  //     ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) {
+  //   // open the window context menu
+  //   if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+  //     ImGui::OpenPopup("ComponentWindowContextMenu");
+  //   // unselect entities
+  //   // if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+  //   //   selectedEntity = (ECS::EntityID)(-1);
+  // }
+  // if (selectedEntity != (ECS::EntityID)(-1) && ImGui::BeginPopup("ComponentWindowContextMenu")) {
+  //   ImGui::MenuItem("Window Options", nullptr, nullptr, false);
+  //   ImGui::EndPopup();
+  // }
   if (selectedEntity != (ECS::EntityID)(-1)) {
     string entityName =
         "Active Entity : " + ECS::EManager.EntityFromID(selectedEntity)->name;

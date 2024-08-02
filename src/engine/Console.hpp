@@ -25,6 +25,10 @@ public:
   void Log(const char *fmt, ...) IM_FMTARGS(2);
 
   void Draw(const char *title, bool *p_open = NULL);
+
+private:
+  unsigned int counter = 0;
+
 };
 
 static AppLog &Console = AppLog::Ref();

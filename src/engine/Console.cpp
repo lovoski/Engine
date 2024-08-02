@@ -1,16 +1,20 @@
 #include "Console.hpp"
 
+#include <string>
+
 void AppLog::Clear() {
   Buf.clear();
   LineOffsets.clear();
   LineOffsets.push_back(0);
+  counter = 0;
 }
 
 void AppLog::Log(const char *fmt, ...) {
   int old_size = Buf.size();
   va_list args;
   va_start(args, fmt);
-  Buf.appendfv(fmt, args);
+  Buf.appendfv((std::to_string(counter)+": "+fmt).c_str(), args);
+  counter++;
   va_end(args);
   for (int new_size = Buf.size(); old_size < new_size; old_size++)
     if (Buf[old_size] == '\n')
