@@ -32,6 +32,9 @@ add_executable(${PROJECT_NAME}
   src/engine/Events.cpp
   src/engine/Console.cpp
   src/engine/EditorWindows.cpp
+  src/engine/editor/AssetsWindow.cpp
+  src/engine/editor/EntitiesWindow.cpp
+  src/engine/editor/InspectorWindow.cpp
   src/utils/Math.cpp
   src/resource/ResourceManager.cpp
   src/resource/MaterialData.cpp

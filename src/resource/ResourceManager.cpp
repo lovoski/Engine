@@ -229,10 +229,13 @@ Shader *ResourceManager::GetShader(string vertShaderPath, string fragShaderPath,
     if (allShaders[i]->vertexShaderPath == vertShaderPath &&
         allShaders[i]->fragShaderPath == fragShaderPath) {
       // reload the shader if specified
-      if (forceReload)
+      if (forceReload) {
         allShaders[i]->LoadAndCompileShader(vertShaderPath.c_str(),
                                             fragShaderPath.c_str(),
                                             geomShaderPath.c_str());
+        Console.Log("[info]: reload shader at:\n%s\n%s\n", vertShaderPath.c_str(), fragShaderPath.c_str());
+      }
+
       return allShaders[i];
     }
   }
