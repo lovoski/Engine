@@ -151,7 +151,7 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
   if (ImGui::BeginPopupContextItem(
           (entity->name + std::to_string((unsigned int)entity->ID)).c_str(),
           ImGuiPopupFlags_MouseButtonRight)) {
-    ImGui::SeparatorText("Entity Options");
+    ImGui::MenuItem("Entity Options", nullptr, nullptr, false);
     if (ImGui::MenuItem("Remove")) {
       if (entity->children.size() > 0)
         Console.Log("[info]: Destroy entity %s and all its children\n",
