@@ -3,7 +3,7 @@
 inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
   auto transform = ECS::EManager.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
-    ImGui::SeparatorText("Global Properties");
+    ImGui::MenuItem("Global Properties", nullptr, nullptr, false);
     vec3 position = transform->Position();
     vec3 scale = transform->Scale();
     vec3 angles = transform->EulerAnglesDegree();
@@ -14,12 +14,10 @@ inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
       ;
     transform->SetGlobalPosition(
         vec3(positions[0], positions[1], positions[2]));
-    ImGui::Separator();
     if (ImGui::DragFloat3("Rotation", rotations, 1.0f, -180.0f, 180.0f))
       ;
     transform->SetGlobalRotationDegree(
         vec3(rotations[0], rotations[1], rotations[2]));
-    ImGui::Separator();
     if (ImGui::DragFloat3("Scale", scales, 0.01f, 0.0f, MAX_FLOAT))
       ;
     transform->SetGlobalScale(vec3(scales[0], scales[1], scales[2]));
