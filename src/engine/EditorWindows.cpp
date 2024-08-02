@@ -41,13 +41,6 @@ void EditorWindows::MainMenuBar() {
       }
       if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
       }
-      // ImGui::SeparatorText("Scene");
-      // if (ImGui::MenuItem("Save Scene")) {
-      //   std::ofstream jsonOut("test_scene.json");
-      //   jsonOut << ECS::EManager.CaptureStatesAsScene() << endl;
-      //   jsonOut.close();
-      // }
-
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Window")) {
@@ -253,6 +246,16 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
           ImGui::Text("Drop at the material texture spot to load");
           ImGui::EndDragDropSource();
         }
+      } else if (fileExtension == ".vert" || fileExtension == ".frag" ||
+                 fileExtension == ".geom") {
+        if (ImGui::BeginDragDropSource()) {
+          char textureFilenameBuffer[100] = {0};
+          std::strcpy(textureFilenameBuffer, entry.path().string().c_str());
+          ImGui::SetDragDropPayload("SHADER_OVERRIDE", textureFilenameBuffer,
+                                    sizeof(textureFilenameBuffer));
+          ImGui::Text("Drop at the material texture spot to load");
+          ImGui::EndDragDropSource();
+        }
       }
     }
     // right click context menu
@@ -270,7 +273,8 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
             static char folderName[50] = {0};
             ImGui::MenuItem("Folder Name", nullptr, nullptr, false);
             ImGui::PushItemWidth(120);
-            ImGui::InputText("##CreateEmptyFolderName", folderName, sizeof(folderName));
+            ImGui::InputText("##CreateEmptyFolderName", folderName,
+                             sizeof(folderName));
             ImGui::PopItemWidth();
             if (ImGui::Button("Create", {-1, 30})) {
               // Console.Log("Create folder %s\n", folderName);
@@ -286,7 +290,8 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
               static char matName[50] = {0};
               ImGui::MenuItem("Material Name", nullptr, nullptr, false);
               ImGui::PushItemWidth(120);
-              ImGui::InputText("##BaeMaterialFileName", matName, sizeof(matName));
+              ImGui::InputText("##BaeMaterialFileName", matName,
+                               sizeof(matName));
               ImGui::PopItemWidth();
               if (ImGui::Button("Create", {-1, 30})) {
                 // Console.Log("Create folder %s\n", folderName);
@@ -299,7 +304,41 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
               }
               ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("Vert & Frag Shader")) {
+            if (ImGui::BeginMenu("Vert & Frag Shader")) {
+              static char shaderName[50] = {0};
+              ImGui::MenuItem("Shader Name", nullptr, nullptr, false);
+              ImGui::PushItemWidth(120);
+              ImGui::InputText("##BaseShaderFilename", shaderName,
+                               sizeof(shaderName));
+              ImGui::PopItemWidth();
+              if (ImGui::Button("Create", {-1, 30})) {
+                // Console.Log("Create folder %s\n", folderName);
+                std::ofstream outputVert(entry.path().string() + "/" +
+                                         string(shaderName) + ".vert");
+                std::ofstream outputFrag(entry.path().string() + "/" +
+                                         string(shaderName) + ".frag");
+                outputVert
+                    << "#version 460 core\n"
+                       "layout (location = 0) in vec3 aPos;\n"
+                       "layout (location = 1) in vec3 aNormal;\n"
+                       "layout (location = 2) in vec2 aTexCoord;\n"
+                       "uniform mat4 model;\n"
+                       "uniform mat4 view;\n"
+                       "uniform mat4 projection;\n"
+                       "void main() {\n"
+                       "  gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+                       "}\n";
+                outputFrag << "#version 460 core\n"
+                              "out vec4 FragColor;\n"
+                              "void main(){\n"
+                              "  FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+                              "}\n";
+                outputVert.close();
+                outputFrag.close();
+                std::strcpy(shaderName, "");
+                ImGui::CloseCurrentPopup();
+              }
+              ImGui::EndMenu();
             }
             if (ImGui::MenuItem("Geometry Shader")) {
             }
@@ -402,7 +441,8 @@ void EditorWindows::DrawGizmos(float x, float y, float width, float height,
                         modelTransform[3][2]);
           selected->SetGlobalPosition(position);
         } else {
-          vec3 scale(glm::length(modelTransform[0]), glm::length(modelTransform[1]),
+          vec3 scale(glm::length(modelTransform[0]),
+                     glm::length(modelTransform[1]),
                      glm::length(modelTransform[2]));
 
           if (mCurrentGizmoOperation == ImGuizmo::ROTATE) {
@@ -463,9 +503,33 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     ImGui::SeparatorText(
         ("Material Name: " + material.matData->identifier).c_str());
     // shader information
-    ImGui::TextWrapped("Vertex Shader: %s", material.VertShaderPath.c_str());
-    ImGui::TextWrapped("Fragment Shader: %s", material.FragShaderPath.c_str());
-
+    ImGui::BeginGroup();
+    ImGui::MenuItem(
+            ("Shaders: " + material.matData->shader->identifier).c_str(), nullptr, nullptr, false);
+      if (ImGui::Button("Reset")) {
+        material.matData->SetShader(); // reset to defualt shader
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Reload")) {
+        material.matData->shader = Core.RManager.GetShader(
+            material.matData->shader->vertexShaderPath, material.matData->shader->fragShaderPath, "none", true);
+      }
+      ImGui::TextWrapped("Vertex Shader: %s", material.matData->shader->vertexShaderPath.c_str());
+      ImGui::TextWrapped("Fragment Shader: %s",
+                         material.matData->shader->fragShaderPath.c_str());
+    ImGui::EndGroup();
+    if (ImGui::BeginDragDropTarget()) {
+      if (const ImGuiPayload *payload =
+              ImGui::AcceptDragDropPayload("SHADER_OVERRIDE")) {
+        char *info = (char *)payload->Data;
+        string base = string(info).substr(0, string(info).find_last_of('.'));
+        material.matData->shader =
+            Core.RManager.GetShader(base + ".vert", base + ".frag");
+        // Console.Log("%s\n", fs::path(info).stem().string().c_str());
+      }
+      ImGui::EndDragDropTarget();
+    }
+    ImGui::MenuItem("Material Variables", nullptr, nullptr, false);
     // get the pointer
     auto ptr = material.matData;
     // construct dynamic material editor from the maps
@@ -477,11 +541,12 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       static int selectedNewVariableType = 0;
       const char *newVariableTypes[] = {"int",  "float", "vec2",
                                         "vec3", "vec4",  "texture"};
-      ImGui::SeparatorText("Create New Variable");
-      ImGui::Combo("New Variable Type", &selectedNewVariableType,
-                   newVariableTypes, 6);
-      ImGui::InputText("Variable Name", newVariableName,
+      ImGui::MenuItem("Variable Name", nullptr, nullptr, false);
+      ImGui::PushItemWidth(200);
+      ImGui::InputText("##newmaterialvariablename", newVariableName,
                        sizeof(newVariableName));
+      ImGui::Combo("Type", &selectedNewVariableType,
+                   newVariableTypes, 6);
       // float
       static float minAndMax[2] = {0.0f, 1.0f};
       if (selectedNewVariableType == 1) {
@@ -511,11 +576,12 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
         ImGui::CloseCurrentPopup(); // close the popup after creating one
                                     // variable
       }
+      ImGui::PopItemWidth();
       ImGui::EndPopup();
     }
     // int variables
     if (ptr->intVariables.size() > 0)
-      ImGui::SeparatorText("Int Variables");
+      ImGui::MenuItem("Int Variables", nullptr, nullptr, false);
     for (auto &intVar : ptr->intVariables) {
       string name = ptr->variableNames[intVar.first];
       if (ImGui::Button(("X##" + name).c_str()))
@@ -525,7 +591,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     }
     // float variables
     if (ptr->floatVariables.size() > 0)
-      ImGui::SeparatorText("Float Variables");
+      ImGui::MenuItem("Float Variables", nullptr, nullptr, false);
     for (auto &floatVar : ptr->floatVariables) {
       float minRange = -10000.0f, maxRange = 10000.0f;
       if (ptr->floatVariablesRange.find(floatVar.first) !=
@@ -543,7 +609,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     static char floatVariableName[50];
     // vec2 variable
     if (ptr->vec2Variables.size() > 0)
-      ImGui::SeparatorText("Vec2 Variables");
+      ImGui::MenuItem("Vec2 Variables", nullptr, nullptr, false);
     for (auto &vec2Var : ptr->vec2Variables) {
       string name = ptr->variableNames[vec2Var.first];
       float vec2Value[2] = {vec2Var.second.x, vec2Var.second.y};
@@ -556,7 +622,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     static char vec2VariableName[50];
     // vec3 variable
     if (ptr->vec3Variables.size() > 0)
-      ImGui::SeparatorText("Vec3 Variables");
+      ImGui::MenuItem("Vec3 Variables", nullptr, nullptr, false);
     for (auto &vec3Var : ptr->vec3Variables) {
       string name = ptr->variableNames[vec3Var.first];
       float vec3Value[3] = {vec3Var.second.x, vec3Var.second.y,
@@ -576,7 +642,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     }
     // vec4 variable
     if (ptr->vec4Variables.size() > 0)
-      ImGui::SeparatorText("Vec4 Variables");
+      ImGui::MenuItem("Vec4 Variables", nullptr, nullptr, false);
     for (auto &vec4Var : ptr->vec4Variables) {
       string name = ptr->variableNames[vec4Var.first];
       float vec4Value[4] = {vec4Var.second.x, vec4Var.second.y,
@@ -596,7 +662,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     }
     // texture variable
     if (ptr->texVariables.size() > 0)
-      ImGui::SeparatorText("Texture Variable");
+      ImGui::MenuItem("Texture Variable", nullptr, nullptr, false);
     const int textureSize = 128;
     for (auto &texVar : ptr->texVariables) {
       string name = ptr->variableNames[texVar.first];

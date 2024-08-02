@@ -1,4 +1,5 @@
 #include "MaterialData.hpp"
+#include "engine/Engine.hpp"
 
 void MaterialData::SetDefaultMaterial() {
   AddVariable("Albedo", vec3(1.0f));
@@ -14,4 +15,8 @@ bool MaterialData::HasNamingConflict(string name) {
       return true;
   }
   return false;
+}
+
+void MaterialData::SetShader(string vertShaderPath, string fragShaderPath) {
+  shader = Core.RManager.GetShader(vertShaderPath, fragShaderPath);
 }

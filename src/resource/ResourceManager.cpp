@@ -100,6 +100,11 @@ void ResourceManager::Initialize() {
                  REPO_SOURCE_DIR "/src/default/shaders/base.frag");
   baseShader->identifier = "base shader";
   allShaders.push_back(baseShader);
+  Shader *errorShader =
+      new Shader(REPO_SOURCE_DIR "/src/default/shaders/error.vert",
+                 REPO_SOURCE_DIR "/src/default/shaders/error.frag");
+  errorShader->identifier = "base shader";
+  allShaders.push_back(errorShader);
   // load default material
   GetMaterialData("::base");
 }
@@ -119,7 +124,7 @@ MaterialData *ResourceManager::GetMaterialData(string path) {
       }
       Json json;
       input >> json;
-      newMat->identifier = path;
+      newMat->identifier = fs::path(path).stem().string();
       newMat->Deserialize(json);
       vector<int> texIndices = json["texVariables"]["indices"];
       vector<string> texPathes = json["texVariables"]["pathes"];
@@ -205,6 +210,7 @@ Shader *ResourceManager::GetShader(string vertShaderPath, string fragShaderPath,
   }
   Shader *loadedShader = new Shader(
       vertShaderPath.c_str(), fragShaderPath.c_str(), geomShaderPath.c_str());
+  loadedShader->identifier = fs::path(vertShaderPath).stem().string();
   allShaders.push_back(loadedShader);
   return loadedShader;
 }

@@ -31,6 +31,7 @@ public:
     EditorContext.SetActiveCamera(cameraEntity->ID);
 
     auto directionalLight = ECS::EManager.AddNewEntity();
+    directionalLight->SetGlobalRotationDegree(vec3(180.0f, 0.0f, 0.0f));
     directionalLight->name = "directional light 0";
     directionalLight->SetGlobalPosition(vec3(3.0f, 3.0f, 3.0f));
     directionalLight->AddComponent<BaseLight>(BaseLight::LIGHT_TYPE::DIRECTIONAL_LIGHT);

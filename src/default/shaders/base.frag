@@ -25,7 +25,7 @@ void main() {
   vec3 Normal = normalize(normal);
   vec3 LightDir = -dLightDir0;
   float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
-  vec3 diffuse = lambert * dLightColor0 * Albedo;
+  vec3 diffuse = lambert * dLightColor0 * texture(DiffuseMap, texCoord).rgb;
 
   // specular
   vec3 reflectDir = reflect(-dLightDir0, Normal);

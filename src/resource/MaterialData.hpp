@@ -4,11 +4,23 @@
 #include "resource/Shader.hpp"
 #include "resource/ResourceTypes.hpp"
 
+#include "EngineConfig.h"
+
 // stores the actual attributes of the material
 class MaterialData {
 public:
-  MaterialData() {}
+  MaterialData() {
+    // load default shader at the creation of material data
+    SetShader();
+  }
   ~MaterialData() {}
+
+  Resource::Shader *shader = nullptr;
+
+  void SetShader(string vertShaderPath = REPO_SOURCE_DIR
+                 "/src/default/shaders/base.vert",
+                 string fragShaderPath = REPO_SOURCE_DIR
+                 "/src/default/shaders/base.frag");
 
   std::map<int, string> variableNames;
   std::map<int, int> intVariables;
