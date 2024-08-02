@@ -66,6 +66,16 @@ public:
   }
 
   MaterialData *matData = nullptr;
+
+  void Serialize(Json &json) override {
+    json["path"] = matData->path;
+  }
+
+  void Deserialize(Json &json) override {
+    string path = json["path"];
+    matData = Core.RManager.GetMaterialData(path);
+  }
+
 private:
 
   // if there's any changes in these properties, these variables must be updated
@@ -85,7 +95,8 @@ private:
   void activateTextures() {
     unsigned int texCounter = 0;
     for (auto tex : matData->texVariables) {
-      if (tex.second->type != Resource::TEXTURE_TYPE::ICON_TEXTURE) { // don't render icon texture
+      // don't pass the texture to gpu if its a texture slot
+      if (tex.second->path != "::textureSlot") {
         glActiveTexture(GL_TEXTURE0 +
                         texCounter); // active proper texture unit before binding
         // retrieve texture number (the N in diffuse_textureN)

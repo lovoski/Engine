@@ -10,6 +10,9 @@ public:
   virtual ~BaseComponent() = default;
   const EntityID GetID() const { return entityID; }
 
+  virtual void Serialize(Json &json) {}
+  virtual void Deserialize(Json &json) {}
+
 protected:
   friend class EntityManager;
   EntityID entityID;

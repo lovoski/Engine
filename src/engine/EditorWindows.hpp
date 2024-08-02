@@ -26,6 +26,8 @@ public:
 
   void Destroy();
 
+  void Reset();
+
   void MainMenuBar();
   void EntitiesWindow();
   void ConsoleWindow();
@@ -75,7 +77,6 @@ private:
   int gizmoGridSize = 10;
   ImGuizmo::OPERATION mCurrentGizmoOperation;
   ImGuizmo::MODE mCurrentGizmoMode;
-
 
   void DrawGizmos(float x, float y, float width, float height, bool enable = true);
 };

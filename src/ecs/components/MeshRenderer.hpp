@@ -6,6 +6,8 @@
 #include "ecs/systems/render/Mesh.hpp"
 #include "ecs/components/Lights.hpp"
 
+#include "engine/Engine.hpp"
+
 class MeshRenderer : public ECS::BaseComponent {
 public:
   MeshRenderer() {}
@@ -28,6 +30,17 @@ public:
 
   void SetMeshData(Graphics::Mesh *mesh) {
     meshData = mesh;
+  }
+
+  void Serialize(Json &json) override {
+    json["mesh"]["modelpath"] = meshData->modelPath;
+    json["mesh"]["identifier"] = meshData->identifier;
+  }
+
+  void Deserialize(Json &json) override {
+    string modelPath = json["mesh"]["modelpath"];
+    string identifier = json["mesh"]["identifier"];
+    meshData = Core.RManager.GetMesh(modelPath, identifier);
   }
 
   Graphics::Mesh *meshData = nullptr;

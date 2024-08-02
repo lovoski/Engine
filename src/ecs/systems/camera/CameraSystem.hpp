@@ -123,6 +123,4 @@ private:
 
   bool mouseFirstMove = true;
   vec2 mouseLastPos = vec2(0.0f);
-
-  float fpsCameraYaw, fpsCameraPitch;
 };

@@ -20,10 +20,8 @@ public:
 
   void Initialize();
 
-  // returns the plane mesh data of a primitive
-  Mesh *GetPrimitive(PRIMITIVE_TYPE pType);
   // get a mesh from its model path and an identifier
-  Mesh *GetMesh(string path, string identifier);
+  Mesh *GetMesh(string path, string identifier = "");
   // get the collection of mesh from its model path
   vector<Mesh *> GetModel(string path);
 
@@ -44,6 +42,8 @@ public:
     allMaterials["::base"]->Serialize(json);
     return json;
   }
+
+  Texture *TextureSlot;
 
 private:
 
@@ -66,9 +66,9 @@ private:
 
   unsigned int textureFromFile(string texturePath, bool gamma = false);
 
-  Graphics::Mesh *processMesh(aiMesh *, const aiScene *);
+  Graphics::Mesh *processMesh(aiMesh *, const aiScene *, string &);
 
-  void processNode(aiNode *, const aiScene *, vector<Graphics::Mesh *> &);
+  void processNode(aiNode *, const aiScene *, vector<Graphics::Mesh *> &, string &);
 
   // returns the plane mesh data of a model
   vector<Mesh *> getModel(string path);

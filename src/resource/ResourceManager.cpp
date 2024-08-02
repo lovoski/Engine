@@ -48,6 +48,8 @@ ResourceManager::~ResourceManager() {
     delete cylinderPrimitive;
   if (conePrimitive)
     delete conePrimitive;
+  if (TextureSlot)
+    delete TextureSlot;
 }
 
 void ResourceManager::Initialize() {
@@ -66,34 +68,43 @@ void ResourceManager::Initialize() {
   indices = {0, 1, 3, 1, 2, 3};
   planePrimitive = new Graphics::Mesh(vertices, indices);
   planePrimitive->identifier = "plane";
+  planePrimitive->modelPath = "::planePrimitive";
   // sphere
   auto sphereMesh =
       getModel(REPO_SOURCE_DIR "/src/default/primitives/sphere.obj");
   spherePrimitive =
       new Graphics::Mesh(sphereMesh[0]->vertices, sphereMesh[0]->indices);
   spherePrimitive->identifier = "sphere";
+  spherePrimitive->modelPath = "::spherePrimitive";
   // cube
   auto cubeMesh = getModel(REPO_SOURCE_DIR "/src/default/primitives/cube.obj");
   cubePrimitive =
       new Graphics::Mesh(cubeMesh[0]->vertices, cubeMesh[0]->indices);
   cubePrimitive->identifier = "cube";
+  cubePrimitive->modelPath = "::cubePrimitive";
   // cylinder
   auto cylinderMesh =
       getModel(REPO_SOURCE_DIR "/src/default/primitives/cylinder.obj");
   cylinderPrimitive =
       new Graphics::Mesh(cylinderMesh[0]->vertices, cylinderMesh[0]->indices);
   cylinderPrimitive->identifier = "cylinder";
+  cylinderPrimitive->modelPath = "::cylinderPrimitive";
   // cone
   auto coneMesh = getModel(REPO_SOURCE_DIR "/src/default/primitives/cone.obj");
   conePrimitive =
       new Graphics::Mesh(coneMesh[0]->vertices, coneMesh[0]->indices);
   conePrimitive->identifier = "cone";
+  conePrimitive->modelPath = "::conePrimitive";
 
   // load icons
   Texture *nullIcon = new Texture();
-  nullIcon->type = TEXTURE_TYPE::ICON_TEXTURE;
   nullIcon->id = textureFromFile(REPO_SOURCE_DIR "/src/default/icons/NULL.png");
   allIcons.insert(std::make_pair(ICON_TYPE::NULL_TYPE, nullIcon));
+  // initialize texture slot
+  TextureSlot = new Texture();
+  // copy the null icon's id
+  TextureSlot->id = nullIcon->id;
+  TextureSlot->path = "::textureSlot";
   // load default shaders
   Shader *baseShader =
       new Shader(REPO_SOURCE_DIR "/src/default/shaders/base.vert",
@@ -114,7 +125,9 @@ MaterialData *ResourceManager::GetMaterialData(string path) {
     // create a new material
     MaterialData *newMat = new MaterialData();
     if (path == "::base") {
+      // the first time call GetMaterialData("::base")
       newMat->identifier = "base material";
+      newMat->path = "::base";
       newMat->SetDefaultMaterial(); // set to default material
     } else {                        // load from file
       std::ifstream input(path);
@@ -122,15 +135,25 @@ MaterialData *ResourceManager::GetMaterialData(string path) {
         cout << "can't open material data file " << path << endl;
         return nullptr;
       }
+      // deserialize from material file
       Json json;
       input >> json;
+      newMat->path = path;
       newMat->identifier = fs::path(path).stem().string();
       newMat->Deserialize(json);
       vector<int> texIndices = json["texVariables"]["indices"];
       vector<string> texPathes = json["texVariables"]["pathes"];
       for (int i = 0; i < texIndices.size(); ++i) {
-        newMat->texVariables.insert(
-            std::make_pair(texIndices[i], GetTexture(texPathes[i])));
+        if (texPathes[i] == "::textureSlot") {
+          // if this is a empty slot
+          // this pointer to empty slot will be replaced by the pointer to a actual
+          // texture after user upload the texture
+          newMat->texVariables.insert(std::make_pair(texIndices[i], TextureSlot));
+        } else {
+          // if this texture has some actual data
+          newMat->texVariables.insert(
+              std::make_pair(texIndices[i], GetTexture(texPathes[i])));
+        }
       }
       input.close();
     }
@@ -145,7 +168,6 @@ Texture *ResourceManager::GetTexture(string path, bool forceReload) {
     Texture *newTex = new Texture();
     newTex->id = textureFromFile(path);
     newTex->path = path;
-    newTex->type = TEXTURE_TYPE::IMAGE_TEXTURE;
     allTextures.insert(std::make_pair(path, newTex));
     return newTex;
   } else {
@@ -169,6 +191,12 @@ vector<Mesh *> ResourceManager::GetModel(string path) {
 }
 
 Mesh *ResourceManager::GetMesh(string path, string identifier) {
+  if (path == "::cubePrimitive") return cubePrimitive;
+  else if (path == "::spherePrimitive") return spherePrimitive;
+  else if (path == "::planePrimitive") return planePrimitive;
+  else if (path == "::cylinderPrimitive") return cylinderPrimitive;
+  else if (path == "::conePrimitive") return conePrimitive;
+  else;
   if (allMeshes.find(path) == allMeshes.end()) {
     // the model has not been loaded
     auto meshes = getModel(path);
@@ -215,21 +243,6 @@ Shader *ResourceManager::GetShader(string vertShaderPath, string fragShaderPath,
   return loadedShader;
 }
 
-Mesh *ResourceManager::GetPrimitive(PRIMITIVE_TYPE pType) {
-  if (pType == PRIMITIVE_TYPE::SPHERE) {
-    return spherePrimitive;
-  } else if (pType == PRIMITIVE_TYPE::CUBE) {
-    return cubePrimitive;
-  } else if (pType == PRIMITIVE_TYPE::PLANE) {
-    return planePrimitive;
-  } else if (pType == PRIMITIVE_TYPE::CYLINDER) {
-    return cylinderPrimitive;
-  } else if (pType == PRIMITIVE_TYPE::CONE) {
-    return conePrimitive;
-  } else
-    return nullptr;
-}
-
 vector<Mesh *> ResourceManager::getModel(string modelPath) {
   // read file via ASSIMP
   Assimp::Importer importer;
@@ -245,11 +258,11 @@ vector<Mesh *> ResourceManager::getModel(string modelPath) {
     return meshes;
   }
   // process ASSIMP's root node recursively
-  processNode(scene->mRootNode, scene, meshes);
+  processNode(scene->mRootNode, scene, meshes, modelPath);
   return meshes;
 }
 
-Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene) {
+Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene, string &modelPath) {
   vector<Vertex> vertices;
   vector<unsigned int> indices;
   // walk through each of the mesh's vertices
@@ -304,6 +317,7 @@ Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene) {
 
   Mesh *loadedMesh = new Mesh(vertices, indices);
   loadedMesh->identifier = string(mesh->mName.C_Str());
+  loadedMesh->modelPath = modelPath;
 
   return loadedMesh;
 }
@@ -361,19 +375,19 @@ unsigned int ResourceManager::textureFromFile(string texturePath, bool gamma) {
 }
 
 void ResourceManager::processNode(aiNode *node, const aiScene *scene,
-                                  vector<Graphics::Mesh *> &meshes) {
+                                  vector<Graphics::Mesh *> &meshes, string &modelPath) {
   // process each mesh located at the current node
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     // the node object only contains indices to index the actual objects in
     // the scene. the scene contains all the data, node is just to keep stuff
     // organized (like relations between nodes).
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    meshes.push_back(processMesh(mesh, scene));
+    meshes.push_back(processMesh(mesh, scene, modelPath));
   }
   // after we've processed all of the meshes (if any) we then recursively
   // process each of the children nodes
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    processNode(node->mChildren[i], scene, meshes);
+    processNode(node->mChildren[i], scene, meshes, modelPath);
   }
 }
 

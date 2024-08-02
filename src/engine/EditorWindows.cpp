@@ -31,15 +31,64 @@ void EditorWindows::Destroy() {
   ImGui::DestroyContext();
 }
 
+void EditorWindows::Reset() {
+  // entity states
+  activeCamera = (ECS::EntityID)(-1);
+  selectedEntity = (ECS::EntityID)(-1);
+
+  // gizmos state
+  mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+  mCurrentGizmoMode = ImGuizmo::WORLD;
+}
+
 void DrawProfiler() {}
 
 void EditorWindows::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
-      if (ImGui::MenuItem("Load Scene")) {
+      if (ImGui::BeginMenu("Load Scene")) {
+        ImGui::MenuItem("Scene Filename", nullptr, nullptr, false);
+        ImGui::PushItemWidth(120);
+        static char filename[50] = {0};
+        ImGui::InputText("##scenefileload", filename, sizeof(filename));
+        if (ImGui::Button("Load")) {
+          std::ifstream sceneFile(Core.RManager.GetProjectRootDir() + "/" +
+                                  string(filename) + ".scene");
+          if (!sceneFile.is_open()) {
+            Console.Log("[error]: can't load scene file from %s\n", filename);
+          } else {
+            Json json;
+            sceneFile >> json;
+            ECS::EManager.ScheduleSceneReset(json);
+          }
+          sceneFile.close();
+          std::strcpy(filename, "");
+          ImGui::CloseCurrentPopup();
+        }
+        ImGui::PopItemWidth();
+        ImGui::EndMenu();
       }
-      if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
+      if (ImGui::BeginMenu("Save Scene", "CTRL+S")) {
+        ImGui::MenuItem("Scene Filename", nullptr, nullptr, false);
+        ImGui::PushItemWidth(120);
+        static char filename[50] = {0};
+        ImGui::InputText("##scenefilesave", filename, sizeof(filename));
+        if (ImGui::Button("Save")) {
+          std::ofstream sceneFile(Core.RManager.GetProjectRootDir() + "/" +
+                                  string(filename) + ".scene");
+          if (!sceneFile.is_open()) {
+            Console.Log("[error]: can't save scene file to %s\n", filename);
+          } else {
+            Json json = ECS::EManager.CaptureStatesAsScene();
+            sceneFile << json;
+          }
+          sceneFile.close();
+          std::strcpy(filename, "");
+          ImGui::CloseCurrentPopup();
+        }
+        ImGui::PopItemWidth();
+        ImGui::EndMenu();
       }
       ImGui::EndMenu();
     }
@@ -67,6 +116,7 @@ void EditorWindows::MainMenuBar() {
       // }
       ImGui::EndMenu();
     }
+    ImGui::EndMainMenuBar();
   }
 }
 
@@ -146,31 +196,31 @@ void EditorWindows::EntitiesWindow() {
         auto cube = ECS::EManager.AddNewEntity();
         cube->AddComponent<BaseMaterial>();
         cube->AddComponent<MeshRenderer>(
-            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
+            Core.RManager.GetMesh("::cubePrimitive"));
       }
       if (ImGui::MenuItem("Plane")) {
         auto plane = ECS::EManager.AddNewEntity();
         plane->AddComponent<BaseMaterial>();
         plane->AddComponent<MeshRenderer>(
-            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
+            Core.RManager.GetMesh("::planePrimitive"));
       }
       if (ImGui::MenuItem("Sphere")) {
         auto sphere = ECS::EManager.AddNewEntity();
         sphere->AddComponent<BaseMaterial>();
         sphere->AddComponent<MeshRenderer>(
-            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
+            Core.RManager.GetMesh("::spherePrimitive"));
       }
       if (ImGui::MenuItem("Cylinder")) {
         auto cylinder = ECS::EManager.AddNewEntity();
         cylinder->AddComponent<BaseMaterial>();
         cylinder->AddComponent<MeshRenderer>(
-            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CYLINDER));
+            Core.RManager.GetMesh("::cylinderPrimitive"));
       }
       if (ImGui::MenuItem("Cone")) {
         auto cone = ECS::EManager.AddNewEntity();
         cone->AddComponent<BaseMaterial>();
         cone->AddComponent<MeshRenderer>(
-            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CONE));
+            Core.RManager.GetMesh("::conePrimitive"));
       }
       ImGui::EndMenu();
     }
@@ -317,17 +367,17 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
                                          string(shaderName) + ".vert");
                 std::ofstream outputFrag(entry.path().string() + "/" +
                                          string(shaderName) + ".frag");
-                outputVert
-                    << "#version 460 core\n"
-                       "layout (location = 0) in vec3 aPos;\n"
-                       "layout (location = 1) in vec3 aNormal;\n"
-                       "layout (location = 2) in vec2 aTexCoord;\n"
-                       "uniform mat4 model;\n"
-                       "uniform mat4 view;\n"
-                       "uniform mat4 projection;\n"
-                       "void main() {\n"
-                       "  gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-                       "}\n";
+                outputVert << "#version 460 core\n"
+                              "layout (location = 0) in vec3 aPos;\n"
+                              "layout (location = 1) in vec3 aNormal;\n"
+                              "layout (location = 2) in vec2 aTexCoord;\n"
+                              "uniform mat4 model;\n"
+                              "uniform mat4 view;\n"
+                              "uniform mat4 projection;\n"
+                              "void main() {\n"
+                              "  gl_Position = projection * view * model * "
+                              "vec4(aPos, 1.0);\n"
+                              "}\n";
                 outputFrag << "#version 460 core\n"
                               "out vec4 FragColor;\n"
                               "void main(){\n"
@@ -505,18 +555,21 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     // shader information
     ImGui::BeginGroup();
     ImGui::MenuItem(
-            ("Shaders: " + material.matData->shader->identifier).c_str(), nullptr, nullptr, false);
-      if (ImGui::Button("Reset")) {
-        material.matData->SetShader(); // reset to defualt shader
-      }
-      ImGui::SameLine();
-      if (ImGui::Button("Reload")) {
-        material.matData->shader = Core.RManager.GetShader(
-            material.matData->shader->vertexShaderPath, material.matData->shader->fragShaderPath, "none", true);
-      }
-      ImGui::TextWrapped("Vertex Shader: %s", material.matData->shader->vertexShaderPath.c_str());
-      ImGui::TextWrapped("Fragment Shader: %s",
-                         material.matData->shader->fragShaderPath.c_str());
+        ("Shaders: " + material.matData->shader->identifier).c_str(), nullptr,
+        nullptr, false);
+    if (ImGui::Button("Reset")) {
+      material.matData->SetShader(); // reset to defualt shader
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Reload")) {
+      material.matData->shader = Core.RManager.GetShader(
+          material.matData->shader->vertexShaderPath,
+          material.matData->shader->fragShaderPath, "none", true);
+    }
+    ImGui::TextWrapped("Vertex Shader: %s",
+                       material.matData->shader->vertexShaderPath.c_str());
+    ImGui::TextWrapped("Fragment Shader: %s",
+                       material.matData->shader->fragShaderPath.c_str());
     ImGui::EndGroup();
     if (ImGui::BeginDragDropTarget()) {
       if (const ImGuiPayload *payload =
@@ -545,8 +598,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       ImGui::PushItemWidth(200);
       ImGui::InputText("##newmaterialvariablename", newVariableName,
                        sizeof(newVariableName));
-      ImGui::Combo("Type", &selectedNewVariableType,
-                   newVariableTypes, 6);
+      ImGui::Combo("Type", &selectedNewVariableType, newVariableTypes, 6);
       // float
       static float minAndMax[2] = {0.0f, 1.0f};
       if (selectedNewVariableType == 1) {
@@ -567,9 +619,8 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
           } else if (selectedNewVariableType == 4) {
             material.matData->AddVariable(newVariableName, vec4(0.0f));
           } else if (selectedNewVariableType == 5) {
-            material.matData->AddVariable(
-                newVariableName,
-                Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE));
+            material.matData->AddVariable(newVariableName,
+                                          Core.RManager.TextureSlot);
           }
           std::strcpy(newVariableName, "");
         }
@@ -669,23 +720,19 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       if (ImGui::Button(("X##" + name).c_str()))
         ptr->RemoveVariable<Resource::Texture *>(name);
       ImGui::SameLine();
-      if (texVar.second->type == Resource::TEXTURE_TYPE::ICON_TEXTURE) {
-        // can be replaced with new texture
-        ImGui::Image(
-            (void *)Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE)->id,
-            {textureSize, textureSize});
-        if (ImGui::BeginDragDropTarget()) {
-          if (const ImGuiPayload *payload =
-                  ImGui::AcceptDragDropPayload("LOAD_TEXTURE")) {
-            char *texturePath = (char *)payload->Data;
-            auto newTexture = Core.RManager.GetTexture(texturePath);
-            texVar.second =
-                newTexture; // replace upload texture with actual loaded texture
-          }
-          ImGui::EndDragDropTarget();
+      // the pointer to texture is a texture slot
+      ImGui::Image((void *)texVar.second->id, {textureSize, textureSize});
+      // // all texture can be replaced with another texture
+      if (ImGui::BeginDragDropTarget()) {
+        if (const ImGuiPayload *payload =
+                ImGui::AcceptDragDropPayload("LOAD_TEXTURE")) {
+          char *texturePath = (char *)payload->Data;
+          auto newTexture = Core.RManager.GetTexture(texturePath);
+          // replace null texture with the actual texture
+          texVar.second =
+              newTexture; // replace upload texture with actual loaded texture
         }
-      } else {
-        ImGui::Image((void *)texVar.second->id, {textureSize, textureSize});
+        ImGui::EndDragDropTarget();
       }
       ImGui::SameLine();
       ImGui::Text(ptr->variableNames[texVar.first].c_str());

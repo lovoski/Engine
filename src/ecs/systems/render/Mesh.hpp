@@ -17,6 +17,7 @@ public:
   unsigned int VAO;
 
   string identifier;
+  string modelPath;
 
   // constructor
   Mesh(vector<Vertex> vertices, vector<unsigned int> indices) {

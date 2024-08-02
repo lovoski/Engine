@@ -21,6 +21,16 @@ public:
   // basic properties
   vec3 LightColor = vec3(0.5f);
 
+  void Serialize(Json &json) override {
+    json["Type"] = (int)Type;
+    json["LightColor"] = LightColor;
+  }
+
+  void Deserialize(Json &json) override {
+    Type = (LIGHT_TYPE)json["Type"];
+    LightColor = json["LightColor"];
+  }
+
   // directional light properties
   // the direction for a directional light is the localForward direction
 

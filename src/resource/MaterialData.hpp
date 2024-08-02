@@ -43,6 +43,7 @@ public:
   bool SetVariableRange(string name, T min, T max);
 
   string identifier;
+  string path;
 
   void Serialize(Json &json) {
     json["variableNames"] = variableNames;
@@ -52,6 +53,9 @@ public:
     json["vec3Variables"] = vec3Variables;
     json["vec4Variables"] = vec4Variables;
     json["floatVariablesRange"] = floatVariablesRange;
+    // there could be some slots to available textures
+    // when a texture is set to be type ICON_TEXTURE, it will 
+    // be displayed as some icons on the gui side
     vector<string> texturePathes;
     vector<int> textureIndex;
     for (auto tex : texVariables) {

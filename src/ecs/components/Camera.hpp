@@ -22,6 +22,24 @@ public:
     return glm::perspective(glm::radians(fovY), width/height, zNear, zFar);
   }
 
+  void Serialize(Json &json) override {
+    json["fovY"] = fovY;
+    json["zNear"] = zNear;
+    json["zFar"] = zFar;
+    json["movementSpeed"] = movementSpeed;
+    json["mouseSensitivity"] = mouseSensitivity;
+    json["moveScheme"] = (int)moveScheme;
+  }
+
+  void Deserialize(Json &json) override {
+    fovY = json["fovY"];
+    zNear = json["zNear"];
+    zFar = json["zFar"];
+    movementSpeed = json["movementSpeed"];
+    mouseSensitivity = json["mouseSensitivity"];
+    moveScheme = (MOVEMENT_STYLE)json["moveScheme"];
+  }
+
   float fovY = 45.0f;
   float zNear = 0.1f, zFar = 100.0f;
 

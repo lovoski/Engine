@@ -30,10 +30,12 @@ public:
     ~Entity() {
       if (parent != nullptr) {
         // remove this child from its parent's child list
-        auto it =
-            std::find(parent->children.begin(), parent->children.end(), this);
-        if (it != parent->children.end())
-          parent->children.erase(it);
+        if (parent->children.size() != 0) {
+          auto it =
+              std::find(parent->children.begin(), parent->children.end(), this);
+          if (it != parent->children.end())
+            parent->children.erase(it);
+        }
         parent = nullptr;
       }
       children.clear();
@@ -174,6 +176,14 @@ public:
       }
     }
 
+    void Serialize(Json &json) {
+      json["p"] = m_position;
+      json["r"] = m_eulerAngles;
+      json["s"] = m_scale;
+      json["parent"] = parent == nullptr ? "none" : std::to_string((int)parent->ID);
+      json["name"] = name;
+    }
+
     template <typename T, typename... Args> void AddComponent(Args &&...args) {
       MGR->AddComponent<T>(ID, std::forward<Args>(args)...);
     }
@@ -278,6 +288,13 @@ public:
     // other systems
     for (auto &system : registeredSystems) {
       system.second->Update();
+    }
+
+    // schedule some update at the end
+    // if the scene needs reset
+    if (scheduleSceneReset) {
+      scheduleSceneReset = false;
+      InitializeFromScene(sceneFile);
     }
   }
 
@@ -431,7 +448,12 @@ public:
   Json CaptureStatesAsScene();
 
   // restore states from a json object
-  void InitializeFromScene(Json json);
+  void InitializeFromScene(Json &json);
+
+  void ScheduleSceneReset(Json &json) {
+    sceneFile = json;
+    scheduleSceneReset = true;
+  }
 
 private:
   // create a component list that stores a specified type of components
@@ -535,6 +557,9 @@ private:
       }
     }
   }
+
+  Json sceneFile;
+  bool scheduleSceneReset = false;
 
   // how many entities have been created
   EntityID entityCount;
