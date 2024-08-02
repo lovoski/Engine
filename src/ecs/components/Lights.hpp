@@ -22,7 +22,7 @@ public:
   vec3 LightColor = vec3(0.5f);
 
   // directional light properties
-  vec3 LightDir = vec3(-1.0f);
+  // the direction for a directional light is the localForward direction
 
   // point light properties
 

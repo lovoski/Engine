@@ -54,7 +54,7 @@ public:
       if (light.Type == BaseLight::DIRECTIONAL_LIGHT) {
         string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
         string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
-        shader->SetVec3(lightDirName, light.LightDir);
+        shader->SetVec3(lightDirName, ECS::EManager.EntityFromID(light.GetID())->LocalForward);
         shader->SetVec3(lightColorName, light.LightColor);
         dirLightCounter++;
       } else if (light.Type == BaseLight::POINT_LIGHT) {

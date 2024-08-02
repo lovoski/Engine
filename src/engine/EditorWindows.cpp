@@ -36,7 +36,7 @@ void DrawProfiler() {}
 void EditorWindows::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
-      ImGui::SeparatorText("Project");
+      ImGui::MenuItem("Project", nullptr, nullptr, false);
       if (ImGui::MenuItem("Load Scene")) {
       }
       if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
@@ -142,38 +142,38 @@ void EditorWindows::EntitiesWindow() {
       selectedEntity = (ECS::EntityID)(-1);
   }
   if (ImGui::BeginPopup("EntitiesWindowContextMenu")) {
-    ImGui::SeparatorText("Window Options");
+    ImGui::MenuItem("Window Options", nullptr, nullptr, false);
     if (ImGui::BeginMenu("Create Entity")) {
-      ImGui::SeparatorText("Entity Types");
+      ImGui::MenuItem("Entity Types", nullptr, nullptr, false);
       if (ImGui::MenuItem("Null Entity")) {
         ECS::EManager.AddNewEntity();
       }
       ImGui::Separator();
-      if (ImGui::MenuItem("Cube Primitive")) {
+      if (ImGui::MenuItem("Cube")) {
         auto cube = ECS::EManager.AddNewEntity();
         cube->AddComponent<BaseMaterial>();
         cube->AddComponent<MeshRenderer>(
             Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
       }
-      if (ImGui::MenuItem("Plane Primitive")) {
+      if (ImGui::MenuItem("Plane")) {
         auto plane = ECS::EManager.AddNewEntity();
         plane->AddComponent<BaseMaterial>();
         plane->AddComponent<MeshRenderer>(
             Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
       }
-      if (ImGui::MenuItem("Sphere Primitive")) {
+      if (ImGui::MenuItem("Sphere")) {
         auto sphere = ECS::EManager.AddNewEntity();
         sphere->AddComponent<BaseMaterial>();
         sphere->AddComponent<MeshRenderer>(
             Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
       }
-      if (ImGui::MenuItem("Cylinder Primitive")) {
+      if (ImGui::MenuItem("Cylinder")) {
         auto cylinder = ECS::EManager.AddNewEntity();
         cylinder->AddComponent<BaseMaterial>();
         cylinder->AddComponent<MeshRenderer>(
             Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CYLINDER));
       }
-      if (ImGui::MenuItem("Cone Primitive")) {
+      if (ImGui::MenuItem("Cone")) {
         auto cone = ECS::EManager.AddNewEntity();
         cone->AddComponent<BaseMaterial>();
         cone->AddComponent<MeshRenderer>(
@@ -259,18 +259,19 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
     if (ImGui::BeginPopupContextItem((entry.path().string() + " popup").c_str(),
                                      ImGuiPopupFlags_MouseButtonRight)) {
       if (isDirectory) { // directory options
-        ImGui::SeparatorText("Directory Options");
+        ImGui::MenuItem("Directory Options", nullptr, nullptr, false);
         if (ImGui::MenuItem("Remove")) {
+          // remove directory
           fs::remove_all(entry.path());
-          // Console.Log("Remove directory : %s\n",
-          // entry.path().string().c_str());
         }
         if (ImGui::BeginMenu("Create")) {
-          ImGui::SeparatorText("Types");
+          ImGui::MenuItem("Types", nullptr, nullptr, false);
           if (ImGui::BeginMenu("Empty Folder")) {
             static char folderName[50] = {0};
-            ImGui::SeparatorText("Create Folder");
-            ImGui::InputText("Folder Name", folderName, sizeof(folderName));
+            ImGui::MenuItem("Folder Name", nullptr, nullptr, false);
+            ImGui::PushItemWidth(120);
+            ImGui::InputText("##CreateEmptyFolderName", folderName, sizeof(folderName));
+            ImGui::PopItemWidth();
             if (ImGui::Button("Create", {-1, 30})) {
               // Console.Log("Create folder %s\n", folderName);
               fs::create_directory(entry.path().string() + "/" + folderName);
@@ -280,11 +281,13 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
             ImGui::EndMenu();
           }
           if (ImGui::BeginMenu("Render")) {
-            ImGui::SeparatorText("Render");
+            ImGui::MenuItem("Render", nullptr, nullptr, false);
             if (ImGui::BeginMenu("Base Material")) {
               static char matName[50] = {0};
-              ImGui::SeparatorText("Material Name");
-              ImGui::InputText("Folder Name", matName, sizeof(matName));
+              ImGui::MenuItem("Material Name", nullptr, nullptr, false);
+              ImGui::PushItemWidth(120);
+              ImGui::InputText("##BaeMaterialFileName", matName, sizeof(matName));
+              ImGui::PopItemWidth();
               if (ImGui::Button("Create", {-1, 30})) {
                 // Console.Log("Create folder %s\n", folderName);
                 std::ofstream output(entry.path().string() + "/" +
@@ -305,7 +308,7 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
           ImGui::EndMenu();
         }
       } else { // file options
-        ImGui::SeparatorText("File Options");
+        ImGui::MenuItem("File Options", nullptr, nullptr, false);
         if (ImGui::MenuItem("Remove")) {
           fs::remove_all(entry.path());
           // Console.Log("Remove file : %s\n", entry.path().string().c_str());
