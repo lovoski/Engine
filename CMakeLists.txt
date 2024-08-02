@@ -10,6 +10,7 @@ add_subdirectory("ext/imgui")
 add_subdirectory("ext/stb")
 add_subdirectory("ext/assimp")
 add_subdirectory("ext/glm")
+add_subdirectory("ext/imguizmo")
 
 if (BUILD_ENGINE_TEST)
   add_subdirectory("src/test")
@@ -18,7 +19,7 @@ endif()
 set(REPO_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
 configure_file(config.h.in EngineConfig.h)
 
-set(ENGINE_DEPS glfw glad assimp stb glm imgui)
+set(ENGINE_DEPS glfw glad assimp stb glm imgui ImGuizmo)
 
 include_directories(
   "${CMAKE_BINARY_DIR}"

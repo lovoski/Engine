@@ -69,6 +69,15 @@ private:
   bool showAssetsWindow = true;
   bool showConsoleWindow = true;
   bool showInspectorWindow = true;
+
+  // imguizmo settings
+  bool showGizmoGrid = true;
+  int gizmoGridSize = 10;
+  ImGuizmo::OPERATION mCurrentGizmoOperation;
+  ImGuizmo::MODE mCurrentGizmoMode;
+
+
+  void DrawGizmos(float x, float y, float width, float height, bool enable = true);
 };
 
 static EditorWindows &EditorContext = EditorWindows::Ref();

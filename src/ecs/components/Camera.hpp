@@ -9,7 +9,8 @@ public:
   ~Camera() {}
 
   enum MOVEMENT_STYLE {
-    FPS_CAMERA
+    FPS_CAMERA,
+    MOUSE_KEY_CAMERA
   };
 
   // The camera looks at -LocalForward direction
@@ -26,5 +27,5 @@ public:
 
   float movementSpeed = 2.5f, mouseSensitivity = 0.1f;
 
-  MOVEMENT_STYLE moveScheme = MOVEMENT_STYLE::FPS_CAMERA;
+  MOVEMENT_STYLE moveScheme = MOVEMENT_STYLE::MOUSE_KEY_CAMERA;
 };

@@ -38,6 +38,11 @@
 
 #include "engine/Console.hpp"
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
+#include <ImGuizmo.h>
+
 using std::cout;
 using std::endl;
 using std::string;

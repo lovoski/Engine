@@ -2,16 +2,15 @@
 #include "resource/MaterialData.hpp"
 #include "roboto.h"
 
-// c++ 17 feature
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
 void EditorWindows::Initialize() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 
   ImGui::StyleColorsLight();
+
+  // setup imguizmo
+  mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+  mCurrentGizmoMode = ImGuizmo::WORLD;
 
   io = &ImGui::GetIO();
   io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -38,9 +37,9 @@ void EditorWindows::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::SeparatorText("Project");
-      if (ImGui::MenuItem("Load Project")) {
+      if (ImGui::MenuItem("Load Scene")) {
       }
-      if (ImGui::MenuItem("Save Project")) {
+      if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
       }
       // ImGui::SeparatorText("Scene");
       // if (ImGui::MenuItem("Save Scene")) {
@@ -51,15 +50,30 @@ void EditorWindows::MainMenuBar() {
 
       ImGui::EndMenu();
     }
-    // if (ImGui::BeginMenu("Tools")) {
-    //   // if (ImGui::MenuItem("Show Profiler")) {
-    //   //   DrawProfiler();
-    //   // }
-    //   // if (ImGui::MenuItem("Show Style Editor")) {
-    //   //   ImGui::ShowStyleEditor();
-    //   // }
-    //   ImGui::EndMenu();
-    // }
+    if (ImGui::BeginMenu("Window")) {
+      if (ImGui::BeginMenu("Gizmos")) {
+        ImGui::MenuItem("Axis Space", nullptr, nullptr, false);
+        if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+          mCurrentGizmoMode = ImGuizmo::LOCAL;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+          mCurrentGizmoMode = ImGuizmo::WORLD;
+        ImGui::Separator();
+        ImGui::MenuItem("Grid Options", nullptr, nullptr, false);
+        ImGui::Checkbox("Show Grid", &showGizmoGrid);
+        ImGui::PushItemWidth(100);
+        ImGui::InputInt("Grid Size", &gizmoGridSize);
+        ImGui::PopItemWidth();
+        ImGui::EndMenu();
+      }
+      // if (ImGui::MenuItem("Show Profiler")) {
+      //   DrawProfiler();
+      // }
+      // if (ImGui::MenuItem("Show Style Editor")) {
+      //   ImGui::ShowStyleEditor();
+      // }
+      ImGui::EndMenu();
+    }
   }
 }
 
@@ -91,8 +105,9 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
     ImGui::EndDragDropTarget();
   }
   // right click context menu
-  if (ImGui::BeginPopupContextItem((entity->name + std::to_string((unsigned int)entity->ID)).c_str(),
-                                   ImGuiPopupFlags_MouseButtonRight)) {
+  if (ImGui::BeginPopupContextItem(
+          (entity->name + std::to_string((unsigned int)entity->ID)).c_str(),
+          ImGuiPopupFlags_MouseButtonRight)) {
     ImGui::SeparatorText("Entity Options");
     if (ImGui::MenuItem("Remove")) {
       if (entity->children.size() > 0)
@@ -137,27 +152,32 @@ void EditorWindows::EntitiesWindow() {
       if (ImGui::MenuItem("Cube Primitive")) {
         auto cube = ECS::EManager.AddNewEntity();
         cube->AddComponent<BaseMaterial>();
-        cube->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
+        cube->AddComponent<MeshRenderer>(
+            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CUBE));
       }
       if (ImGui::MenuItem("Plane Primitive")) {
         auto plane = ECS::EManager.AddNewEntity();
         plane->AddComponent<BaseMaterial>();
-        plane->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
+        plane->AddComponent<MeshRenderer>(
+            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::PLANE));
       }
       if (ImGui::MenuItem("Sphere Primitive")) {
         auto sphere = ECS::EManager.AddNewEntity();
         sphere->AddComponent<BaseMaterial>();
-        sphere->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
+        sphere->AddComponent<MeshRenderer>(
+            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::SPHERE));
       }
       if (ImGui::MenuItem("Cylinder Primitive")) {
         auto cylinder = ECS::EManager.AddNewEntity();
         cylinder->AddComponent<BaseMaterial>();
-        cylinder->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CYLINDER));
+        cylinder->AddComponent<MeshRenderer>(
+            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CYLINDER));
       }
       if (ImGui::MenuItem("Cone Primitive")) {
         auto cone = ECS::EManager.AddNewEntity();
         cone->AddComponent<BaseMaterial>();
-        cone->AddComponent<MeshRenderer>(Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CONE));
+        cone->AddComponent<MeshRenderer>(
+            Core.RManager.GetPrimitive(Resource::PRIMITIVE_TYPE::CONE));
       }
       ImGui::EndMenu();
     }
@@ -177,7 +197,7 @@ void EditorWindows::EntitiesWindow() {
             ImGui::AcceptDragDropPayload("IMPORT_MODEL_ASSETS")) {
       char *modelPath = (char *)payload->Data;
       // Console.Log(modelPath);
-      auto modelEntity =Core.RManager.GetModelEntity(modelPath);
+      auto modelEntity = Core.RManager.GetModelEntity(modelPath);
     }
     ImGui::EndDragDropTarget();
   }
@@ -208,8 +228,7 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
         if (ImGui::BeginDragDropSource()) {
           char matFilenameBuffer[100] = {0};
           std::strcpy(matFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("MATERIAL_OVERRIDE",
-                                    matFilenameBuffer,
+          ImGui::SetDragDropPayload("MATERIAL_OVERRIDE", matFilenameBuffer,
                                     sizeof(matFilenameBuffer));
           ImGui::Text("Drop at a material component to override");
           ImGui::EndDragDropSource();
@@ -219,18 +238,17 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
         if (ImGui::BeginDragDropSource()) {
           char modelFilenameBuffer[100] = {0};
           std::strcpy(modelFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("IMPORT_MODEL_ASSETS",
-                                    modelFilenameBuffer,
+          ImGui::SetDragDropPayload("IMPORT_MODEL_ASSETS", modelFilenameBuffer,
                                     sizeof(modelFilenameBuffer));
           ImGui::Text("Drop at the entity window to import");
           ImGui::EndDragDropSource();
         }
-      } else if (fileExtension == ".png" || fileExtension == ".bmp" || fileExtension == ".jpg") {
+      } else if (fileExtension == ".png" || fileExtension == ".bmp" ||
+                 fileExtension == ".jpg") {
         if (ImGui::BeginDragDropSource()) {
           char textureFilenameBuffer[100] = {0};
           std::strcpy(textureFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("LOAD_TEXTURE",
-                                    textureFilenameBuffer,
+          ImGui::SetDragDropPayload("LOAD_TEXTURE", textureFilenameBuffer,
                                     sizeof(textureFilenameBuffer));
           ImGui::Text("Drop at the material texture spot to load");
           ImGui::EndDragDropSource();
@@ -244,7 +262,8 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
         ImGui::SeparatorText("Directory Options");
         if (ImGui::MenuItem("Remove")) {
           fs::remove_all(entry.path());
-          // Console.Log("Remove directory : %s\n", entry.path().string().c_str());
+          // Console.Log("Remove directory : %s\n",
+          // entry.path().string().c_str());
         }
         if (ImGui::BeginMenu("Create")) {
           ImGui::SeparatorText("Types");
@@ -254,7 +273,7 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
             ImGui::InputText("Folder Name", folderName, sizeof(folderName));
             if (ImGui::Button("Create", {-1, 30})) {
               // Console.Log("Create folder %s\n", folderName);
-              fs::create_directory(entry.path().string()+"/"+folderName);
+              fs::create_directory(entry.path().string() + "/" + folderName);
               std::strcpy(folderName, "");
               ImGui::CloseCurrentPopup();
             }
@@ -268,7 +287,8 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
               ImGui::InputText("Folder Name", matName, sizeof(matName));
               if (ImGui::Button("Create", {-1, 30})) {
                 // Console.Log("Create folder %s\n", folderName);
-                std::ofstream output(entry.path().string() + "/" + string(matName)+".material");
+                std::ofstream output(entry.path().string() + "/" +
+                                     string(matName) + ".material");
                 output << Core.RManager.GetDefaultMaterialJson();
                 output.close();
                 std::strcpy(matName, "");
@@ -278,7 +298,8 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
             }
             if (ImGui::MenuItem("Vert & Frag Shader")) {
             }
-            if (ImGui::MenuItem("Geometry Shader")) {}
+            if (ImGui::MenuItem("Geometry Shader")) {
+            }
             ImGui::EndMenu();
           }
           ImGui::EndMenu();
@@ -308,8 +329,7 @@ void EditorWindows::AssetsWindow() {
   static int treeNodeInd = 0, selectedFile = 0;
   treeNodeInd = 0;
   const string rootDir = Core.RManager.GetProjectRootDir();
-  if (!fs::exists(rootDir) ||
-      !fs::is_directory(rootDir)) {
+  if (!fs::exists(rootDir) || !fs::is_directory(rootDir)) {
     cout << "project root dir don't exists or isn't a directory (From "
             "AssetsWindow)"
          << endl;
@@ -341,6 +361,60 @@ void EditorWindows::AssetsWindow() {
   ImGui::End();
 }
 
+void EditorWindows::DrawGizmos(float x, float y, float width, float height,
+                               bool enable) {
+
+  if (ImGui::IsKeyPressed(ImGuiKey_G))
+    mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+  if (ImGui::IsKeyPressed(ImGuiKey_R))
+    mCurrentGizmoOperation = ImGuizmo::ROTATE;
+  if (ImGui::IsKeyPressed(ImGuiKey_S))
+    mCurrentGizmoOperation = ImGuizmo::SCALE;
+
+  ECS::EntityID camera;
+  if (enable && GetActiveCamera(camera)) {
+    ImGuizmo::AllowAxisFlip(false);
+    ImGuizmo::SetDrawlist();
+    ImGuizmo::SetRect(x, y, width, height);
+    Entity *cameraEnt = ECS::EManager.EntityFromID(camera);
+    Camera &cameraComp = cameraEnt->GetComponent<Camera>();
+    if (showGizmoGrid) {
+      ImGuizmo::DrawGrid(
+          glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
+          glm::value_ptr(cameraComp.GetProjMatrixPerspective(width, height)),
+          glm::value_ptr(mat4(1.0f)), gizmoGridSize);
+    }
+    if (selectedEntity != (ECS::EntityID)(-1)) {
+      Entity *selected = ECS::EManager.EntityFromID(selectedEntity);
+      mat4 modelTransform = selected->GetModelMatrix();
+      ImGuizmo::Manipulate(
+          glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
+          glm::value_ptr(cameraComp.GetProjMatrixPerspective(width, height)),
+          mCurrentGizmoOperation, mCurrentGizmoMode,
+          glm::value_ptr(modelTransform), NULL, NULL);
+      if (ImGuizmo::IsUsing()) {
+        // update object transform with modified changes
+        if (mCurrentGizmoOperation == ImGuizmo::TRANSLATE) {
+          vec3 position(modelTransform[3][0], modelTransform[3][1],
+                        modelTransform[3][2]);
+          selected->SetGlobalPosition(position);
+        } else {
+          vec3 scale(glm::length(modelTransform[0]), glm::length(modelTransform[1]),
+                     glm::length(modelTransform[2]));
+
+          if (mCurrentGizmoOperation == ImGuizmo::ROTATE) {
+            mat4 rotation =
+                mat4(modelTransform[0] / scale.x, modelTransform[1] / scale.y,
+                     modelTransform[2] / scale.z, vec4(0.0f, 0.0f, 0.0f, 1.0f));
+            selected->SetGlobalRotation(glm::quat_cast(rotation));
+          } else if (mCurrentGizmoOperation == ImGuizmo::SCALE)
+            selected->SetGlobalScale(scale);
+        }
+      }
+    }
+  }
+}
+
 inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
   auto transform = ECS::EManager.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
@@ -351,15 +425,18 @@ inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
     float positions[3] = {position.x, position.y, position.z};
     float scales[3] = {scale.x, scale.y, scale.z};
     float rotations[3] = {angles.x, angles.y, angles.z};
-    if (ImGui::DragFloat3("Position", positions, 0.01f, -MAX_FLOAT, MAX_FLOAT));
+    if (ImGui::DragFloat3("Position", positions, 0.01f, -MAX_FLOAT, MAX_FLOAT))
+      ;
     transform->SetGlobalPosition(
         vec3(positions[0], positions[1], positions[2]));
     ImGui::Separator();
-    if (ImGui::DragFloat3("Rotation", rotations, 1.0f, -180.0f, 180.0f));
+    if (ImGui::DragFloat3("Rotation", rotations, 1.0f, -180.0f, 180.0f))
+      ;
     transform->SetGlobalRotationDegree(
         vec3(rotations[0], rotations[1], rotations[2]));
     ImGui::Separator();
-    if (ImGui::DragFloat3("Scale", scales, 0.01f, 0.0f, MAX_FLOAT));
+    if (ImGui::DragFloat3("Scale", scales, 0.01f, 0.0f, MAX_FLOAT))
+      ;
     transform->SetGlobalScale(vec3(scales[0], scales[1], scales[2]));
     ImGui::TreePop();
   }
@@ -378,8 +455,10 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
 inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   auto &material = ECS::EManager.GetComponent<BaseMaterial>(selectedEntity);
   if (ImGui::TreeNode("Base Material")) {
-    ImGui::BeginChild("BaseMaterialEditor", {-1, ImGui::GetContentRegionAvail().y});
-    ImGui::SeparatorText(("Material Name: " + material.matData->identifier).c_str());
+    ImGui::BeginChild("BaseMaterialEditor",
+                      {-1, ImGui::GetContentRegionAvail().y});
+    ImGui::SeparatorText(
+        ("Material Name: " + material.matData->identifier).c_str());
     // shader information
     ImGui::TextWrapped("Vertex Shader: %s", material.VertShaderPath.c_str());
     ImGui::TextWrapped("Fragment Shader: %s", material.FragShaderPath.c_str());
@@ -393,10 +472,13 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     if (ImGui::BeginPopup("AddNewVariable")) {
       static char newVariableName[100];
       static int selectedNewVariableType = 0;
-      const char *newVariableTypes[] = {"int", "float", "vec2", "vec3", "vec4", "texture"};
+      const char *newVariableTypes[] = {"int",  "float", "vec2",
+                                        "vec3", "vec4",  "texture"};
       ImGui::SeparatorText("Create New Variable");
-      ImGui::Combo("New Variable Type", &selectedNewVariableType, newVariableTypes, 6);
-      ImGui::InputText("Variable Name", newVariableName, sizeof(newVariableName));
+      ImGui::Combo("New Variable Type", &selectedNewVariableType,
+                   newVariableTypes, 6);
+      ImGui::InputText("Variable Name", newVariableName,
+                       sizeof(newVariableName));
       // float
       static float minAndMax[2] = {0.0f, 1.0f};
       if (selectedNewVariableType == 1) {
@@ -417,11 +499,14 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
           } else if (selectedNewVariableType == 4) {
             material.matData->AddVariable(newVariableName, vec4(0.0f));
           } else if (selectedNewVariableType == 5) {
-            material.matData->AddVariable(newVariableName, Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE));
+            material.matData->AddVariable(
+                newVariableName,
+                Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE));
           }
           std::strcpy(newVariableName, "");
         }
-        ImGui::CloseCurrentPopup(); // close the popup after creating one variable
+        ImGui::CloseCurrentPopup(); // close the popup after creating one
+                                    // variable
       }
       ImGui::EndPopup();
     }
@@ -513,17 +598,20 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     for (auto &texVar : ptr->texVariables) {
       string name = ptr->variableNames[texVar.first];
       if (ImGui::Button(("X##" + name).c_str()))
-        ptr->RemoveVariable<Resource::Texture*>(name);
+        ptr->RemoveVariable<Resource::Texture *>(name);
       ImGui::SameLine();
       if (texVar.second->type == Resource::TEXTURE_TYPE::ICON_TEXTURE) {
         // can be replaced with new texture
-        ImGui::Image((void *)Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE)->id, {textureSize, textureSize});
+        ImGui::Image(
+            (void *)Core.RManager.GetIcon(Resource::ICON_TYPE::NULL_TYPE)->id,
+            {textureSize, textureSize});
         if (ImGui::BeginDragDropTarget()) {
           if (const ImGuiPayload *payload =
                   ImGui::AcceptDragDropPayload("LOAD_TEXTURE")) {
             char *texturePath = (char *)payload->Data;
             auto newTexture = Core.RManager.GetTexture(texturePath);
-            texVar.second = newTexture; // replace upload texture with actual loaded texture
+            texVar.second =
+                newTexture; // replace upload texture with actual loaded texture
           }
           ImGui::EndDragDropTarget();
         }
@@ -608,6 +696,7 @@ void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
                ImVec2(1, 0));
   SceneWindowSize = {size.x, size.y};
   SceneWindowPos = {pos.x, pos.y};
+  DrawGizmos(pos.x, pos.y, size.x, size.y);
   ImGui::EndChild();
   ImGui::End();
 

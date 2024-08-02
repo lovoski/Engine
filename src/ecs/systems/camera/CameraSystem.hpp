@@ -59,7 +59,8 @@ public:
         // change rotation of camera
         vec2 mouseCurrentPos = Event.MouseCurrentPosition;
         // the shift only happens if cousor in the range of scene window
-        if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS && EditorContext.LoopCursorInSceneWindow()) {
+        if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
+            EditorContext.LoopCursorInSceneWindow()) {
           // loop the camera if the camera is locked
           if (mouseFirstMove) {
             mouseLastPos = mouseCurrentPos;
@@ -72,7 +73,47 @@ public:
                                                glm::radians(mouseOffset.x),
                                                0.0f));
           mouseLastPos = mouseCurrentPos;
-        } else mouseFirstMove = true;
+        } else
+          mouseFirstMove = true;
+      } else if (cameraComp.moveScheme ==
+                 Camera::MOVEMENT_STYLE::MOUSE_KEY_CAMERA) {
+        bool inSceneWindow = EditorContext.InSceneWindow(
+            Event.MouseCurrentPosition.x, Event.MouseCurrentPosition.y);
+        if (inSceneWindow) {
+          // check action queue for mouse scroll event
+          for (auto action : Event.actions) {
+            if (action.Type == Action::ActionType::MOUSE_SCROLL) {
+              vec2 scrollOffset = (*(vec2 *)action.Data);
+              cameraObject->SetGlobalPosition(cameraObject->Position() - cameraObject->LocalForward * scrollOffset.y * 0.1f);
+            }
+          }
+        }
+        vec2 mouseCurrentPos = Event.MouseCurrentPosition;
+        if (Event.GetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS &&
+            EditorContext.LoopCursorInSceneWindow()) {
+          // loop the camera if the camera is locked
+          if (mouseFirstMove) {
+            mouseLastPos = mouseCurrentPos;
+            mouseFirstMove = false;
+          }
+          vec2 mouseOffset =
+              mouseSensitivity * (mouseCurrentPos - mouseLastPos);
+          if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+            // move the view position
+            cameraObject->SetGlobalPosition(
+                cameraObject->Position() -
+                0.1f * mouseOffset.x * cameraObject->LocalLeft +
+                0.1f * mouseOffset.y * cameraObject->LocalUp);
+          } else {
+            // move the view direction
+            cameraObject->SetGlobalRotation(cameraObject->EulerAngles() -
+                                            vec3(glm::radians(mouseOffset.y),
+                                                 glm::radians(mouseOffset.x),
+                                                 0.0f));
+          }
+          mouseLastPos = mouseCurrentPos;
+        } else
+          mouseFirstMove = true;
       }
     }
   }
