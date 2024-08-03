@@ -57,6 +57,15 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
           ImGui::Text("Drop at the material texture spot to load");
           ImGui::EndDragDropSource();
         }
+      } else if (fileExtension == ".scene") { // load a scene
+        if (ImGui::BeginDragDropSource()) {
+          char sceneFilenameBuffer[100] = {0};
+          std::strcpy(sceneFilenameBuffer, entry.path().string().c_str());
+          ImGui::SetDragDropPayload("IMPORT_SCENE", sceneFilenameBuffer,
+                                    sizeof(sceneFilenameBuffer));
+          ImGui::Text("Drop at the entity window to import");
+          ImGui::EndDragDropSource();
+        }
       }
     }
     // right click context menu
@@ -171,7 +180,7 @@ void EditorWindows::AssetsWindow() {
   ImGui::Begin("Assets");
   static int treeNodeInd = 0, selectedFile = 0;
   treeNodeInd = 0;
-  const string rootDir = Core.RManager.GetProjectRootDir();
+  const string rootDir = activeBaseFolder;
   if (!fs::exists(rootDir) || !fs::is_directory(rootDir)) {
     cout << "project root dir don't exists or isn't a directory (From "
             "AssetsWindow)"

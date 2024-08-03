@@ -35,8 +35,6 @@ public:
   Texture *GetTexture(string path, bool forceReload = false);
   Texture *GetIcon(ICON_TYPE iconType) { return allIcons[iconType]; }
 
-  string GetProjectRootDir() { return projectRootDir; }
-
   Json GetDefaultMaterialJson() {
     Json json;
     allMaterials["::base"]->Serialize(json);
@@ -73,9 +71,6 @@ private:
   // returns the plane mesh data of a model
   vector<Mesh *> getModel(string path);
 
-  // the project settings
-
-  string projectRootDir = REPO_SOURCE_DIR "/assets/learnopengl";
 };
 
 }; // namespace Resource

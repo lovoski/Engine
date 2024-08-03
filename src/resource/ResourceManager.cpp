@@ -332,6 +332,7 @@ Entity *ResourceManager::GetModelEntity(string path) {
   for (auto mesh : meshes) {
     auto childObject = ECS::EManager.AddNewEntity();
     parentObject->AssignChild(childObject);
+    childObject->name = mesh->identifier;
     childObject->AddComponent<MeshRenderer>(mesh);
     childObject->AddComponent<BaseMaterial>();
   }

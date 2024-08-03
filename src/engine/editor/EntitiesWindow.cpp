@@ -159,8 +159,25 @@ void EditorWindows::EntitiesWindow() {
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("IMPORT_MODEL_ASSETS")) {
       char *modelPath = (char *)payload->Data;
-      // Console.Log(modelPath);
+      Console.Log("[info]: import modelfrom %s\n", modelPath);
       auto modelEntity = Core.RManager.GetModelEntity(modelPath);
+    }
+    ImGui::EndDragDropTarget();
+  }
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("IMPORT_SCENE")) {
+      char *scenePath = (char *)payload->Data;
+      std::ifstream sceneFile(scenePath);
+      if (!sceneFile.is_open()) {
+        Console.Log("[error]: unable to open scene file %s\n", scenePath);
+      } else {
+        Console.Log("[info]: open scene file %s\n", scenePath);
+        Json json;
+        sceneFile >> json;
+        ECS::EManager.ScheduleSceneReset(json);
+      }
+      sceneFile.close();
     }
     ImGui::EndDragDropTarget();
   }

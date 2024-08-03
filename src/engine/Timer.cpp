@@ -11,3 +11,5 @@ void tTimer::Tick() {
 }
 
 float tTimer::DeltaTime() { return deltaTime; }
+
+float tTimer::GetTime() { return (float)glfwGetTime(); }

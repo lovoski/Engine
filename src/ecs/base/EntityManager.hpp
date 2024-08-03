@@ -450,6 +450,7 @@ public:
   // restore states from a json object
   void InitializeFromScene(Json &json);
 
+  // load the scene at the end of this frame
   void ScheduleSceneReset(Json &json) {
     sceneFile = json;
     scheduleSceneReset = true;

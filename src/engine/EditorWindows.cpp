@@ -47,35 +47,17 @@ void EditorWindows::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
-      if (ImGui::BeginMenu("Load Scene")) {
-        ImGui::MenuItem("Scene Filename", nullptr, nullptr, false);
-        ImGui::PushItemWidth(120);
-        static char filename[50] = {0};
-        ImGui::InputText("##scenefileload", filename, sizeof(filename));
-        if (ImGui::Button("Load")) {
-          std::ifstream sceneFile(Core.RManager.GetProjectRootDir() + "/" +
-                                  string(filename) + ".scene");
-          if (!sceneFile.is_open()) {
-            Console.Log("[error]: can't load scene file from %s\n", filename);
-          } else {
-            Json json;
-            sceneFile >> json;
-            ECS::EManager.ScheduleSceneReset(json);
-          }
-          sceneFile.close();
-          std::strcpy(filename, "");
-          ImGui::CloseCurrentPopup();
-        }
-        ImGui::PopItemWidth();
-        ImGui::EndMenu();
-      }
+      // if (ImGui::BeginMenu("Open Folder")) {
+      //   // switch activeBaseFolder
+      //   ImGui::EndMenu();
+      // }
       if (ImGui::BeginMenu("Save Scene", "CTRL+S")) {
         ImGui::MenuItem("Scene Filename", nullptr, nullptr, false);
         ImGui::PushItemWidth(120);
         static char filename[50] = {0};
         ImGui::InputText("##scenefilesave", filename, sizeof(filename));
         if (ImGui::Button("Save")) {
-          std::ofstream sceneFile(Core.RManager.GetProjectRootDir() + "/" +
+          std::ofstream sceneFile(activeBaseFolder + "/" +
                                   string(filename) + ".scene");
           if (!sceneFile.is_open()) {
             Console.Log("[error]: can't save scene file to %s\n", filename);

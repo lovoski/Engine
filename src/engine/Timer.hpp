@@ -17,6 +17,8 @@ public:
   void Initialize();
   float DeltaTime();
 
+  float GetTime();
+
 private:
   tTimer();
   float lastFrame, deltaTime;
