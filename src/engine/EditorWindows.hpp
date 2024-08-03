@@ -72,8 +72,7 @@ private:
   bool showConsoleWindow = true;
   bool showInspectorWindow = true;
 
-  string defaultBaseFolder = REPO_SOURCE_DIR "/assets/learnopengl";
-  string activeBaseFolder = defaultBaseFolder;
+  string activeBaseFolder = ".";
 
   // imguizmo settings
   bool showGizmoGrid = true;

@@ -47,10 +47,12 @@ void EditorWindows::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
-      // if (ImGui::BeginMenu("Open Folder")) {
-      //   // switch activeBaseFolder
-      //   ImGui::EndMenu();
-      // }
+      if (ImGui::MenuItem("Open Folder")) {
+        // switch activeBaseFolder
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        ImGuiFileDialog::Instance()->OpenDialog("chooseprojectrootdir", "Choose Project Root", nullptr, config);
+      }
       if (ImGui::BeginMenu("Save Scene", "CTRL+S")) {
         ImGui::MenuItem("Scene Filename", nullptr, nullptr, false);
         ImGui::PushItemWidth(120);
@@ -99,6 +101,15 @@ void EditorWindows::MainMenuBar() {
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
+  }
+  if (ImGuiFileDialog::Instance()->Display("chooseprojectrootdir")) {
+    if (ImGuiFileDialog::Instance()->IsOk()) {
+      // string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+      string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+      // Console.Log("filepathname:%s\nfilepath%s\n", filePathName.c_str(), filePath.c_str());
+      activeBaseFolder = filePath;
+    }
+    ImGuiFileDialog::Instance()->Close();
   }
 }
 

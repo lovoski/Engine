@@ -43,6 +43,8 @@ namespace fs = std::filesystem;
 
 #include <ImGuizmo.h>
 
+#include <ImGuiFileDialog.h>
+
 using std::cout;
 using std::endl;
 using std::string;
