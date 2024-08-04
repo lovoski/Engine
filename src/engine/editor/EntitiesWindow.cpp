@@ -168,16 +168,7 @@ void EditorWindows::EntitiesWindow() {
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("IMPORT_SCENE")) {
       char *scenePath = (char *)payload->Data;
-      std::ifstream sceneFile(scenePath);
-      if (!sceneFile.is_open()) {
-        Console.Log("[error]: unable to open scene file %s\n", scenePath);
-      } else {
-        Console.Log("[info]: open scene file %s\n", scenePath);
-        Json json;
-        sceneFile >> json;
-        ECS::EManager.ScheduleSceneReset(json);
-      }
-      sceneFile.close();
+      ECS::EManager.ScheduleSceneReset(scenePath);
     }
     ImGui::EndDragDropTarget();
   }

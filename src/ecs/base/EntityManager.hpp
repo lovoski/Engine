@@ -294,7 +294,7 @@ public:
     // if the scene needs reset
     if (scheduleSceneReset) {
       scheduleSceneReset = false;
-      InitializeFromScene(sceneFile);
+      InitializeFromScene();
     }
   }
 
@@ -448,11 +448,11 @@ public:
   Json CaptureStatesAsScene();
 
   // restore states from a json object
-  void InitializeFromScene(Json &json);
+  void InitializeFromScene();
 
   // load the scene at the end of this frame
-  void ScheduleSceneReset(Json &json) {
-    sceneFile = json;
+  void ScheduleSceneReset(string path) {
+    sceneFilePath = path;
     scheduleSceneReset = true;
   }
 
@@ -559,7 +559,7 @@ private:
     }
   }
 
-  Json sceneFile;
+  string sceneFilePath;
   bool scheduleSceneReset = false;
 
   // how many entities have been created

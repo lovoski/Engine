@@ -1,5 +1,125 @@
 #include "engine/EditorWindows.hpp"
 
+void DirectoryRightClickMenu(fs::directory_entry entry) {
+  ImGui::MenuItem("Directory Options", nullptr, nullptr, false);
+  if (ImGui::MenuItem("Remove")) {
+    // remove directory
+    fs::remove_all(entry.path());
+  }
+  if (ImGui::BeginMenu("Create")) {
+    ImGui::MenuItem("Types", nullptr, nullptr, false);
+    if (ImGui::BeginMenu("Scene Name")) {
+      static char sceneName[50] = {0};
+      ImGui::MenuItem("Scene Name", nullptr, nullptr, false);
+      ImGui::PushItemWidth(120);
+      ImGui::InputText("##createemptyscenename", sceneName,
+                       sizeof(sceneName));
+      ImGui::PopItemWidth();
+      if (ImGui::Button("Create", {-1, 30})) {
+        string path = entry.path().string() + "/" + sceneName + ".scene";
+        std::ofstream sceneFileOutput(path);
+        if (!sceneFileOutput.is_open()) {
+          Console.Log("[error]: failed to create scene file at %s\n", path.c_str());
+        } else {
+          Json json;
+          // set up a null scene
+          json["scene"]["activeCamera"] = -1;
+          sceneFileOutput << json;
+          Console.Log("[info]: create scene file at %s\n", path.c_str());
+        }
+        sceneFileOutput.close();
+        std::strcpy(sceneName, "");
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Empty Folder")) {
+      static char folderName[50] = {0};
+      ImGui::MenuItem("Folder Name", nullptr, nullptr, false);
+      ImGui::PushItemWidth(120);
+      ImGui::InputText("##CreateEmptyFolderName", folderName,
+                       sizeof(folderName));
+      ImGui::PopItemWidth();
+      if (ImGui::Button("Create", {-1, 30})) {
+        // Console.Log("Create folder %s\n", folderName);
+        fs::create_directory(entry.path().string() + "/" + folderName);
+        std::strcpy(folderName, "");
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Render")) {
+      ImGui::MenuItem("Render", nullptr, nullptr, false);
+      if (ImGui::BeginMenu("Base Material")) {
+        static char matName[50] = {0};
+        ImGui::MenuItem("Material Name", nullptr, nullptr, false);
+        ImGui::PushItemWidth(120);
+        ImGui::InputText("##BaeMaterialFileName", matName,
+                         sizeof(matName));
+        ImGui::PopItemWidth();
+        if (ImGui::Button("Create", {-1, 30})) {
+          // Console.Log("Create folder %s\n", folderName);
+          std::ofstream output(entry.path().string() + "/" +
+                               string(matName) + ".material");
+          output << Core.RManager.GetDefaultMaterialJson();
+          output.close();
+          std::strcpy(matName, "");
+          ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndMenu();
+      }
+      if (ImGui::BeginMenu("Vert & Frag Shader")) {
+        static char shaderName[50] = {0};
+        ImGui::MenuItem("Shader Name", nullptr, nullptr, false);
+        ImGui::PushItemWidth(120);
+        ImGui::InputText("##BaseShaderFilename", shaderName,
+                         sizeof(shaderName));
+        ImGui::PopItemWidth();
+        if (ImGui::Button("Create", {-1, 30})) {
+          // Console.Log("Create folder %s\n", folderName);
+          std::ofstream outputVert(entry.path().string() + "/" +
+                                   string(shaderName) + ".vert");
+          std::ofstream outputFrag(entry.path().string() + "/" +
+                                   string(shaderName) + ".frag");
+          outputVert << "#version 460 core\n"
+                        "layout (location = 0) in vec3 aPos;\n"
+                        "layout (location = 1) in vec3 aNormal;\n"
+                        "layout (location = 2) in vec2 aTexCoord;\n"
+                        "uniform mat4 model;\n"
+                        "uniform mat4 view;\n"
+                        "uniform mat4 projection;\n"
+                        "void main() {\n"
+                        "  gl_Position = projection * view * model * "
+                        "vec4(aPos, 1.0);\n"
+                        "}\n";
+          outputFrag << "#version 460 core\n"
+                        "out vec4 FragColor;\n"
+                        "void main(){\n"
+                        "  FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+                        "}\n";
+          outputVert.close();
+          outputFrag.close();
+          std::strcpy(shaderName, "");
+          ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndMenu();
+      }
+      if (ImGui::MenuItem("Geometry Shader")) {
+      }
+      ImGui::EndMenu();
+    }
+    ImGui::EndMenu();
+  }
+}
+
+void FileRightClickMenu(fs::directory_entry entry) {
+  ImGui::MenuItem("File Options", nullptr, nullptr, false);
+  if (ImGui::MenuItem("Remove")) {
+    fs::remove_all(entry.path());
+    // Console.Log("Remove file : %s\n", entry.path().string().c_str());
+  }
+}
+
 void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
                        ImGuiTreeNodeFlags parentFlag, int &selectedFile) {
   for (const auto &entry : fs::directory_iterator(parentPath)) {
@@ -72,96 +192,9 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
     if (ImGui::BeginPopupContextItem((entry.path().string() + " popup").c_str(),
                                      ImGuiPopupFlags_MouseButtonRight)) {
       if (isDirectory) { // directory options
-        ImGui::MenuItem("Directory Options", nullptr, nullptr, false);
-        if (ImGui::MenuItem("Remove")) {
-          // remove directory
-          fs::remove_all(entry.path());
-        }
-        if (ImGui::BeginMenu("Create")) {
-          ImGui::MenuItem("Types", nullptr, nullptr, false);
-          if (ImGui::BeginMenu("Empty Folder")) {
-            static char folderName[50] = {0};
-            ImGui::MenuItem("Folder Name", nullptr, nullptr, false);
-            ImGui::PushItemWidth(120);
-            ImGui::InputText("##CreateEmptyFolderName", folderName,
-                             sizeof(folderName));
-            ImGui::PopItemWidth();
-            if (ImGui::Button("Create", {-1, 30})) {
-              // Console.Log("Create folder %s\n", folderName);
-              fs::create_directory(entry.path().string() + "/" + folderName);
-              std::strcpy(folderName, "");
-              ImGui::CloseCurrentPopup();
-            }
-            ImGui::EndMenu();
-          }
-          if (ImGui::BeginMenu("Render")) {
-            ImGui::MenuItem("Render", nullptr, nullptr, false);
-            if (ImGui::BeginMenu("Base Material")) {
-              static char matName[50] = {0};
-              ImGui::MenuItem("Material Name", nullptr, nullptr, false);
-              ImGui::PushItemWidth(120);
-              ImGui::InputText("##BaeMaterialFileName", matName,
-                               sizeof(matName));
-              ImGui::PopItemWidth();
-              if (ImGui::Button("Create", {-1, 30})) {
-                // Console.Log("Create folder %s\n", folderName);
-                std::ofstream output(entry.path().string() + "/" +
-                                     string(matName) + ".material");
-                output << Core.RManager.GetDefaultMaterialJson();
-                output.close();
-                std::strcpy(matName, "");
-                ImGui::CloseCurrentPopup();
-              }
-              ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Vert & Frag Shader")) {
-              static char shaderName[50] = {0};
-              ImGui::MenuItem("Shader Name", nullptr, nullptr, false);
-              ImGui::PushItemWidth(120);
-              ImGui::InputText("##BaseShaderFilename", shaderName,
-                               sizeof(shaderName));
-              ImGui::PopItemWidth();
-              if (ImGui::Button("Create", {-1, 30})) {
-                // Console.Log("Create folder %s\n", folderName);
-                std::ofstream outputVert(entry.path().string() + "/" +
-                                         string(shaderName) + ".vert");
-                std::ofstream outputFrag(entry.path().string() + "/" +
-                                         string(shaderName) + ".frag");
-                outputVert << "#version 460 core\n"
-                              "layout (location = 0) in vec3 aPos;\n"
-                              "layout (location = 1) in vec3 aNormal;\n"
-                              "layout (location = 2) in vec2 aTexCoord;\n"
-                              "uniform mat4 model;\n"
-                              "uniform mat4 view;\n"
-                              "uniform mat4 projection;\n"
-                              "void main() {\n"
-                              "  gl_Position = projection * view * model * "
-                              "vec4(aPos, 1.0);\n"
-                              "}\n";
-                outputFrag << "#version 460 core\n"
-                              "out vec4 FragColor;\n"
-                              "void main(){\n"
-                              "  FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
-                              "}\n";
-                outputVert.close();
-                outputFrag.close();
-                std::strcpy(shaderName, "");
-                ImGui::CloseCurrentPopup();
-              }
-              ImGui::EndMenu();
-            }
-            if (ImGui::MenuItem("Geometry Shader")) {
-            }
-            ImGui::EndMenu();
-          }
-          ImGui::EndMenu();
-        }
+        DirectoryRightClickMenu(entry);
       } else { // file options
-        ImGui::MenuItem("File Options", nullptr, nullptr, false);
-        if (ImGui::MenuItem("Remove")) {
-          fs::remove_all(entry.path());
-          // Console.Log("Remove file : %s\n", entry.path().string().c_str());
-        }
+        FileRightClickMenu(entry);
       }
       ImGui::EndPopup();
     }

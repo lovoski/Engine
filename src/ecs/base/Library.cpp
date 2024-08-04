@@ -48,7 +48,17 @@ Json ECS::EntityManager::CaptureStatesAsScene() {
 }
 
 // restore states from a json object
-void ECS::EntityManager::InitializeFromScene(Json &json) {
+void ECS::EntityManager::InitializeFromScene() {
+  std::ifstream sceneFileInput(sceneFilePath);
+  Json json;
+  if (!sceneFileInput.is_open()) {
+    Console.Log("[error]: unable to open scene file %s\n", sceneFilePath.c_str());
+    return;
+  } else {
+    Console.Log("[info]: open scene file %s\n", sceneFilePath.c_str());
+    sceneFileInput >> json;
+  }
+  sceneFileInput.close();
   // destroy current scene (entities, components)
   for (auto root : HierarchyRoots)
     DestroyEntity(root->ID);
@@ -58,6 +68,7 @@ void ECS::EntityManager::InitializeFromScene(Json &json) {
   GetComponentList<MeshRenderer>()->data.clear();
   HierarchyRoots.clear();
   entitiesSignatures.clear();
+  entities.clear();
   // reset editor context
   EditorContext.Reset();
 
@@ -117,5 +128,7 @@ void ECS::EntityManager::InitializeFromScene(Json &json) {
     }
   }
   // reset the scene variables
-  EditorContext.SetActiveCamera(old2new[json["scene"]["activeCamera"]]);
+  EditorContext.activeSceneFile = sceneFilePath;
+  if (json["scene"]["activeCamera"].get<int>() != -1)
+    EditorContext.SetActiveCamera(old2new[json["scene"]["activeCamera"]]);
 }

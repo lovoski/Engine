@@ -11,6 +11,8 @@
 
 class EditorWindows {
 public:
+  friend class ECS::EntityManager;
+
   EditorWindows() {}
   ~EditorWindows() {}
 
@@ -73,6 +75,7 @@ private:
   bool showInspectorWindow = true;
 
   string activeBaseFolder = ".";
+  string activeSceneFile = "::defaultScene";
 
   // imguizmo settings
   bool showGizmoGrid = true;

@@ -33,7 +33,9 @@ void EditorWindows::Destroy() {
 
 void EditorWindows::Reset() {
   // entity states
+  // reset camera status
   activeCamera = (ECS::EntityID)(-1);
+  hasActiveCamera = false;
   selectedEntity = (ECS::EntityID)(-1);
 
   // gizmos state
@@ -53,26 +55,15 @@ void EditorWindows::MainMenuBar() {
         config.path = ".";
         ImGuiFileDialog::Instance()->OpenDialog("chooseprojectrootdir", "Choose Project Root", nullptr, config);
       }
-      if (ImGui::BeginMenu("Save Scene", "CTRL+S")) {
-        ImGui::MenuItem("Scene Filename", nullptr, nullptr, false);
-        ImGui::PushItemWidth(120);
-        static char filename[50] = {0};
-        ImGui::InputText("##scenefilesave", filename, sizeof(filename));
-        if (ImGui::Button("Save")) {
-          std::ofstream sceneFile(activeBaseFolder + "/" +
-                                  string(filename) + ".scene");
-          if (!sceneFile.is_open()) {
-            Console.Log("[error]: can't save scene file to %s\n", filename);
-          } else {
-            Json json = ECS::EManager.CaptureStatesAsScene();
-            sceneFile << json;
-          }
-          sceneFile.close();
-          std::strcpy(filename, "");
-          ImGui::CloseCurrentPopup();
+      if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
+        std::ofstream sceneFileOutput(activeSceneFile);
+        if (!sceneFileOutput.is_open()) {
+          Console.Log("[error]: can't save scene to %s\n", activeSceneFile.c_str());
+        } else {
+          sceneFileOutput << ECS::EManager.CaptureStatesAsScene();
+          Console.Log("[info]: save scene to %s\n", activeSceneFile.c_str());
         }
-        ImGui::PopItemWidth();
-        ImGui::EndMenu();
+        sceneFileOutput.close();
       }
       ImGui::EndMenu();
     }
@@ -221,6 +212,10 @@ bool EditorWindows::LoopCursorInSceneWindow() {
 }
 
 bool EditorWindows::SetActiveCamera(ECS::EntityID camera) {
+  if (camera == (ECS::EntityID)(-1)) {
+    Console.Log("[info]: camera is not a valid entity\n");
+    return false;
+  }
   if (ECS::EManager.HasComponent<Camera>(camera)) {
     hasActiveCamera = true;
     activeCamera = camera;
