@@ -1,8 +1,6 @@
 #include "utils/Tref.hpp"
 #include "utils/json.hpp"
 
-#include "EngineConfig.h"
-
 #include <iomanip>
 #include <tuple>
 #include <iostream>
@@ -15,7 +13,7 @@ using Json = nlohmann::json;
 #define SerializableType TrefType
 #define SerializableField TrefField
 
-const string basePath = REPO_SOURCE_DIR "/src/test/reflection";
+const string basePath = "/src/test/reflection";
 
 struct SomeStruct {
   float a = -1.2f;

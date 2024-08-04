@@ -1,8 +1,8 @@
 #pragma once
 
 #include "basics.hpp"
-#include "ecs/components/Camera.hpp"
 #include "ecs/ecs.hpp"
+#include "ecs/components/Camera.hpp"
 
 // controls the movement of camera
 class CameraSystem : public ECS::BaseSystem {
@@ -11,16 +11,16 @@ public:
   ~CameraSystem() {}
 
   void Update() {
-    if (EditorContext.GetActiveCamera(activeCamera)) {
+    if (Core.GetActiveCamera(activeCamera)) {
       // update the position of this active camera
-      auto cameraObject = ECS::EManager.EntityFromID(activeCamera);
-      auto &cameraComp = ECS::EManager.GetComponent<Camera>(activeCamera);
+      auto cameraObject = Core.EManager.EntityFromID(activeCamera);
+      auto &cameraComp = Core.EManager.GetComponent<Camera>(activeCamera);
       float detltaTime = Timer.DeltaTime();
       float movementDistance = cameraComp.movementSpeed * detltaTime;
       float mouseSensitivity = cameraComp.mouseSensitivity;
       if (cameraComp.moveScheme == Camera::MOVEMENT_STYLE::FPS_CAMERA) {
         // update the camera with predefined fps camera way
-        bool inSceneWindow = EditorContext.InSceneWindow(
+        bool inSceneWindow = Core.InSceneWindow(
             Event.MouseCurrentPosition.x, Event.MouseCurrentPosition.y);
         if (inSceneWindow) {
           // check action queue for mouse scroll event
@@ -60,7 +60,7 @@ public:
         vec2 mouseCurrentPos = Event.MouseCurrentPosition;
         // the shift only happens if cousor in the range of scene window
         if (Event.GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS &&
-            EditorContext.LoopCursorInSceneWindow()) {
+            Core.LoopCursorInSceneWindow()) {
           // loop the camera if the camera is locked
           if (mouseFirstMove) {
             mouseLastPos = mouseCurrentPos;
@@ -77,7 +77,7 @@ public:
           mouseFirstMove = true;
       } else if (cameraComp.moveScheme ==
                  Camera::MOVEMENT_STYLE::MOUSE_KEY_CAMERA) {
-        bool inSceneWindow = EditorContext.InSceneWindow(
+        bool inSceneWindow = Core.InSceneWindow(
             Event.MouseCurrentPosition.x, Event.MouseCurrentPosition.y);
         if (inSceneWindow) {
           // check action queue for mouse scroll event
@@ -90,7 +90,7 @@ public:
         }
         vec2 mouseCurrentPos = Event.MouseCurrentPosition;
         if (Event.GetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS &&
-            EditorContext.LoopCursorInSceneWindow()) {
+            Core.LoopCursorInSceneWindow()) {
           // loop the camera if the camera is locked
           if (mouseFirstMove) {
             mouseLastPos = mouseCurrentPos;

@@ -1,4 +1,10 @@
-#include "engine/EditorWindows.hpp"
+#include "ecs/components/Material.hpp"
+#include "ecs/components/Lights.hpp"
+#include "ecs/components/Lights.hpp"
+#include "ecs/components/Camera.hpp"
+#include "ecs/components/MeshRenderer.hpp"
+
+#include "ecs/systems/gui/GuiSystem.hpp"
 
 inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
                              ImGuiTreeNodeFlags nodeFlag) {
@@ -23,7 +29,7 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("CHANGE_ENTITY_HIERARCHY")) {
       Entity *newChild = *(Entity **)payload->Data;
-      ECS::EManager.EntityFromID(entity->ID)->AssignChild(newChild);
+      Core.EManager.EntityFromID(entity->ID)->AssignChild(newChild);
     }
     ImGui::EndDragDropTarget();
   }
@@ -38,7 +44,7 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
                     entity->name.c_str());
       else
         Console.Log("[info]: Destroy entity %s\n", entity->name.c_str());
-      ECS::EManager.DestroyEntity(entity->ID);
+      Core.EManager.DestroyEntity(entity->ID);
       selectedEntity = (ECS::EntityID)(-1);
       ImGui::CloseCurrentPopup();
     }
@@ -48,7 +54,7 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
       static char entityNewName[50] = {0};
       ImGui::InputText("##renameentity", entityNewName, sizeof(entityNewName));
       if (ImGui::Button("Confirm")) {
-        ECS::EManager.EntityFromID(selectedEntity)->name = entityNewName;
+        Core.EManager.EntityFromID(selectedEntity)->name = entityNewName;
         std::strcpy(entityNewName, "");
         ImGui::CloseCurrentPopup();
       }
@@ -64,7 +70,7 @@ inline void DrawHierarchyGUI(Entity *entity, ECS::EntityID &selectedEntity,
   }
 }
 
-void EditorWindows::EntitiesWindow() {
+void GuiSystem::EntitiesWindow() {
   ImGui::Begin("Entities");
   ImGui::SeparatorText("Scene");
   // Right-click context menu for the parent window
@@ -82,72 +88,72 @@ void EditorWindows::EntitiesWindow() {
     if (ImGui::BeginMenu("Create Entity")) {
       ImGui::MenuItem("Entity Types", nullptr, nullptr, false);
       if (ImGui::MenuItem("Null Entity")) {
-        ECS::EManager.AddNewEntity();
+        Core.EManager.AddNewEntity();
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Cube")) {
-        auto cube = ECS::EManager.AddNewEntity();
-        cube->AddComponent<BaseMaterial>();
+        auto cube = Core.EManager.AddNewEntity();
+        cube->AddComponent<Material>();
         cube->AddComponent<MeshRenderer>(
             Core.RManager.GetMesh("::cubePrimitive"));
       }
       if (ImGui::MenuItem("Plane")) {
-        auto plane = ECS::EManager.AddNewEntity();
-        plane->AddComponent<BaseMaterial>();
+        auto plane = Core.EManager.AddNewEntity();
+        plane->AddComponent<Material>();
         plane->AddComponent<MeshRenderer>(
             Core.RManager.GetMesh("::planePrimitive"));
       }
       if (ImGui::MenuItem("Sphere")) {
-        auto sphere = ECS::EManager.AddNewEntity();
-        sphere->AddComponent<BaseMaterial>();
+        auto sphere = Core.EManager.AddNewEntity();
+        sphere->AddComponent<Material>();
         sphere->AddComponent<MeshRenderer>(
             Core.RManager.GetMesh("::spherePrimitive"));
       }
       if (ImGui::MenuItem("Cylinder")) {
-        auto cylinder = ECS::EManager.AddNewEntity();
-        cylinder->AddComponent<BaseMaterial>();
+        auto cylinder = Core.EManager.AddNewEntity();
+        cylinder->AddComponent<Material>();
         cylinder->AddComponent<MeshRenderer>(
             Core.RManager.GetMesh("::cylinderPrimitive"));
       }
       if (ImGui::MenuItem("Cone")) {
-        auto cone = ECS::EManager.AddNewEntity();
-        cone->AddComponent<BaseMaterial>();
+        auto cone = Core.EManager.AddNewEntity();
+        cone->AddComponent<Material>();
         cone->AddComponent<MeshRenderer>(
             Core.RManager.GetMesh("::conePrimitive"));
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Camera")) {
-        auto camera = ECS::EManager.AddNewEntity();
+        auto camera = Core.EManager.AddNewEntity();
         camera->name = "Camera";
         camera->AddComponent<Camera>();
-        SetActiveCamera(camera->ID);
+        Core.SetActiveCamera(camera->ID);
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Directional Light")) {
-        auto dLight = ECS::EManager.AddNewEntity();
+        auto dLight = Core.EManager.AddNewEntity();
         dLight->name = "Light";
         dLight->SetGlobalRotationDegree(vec3(180.0f, 0.0f, 0.0f));
-        dLight->AddComponent<BaseLight>();
-        dLight->GetComponent<BaseLight>().Type = BaseLight::LIGHT_TYPE::DIRECTIONAL_LIGHT;
+        dLight->AddComponent<Light>();
+        dLight->GetComponent<Light>().Type = Light::LIGHT_TYPE::DIRECTIONAL_LIGHT;
       }
       if (ImGui::MenuItem("Point Light")) {
-        auto pLight = ECS::EManager.AddNewEntity();
+        auto pLight = Core.EManager.AddNewEntity();
         pLight->name = "Point light";
-        pLight->AddComponent<BaseLight>();
-        pLight->GetComponent<BaseLight>().Type = BaseLight::LIGHT_TYPE::POINT_LIGHT;
+        pLight->AddComponent<Light>();
+        pLight->GetComponent<Light>().Type = Light::LIGHT_TYPE::POINT_LIGHT;
       }
       if (ImGui::MenuItem("Spot Light")) {
-        auto sLight = ECS::EManager.AddNewEntity();
+        auto sLight = Core.EManager.AddNewEntity();
         sLight->name = "Spot light";
-        sLight->AddComponent<BaseLight>();
-        sLight->GetComponent<BaseLight>().Type = BaseLight::LIGHT_TYPE::SPOT_LIGHT;
+        sLight->AddComponent<Light>();
+        sLight->GetComponent<Light>().Type = Light::LIGHT_TYPE::SPOT_LIGHT;
       }
       ImGui::EndMenu();
     }
     ImGui::EndPopup();
   }
   ImGui::BeginChild("Entities List", {-1, ImGui::GetContentRegionAvail().y});
-  auto entities = ECS::EManager.HierarchyRoots;
+  auto entities = Core.EManager.HierarchyRoots;
   static ImGuiTreeNodeFlags guiTreeNodeFlags =
       ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
       ImGuiTreeNodeFlags_SpanAvailWidth;
@@ -168,7 +174,7 @@ void EditorWindows::EntitiesWindow() {
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("IMPORT_SCENE")) {
       char *scenePath = (char *)payload->Data;
-      ECS::EManager.ScheduleSceneReset(scenePath);
+      Core.ReloadScene(scenePath);
     }
     ImGui::EndDragDropTarget();
   }

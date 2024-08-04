@@ -1,20 +1,21 @@
 #include "Events.hpp"
 #include "Engine.hpp"
-#include "EditorWindows.hpp"
+
+#include "ecs/systems/gui/GuiSystem.hpp"
 
 void WindowCloseCallback(GLFWwindow *window) { Core.Quit(); }
 
 void MouseMoveCallback(GLFWwindow *window, double xpos, double ypos) {
   vec2 currentPos = vec2(static_cast<float>(xpos), static_cast<float>(ypos));
 
-  EditorContext.io->AddMousePosEvent(currentPos.x, currentPos.y);
+  Core.EManager.GetSystemInstance<GuiSystem>()->io->AddMousePosEvent(currentPos.x, currentPos.y);
 }
 
 void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
   Event._currentScrollOffset = vec2(static_cast<float>(xoffset), static_cast<float>(yoffset));
   // Console.Log("push to actions, scorll offset y=%f\n", yoffset);
   Event.actions.push_back({Action::ActionType::MOUSE_SCROLL, &Event._currentScrollOffset});
-  EditorContext.io->AddMouseWheelEvent(Event._currentScrollOffset.x, Event._currentScrollOffset.y);
+  Core.EManager.GetSystemInstance<GuiSystem>()->io->AddMouseWheelEvent(Event._currentScrollOffset.x, Event._currentScrollOffset.y);
 }
 
 Events::Events() {}

@@ -7,18 +7,18 @@
 #include "ecs/systems/render/RenderSystem.hpp"
 
 
-class BaseLightSystem : public ECS::BaseSystem {
+class LightSystem : public ECS::BaseSystem {
 public:
-  BaseLightSystem() {
-    AddComponentSignature<BaseLight>();
+  LightSystem() {
+    AddComponentSignature<Light>();
   }
   void Update() {
     // pass the information of all base lights to the render system
-    auto rSystem = ECS::EManager.GetSystemInstance<RenderSystem>();
+    auto rSystem = Core.EManager.GetSystemInstance<RenderSystem>();
     rSystem->activeBaseLights.clear();
     for (auto entity : entities) {
       rSystem->activeBaseLights.push_back(
-          ECS::EManager.GetComponent<BaseLight>(entity));
+          Core.EManager.GetComponent<Light>(entity));
     }
   }
 

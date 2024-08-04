@@ -14,7 +14,7 @@ public:
   MeshRenderer(Graphics::Mesh *mesh) : meshData(mesh) {}
   ~MeshRenderer() {}
 
-  void Render(mat4 projMat, mat4 viewMat, Transform *camera, Transform *object, BaseMaterial *material, vector<BaseLight> &lights) {
+  void Render(mat4 projMat, mat4 viewMat, Transform *camera, Transform *object, Material *material, vector<Light> &lights) {
     Resource::Shader *shader = material->GetShader();
     shader->Use();
     shader->SetVec3("ViewDir", -camera->LocalForward);

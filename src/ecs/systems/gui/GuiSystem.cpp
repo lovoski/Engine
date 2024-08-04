@@ -1,8 +1,16 @@
-#include "EditorWindows.hpp"
-#include "resource/MaterialData.hpp"
+#include "global.hpp"
 #include "roboto.h"
+#include "engine/Engine.hpp"
 
-void EditorWindows::Initialize() {
+#include "ecs/components/Material.hpp"
+#include "ecs/components/Lights.hpp"
+#include "ecs/components/Lights.hpp"
+#include "ecs/components/Camera.hpp"
+#include "ecs/components/MeshRenderer.hpp"
+
+#include "ecs/systems/gui/GuiSystem.hpp"
+
+void GuiSystem::Start() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 
@@ -16,8 +24,8 @@ void EditorWindows::Initialize() {
   io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  io->Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len,
-                                  20.0f);
+  // io->Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len,
+  //                                 20.0f);
 
   io->IniFilename = layoutFileName;
 
@@ -25,27 +33,15 @@ void EditorWindows::Initialize() {
   ImGui_ImplOpenGL3_Init("#version 460");
 }
 
-void EditorWindows::Destroy() {
+void GuiSystem::Destroy() {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 }
 
-void EditorWindows::Reset() {
-  // entity states
-  // reset camera status
-  activeCamera = (ECS::EntityID)(-1);
-  hasActiveCamera = false;
-  selectedEntity = (ECS::EntityID)(-1);
-
-  // gizmos state
-  mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-  mCurrentGizmoMode = ImGuizmo::WORLD;
-}
-
 void DrawProfiler() {}
 
-void EditorWindows::MainMenuBar() {
+void GuiSystem::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
@@ -56,12 +52,12 @@ void EditorWindows::MainMenuBar() {
         ImGuiFileDialog::Instance()->OpenDialog("chooseprojectrootdir", "Choose Project Root", nullptr, config);
       }
       if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
-        std::ofstream sceneFileOutput(activeSceneFile);
+        std::ofstream sceneFileOutput(Core.ActiveSceneFile);
         if (!sceneFileOutput.is_open()) {
-          Console.Log("[error]: can't save scene to %s\n", activeSceneFile.c_str());
+          Console.Log("[error]: can't save scene to %s\n", Core.ActiveSceneFile.c_str());
         } else {
-          sceneFileOutput << ECS::EManager.CaptureStatesAsScene();
-          Console.Log("[info]: save scene to %s\n", activeSceneFile.c_str());
+          sceneFileOutput << Core.DumpSceneAsJson();
+          Console.Log("[info]: save scene to %s\n", Core.ActiveSceneFile.c_str());
         }
         sceneFileOutput.close();
       }
@@ -104,9 +100,9 @@ void EditorWindows::MainMenuBar() {
   }
 }
 
-void EditorWindows::ConsoleWindow() { Console.Draw("Console"); }
+void GuiSystem::ConsoleWindow() { Console.Draw("Console"); }
 
-void EditorWindows::DrawGizmos(float x, float y, float width, float height,
+void GuiSystem::DrawGizmos(float x, float y, float width, float height,
                                bool enable) {
 
   if (ImGui::IsKeyPressed(ImGuiKey_G))
@@ -117,11 +113,11 @@ void EditorWindows::DrawGizmos(float x, float y, float width, float height,
     mCurrentGizmoOperation = ImGuizmo::SCALE;
 
   ECS::EntityID camera;
-  if (enable && GetActiveCamera(camera)) {
+  if (enable && Core.GetActiveCamera(camera)) {
     ImGuizmo::AllowAxisFlip(false);
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(x, y, width, height);
-    Entity *cameraEnt = ECS::EManager.EntityFromID(camera);
+    Entity *cameraEnt = Core.EManager.EntityFromID(camera);
     Camera &cameraComp = cameraEnt->GetComponent<Camera>();
     if (showGizmoGrid) {
       ImGuizmo::DrawGrid(
@@ -130,7 +126,7 @@ void EditorWindows::DrawGizmos(float x, float y, float width, float height,
           glm::value_ptr(mat4(1.0f)), gizmoGridSize);
     }
     if (selectedEntity != (ECS::EntityID)(-1)) {
-      Entity *selected = ECS::EManager.EntityFromID(selectedEntity);
+      Entity *selected = Core.EManager.EntityFromID(selectedEntity);
       mat4 modelTransform = selected->GetModelMatrix();
       ImGuizmo::Manipulate(
           glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
@@ -161,81 +157,35 @@ void EditorWindows::DrawGizmos(float x, float y, float width, float height,
   }
 }
 
-void EditorWindows::RenderStart(Graphics::FrameBuffer *sceneBuffer) {
+void GuiSystem::Render() {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
-
-  MainMenuBar();
 
   ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
   ImGui::Begin("Scene");
   ImGui::BeginChild("GameRenderer");
   auto size = ImGui::GetContentRegionAvail();
   auto pos = ImGui::GetWindowPos();
-  ImGui::Image((void *)sceneBuffer->GetFrameTexture(), size, ImVec2(0, 1),
+  ImGui::Image((void *)Core.SceneBuffer->GetFrameTexture(), size, ImVec2(0, 1),
                ImVec2(1, 0));
-  SceneWindowSize = {size.x, size.y};
-  SceneWindowPos = {pos.x, pos.y};
+  if (Core.SceneWindowSize.x != size.x || Core.SceneWindowSize.y != size.y) {
+    Core.SceneBuffer->RescaleFrameBuffer(size.x, size.y);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+      Console.Log("[error]: Rescaled framebuffer is not complete\n");
+    glViewport(0, 0, size.x, size.y);
+  }
+  Core.SceneWindowSize = {size.x, size.y};
+  Core.SceneWindowPos = {pos.x, pos.y};
   DrawGizmos(pos.x, pos.y, size.x, size.y);
   ImGui::EndChild();
   ImGui::End();
 
+  MainMenuBar();
   EntitiesWindow();
   ConsoleWindow();
   InspectorWindow();
   AssetsWindow();
-}
-
-void EditorWindows::RenderComplete() {
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-bool EditorWindows::LoopCursorInSceneWindow() {
-  vec2 cursorPos = Event.MouseCurrentPosition;
-  if (!InSceneWindow(cursorPos.x, cursorPos.y)) {
-    cursorPos -= SceneWindowPos;
-    while (cursorPos.x < 0.0f)
-      cursorPos.x += SceneWindowSize.x;
-    while (cursorPos.x > SceneWindowSize.x)
-      cursorPos.x -= SceneWindowSize.x;
-    while (cursorPos.y < 0.0f)
-      cursorPos.y += SceneWindowSize.y;
-    while (cursorPos.y > SceneWindowSize.y)
-      cursorPos.y -= SceneWindowSize.y;
-    cursorPos += SceneWindowPos;
-    glfwSetCursorPos(&Core.Window(), cursorPos.x, cursorPos.y);
-    return false;
-  } else
-    return true;
-}
-
-bool EditorWindows::SetActiveCamera(ECS::EntityID camera) {
-  if (camera == (ECS::EntityID)(-1)) {
-    Console.Log("[info]: camera is not a valid entity\n");
-    return false;
-  }
-  if (ECS::EManager.HasComponent<Camera>(camera)) {
-    hasActiveCamera = true;
-    activeCamera = camera;
-    Console.Log("[info]: set active camera to %s\n", ECS::EManager.EntityFromID(camera)->name.c_str());
-    return true;
-  } else {
-    Console.Log("[error]: Not a valid camera entity: %ld\n", camera);
-    // there could exist an active camera,
-    // don't reset the hasActiveCamera flag
-    return false;
-  }
-}
-
-bool EditorWindows::GetActiveCamera(ECS::EntityID &camera) {
-  if (hasActiveCamera) {
-    camera = activeCamera;
-    return true;
-  } else {
-    // Console.Log("[Info]: There's no active camera\n");
-    camera = (ECS::EntityID)(-1);
-    return false;
-  }
 }

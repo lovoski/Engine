@@ -3,7 +3,7 @@
 #include "global.hpp"
 #include "ecs/ecs.hpp"
 
-class BaseLight : public ECS::BaseComponent {
+class Light : public ECS::BaseComponent {
 public:
 
   enum LIGHT_TYPE {
@@ -12,9 +12,9 @@ public:
     SPOT_LIGHT
   };
 
-  BaseLight() {}
-  BaseLight(LIGHT_TYPE type) : Type(type) {}
-  ~BaseLight() {}
+  Light() {}
+  Light(LIGHT_TYPE type) : Type(type) {}
+  ~Light() {}
 
   LIGHT_TYPE Type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
 

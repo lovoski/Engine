@@ -14,10 +14,14 @@
 #include "ComponentList.hpp"
 #include "Types.hpp"
 
+class Engine;
+
 namespace ECS {
 
 class EntityManager {
 public:
+  friend class ::Engine;
+
   class Entity {
   public:
     friend class EntityManager;
@@ -267,94 +271,23 @@ public:
   const EntityManager &operator=(EntityManager &) = delete;
   ~EntityManager() { delete nullEntity; }
 
-  static EntityManager &Ref() {
-    static EntityManager reference;
-    return reference;
-  }
-
   // Call the start function of all the systems
-  void Start() {
-    for (auto &system : registeredSystems) {
-      system.second->Start();
-    }
-  }
+  void Start();
 
   // Update all the registered systems
-  void Update() {
-    // update the transforms first
-    recomputeLocalAxis();
-    rebuildHierarchyStructure();
-
-    // other systems
-    for (auto &system : registeredSystems) {
-      system.second->Update();
-    }
-
-    // schedule some update at the end
-    // if the scene needs reset
-    if (scheduleSceneReset) {
-      scheduleSceneReset = false;
-      InitializeFromScene();
-    }
-  }
+  void Update();
 
   // Destroy all the registered systems
-  void Destroy() {
-    for (auto &system : registeredSystems) {
-      system.second->Destroy();
-    }
-  }
+  void Destroy();
 
-  Entity *AddNewEntity() {
-    const EntityID id = addNewEntity();
-    entities.insert(
-        std::make_pair(id, std::move(std::make_shared<Entity>(id, this))));
-    entities[id]->name += std::to_string(id);
-    return &(*(entities[id]));
-  }
+  Entity *AddNewEntity();
+  Entity *EntityFromID(const EntityID entity);
 
-  Entity *EntityFromID(const EntityID entity) {
-    if (entity >= MAX_ENTITY_COUNT)
-      throw std::runtime_error(
-          "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
-    if (entities.count(entity) == 0) {
-      Console.Log("[error]: No entity match this id: %ld\n", entity);
-      return nullEntity;
-    } else {
-      return &(*(entities.at(entity)));
-    }
-  }
-
-  vector<Entity *> GetActiveEntities() {
-    vector<Entity *> result;
-    for (auto &entity : entities) {
-      result.push_back(&(*entity.second));
-    }
-    return result;
-  }
+  vector<Entity *> GetActiveEntities();
 
   // if one entity with children is destroyed, all its children entities will
   // also be destroyed
-  void DestroyEntity(const EntityID entity) {
-    if (entity >= MAX_ENTITY_COUNT)
-      throw std::runtime_error("Destroying entity out of range");
-    if (entitiesSignatures.find(entity) == entitiesSignatures.end())
-      throw std::runtime_error("Destroying entity do not exists");
-    auto children = entities[entity]->children;
-    entitiesSignatures.erase(entity);
-    entities.erase(entity);
-    for (auto &array : componentsArrays) {
-      array.second->Erase(entity);
-    }
-    // the destroyed entity won't appear in any systems
-    for (auto &system : registeredSystems) {
-      system.second->RemoveEntity(entity);
-    }
-    entityCount--;
-    availableEntities.push(entity);
-    for (auto child : children)
-      DestroyEntity(child->ID);
-  }
+  void DestroyEntity(const EntityID entity);
 
   template <typename T, typename... Args>
   void AddComponent(const EntityID entity, Args &&...args) {
@@ -443,18 +376,6 @@ public:
   }
 
   vector<Entity *> HierarchyRoots;
-
-  // stores current states in a scene file
-  Json CaptureStatesAsScene();
-
-  // restore states from a json object
-  void InitializeFromScene();
-
-  // load the scene at the end of this frame
-  void ScheduleSceneReset(string path) {
-    sceneFilePath = path;
-    scheduleSceneReset = true;
-  }
 
 private:
   // create a component list that stores a specified type of components
@@ -559,9 +480,6 @@ private:
     }
   }
 
-  string sceneFilePath;
-  bool scheduleSceneReset = false;
-
   // how many entities have been created
   EntityID entityCount;
   Entity *nullEntity;
@@ -572,8 +490,6 @@ private:
   std::map<SystemTypeID, std::shared_ptr<BaseSystem>> registeredSystems;
   std::map<ComponentTypeID, std::shared_ptr<IComponentList>> componentsArrays;
 };
-
-static EntityManager &EManager = EntityManager::Ref();
 
 }; // namespace ECS
 

@@ -71,26 +71,26 @@ void ResourceManager::Initialize() {
   planePrimitive->modelPath = "::planePrimitive";
   // sphere
   auto sphereMesh =
-      getModel(REPO_SOURCE_DIR "/src/default/primitives/sphere.obj");
+      getModel("./default/primitives/sphere.obj");
   spherePrimitive =
       new Graphics::Mesh(sphereMesh[0]->vertices, sphereMesh[0]->indices);
   spherePrimitive->identifier = "sphere";
   spherePrimitive->modelPath = "::spherePrimitive";
   // cube
-  auto cubeMesh = getModel(REPO_SOURCE_DIR "/src/default/primitives/cube.obj");
+  auto cubeMesh = getModel("./default/primitives/cube.obj");
   cubePrimitive =
       new Graphics::Mesh(cubeMesh[0]->vertices, cubeMesh[0]->indices);
   cubePrimitive->identifier = "cube";
   cubePrimitive->modelPath = "::cubePrimitive";
   // cylinder
   auto cylinderMesh =
-      getModel(REPO_SOURCE_DIR "/src/default/primitives/cylinder.obj");
+      getModel("./default/primitives/cylinder.obj");
   cylinderPrimitive =
       new Graphics::Mesh(cylinderMesh[0]->vertices, cylinderMesh[0]->indices);
   cylinderPrimitive->identifier = "cylinder";
   cylinderPrimitive->modelPath = "::cylinderPrimitive";
   // cone
-  auto coneMesh = getModel(REPO_SOURCE_DIR "/src/default/primitives/cone.obj");
+  auto coneMesh = getModel("./default/primitives/cone.obj");
   conePrimitive =
       new Graphics::Mesh(coneMesh[0]->vertices, coneMesh[0]->indices);
   conePrimitive->identifier = "cone";
@@ -98,7 +98,7 @@ void ResourceManager::Initialize() {
 
   // load icons
   Texture *nullIcon = new Texture();
-  nullIcon->id = textureFromFile(REPO_SOURCE_DIR "/src/default/icons/NULL.png");
+  nullIcon->id = textureFromFile("./default/icons/NULL.png");
   allIcons.insert(std::make_pair(ICON_TYPE::NULL_TYPE, nullIcon));
   // initialize texture slot
   TextureSlot = new Texture();
@@ -107,13 +107,13 @@ void ResourceManager::Initialize() {
   TextureSlot->path = "::textureSlot";
   // load default shaders
   Shader *baseShader =
-      new Shader(REPO_SOURCE_DIR "/src/default/shaders/base.vert",
-                 REPO_SOURCE_DIR "/src/default/shaders/base.frag");
+      new Shader("./default/shaders/base.vert",
+                 "./default/shaders/base.frag");
   baseShader->identifier = "base shader";
   allShaders.push_back(baseShader);
   Shader *errorShader =
-      new Shader(REPO_SOURCE_DIR "/src/default/shaders/error.vert",
-                 REPO_SOURCE_DIR "/src/default/shaders/error.frag");
+      new Shader("./default/shaders/error.vert",
+                 "./default/shaders/error.frag");
   errorShader->identifier = "base shader";
   allShaders.push_back(errorShader);
   // load default material
@@ -327,14 +327,14 @@ Mesh *ResourceManager::processMesh(aiMesh *mesh, const aiScene *scene, string &m
 
 Entity *ResourceManager::GetModelEntity(string path) {
   auto meshes = GetModel(path);
-  auto parentObject = ECS::EManager.AddNewEntity();
+  auto parentObject = Core.EManager.AddNewEntity();
   parentObject->name = fs::path(path).filename().string();
   for (auto mesh : meshes) {
-    auto childObject = ECS::EManager.AddNewEntity();
+    auto childObject = Core.EManager.AddNewEntity();
     parentObject->AssignChild(childObject);
     childObject->name = mesh->identifier;
     childObject->AddComponent<MeshRenderer>(mesh);
-    childObject->AddComponent<BaseMaterial>();
+    childObject->AddComponent<Material>();
   }
   return parentObject;
 }

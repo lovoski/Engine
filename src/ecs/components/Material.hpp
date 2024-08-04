@@ -9,12 +9,12 @@
 
 #include "engine/Engine.hpp"
 
-class BaseMaterial : public ECS::BaseComponent {
+class Material : public ECS::BaseComponent {
 public:
-  BaseMaterial() {
+  Material() {
     SetMaterialData();
   }
-  ~BaseMaterial() {}
+  ~Material() {}
 
   void SetMaterialData(string path="::base") {
     matData = Core.RManager.GetMaterialData(path);
@@ -36,28 +36,28 @@ public:
     activateTextures();
   }
 
-  void SetBaseLights(vector<BaseLight> &lights) {
+  void SetBaseLights(vector<Light> &lights) {
     unsigned int dirLightCounter = 0;
     unsigned int pointLightCounter = 0;
     unsigned int spotLightCounter = 0;
     // set the properties of different lights
     for (auto &light : lights) {
-      if (light.Type == BaseLight::DIRECTIONAL_LIGHT) {
+      if (light.Type == Light::DIRECTIONAL_LIGHT) {
         string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
         string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
-        matData->shader->SetVec3(lightDirName, ECS::EManager.EntityFromID(light.GetID())->LocalForward);
+        matData->shader->SetVec3(lightDirName, Core.EManager.EntityFromID(light.GetID())->LocalForward);
         matData->shader->SetVec3(lightColorName, light.LightColor);
         dirLightCounter++;
-      } else if (light.Type == BaseLight::POINT_LIGHT) {
+      } else if (light.Type == Light::POINT_LIGHT) {
         string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
         string lightColorName =
             "pLightColor" + std::to_string(pointLightCounter);
         matData->shader->SetVec3(
             lightPosName,
-            ECS::EManager.EntityFromID(light.GetID())->Position());
+            Core.EManager.EntityFromID(light.GetID())->Position());
         matData->shader->SetVec3(lightColorName, light.LightColor);
         pointLightCounter++;
-      } else if (light.Type == BaseLight::SPOT_LIGHT) {
+      } else if (light.Type == Light::SPOT_LIGHT) {
       }
     }
     if (dirLightCounter == 0) {

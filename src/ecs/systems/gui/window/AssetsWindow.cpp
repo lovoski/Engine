@@ -1,4 +1,6 @@
-#include "engine/EditorWindows.hpp"
+#include "engine/Engine.hpp"
+
+#include "ecs/systems/gui/GuiSystem.hpp"
 
 void DirectoryRightClickMenu(fs::directory_entry entry) {
   ImGui::MenuItem("Directory Options", nullptr, nullptr, false);
@@ -209,7 +211,7 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
   }
 }
 
-void EditorWindows::AssetsWindow() {
+void GuiSystem::AssetsWindow() {
   ImGui::Begin("Assets");
   static int treeNodeInd = 0, selectedFile = 0;
   treeNodeInd = 0;
@@ -231,11 +233,11 @@ void EditorWindows::AssetsWindow() {
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
       selectedFile = -1;
   }
-  // // the right click file context menu
-  // if (ImGui::BeginPopup("AssetsWindowContextMenu")) {
-  //   ImGui::SeparatorText("File Options");
-  //   ImGui::EndPopup();
-  // }
+  // the right click file context menu
+  if (ImGui::BeginPopup("AssetsWindowContextMenu")) {
+    DirectoryRightClickMenu(fs::directory_entry(activeBaseFolder));
+    ImGui::EndPopup();
+  }
   ImGui::BeginChild("File Hierarchy List",
                     {-1, ImGui::GetContentRegionAvail().y});
   ImGuiTreeNodeFlags parentFlag = ImGuiTreeNodeFlags_OpenOnArrow |

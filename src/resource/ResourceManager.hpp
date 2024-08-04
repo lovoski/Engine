@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EngineConfig.h"
 #include "ResourceTypes.hpp"
 #include "Shader.hpp"
 #include "ecs/ecs.hpp"

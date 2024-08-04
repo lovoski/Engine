@@ -1,7 +1,15 @@
-#include "engine/EditorWindows.hpp"
+#include "engine/Engine.hpp"
+
+#include "ecs/components/Material.hpp"
+#include "ecs/components/Lights.hpp"
+#include "ecs/components/Lights.hpp"
+#include "ecs/components/Camera.hpp"
+#include "ecs/components/MeshRenderer.hpp"
+
+#include "ecs/systems/gui/GuiSystem.hpp"
 
 inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
-  auto transform = ECS::EManager.EntityFromID(selectedEntity);
+  auto transform = Core.EManager.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
     ImGui::MenuItem("Global Properties", nullptr, nullptr, false);
     vec3 position = transform->Position();
@@ -26,7 +34,7 @@ inline void DrawTransformGUI(ECS::EntityID selectedEntity) {
 }
 
 inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
-  auto &camera = ECS::EManager.GetComponent<Camera>(selectedEntity);
+  auto &camera = Core.EManager.GetComponent<Camera>(selectedEntity);
   if (ImGui::TreeNode("Camera")) {
     ImGui::DragFloat(" :Fov  Y", &camera.fovY, 1.0f, 0.0f, 150.0f);
     ImGui::DragFloat(" :Z Near", &camera.zNear, 0.001f, 0.0000001f, 10.0f);
@@ -36,7 +44,7 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
 }
 
 inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
-  auto &material = ECS::EManager.GetComponent<BaseMaterial>(selectedEntity);
+  auto &material = Core.EManager.GetComponent<Material>(selectedEntity);
   if (ImGui::TreeNode("Base Material")) {
     const ImVec2 sizeAvailable = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("BaseMaterialEditor",
@@ -247,7 +255,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
         char *info = (char *)payload->Data;
         // Console.Log(info);
         material.matData = Core.RManager.GetMaterialData(info);
-        // ECS::EManager.EntityFromID(entity->ID)->AssignChild(newChild);
+        // Core.EManager.EntityFromID(entity->ID)->AssignChild(newChild);
       }
       ImGui::EndDragDropTarget();
     }
@@ -256,7 +264,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
 }
 
 inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
-  auto &light = ECS::EManager.GetComponent<BaseLight>(selectedEntity);
+  auto &light = Core.EManager.GetComponent<Light>(selectedEntity);
   if (ImGui::TreeNode("Base Light")) {
     const char *comboItems[] = {"Directional light", "Point light",
                                 "Spot light"};
@@ -276,7 +284,7 @@ inline void DrawBaseLightGUI(ECS::EntityID selectedEntity) {
   }
 }
 
-void EditorWindows::InspectorWindow() {
+void GuiSystem::InspectorWindow() {
   ImGui::Begin("Components");
   // // Right-click context menu for the parent window
   // if (!ImGui::IsAnyItemHovered() &&
@@ -294,16 +302,16 @@ void EditorWindows::InspectorWindow() {
   // }
   if (selectedEntity != (ECS::EntityID)(-1)) {
     string entityName =
-        "Active Entity : " + ECS::EManager.EntityFromID(selectedEntity)->name;
+        "Active Entity : " + Core.EManager.EntityFromID(selectedEntity)->name;
     ImGui::SeparatorText(entityName.c_str());
     ImGui::BeginChild("Components List",
                       {-1, ImGui::GetContentRegionAvail().y});
     DrawTransformGUI(selectedEntity);
-    if (ECS::EManager.HasComponent<Camera>(selectedEntity))
+    if (Core.EManager.HasComponent<Camera>(selectedEntity))
       DrawCameraGUI(selectedEntity);
-    if (ECS::EManager.HasComponent<BaseMaterial>(selectedEntity))
+    if (Core.EManager.HasComponent<Material>(selectedEntity))
       DrawBaseMaterialGUI(selectedEntity);
-    if (ECS::EManager.HasComponent<BaseLight>(selectedEntity))
+    if (Core.EManager.HasComponent<Light>(selectedEntity))
       DrawBaseLightGUI(selectedEntity);
     ImGui::EndChild();
   }
