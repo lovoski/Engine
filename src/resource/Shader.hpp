@@ -90,7 +90,7 @@ public:
     ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
-    if (geometryPath != nullptr)
+    if (geometryPath != nullptr && strcmp(geometryPath, "none"))
       glAttachShader(ID, geometry);
     glLinkProgram(ID);
     checkCompileErrors(ID, "PROGRAM");
@@ -98,7 +98,7 @@ public:
     // necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
-    if (geometryPath != nullptr)
+    if (geometryPath != nullptr && strcmp(geometryPath, "none"))
       glDeleteShader(geometry);
   }
 
