@@ -105,6 +105,7 @@ void MaterialData::SetupVariables() {
 }
 
 void MaterialData::setFixedVariables() {
+  shader->Use();
   for (auto intVar : intVariables)
     shader->SetInt(variableNames[intVar.first], intVar.second);
   for (auto floatVar : floatVariables)
@@ -118,17 +119,24 @@ void MaterialData::setFixedVariables() {
 }
 
 void MaterialData::activateTextures() {
+  shader->Use();
   unsigned int texCounter = 0;
   for (auto tex : texVariables) {
     // don't pass the texture to gpu if its a texture slot
     if (tex.second->path != "::textureSlot") {
-      glActiveTexture(GL_TEXTURE0 +
-                      texCounter); // active proper texture unit before binding
-      // retrieve texture number (the N in diffuse_textureN)
+      if (texCounter >= GL_MAX_TEXTURE_UNITS) {
+        Console.Log("[error]: exceeded maximum texture numbers\n");
+        break;
+      }
+       // active proper texture unit before binding
+      glActiveTexture(GL_TEXTURE0 + texCounter);
       string name = variableNames[tex.first];
-      // now set the sampler to the correct texture unit
-      glUniform1i(glGetUniformLocation(shader->ID, name.c_str()), texCounter);
-      // and finally bind the texture
+      int location = glGetUniformLocation(shader->ID, name.c_str());
+      if (location == -1) {
+        // Console.Log("[warning]: uniform %s not found in shader\n", name.c_str());
+        continue;
+      }
+      glUniform1i(location, texCounter);
       glBindTexture(GL_TEXTURE_2D, tex.second->id);
       texCounter++;
     }

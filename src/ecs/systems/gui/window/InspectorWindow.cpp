@@ -84,7 +84,7 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
     ImGui::TextWrapped("Vertex Shader: %s",
                        material.passes[0]->vertShaderPath.c_str());
     ImGui::TextWrapped("Fragment Shader: %s",
-                       material.passes[0]->vertShaderPath.c_str());
+                       material.passes[0]->fragShaderPath.c_str());
     ImGui::TextWrapped("Geometry Shader: %s",
                        material.passes[0]->geomShaderPath.c_str());
     ImGui::EndGroup();
@@ -146,124 +146,147 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
       ImGui::EndPopup();
     }
     // int variables
-    if (ptr->intVariables.size() > 0)
+    if (ptr->intVariables.size() > 0) {
+      // don't modify the map when iterating through it
+      vector<string> toRemove;
       ImGui::MenuItem("Int Variables", nullptr, nullptr, false);
-    for (auto &intVar : ptr->intVariables) {
-      string name = ptr->variableNames[intVar.first];
-      if (ImGui::Button(("X##" + name).c_str()))
+      for (auto &intVar : ptr->intVariables) {
+        string name = ptr->variableNames[intVar.first];
+        if (ImGui::Button(("X##" + name).c_str()))
+          toRemove.push_back(name);
+        ImGui::SameLine();
+        ImGui::InputInt(name.c_str(), &intVar.second);
+      }
+      for (auto name : toRemove)
         ptr->RemoveVariable<int>(name);
-      ImGui::SameLine();
-      ImGui::InputInt(name.c_str(), &intVar.second);
     }
     // float variables
-    if (ptr->floatVariables.size() > 0)
+    if (ptr->floatVariables.size() > 0) {
+      vector<string> toRemove;
       ImGui::MenuItem("Float Variables", nullptr, nullptr, false);
-    for (auto &floatVar : ptr->floatVariables) {
-      float minRange = -10000.0f, maxRange = 10000.0f;
-      if (ptr->floatVariablesRange.find(floatVar.first) !=
-          ptr->floatVariablesRange.end()) {
-        auto range = ptr->floatVariablesRange[floatVar.first];
-        minRange = range.first;
-        maxRange = range.second;
+      for (auto &floatVar : ptr->floatVariables) {
+        float minRange = -10000.0f, maxRange = 10000.0f;
+        if (ptr->floatVariablesRange.find(floatVar.first) !=
+            ptr->floatVariablesRange.end()) {
+          auto range = ptr->floatVariablesRange[floatVar.first];
+          minRange = range.first;
+          maxRange = range.second;
+        }
+        string name = ptr->variableNames[floatVar.first];
+        if (ImGui::Button(("X##" + name).c_str()))
+          toRemove.push_back(name);
+        ImGui::SameLine();
+        ImGui::SliderFloat(name.c_str(), &floatVar.second, minRange, maxRange);
       }
-      string name = ptr->variableNames[floatVar.first];
-      if (ImGui::Button(("X##" + name).c_str()))
+      for (auto name : toRemove)
         ptr->RemoveVariable<float>(name);
-      ImGui::SameLine();
-      ImGui::SliderFloat(name.c_str(), &floatVar.second, minRange, maxRange);
     }
-    static char floatVariableName[50];
     // vec2 variable
-    if (ptr->vec2Variables.size() > 0)
+    if (ptr->vec2Variables.size() > 0) {
+      vector<string> toRemove;
       ImGui::MenuItem("Vec2 Variables", nullptr, nullptr, false);
-    for (auto &vec2Var : ptr->vec2Variables) {
-      string name = ptr->variableNames[vec2Var.first];
-      float vec2Value[2] = {vec2Var.second.x, vec2Var.second.y};
-      if (ImGui::Button(("X##" + name).c_str()))
-        ptr->RemoveVariable<vec2>(name);
-      ImGui::SameLine();
-      if (ImGui::DragFloat2(name.c_str(), vec2Value))
-        ptr->vec2Variables[vec2Var.first] = vec2(vec2Value[0], vec2Value[1]);
-    }
-    static char vec2VariableName[50];
-    // vec3 variable
-    if (ptr->vec3Variables.size() > 0)
-      ImGui::MenuItem("Vec3 Variables", nullptr, nullptr, false);
-    for (auto &vec3Var : ptr->vec3Variables) {
-      string name = ptr->variableNames[vec3Var.first];
-      float vec3Value[3] = {vec3Var.second.x, vec3Var.second.y,
-                            vec3Var.second.z};
-      if (ImGui::Button(("X##" + name).c_str()))
-        ptr->RemoveVariable<vec3>(name);
-      ImGui::SameLine();
-      if (name == "Albedo" || name == "Specular") {
-        if (ImGui::ColorEdit3(name.c_str(), vec3Value))
-          ptr->vec3Variables[vec3Var.first] =
-              vec3(vec3Value[0], vec3Value[1], vec3Value[2]);
-      } else {
-        if (ImGui::DragFloat3(name.c_str(), vec3Value, 0.01f))
-          ptr->vec3Variables[vec3Var.first] =
-              vec3(vec3Value[0], vec3Value[1], vec3Value[2]);
+      for (auto &vec2Var : ptr->vec2Variables) {
+        string name = ptr->variableNames[vec2Var.first];
+        float vec2Value[2] = {vec2Var.second.x, vec2Var.second.y};
+        if (ImGui::Button(("X##" + name).c_str()))
+          toRemove.push_back(name);
+        ImGui::SameLine();
+        if (ImGui::DragFloat2(name.c_str(), vec2Value))
+          ptr->vec2Variables[vec2Var.first] = vec2(vec2Value[0], vec2Value[1]);
       }
+      for (auto name : toRemove)
+        ptr->RemoveVariable<vec2>(name);
+    }
+    // vec3 variable
+    if (ptr->vec3Variables.size() > 0) {
+      vector<string> toRemove;
+      ImGui::MenuItem("Vec3 Variables", nullptr, nullptr, false);
+      for (auto &vec3Var : ptr->vec3Variables) {
+        string name = ptr->variableNames[vec3Var.first];
+        float vec3Value[3] = {vec3Var.second.x, vec3Var.second.y,
+                              vec3Var.second.z};
+        if (ImGui::Button(("X##" + name).c_str()))
+          toRemove.push_back(name);
+        ImGui::SameLine();
+        if (name == "Albedo" || name == "Specular") {
+          if (ImGui::ColorEdit3(name.c_str(), vec3Value))
+            ptr->vec3Variables[vec3Var.first] =
+                vec3(vec3Value[0], vec3Value[1], vec3Value[2]);
+        } else {
+          if (ImGui::DragFloat3(name.c_str(), vec3Value, 0.01f))
+            ptr->vec3Variables[vec3Var.first] =
+                vec3(vec3Value[0], vec3Value[1], vec3Value[2]);
+        }
+      }
+      for (auto name : toRemove)
+        ptr->RemoveVariable<vec3>(name);
     }
     // vec4 variable
-    if (ptr->vec4Variables.size() > 0)
+    if (ptr->vec4Variables.size() > 0) {
+      vector<string> toRemove;
       ImGui::MenuItem("Vec4 Variables", nullptr, nullptr, false);
-    for (auto &vec4Var : ptr->vec4Variables) {
-      string name = ptr->variableNames[vec4Var.first];
-      float vec4Value[4] = {vec4Var.second.x, vec4Var.second.y,
-                            vec4Var.second.z, vec4Var.second.w};
-      if (ImGui::Button(("X##" + name).c_str()))
-        ptr->RemoveVariable<vec4>(name);
-      ImGui::SameLine();
-      if (name == "Albedo" || name == "Specular") {
-        if (ImGui::ColorEdit4(name.c_str(), vec4Value))
-          ptr->vec4Variables[vec4Var.first] =
-              vec4(vec4Value[0], vec4Value[1], vec4Value[2], vec4Value[3]);
-      } else {
-        if (ImGui::DragFloat4(name.c_str(), vec4Value, 0.01f))
-          ptr->vec4Variables[vec4Var.first] =
-              vec4(vec4Value[0], vec4Value[1], vec4Value[2], vec4Value[3]);
+      for (auto &vec4Var : ptr->vec4Variables) {
+        string name = ptr->variableNames[vec4Var.first];
+        float vec4Value[4] = {vec4Var.second.x, vec4Var.second.y,
+                              vec4Var.second.z, vec4Var.second.w};
+        if (ImGui::Button(("X##" + name).c_str()))
+          toRemove.push_back(name);
+        ImGui::SameLine();
+        if (name == "Albedo" || name == "Specular") {
+          if (ImGui::ColorEdit4(name.c_str(), vec4Value))
+            ptr->vec4Variables[vec4Var.first] =
+                vec4(vec4Value[0], vec4Value[1], vec4Value[2], vec4Value[3]);
+        } else {
+          if (ImGui::DragFloat4(name.c_str(), vec4Value, 0.01f))
+            ptr->vec4Variables[vec4Var.first] =
+                vec4(vec4Value[0], vec4Value[1], vec4Value[2], vec4Value[3]);
+        }
       }
+      for (auto name : toRemove)
+        ptr->RemoveVariable<vec4>(name);
     }
     // texture variable
-    if (ptr->texVariables.size() > 0)
+    if (ptr->texVariables.size() > 0) {
       ImGui::MenuItem("Texture Variable", nullptr, nullptr, false);
-    const int textureSize = 128;
-    for (auto &texVar : ptr->texVariables) {
-      string name = ptr->variableNames[texVar.first];
-      if (ImGui::Button(("X##" + name).c_str()))
-        ptr->RemoveVariable<Resource::Texture *>(name);
-      ImGui::SameLine();
-      // the pointer to texture is a texture slot
-      ImGui::Image((void *)texVar.second->id, {textureSize, textureSize});
-      // // all texture can be replaced with another texture
+      const int textureSize = 128;
+      vector<string> toRemove;
+      for (auto &texVar : ptr->texVariables) {
+        string name = ptr->variableNames[texVar.first];
+        if (ImGui::Button(("X##" + name).c_str()))
+          toRemove.push_back(name);
+        ImGui::SameLine();
+        // the pointer to texture is a texture slot
+        ImGui::Image((void *)texVar.second->id, {textureSize, textureSize});
+        // // all texture can be replaced with another texture
+        if (ImGui::BeginDragDropTarget()) {
+          if (const ImGuiPayload *payload =
+                  ImGui::AcceptDragDropPayload("LOAD_TEXTURE")) {
+            char *texturePath = (char *)payload->Data;
+            auto newTexture = Core.RManager.GetTexture(texturePath);
+            // replace null texture with the actual texture
+            texVar.second =
+                newTexture; // replace upload texture with actual loaded texture
+          }
+          ImGui::EndDragDropTarget();
+        }
+        ImGui::SameLine();
+        ImGui::Text(name.c_str());
+      }
+      ImGui::EndChild();
       if (ImGui::BeginDragDropTarget()) {
         if (const ImGuiPayload *payload =
-                ImGui::AcceptDragDropPayload("LOAD_TEXTURE")) {
-          char *texturePath = (char *)payload->Data;
-          auto newTexture = Core.RManager.GetTexture(texturePath);
-          // replace null texture with the actual texture
-          texVar.second =
-              newTexture; // replace upload texture with actual loaded texture
+                ImGui::AcceptDragDropPayload("MATERIAL_OVERRIDE")) {
+          char *info = (char *)payload->Data;
+          // Console.Log(info);
+          auto newPass = Core.RManager.GetMaterialData(info);
+          if (newPass != nullptr) // setup new pass if the pointer is not null
+            material.passes[0] = Core.RManager.GetMaterialData(info);
+          // Core.EManager.EntityFromID(entity->ID)->AssignChild(newChild);
         }
         ImGui::EndDragDropTarget();
       }
-      ImGui::SameLine();
-      ImGui::Text(name.c_str());
-    }
-    ImGui::EndChild();
-    if (ImGui::BeginDragDropTarget()) {
-      if (const ImGuiPayload *payload =
-              ImGui::AcceptDragDropPayload("MATERIAL_OVERRIDE")) {
-        char *info = (char *)payload->Data;
-        // Console.Log(info);
-        auto newPass = Core.RManager.GetMaterialData(info);
-        if (newPass != nullptr) // setup new pass if the pointer is not null
-          material.passes[0] = Core.RManager.GetMaterialData(info);
-        // Core.EManager.EntityFromID(entity->ID)->AssignChild(newChild);
-      }
-      ImGui::EndDragDropTarget();
+      for (auto name : toRemove)
+        ptr->RemoveVariable<Resource::Texture *>(name);
     }
     ImGui::TreePop();
   }
