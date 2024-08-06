@@ -272,21 +272,21 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
         ImGui::SameLine();
         ImGui::Text(name.c_str());
       }
-      ImGui::EndChild();
-      if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload *payload =
-                ImGui::AcceptDragDropPayload("MATERIAL_OVERRIDE")) {
-          char *info = (char *)payload->Data;
-          // Console.Log(info);
-          auto newPass = Core.RManager.GetMaterialData(info);
-          if (newPass != nullptr) // setup new pass if the pointer is not null
-            material.passes[0] = Core.RManager.GetMaterialData(info);
-          // Core.EManager.EntityFromID(entity->ID)->AssignChild(newChild);
-        }
-        ImGui::EndDragDropTarget();
-      }
       for (auto name : toRemove)
         ptr->RemoveVariable<Resource::Texture *>(name);
+    }
+    ImGui::EndChild();
+    if (ImGui::BeginDragDropTarget()) {
+      if (const ImGuiPayload *payload =
+              ImGui::AcceptDragDropPayload("MATERIAL_OVERRIDE")) {
+        char *info = (char *)payload->Data;
+        // Console.Log(info);
+        auto newPass = Core.RManager.GetMaterialData(info);
+        if (newPass != nullptr) // setup new pass if the pointer is not null
+          material.passes[0] = Core.RManager.GetMaterialData(info);
+        // Core.EManager.EntityFromID(entity->ID)->AssignChild(newChild);
+      }
+      ImGui::EndDragDropTarget();
     }
     ImGui::TreePop();
   }

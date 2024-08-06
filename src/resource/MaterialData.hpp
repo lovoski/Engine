@@ -34,11 +34,13 @@ public:
 
   std::map<int, std::pair<float, float>> floatVariablesRange;
 
-  // set up default variables needed by the basic shader
-  void SetDefaultMaterial();
+  // Set to diffuse material by default
+  void SetDiffuseMaterial();
+  // Set to pbr material by default
+  void SetPBRMaterial();
   // force reload, compile and link the shader program
-  void LoadShader(string vsp = Resource::BasicShaderPath + ".vert",
-                  string fsp = Resource::BasicShaderPath + ".frag",
+  void LoadShader(string vsp = Resource::DiffuseShaderPath + ".vert",
+                  string fsp = Resource::DiffuseShaderPath + ".frag",
                   string gsp = "none");
 
   Resource::Shader *GetShader() { return shader; }

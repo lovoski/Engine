@@ -112,7 +112,7 @@ MaterialData *ResourceManager::GetMaterialData(string path) {
       // the first time call GetMaterialData("::base")
       newMat->identifier = "base material";
       newMat->path = "::base";
-      newMat->SetDefaultMaterial(); // set to default material
+      newMat->SetDiffuseMaterial(); // set to default material
       newMat->LoadShader(); // the default material uses the default shaders
     } else {                        // load from file
       std::ifstream input(path);

@@ -164,7 +164,9 @@ private:
 
 // the default path to error shader
 const string ErrorShaderPath = "./default/shaders/error";
-// the default basic shader
-const string BasicShaderPath = "./default/shaders/base";
+// the default diffuse shader
+const string DiffuseShaderPath = "./default/shaders/diffuse";
+// the default pbr shader
+const string PBRShaderPath = "./default/shaders/pbr";
 
 }; // namespace Resource

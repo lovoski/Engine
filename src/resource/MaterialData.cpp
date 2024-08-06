@@ -1,12 +1,16 @@
 #include "MaterialData.hpp"
 #include "engine/Engine.hpp"
 
-void MaterialData::SetDefaultMaterial() {
+void MaterialData::SetDiffuseMaterial() {
   AddVariable("Albedo", vec3(1.0f));
   AddVariable("Specular", vec3(1.0f));
   AddVariable("Ambient", 0.1f);
   SetVariableRange("Ambient", 0.0f, 1.0f);
   AddVariable("Smootheness", 32);
+}
+
+void MaterialData::SetPBRMaterial() {
+  
 }
 
 bool MaterialData::HasNamingConflict(string name) {
