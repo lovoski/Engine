@@ -1,5 +1,4 @@
 #include "global.hpp"
-#include "roboto.h"
 #include "engine/Engine.hpp"
 
 #include "ecs/components/Material.hpp"
@@ -24,8 +23,7 @@ void GuiSystem::Start() {
   io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  // io->Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len,
-  //                                 20.0f);
+  io->Fonts->AddFontFromFileTTF("./default/fonts/DSM/DroidSansMono.ttf", 20);
 
   io->IniFilename = layoutFileName;
 
