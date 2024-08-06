@@ -19,10 +19,13 @@ public:
     for (auto pass : material->passes) {
       auto shader = pass->GetShader();
       shader->Use();
+      mat4 ModelToWorldPoint = object->GetModelMatrix();
+      mat3 ModelToWorldDir = glm::transpose(glm::inverse(mat3(ModelToWorldPoint)));
       shader->SetVec3("ViewDir", -camera->LocalForward);
-      shader->SetMat4("projection", projMat);
-      shader->SetMat4("view", viewMat);
-      shader->SetMat4("model", object->GetModelMatrix());
+      shader->SetMat4("Projection", projMat);
+      shader->SetMat4("View", viewMat);
+      shader->SetMat4("ModelToWorldPoint", ModelToWorldPoint);
+      shader->SetMat3("ModelToWorldDir", ModelToWorldDir);
       pass->SetupVariables();
       pass->SetupLights(lights);
       meshData->Draw(*shader);

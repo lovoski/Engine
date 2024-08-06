@@ -39,6 +39,7 @@ void MaterialData::Serialize(Json &json) {
   json["vsp"] = vertShaderPath;
   json["fsp"] = fragShaderPath;
   json["gsp"] = geomShaderPath;
+  json["idCounter"] = idCounter;
 }
 
 void MaterialData::Deserialize(Json &json) {
@@ -65,6 +66,8 @@ void MaterialData::Deserialize(Json &json) {
   }
   // load the shader if possible
   LoadShader(json["vsp"], json["fsp"], json["gsp"]);
+  // reset id counter
+  idCounter = json["idCounter"].get<int>();
 }
 
 void MaterialData::SetupLights(vector<Light> &lights) {
