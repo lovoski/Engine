@@ -10,7 +10,7 @@ void DirectoryRightClickMenu(fs::directory_entry entry) {
   }
   if (ImGui::BeginMenu("Create")) {
     ImGui::MenuItem("Types", nullptr, nullptr, false);
-    if (ImGui::BeginMenu("Scene Name")) {
+    if (ImGui::BeginMenu("Empty Scene")) {
       static char sceneName[50] = {0};
       ImGui::MenuItem("Scene Name", nullptr, nullptr, false);
       ImGui::PushItemWidth(120);
