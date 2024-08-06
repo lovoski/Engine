@@ -6,27 +6,20 @@ namespace Resource {
 
 class Shader {
 public:
-  string vertexShaderPath, fragShaderPath, geomShaderPath;
   string identifier;
   unsigned int ID = 0;
-  // constructor generates the shader on the fly
-  // ------------------------------------------------------------------------
-  Shader(const char *vertexPath, const char *fragmentPath,
-         const char *geometryPath = nullptr) {
-    LoadAndCompileShader(vertexPath, fragmentPath, geometryPath);
-  }
-
+  // do nothing at the constructor
+  Shader() {}
   ~Shader() { glDeleteProgram(ID); }
 
-  void LoadAndCompileShader(const char *vertexPath, const char *fragmentPath,
-                            const char *geometryPath = nullptr) {
+  // Returns true if the shader is loaded, compiled and linked in the correct way
+  // Be carefully this function is very expensive
+  bool LoadAndRecompileShader(string vsp, string fsp, string gsp = "none") {
     // delete previous program if exists
-    if (ID != 0)
+    if (ID != 0) {
+      // free old shader if there's any
       glDeleteProgram(ID);
-    // 1. retrieve the vertex/fragment source code from filePath
-    vertexShaderPath = vertexPath;
-    fragShaderPath = fragmentPath;
-    geomShaderPath = geometryPath == nullptr ? "" : geometryPath;
+    }
     string vertexCode;
     string fragmentCode;
     string geometryCode;
@@ -39,8 +32,8 @@ public:
     gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
       // open files
-      vShaderFile.open(vertexPath);
-      fShaderFile.open(fragmentPath);
+      vShaderFile.open(vsp);
+      fShaderFile.open(fsp);
       std::stringstream vShaderStream, fShaderStream;
       // read file's buffer contents into streams
       vShaderStream << vShaderFile.rdbuf();
@@ -52,16 +45,17 @@ public:
       vertexCode = vShaderStream.str();
       fragmentCode = fShaderStream.str();
       // if geometry shader path is present, also load a geometry shader
-      if (geometryPath != nullptr && strcmp(geometryPath, "none") != 0) {
-        gShaderFile.open(geometryPath);
+      if (gsp != "none") {
+        gShaderFile.open(gsp);
         std::stringstream gShaderStream;
         gShaderStream << gShaderFile.rdbuf();
         gShaderFile.close();
         geometryCode = gShaderStream.str();
       }
     } catch (std::ifstream::failure &e) {
-      Console.Log("[error]::SHADER::FILE_NOT_SUCCESSFULLY_READ: %s\n",
+      Console.Log("[error]: failed to load shader, initialize as error shader%s\n",
                   e.what());
+      return false;
     }
     const char *vShaderCode = vertexCode.c_str();
     const char *fShaderCode = fragmentCode.c_str();
@@ -79,7 +73,7 @@ public:
     checkCompileErrors(fragment, "FRAGMENT");
     // if geometry shader is given, compile geometry shader
     unsigned int geometry;
-    if (geometryPath != nullptr && strcmp(geometryPath, "none") != 0) {
+    if (gsp != "none") {
       const char *gShaderCode = geometryCode.c_str();
       geometry = glCreateShader(GL_GEOMETRY_SHADER);
       glShaderSource(geometry, 1, &gShaderCode, NULL);
@@ -90,16 +84,19 @@ public:
     ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
-    if (geometryPath != nullptr && strcmp(geometryPath, "none"))
+    if (gsp != "none")
       glAttachShader(ID, geometry);
+    // linking the shader is a time consuming process
+    // this should be avoid between frames in all cost
     glLinkProgram(ID);
     checkCompileErrors(ID, "PROGRAM");
     // delete the shaders as they're linked into our program now and no longer
     // necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
-    if (geometryPath != nullptr && strcmp(geometryPath, "none"))
+    if (gsp != "none")
       glDeleteShader(geometry);
+    return true;
   }
 
   void Use() { glUseProgram(ID); }
@@ -164,5 +161,10 @@ private:
     }
   }
 };
+
+// the default path to error shader
+const string ErrorShaderPath = "./default/shaders/error";
+// the default basic shader
+const string BasicShaderPath = "./default/shaders/base";
 
 }; // namespace Resource

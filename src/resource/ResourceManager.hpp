@@ -26,9 +26,8 @@ public:
 
   Entity *GetModelEntity(string path);
 
-  // shaders are identified by their vertex and fragment shader path
-  Shader *GetShader(string vertShaderPath, string fragShaderPath, string geomShaderPath = "none", bool forceReload=false);
-  // materials are identified by a string identifier
+  // materials are identified by its file path
+  // use path '::base' to get the instance of the default material
   MaterialData *GetMaterialData(string path);
   // get an image texture from file, if the path matches
   Texture *GetTexture(string path, bool forceReload = false);
@@ -46,8 +45,6 @@ private:
 
   // path to texture
   std::map<string, Texture*> allTextures;
-  // collection of shaders
-  vector<Shader*> allShaders;
   // path to model, one model could contain multiple meshes
   std::map<string, vector<Mesh*>> allMeshes;
   // path to material data

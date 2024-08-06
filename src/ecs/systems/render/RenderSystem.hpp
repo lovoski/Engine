@@ -10,6 +10,7 @@
 class RenderSystem : public ECS::BaseSystem {
 public:
   RenderSystem() {
+    AddComponentSignature<Material>();
     AddComponentSignature<MeshRenderer>();
   }
   ~RenderSystem() {}
@@ -38,11 +39,7 @@ public:
       for (auto entity : entities) {
         auto &renderer = Core.EManager.GetComponent<MeshRenderer>(entity);
         auto transform = Core.EManager.EntityFromID(entity);
-        Material *material =
-            Core.EManager.HasComponent<Material>(entity)
-                ? &Core.EManager.GetComponent<Material>(entity)
-                : &defaultMaterial;
-        renderer.Render(projMatrix, viewMatrix, camera, transform, material, activeBaseLights);
+        renderer.Render(projMatrix, viewMatrix, camera, transform, &Core.EManager.GetComponent<Material>(entity), activeBaseLights);
       }
     }
     Core.SceneBuffer->Unbind();
@@ -58,6 +55,4 @@ public:
   // this array is maintained by the light system
   vector<Light> activeBaseLights;
 
-private:
-  Material defaultMaterial;
 };

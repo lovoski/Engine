@@ -1,8 +1,9 @@
 #include "Engine.hpp"
-#include "ecs/systems/render/RenderSystem.hpp"
 #include "ecs/systems/camera/CameraSystem.hpp"
-#include "ecs/systems/light/LightSystem.hpp"
 #include "ecs/systems/gui/GuiSystem.hpp"
+#include "ecs/systems/light/LightSystem.hpp"
+#include "ecs/systems/render/RenderSystem.hpp"
+
 
 // the actual implementation of stb image
 #define STB_IMAGE_IMPLEMENTATION
@@ -64,6 +65,9 @@ void Engine::Reset() {
   // set camera to inactive
   hasActiveCamera = false;
   activeCamera = (ECS::EntityID)(-1);
+
+  // reset editor context
+  EManager.GetSystemInstance<GuiSystem>()->Reset();
 }
 
 void Engine::Update() {
@@ -88,13 +92,16 @@ void Engine::Quit() {
 
 bool Engine::SetActiveCamera(ECS::EntityID camera) {
   if (camera == (ECS::EntityID)(-1)) {
-    Console.Log("[info]: camera is not a valid entity, current active camera %d\n", activeCamera);
+    Console.Log(
+        "[info]: camera is not a valid entity, current active camera %d\n",
+        activeCamera);
     return false;
   }
   if (EManager.HasComponent<Camera>(camera)) {
     hasActiveCamera = true;
     activeCamera = camera;
-    Console.Log("[info]: set active camera to %s\n", EManager.EntityFromID(camera)->name.c_str());
+    Console.Log("[info]: set active camera to %s\n",
+                EManager.EntityFromID(camera)->name.c_str());
     return true;
   } else {
     Console.Log("[error]: Not a valid camera entity: %ld\n", camera);
@@ -118,6 +125,7 @@ bool Engine::GetActiveCamera(ECS::EntityID &camera) {
 
 // check if the scene file is a valid file
 // update the variable `activeSceneFile`
+// set `reloadScene` variable to true
 void Engine::ReloadScene(string path) {
   std::ifstream sceneFileInput(path);
   if (!sceneFileInput.is_open()) {
@@ -126,6 +134,7 @@ void Engine::ReloadScene(string path) {
   } else {
     Console.Log("[info]: load scene file from %s\n", path.c_str());
     ActiveSceneFile = path;
+    reloadScene = true;
   }
   sceneFileInput.close();
 }
@@ -156,17 +165,18 @@ Json Engine::DumpSceneAsJson() {
     string currentEntityID = std::to_string((unsigned int)entity.first);
     entity.second->Serialize(json["entities"][currentEntityID]);
   }
-  // if more components created, they need to be registered here to be serialized
+  // if more components created, they need to be registered here to be
+  // serialized
   for (auto camera : EManager.GetComponentList<Camera>()->data) {
     camera.Serialize(
         json["components"]["camera"][std::to_string(camera.GetID())]);
   }
   for (auto material : EManager.GetComponentList<Material>()->data) {
-    material.Serialize(json["components"]["material"][std::to_string(material.GetID())]);
+    material.Serialize(
+        json["components"]["material"][std::to_string(material.GetID())]);
   }
   for (auto light : EManager.GetComponentList<Light>()->data) {
-    light.Serialize(
-        json["components"]["light"][std::to_string(light.GetID())]);
+    light.Serialize(json["components"]["light"][std::to_string(light.GetID())]);
   }
   for (auto renderer : EManager.GetComponentList<MeshRenderer>()->data) {
     renderer.Serialize(
@@ -175,7 +185,7 @@ Json Engine::DumpSceneAsJson() {
 
   // scene specific settings
   if (GetActiveCamera(activeCamera))
-  json["scene"]["activeCamera"] = (int)activeCamera;
+    json["scene"]["activeCamera"] = (int)activeCamera;
   return json;
 }
 
@@ -186,22 +196,48 @@ void Engine::LoadSceneFromJson(Json sceneFileContent) {
 
   // reload scene from the file
   std::map<ECS::EntityID, ECS::EntityID> old2new;
+  std::map<ECS::EntityID, vector<ECS::EntityID>> childrenMap;
+  std::queue<ECS::EntityID> q;
   for (auto entJson : sceneFileContent["entities"].items()) {
     ECS::EntityID old = (ECS::EntityID)std::stoi(entJson.key());
     auto newEntity = EManager.AddNewEntity();
     newEntity->name = entJson.value()["name"];
     old2new[old] = newEntity->ID;
+    ECS::EntityID oldParentID =
+        entJson.value().value("parent", "none") == "none"
+            ? -1
+            : (ECS::EntityID)std::stoi(entJson.value().value("parent", "none"));
+    if (oldParentID != (ECS::EntityID)(-1)) {
+      childrenMap[oldParentID].push_back(old);
+    } else {
+      q.push(old); // keep record of potential root nodes
+      childrenMap[old] = vector<ECS::EntityID>();
+    }
   }
-  for (auto entJson : sceneFileContent["entities"].items()) {
-    // cout << entJson << endl;
-    ECS::EntityID old = (ECS::EntityID)std::stoi(entJson.key());
+  vector<ECS::EntityID> traversalOrder;
+  while (!q.empty()) {
+    auto cur = q.front();
+    q.pop();
+    traversalOrder.push_back(cur);
+    if (childrenMap.find(cur) != childrenMap.end()) {
+      for (auto c : childrenMap[cur]) {
+        q.push(c);
+      }
+    }
+  }
+
+  // update the parent first, make sure the hierarchy positions are correct
+  for (auto currentUpdateIndex : traversalOrder) {
+    auto entJson = sceneFileContent["entities"][std::to_string((int)currentUpdateIndex)];
+    ECS::EntityID old = currentUpdateIndex;
     ECS::EntityID newID = old2new[old];
     auto newEntity = EManager.EntityFromID(newID);
-    newEntity->SetGlobalPosition(entJson.value()["p"].get<vec3>());
-    newEntity->SetGlobalScale(entJson.value()["s"].get<vec3>());
-    newEntity->SetGlobalRotation(entJson.value()["r"].get<vec3>());
-    if (entJson.value().value("parent", "none") != "none") {
-      auto oldParentID = (ECS::EntityID)std::stoi(entJson.value().value("parent", "none"));
+    newEntity->SetGlobalPosition(entJson["p"].get<vec3>());
+    newEntity->SetGlobalScale(entJson["s"].get<vec3>());
+    newEntity->SetGlobalRotation(entJson["r"].get<vec3>());
+    if (entJson.value("parent", "none") != "none") {
+      auto oldParentID =
+          (ECS::EntityID)std::stoi(entJson.value("parent", "none"));
       auto parent = EManager.EntityFromID(old2new[oldParentID]);
       parent->AssignChild(newEntity);
     }
@@ -211,7 +247,8 @@ void Engine::LoadSceneFromJson(Json sceneFileContent) {
       if (belongs == old) {
         // this component belongs to the entity
         newEntity->AddComponent<Camera>();
-        newEntity->GetComponent<Camera>().Deserialize(sceneFileContent["components"]["camera"][std::to_string((int)old)]);
+        newEntity->GetComponent<Camera>().Deserialize(
+            sceneFileContent["components"]["camera"][std::to_string((int)old)]);
       }
     }
     for (auto compJson : sceneFileContent["components"]["material"].items()) {
@@ -219,7 +256,9 @@ void Engine::LoadSceneFromJson(Json sceneFileContent) {
       if (belongs == old) {
         // this component belongs to the entity
         newEntity->AddComponent<Material>();
-        newEntity->GetComponent<Material>().Deserialize(sceneFileContent["components"]["material"][std::to_string((int)old)]);
+        newEntity->GetComponent<Material>().Deserialize(
+            sceneFileContent["components"]["material"]
+                            [std::to_string((int)old)]);
       }
     }
     for (auto compJson : sceneFileContent["components"]["light"].items()) {
@@ -227,7 +266,8 @@ void Engine::LoadSceneFromJson(Json sceneFileContent) {
       if (belongs == old) {
         // this component belongs to the entity
         newEntity->AddComponent<Light>();
-        newEntity->GetComponent<Light>().Deserialize(sceneFileContent["components"]["light"][std::to_string((int)old)]);
+        newEntity->GetComponent<Light>().Deserialize(
+            sceneFileContent["components"]["light"][std::to_string((int)old)]);
       }
     }
     for (auto compJson : sceneFileContent["components"]["renderer"].items()) {
@@ -235,10 +275,13 @@ void Engine::LoadSceneFromJson(Json sceneFileContent) {
       if (belongs == old) {
         // this component belongs to the entity
         newEntity->AddComponent<MeshRenderer>();
-        newEntity->GetComponent<MeshRenderer>().Deserialize(sceneFileContent["components"]["renderer"][std::to_string((int)old)]);
+        newEntity->GetComponent<MeshRenderer>().Deserialize(
+            sceneFileContent["components"]["renderer"]
+                            [std::to_string((int)old)]);
       }
     }
   }
+
   // reset the scene variables
   if (sceneFileContent["scene"]["activeCamera"].get<int>() != -1)
     SetActiveCamera(old2new[sceneFileContent["scene"]["activeCamera"]]);

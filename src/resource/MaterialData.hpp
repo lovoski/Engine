@@ -1,24 +1,27 @@
 #pragma once
 
 #include "global.hpp"
-#include "resource/Shader.hpp"
 #include "resource/ResourceTypes.hpp"
+#include "resource/Shader.hpp"
 
-// stores the actual attributes of the material
+
+#include "ecs/components/Lights.hpp"
+
+// Each material data should maintain an instance shader
+// If the shader specified failed to load, a default error shader should be
+// applied The material data should be able to represent a complete render pass
 class MaterialData {
 public:
-  MaterialData() {
-    // load default shader at the creation of material data
-    SetShader();
+  MaterialData() {}
+  ~MaterialData() {
+    if (shader != nullptr)
+      delete shader;
   }
-  ~MaterialData() {}
 
-  Resource::Shader *shader = nullptr;
+  string identifier;
+  string path;
 
-  void SetShader(string vertShaderPath =
-                 "./default/shaders/base.vert",
-                 string fragShaderPath =
-                 "./default/shaders/base.frag");
+  string vertShaderPath, fragShaderPath, geomShaderPath;
 
   std::map<int, string> variableNames;
   std::map<int, int> intVariables;
@@ -27,59 +30,40 @@ public:
   std::map<int, vec3> vec3Variables;
   std::map<int, vec4> vec4Variables;
   // textures
-  std::map<int, Resource::Texture*> texVariables;
+  std::map<int, Resource::Texture *> texVariables;
 
   std::map<int, std::pair<float, float>> floatVariablesRange;
 
-  template<typename T>
-  bool AddVariable(string name, T value);
-  template<typename T>
-  bool RemoveVariable(string name);
+  // set up default variables needed by the basic shader
   void SetDefaultMaterial();
+  // force reload, compile and link the shader program
+  void LoadShader(string vsp = Resource::BasicShaderPath + ".vert",
+                  string fsp = Resource::BasicShaderPath + ".frag",
+                  string gsp = "none");
 
-  template<typename T>
-  bool SetVariableRange(string name, T min, T max);
+  Resource::Shader *GetShader() { return shader; }
 
-  string identifier;
-  string path;
+  template <typename T> bool AddVariable(string name, T value);
+  template <typename T> bool RemoveVariable(string name);
 
-  void Serialize(Json &json) {
-    json["variableNames"] = variableNames;
-    json["intVariables"] = intVariables;
-    json["floatVariables"] = floatVariables;
-    json["vec2Variables"] = vec2Variables;
-    json["vec3Variables"] = vec3Variables;
-    json["vec4Variables"] = vec4Variables;
-    json["floatVariablesRange"] = floatVariablesRange;
-    // there could be some slots to available textures
-    // when a texture is set to be type ICON_TEXTURE, it will 
-    // be displayed as some icons on the gui side
-    vector<string> texturePathes;
-    vector<int> textureIndex;
-    for (auto tex : texVariables) {
-      textureIndex.push_back(tex.first);
-      texturePathes.push_back(tex.second->path);
-    }
-    json["texVariables"]["indices"] = textureIndex;
-    json["texVariables"]["pathes"] = texturePathes;
-  }
+  template <typename T> bool SetVariableRange(string name, T min, T max);
 
-  void Deserialize(Json &json) {
-    variableNames = json["variableNames"];
-    intVariables = json["intVariables"];
-    floatVariables = json["floatVariables"];
-    vec2Variables = json["vec2Variables"];
-    vec3Variables = json["vec3Variables"];
-    vec4Variables = json["vec4Variables"];
-    floatVariablesRange = json["floatVariablesRange"];
-  }
+  void Serialize(Json &json);
+  void Deserialize(Json &json);
+
+  void SetupLights(vector<Light> &lights);
+  void SetupVariables();
 
 private:
   int idCounter = 0;
 
-  bool HasNamingConflict(string name);
-};
+  Resource::Shader *shader = nullptr;
 
+  bool HasNamingConflict(string name);
+
+  void setFixedVariables();
+  void activateTextures();
+};
 
 // template functions must be fully defined in the header file
 template <typename T>
@@ -98,7 +82,7 @@ bool MaterialData::AddVariable(std::string name, T value) {
     vec3Variables[idCounter] = value;
   } else if constexpr (std::is_same_v<T, vec4>) {
     vec4Variables[idCounter] = value;
-  } else if constexpr (std::is_same_v<T, Resource::Texture*>) {
+  } else if constexpr (std::is_same_v<T, Resource::Texture *>) {
     texVariables[idCounter] = value;
   } else {
     std::cout << "Setting unsupported type to material data, type: "
@@ -108,6 +92,7 @@ bool MaterialData::AddVariable(std::string name, T value) {
   ++idCounter;
   return true;
 }
+
 template <typename T> bool MaterialData::RemoveVariable(string name) {
   int idTBR = -1;
   for (auto ele : variableNames)
@@ -128,7 +113,7 @@ template <typename T> bool MaterialData::RemoveVariable(string name) {
     vec3Variables.erase(idTBR);
   } else if constexpr (std::is_same_v<T, vec4>) {
     vec4Variables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, Resource::Texture*>) {
+  } else if constexpr (std::is_same_v<T, Resource::Texture *>) {
     texVariables.erase(idTBR);
   } else {
     cout << "removing unsupported type to material data, type: "
@@ -138,7 +123,7 @@ template <typename T> bool MaterialData::RemoveVariable(string name) {
   return true;
 }
 
-template<typename T>
+template <typename T>
 bool MaterialData::SetVariableRange(string name, T min, T max) {
   int id = -1;
   for (auto ele : variableNames)
@@ -151,7 +136,8 @@ bool MaterialData::SetVariableRange(string name, T min, T max) {
   if constexpr (std::is_same_v<T, float>) {
     floatVariablesRange[id] = std::make_pair(min, max);
   } else {
-    cout << "type " << typeid(T).name() << " don't support range specification" << endl;
+    cout << "type " << typeid(T).name() << " don't support range specification"
+         << endl;
     return false;
   }
   return true;

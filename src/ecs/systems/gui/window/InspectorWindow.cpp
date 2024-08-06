@@ -1,10 +1,10 @@
 #include "engine/Engine.hpp"
 
-#include "ecs/components/Material.hpp"
-#include "ecs/components/Lights.hpp"
-#include "ecs/components/Lights.hpp"
 #include "ecs/components/Camera.hpp"
+#include "ecs/components/Lights.hpp"
+#include "ecs/components/Material.hpp"
 #include "ecs/components/MeshRenderer.hpp"
+
 
 #include "ecs/systems/gui/GuiSystem.hpp"
 
@@ -45,57 +45,61 @@ inline void DrawCameraGUI(ECS::EntityID selectedEntity) {
 
 inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
   auto &material = Core.EManager.GetComponent<Material>(selectedEntity);
-  if (ImGui::TreeNode("Base Material")) {
+  if (ImGui::TreeNode("Material")) {
     const ImVec2 sizeAvailable = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("BaseMaterialEditor",
-                      {-1, sizeAvailable.y});
-    ImGui::MenuItem(
-        ("Material: " + material.matData->identifier).c_str(), nullptr, nullptr, false);
+    ImGui::BeginChild("BaseMaterialEditor", {-1, sizeAvailable.y});
+    ImGui::MenuItem(("Material: " + material.passes[0]->identifier).c_str(),
+                    nullptr, nullptr, false);
     if (ImGui::Button("Save", {-1, 30})) {
-      std::ofstream materialOut(material.matData->path);
+      std::ofstream materialOut(material.passes[0]->path);
       if (!materialOut.is_open()) {
-        Console.Log("[error]: can't save material to %s\n", material.matData->path.c_str());
+        Console.Log("[error]: can't save material to %s\n",
+                    material.passes[0]->path.c_str());
       } else {
         Json output;
-        material.matData->Serialize(output);
+        material.passes[0]->Serialize(output);
         materialOut << output;
-        Console.Log("[info]: save material to %s\n", material.matData->path.c_str());
+        Console.Log("[info]: save material to %s\n",
+                    material.passes[0]->path.c_str());
       }
       materialOut.close();
     }
     // shader information
     ImGui::BeginGroup();
-    ImGui::MenuItem(
-        ("Shaders: " + material.matData->shader->identifier).c_str(), nullptr,
-        nullptr, false);
-    if (ImGui::Button("Reset", {sizeAvailable.x/2, 30})) {
-      material.matData->SetShader(); // reset to defualt shader
+    ImGui::MenuItem("Shaders", nullptr, nullptr, false);
+    if (ImGui::Button("Reset", {sizeAvailable.x / 2, 30})) {
+      material.passes[0]->LoadShader(); // reset to defualt shader
+      Console.Log("[info]: reset to default shaders\n");
     }
     ImGui::SameLine();
     if (ImGui::Button("Reload", {-1, 30})) {
-      material.matData->shader = Core.RManager.GetShader(
-          material.matData->shader->vertexShaderPath,
-          material.matData->shader->fragShaderPath, "none", true);
+      material.passes[0]->LoadShader(material.passes[0]->vertShaderPath,
+                                     material.passes[0]->fragShaderPath,
+                                     material.passes[0]->geomShaderPath);
+      Console.Log("[info]: reload shader %s, %s, %s\n",
+                  material.passes[0]->vertShaderPath.c_str(),
+                  material.passes[0]->fragShaderPath.c_str(),
+                  material.passes[0]->geomShaderPath.c_str());
     }
     ImGui::TextWrapped("Vertex Shader: %s",
-                       material.matData->shader->vertexShaderPath.c_str());
+                       material.passes[0]->vertShaderPath.c_str());
     ImGui::TextWrapped("Fragment Shader: %s",
-                       material.matData->shader->fragShaderPath.c_str());
+                       material.passes[0]->vertShaderPath.c_str());
+    ImGui::TextWrapped("Geometry Shader: %s",
+                       material.passes[0]->geomShaderPath.c_str());
     ImGui::EndGroup();
     if (ImGui::BeginDragDropTarget()) {
       if (const ImGuiPayload *payload =
               ImGui::AcceptDragDropPayload("SHADER_OVERRIDE")) {
         char *info = (char *)payload->Data;
         string base = string(info).substr(0, string(info).find_last_of('.'));
-        material.matData->shader =
-            Core.RManager.GetShader(base + ".vert", base + ".frag");
-        // Console.Log("%s\n", fs::path(info).stem().string().c_str());
+        material.passes[0]->LoadShader(base + ".vert", base + ".frag");
       }
       ImGui::EndDragDropTarget();
     }
     ImGui::MenuItem("Material Variables", nullptr, nullptr, false);
     // get the pointer
-    auto ptr = material.matData;
+    auto ptr = material.passes[0];
     // construct dynamic material editor from the maps
     if (ImGui::Button("New Variable", {-1, 30})) {
       ImGui::OpenPopup("AddNewVariable");
@@ -120,19 +124,18 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
           Console.Log("[error]: variable name can't be null\n");
         } else {
           if (selectedNewVariableType == 0) {
-            material.matData->AddVariable(newVariableName, 0);
+            ptr->AddVariable(newVariableName, 0);
           } else if (selectedNewVariableType == 1) {
-            material.matData->AddVariable(newVariableName, 0.0f);
-            material.matData->SetVariableRange(newVariableName, minAndMax[0], minAndMax[1]);
+            ptr->AddVariable(newVariableName, 0.0f);
+            ptr->SetVariableRange(newVariableName, minAndMax[0], minAndMax[1]);
           } else if (selectedNewVariableType == 2) {
-            material.matData->AddVariable(newVariableName, vec2(0.0f));
+            ptr->AddVariable(newVariableName, vec2(0.0f));
           } else if (selectedNewVariableType == 3) {
-            material.matData->AddVariable(newVariableName, vec3(0.0f));
+            ptr->AddVariable(newVariableName, vec3(0.0f));
           } else if (selectedNewVariableType == 4) {
-            material.matData->AddVariable(newVariableName, vec4(0.0f));
+            ptr->AddVariable(newVariableName, vec4(0.0f));
           } else if (selectedNewVariableType == 5) {
-            material.matData->AddVariable(newVariableName,
-                                          Core.RManager.TextureSlot);
+            ptr->AddVariable(newVariableName, Core.RManager.TextureSlot);
           }
           std::strcpy(newVariableName, "");
         }
@@ -241,7 +244,8 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
           char *texturePath = (char *)payload->Data;
           auto newTexture = Core.RManager.GetTexture(texturePath);
           // replace null texture with the actual texture
-          texVar.second = newTexture; // replace upload texture with actual loaded texture
+          texVar.second =
+              newTexture; // replace upload texture with actual loaded texture
         }
         ImGui::EndDragDropTarget();
       }
@@ -254,7 +258,9 @@ inline void DrawBaseMaterialGUI(ECS::EntityID selectedEntity) {
               ImGui::AcceptDragDropPayload("MATERIAL_OVERRIDE")) {
         char *info = (char *)payload->Data;
         // Console.Log(info);
-        material.matData = Core.RManager.GetMaterialData(info);
+        auto newPass = Core.RManager.GetMaterialData(info);
+        if (newPass != nullptr) // setup new pass if the pointer is not null
+          material.passes[0] = Core.RManager.GetMaterialData(info);
         // Core.EManager.EntityFromID(entity->ID)->AssignChild(newChild);
       }
       ImGui::EndDragDropTarget();
@@ -296,7 +302,8 @@ void GuiSystem::InspectorWindow() {
   //   // if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
   //   //   selectedEntity = (ECS::EntityID)(-1);
   // }
-  // if (selectedEntity != (ECS::EntityID)(-1) && ImGui::BeginPopup("ComponentWindowContextMenu")) {
+  // if (selectedEntity != (ECS::EntityID)(-1) &&
+  // ImGui::BeginPopup("ComponentWindowContextMenu")) {
   //   ImGui::MenuItem("Window Options", nullptr, nullptr, false);
   //   ImGui::EndPopup();
   // }

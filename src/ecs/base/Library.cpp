@@ -38,9 +38,12 @@ void EntityManager::Update() {
   recomputeLocalAxis();
   rebuildHierarchyStructure();
 
-  for (auto &system : registeredSystems) {
+  // call update
+  for (auto &system : registeredSystems)
     system.second->Update();
-  }
+  // call late update
+  for (auto &system : registeredSystems)
+    system.second->LateUpdate();
 
   // do the rendering
   GetSystemInstance<RenderSystem>()->BeginRender();

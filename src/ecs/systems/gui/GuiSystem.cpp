@@ -39,6 +39,11 @@ void GuiSystem::Destroy() {
   ImGui::DestroyContext();
 }
 
+void GuiSystem::Reset() {
+  // don't select anything
+  selectedEntity = (ECS::EntityID)(-1);
+}
+
 void DrawProfiler() {}
 
 void GuiSystem::MainMenuBar() {

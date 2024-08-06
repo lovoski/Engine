@@ -11,6 +11,8 @@ public:
   void Render() override;
   void Destroy() override;
 
+  void Reset();
+
   // imgui variables
   ImGuiIO *io = nullptr;
 

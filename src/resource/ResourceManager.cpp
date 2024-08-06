@@ -19,11 +19,6 @@ ResourceManager::~ResourceManager() {
       delete texture.second;
     }
   }
-  for (auto shader : allShaders) {
-    if (shader) {
-      delete shader;
-    }
-  }
   for (auto meshEle : allMeshes) {
     for (auto mesh : meshEle.second)
       if (mesh)
@@ -105,17 +100,6 @@ void ResourceManager::Initialize() {
   // copy the null icon's id
   TextureSlot->id = nullIcon->id;
   TextureSlot->path = "::textureSlot";
-  // load default shaders
-  Shader *baseShader =
-      new Shader("./default/shaders/base.vert",
-                 "./default/shaders/base.frag");
-  baseShader->identifier = "base shader";
-  allShaders.push_back(baseShader);
-  Shader *errorShader =
-      new Shader("./default/shaders/error.vert",
-                 "./default/shaders/error.frag");
-  errorShader->identifier = "base shader";
-  allShaders.push_back(errorShader);
   // load default material
   GetMaterialData("::base");
 }
@@ -129,6 +113,7 @@ MaterialData *ResourceManager::GetMaterialData(string path) {
       newMat->identifier = "base material";
       newMat->path = "::base";
       newMat->SetDefaultMaterial(); // set to default material
+      newMat->LoadShader(); // the default material uses the default shaders
     } else {                        // load from file
       std::ifstream input(path);
       if (!input.is_open()) {
@@ -138,23 +123,10 @@ MaterialData *ResourceManager::GetMaterialData(string path) {
       // deserialize from material file
       Json json;
       input >> json;
+      // setup path and identifier for the material
       newMat->path = path;
       newMat->identifier = fs::path(path).stem().string();
       newMat->Deserialize(json);
-      vector<int> texIndices = json["texVariables"]["indices"];
-      vector<string> texPathes = json["texVariables"]["pathes"];
-      for (int i = 0; i < texIndices.size(); ++i) {
-        if (texPathes[i] == "::textureSlot") {
-          // if this is a empty slot
-          // this pointer to empty slot will be replaced by the pointer to a actual
-          // texture after user upload the texture
-          newMat->texVariables.insert(std::make_pair(texIndices[i], TextureSlot));
-        } else {
-          // if this texture has some actual data
-          newMat->texVariables.insert(
-              std::make_pair(texIndices[i], GetTexture(texPathes[i])));
-        }
-      }
       input.close();
     }
     allMaterials.insert(std::make_pair(path, newMat));
@@ -221,29 +193,6 @@ Mesh *ResourceManager::GetMesh(string path, string identifier) {
            identifier.c_str());
     return nullptr;
   }
-}
-
-Shader *ResourceManager::GetShader(string vertShaderPath, string fragShaderPath,
-                                   string geomShaderPath, bool forceReload) {
-  for (auto i = 0; i < allShaders.size(); ++i) {
-    if (allShaders[i]->vertexShaderPath == vertShaderPath &&
-        allShaders[i]->fragShaderPath == fragShaderPath) {
-      // reload the shader if specified
-      if (forceReload) {
-        allShaders[i]->LoadAndCompileShader(vertShaderPath.c_str(),
-                                            fragShaderPath.c_str(),
-                                            geomShaderPath.c_str());
-        Console.Log("[info]: reload shader at:\n%s\n%s\n", vertShaderPath.c_str(), fragShaderPath.c_str());
-      }
-
-      return allShaders[i];
-    }
-  }
-  Shader *loadedShader = new Shader(
-      vertShaderPath.c_str(), fragShaderPath.c_str(), geomShaderPath.c_str());
-  loadedShader->identifier = fs::path(vertShaderPath).stem().string();
-  allShaders.push_back(loadedShader);
-  return loadedShader;
 }
 
 vector<Mesh *> ResourceManager::getModel(string modelPath) {

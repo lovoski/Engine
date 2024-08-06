@@ -12,101 +12,36 @@
 class Material : public ECS::BaseComponent {
 public:
   Material() {
-    SetMaterialData();
+    // load the default material data
+    // each material data has only one instance
+    // modifing one instance would have effect on all references
+    passes.push_back(Core.RManager.GetMaterialData("::base"));
   }
-  ~Material() {}
-
-  void SetMaterialData(string path="::base") {
-    matData = Core.RManager.GetMaterialData(path);
-  }
-  Resource::Shader *GetShader() {
-    if (matData == nullptr || matData->shader == nullptr)
-      Console.Log("[error]: material has no valid shader\n");
-    return matData->shader;
-  }
-  MaterialData *GetMaterialData() {
-    if (matData == nullptr)
-      Console.Log("[error]: material has no valid material data\n");
-    return matData;
+  ~Material() {
+    passes.clear();
   }
 
-  // pass variables and textures to shaders
-  void SetBaseVariables() {
-    setFixedVariables();
-    activateTextures();
-  }
-
-  void SetBaseLights(vector<Light> &lights) {
-    unsigned int dirLightCounter = 0;
-    unsigned int pointLightCounter = 0;
-    unsigned int spotLightCounter = 0;
-    // set the properties of different lights
-    for (auto &light : lights) {
-      if (light.Type == Light::DIRECTIONAL_LIGHT) {
-        string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
-        string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
-        matData->shader->SetVec3(lightDirName, Core.EManager.EntityFromID(light.GetID())->LocalForward);
-        matData->shader->SetVec3(lightColorName, light.LightColor);
-        dirLightCounter++;
-      } else if (light.Type == Light::POINT_LIGHT) {
-        string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
-        string lightColorName =
-            "pLightColor" + std::to_string(pointLightCounter);
-        matData->shader->SetVec3(
-            lightPosName,
-            Core.EManager.EntityFromID(light.GetID())->Position());
-        matData->shader->SetVec3(lightColorName, light.LightColor);
-        pointLightCounter++;
-      } else if (light.Type == Light::SPOT_LIGHT) {
-      }
-    }
-    if (dirLightCounter == 0) {
-      Console.Log("[error]: At least one directional light needed for the default shader\n");
-    }
-  }
-
-  MaterialData *matData = nullptr;
+  vector<MaterialData *> passes;
 
   void Serialize(Json &json) override {
-    json["path"] = matData->path;
+    for (auto pass : passes) {
+      json["passes"][pass->identifier] = pass->path;
+    }
   }
 
   void Deserialize(Json &json) override {
-    string path = json["path"];
-    matData = Core.RManager.GetMaterialData(path);
-  }
+    // clear the passes first
+    // the free of material data will be handled by resource manager
+    passes.clear();
 
-private:
-
-  // if there's any changes in these properties, these variables must be updated
-  void setFixedVariables() {
-    for (auto intVar : matData->intVariables)
-      matData->shader->SetInt(matData->variableNames[intVar.first], intVar.second);
-    for (auto floatVar : matData->floatVariables)
-      matData->shader->SetFloat(matData->variableNames[floatVar.first], floatVar.second);
-    for (auto vec2Var : matData->vec2Variables)
-      matData->shader->SetVec2(matData->variableNames[vec2Var.first], vec2Var.second);
-    for (auto vec3Var : matData->vec3Variables)
-      matData->shader->SetVec3(matData->variableNames[vec3Var.first], vec3Var.second);
-    for (auto vec4Var : matData->vec4Variables)
-      matData->shader->SetVec4(matData->variableNames[vec4Var.first], vec4Var.second);
-  }
-
-  void activateTextures() {
-    unsigned int texCounter = 0;
-    for (auto tex : matData->texVariables) {
-      // don't pass the texture to gpu if its a texture slot
-      if (tex.second->path != "::textureSlot") {
-        glActiveTexture(GL_TEXTURE0 +
-                        texCounter); // active proper texture unit before binding
-        // retrieve texture number (the N in diffuse_textureN)
-        string name = matData->variableNames[tex.first];
-        // now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(matData->shader->ID, name.c_str()), texCounter);
-        // and finally bind the texture
-        glBindTexture(GL_TEXTURE_2D, tex.second->id);
-        texCounter++;
+    // reload all passes
+    for (auto pass : json["passes"].items()) {
+      auto ptr = Core.RManager.GetMaterialData(pass.value());
+      if (ptr != nullptr) {
+        // if the pass was successfully loaded
+        passes.push_back(ptr);
       }
     }
   }
+
 };

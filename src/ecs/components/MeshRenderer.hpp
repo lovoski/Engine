@@ -15,17 +15,18 @@ public:
   ~MeshRenderer() {}
 
   void Render(mat4 projMat, mat4 viewMat, Transform *camera, Transform *object, Material *material, vector<Light> &lights) {
-    Resource::Shader *shader = material->GetShader();
-    shader->Use();
-    shader->SetVec3("ViewDir", -camera->LocalForward);
-    shader->SetMat4("projection", projMat);
-    shader->SetMat4("view", viewMat);
-    shader->SetMat4("model", object->GetModelMatrix());
-
-    material->SetBaseVariables();
-    material->SetBaseLights(lights);
-
-    meshData->Draw(*shader);
+    // each materail could have multiple render passes in different render queues
+    for (auto pass : material->passes) {
+      auto shader = pass->GetShader();
+      shader->Use();
+      shader->SetVec3("ViewDir", -camera->LocalForward);
+      shader->SetMat4("projection", projMat);
+      shader->SetMat4("view", viewMat);
+      shader->SetMat4("model", object->GetModelMatrix());
+      pass->SetupVariables();
+      pass->SetupLights(lights);
+      meshData->Draw(*shader);
+    }
   }
 
   void SetMeshData(Graphics::Mesh *mesh) {
