@@ -10,6 +10,11 @@ include_directories(
 add_executable(test_mesh
   geometry/test_mesh.cpp)
 
+add_executable(test_motion
+  test_motion.cpp
+  ${CMAKE_SOURCE_DIR}/src/resource/animation/Motion.cpp)
+target_link_libraries(test_motion PRIVATE glm)
+
 add_executable(test_reflection
   test_reflection.cpp)
 set_property(TARGET test_reflection PROPERTY CXX_STANDARD 17)

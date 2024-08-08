@@ -26,3 +26,6 @@ imgui.ini
 
 # test render assets
 /assets/learnopengl
+
+# test assets
+/src/test/animation/*
