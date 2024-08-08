@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <string>
 #include <cmath>
+#include <string>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,9 +11,12 @@
 
 namespace Resource {
 
-// enum CHANNEL_AXIS_ORDER {
-//   XYZ, XZY, YXZ, YZX, ZXY, ZYX, NONE
-// };
+#define EULER_XYZ 12
+#define EULER_XZY 21
+#define EULER_YXZ 102
+#define EULER_YZX 120
+#define EULER_ZXY 201
+#define EULER_ZYX 210
 
 struct Skeleton {
   std::string skeletonName;
@@ -23,19 +26,22 @@ struct Skeleton {
   std::vector<int> jointParent;
   std::vector<std::vector<int>> jointChildren;
 
-  // // for bvh format only
-  // std::vector<int> jointChannels;
-  // // for bvh format only
-  // std::vector<CHANNEL_AXIS_ORDER> jointChannelsType;
+  // for bvh file format only
+  std::vector<int> jointChannels;
+  std::vector<int> jointChannelsOrder;
 
   int GetNumJoints() { return jointNames.size(); }
 };
 
 struct Pose {
   Skeleton *skeleton = nullptr;
+
   // these arrays should have the size of skeleton.GetNumJoints()
+
+  // local positions of all joints
   std::vector<glm::vec3> jointPositions;
-  std::vector<glm::quat> jointRotations;
+  // local rotations of all joints in euler angles
+  std::vector<glm::vec3> jointRotations;
 
   std::vector<glm::vec3> GetGlobalPositions() {}
   std::vector<glm::quat> GetGlobalRotations() {}
@@ -48,7 +54,13 @@ struct Motion {
   Skeleton skeleton;
   std::vector<Pose> poses;
 
+  // We assume that the root's position channels always has the order XYZ, 
+  // while the rotation channels can have arbitrary orders, 
+  // the rotation channels can only follow behind the position channels.
   bool LoadFromBVH(std::string filename);
+  // The saved bvh file's position channels will always be XYZ, 
+  // the rotation channels will have the same order as it the loaded file and 
+  // can only follow behind the position channels.
   bool SaveToBVH(std::string filename);
 };
 
