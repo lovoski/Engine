@@ -9,10 +9,10 @@ using namespace std;
 namespace fs = std::filesystem;
 
 int main() {
-  string bvhFilename = REPO_SOURCE_DIR "/src/test/animation/motion/LocomotionFlat01_000_2.bvh";
-  Resource::Motion motion;
-  motion.LoadFromBVH(bvhFilename);
-  motion.SaveToBVH("a.bvh");
+  // string bvhFilename = REPO_SOURCE_DIR "/src/test/animation/motion/LocomotionFlat01_000_2.bvh";
+  // Resource::Motion motion;
+  // motion.LoadFromBVH(bvhFilename);
+  // motion.SaveToBVH("a.bvh");
 
   // glm::vec3 eulerZXY = glm::radians(glm::vec3(3.36719 - 6.07025 - 3.68531));
   // glm::quat q = glm::angleAxis(eulerZXY.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
@@ -32,14 +32,18 @@ int main() {
   // cout << q.x << " " << q.y << " " << q.z << " " << q.w << endl;
   // cout << q1.x << " " << q1.y << " " << q1.z << " " << q1.w << endl;
 
-  // string bvhFileFolder = REPO_SOURCE_DIR "/src/test/animation";
-  // vector<Resource::Motion> motions;
-  // int index = 0;
-  // for (const auto & entry : fs::directory_iterator(bvhFileFolder)) {
-  //   auto motion = Resource::Motion();
-  //   motion.LoadFromBVH(entry.path().string());
-  //   motions.push_back(motion);
-  //   motion.SaveToBVH(std::to_string(index++)+".bvh");
-  // }
+  string bvhFileFolder = REPO_SOURCE_DIR "/src/test/animation";
+  vector<Resource::Motion> motions;
+  vector<vector<glm::vec3>> positions;
+  int index = 0;
+  for (const auto & entry : fs::directory_iterator(bvhFileFolder)) {
+    if (fs::is_directory(entry)) continue;
+    auto motion = Resource::Motion();
+    motion.LoadFromBVH(entry.path().string());
+    motions.push_back(motion);
+    motion.SaveToBVH(std::to_string(index++)+".bvh");
+    positions.push_back(motion.poses[0].GetGlobalPositions());
+  }
+  int a = 10;
   return 0;
 }

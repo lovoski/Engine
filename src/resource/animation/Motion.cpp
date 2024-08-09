@@ -54,17 +54,17 @@ quat QuatFromEulers(vec3 angles, int order) {
   quat qy = glm::angleAxis(angles.y, vec3(0.0f, 1.0f, 0.0f));
   quat qz = glm::angleAxis(angles.z, vec3(0.0f, 0.0f, 1.0f));
   if (order == EULER_XYZ) {
-    return qx*qy*qz;
+    return qx * qy * qz;
   } else if (order == EULER_XZY) {
-    return qx*qz*qy;
+    return qx * qz * qy;
   } else if (order == EULER_YXZ) {
-    return qy*qx*qz;
+    return qy * qx * qz;
   } else if (order == EULER_YZX) {
-    return qy*qz*qx;
+    return qy * qz * qx;
   } else if (order == EULER_ZXY) {
-    return qz*qx*qy;
+    return qz * qx * qy;
   } else if (order == EULER_ZYX) {
-    return qz*qy*qx;
+    return qz * qy * qx;
   } else
     return quat(1.0f, vec3(0.0f));
 }
@@ -202,8 +202,8 @@ bool Motion::LoadFromBVH(string filename) {
                     v[o1] = std::stof(lineSeg[segInd++]);
                     v[o2] = std::stof(lineSeg[segInd++]);
                     v[o3] = std::stof(lineSeg[segInd++]);
-                    poses[frameInd].jointRotations[jointInd] = 
-                      QuatFromEulers(glm::radians(v), rotationOrder);
+                    poses[frameInd].jointRotations[jointInd] =
+                        QuatFromEulers(glm::radians(v), rotationOrder);
                   } else {
                     // set the rotation of end effectors to normal quaternion
                     poses[frameInd].jointRotations[jointInd] =
@@ -318,5 +318,32 @@ bool Motion::SaveToBVH(string filename) {
     return true;
   }
 }
+
+vector<vec3> Pose::GetGlobalPositions() {
+  int jointNum = skeleton->GetNumJoints();
+  vector<vec3> positions(jointNum, vec3(0.0f));
+  if (jointNum != jointPositions.size() || jointNum != jointRotations.size()) {
+    throw std::runtime_error(
+        "inconsistent joint number between skeleton and pose data");
+    return positions;
+  }
+  vector<quat> orientations(jointNum, quat(1.0f, vec3(0.0f)));
+  quat parentOrientation;
+  vec3 parentPosition;
+  // start traversaling the joints
+  for (int curJoint = 0; curJoint < jointNum; ++curJoint) {
+    // compute the orientation
+    int parentInd = skeleton->jointParent[curJoint];
+    if (parentInd == -1) parentInd = 0;
+    parentOrientation = orientations[parentInd];
+    parentPosition = positions[parentInd];
+    orientations[curJoint] = parentOrientation * jointRotations[curJoint];
+    positions[curJoint] = parentPosition + skeleton->jointOffset[curJoint] *
+                                               orientations[curJoint];
+  }
+  return positions;
+}
+
+// glm::vec2 Pose::GetFacingDirection() {}
 
 }; // namespace Resource

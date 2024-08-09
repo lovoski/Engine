@@ -1,3 +1,5 @@
+// Data structure related to motion data and joints hierarchy
+
 #pragma once
 
 #include <cmath>
@@ -11,17 +13,18 @@
 
 namespace Resource {
 
+// The parent joint has a lower index than all its children
 struct Skeleton {
   std::string skeletonName;
-  // the parent joint should always have a lower index than its children
   std::vector<std::string> jointNames;
   std::vector<glm::vec3> jointOffset;
   std::vector<int> jointParent;
   std::vector<std::vector<int>> jointChildren;
 
-  int GetNumJoints() { return jointNames.size(); }
+  const int GetNumJoints() { return jointNames.size(); }
 };
 
+// By default, the up direction is y-axis (0, 1, 0)
 struct Pose {
   Pose() = default;
   ~Pose() {
@@ -32,15 +35,18 @@ struct Pose {
 
   Skeleton *skeleton = nullptr;
 
-  // these arrays should have the size of skeleton.GetNumJoints()
-
   // local positions of all joints
   std::vector<glm::vec3> jointPositions;
   // local rotations of all joints in euler angles
   std::vector<glm::quat> jointRotations;
 
-  std::vector<glm::vec3> GetGlobalPositions() {}
-  std::vector<glm::quat> GetGlobalRotations() {}
+  // Perform FK to get global positions for all joints.
+  // Mind that `self.ori = parent.ori * self.rot`
+  // where `ori` means global rotation, `rot` means local rotation.
+  std::vector<glm::vec3> GetGlobalPositions();
+
+  // // Get the facing direction on XZ plane
+  // glm::vec2 GetFacingDirection();
 };
 
 struct Motion {
