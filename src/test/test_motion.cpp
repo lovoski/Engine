@@ -44,6 +44,5 @@ int main() {
     motion.SaveToBVH(std::to_string(index++)+".bvh");
     positions.push_back(motion.poses[0].GetGlobalPositions());
   }
-  int a = 10;
   return 0;
 }

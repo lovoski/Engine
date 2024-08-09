@@ -32,8 +32,8 @@ private:
   void DrawGizmos(float x, float y, float width, float height, bool enable = true);
 
   // imguizmo settings
-  bool showGizmoGrid = true;
-  int gizmoGridSize = 10;
+  // bool showGizmoGrid = true;
+  // int gizmoGridSize = 10;
   ImGuizmo::OPERATION mCurrentGizmoOperation;
   ImGuizmo::MODE mCurrentGizmoMode;
 

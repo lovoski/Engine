@@ -74,12 +74,12 @@ void GuiSystem::MainMenuBar() {
         ImGui::SameLine();
         if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
           mCurrentGizmoMode = ImGuizmo::WORLD;
-        ImGui::Separator();
-        ImGui::MenuItem("Grid Options", nullptr, nullptr, false);
-        ImGui::Checkbox("Show Grid", &showGizmoGrid);
-        ImGui::PushItemWidth(100);
-        ImGui::InputInt("Grid Size", &gizmoGridSize);
-        ImGui::PopItemWidth();
+        // ImGui::Separator();
+        // ImGui::MenuItem("Grid Options", nullptr, nullptr, false);
+        // ImGui::Checkbox("Show Grid", &showGizmoGrid);
+        // ImGui::PushItemWidth(100);
+        // ImGui::InputInt("Grid Size", &gizmoGridSize);
+        // ImGui::PopItemWidth();
         ImGui::EndMenu();
       }
       // if (ImGui::MenuItem("Show Profiler")) {
@@ -122,12 +122,12 @@ void GuiSystem::DrawGizmos(float x, float y, float width, float height,
     ImGuizmo::SetRect(x, y, width, height);
     Entity *cameraEnt = Core.EManager.EntityFromID(camera);
     Camera &cameraComp = cameraEnt->GetComponent<Camera>();
-    if (showGizmoGrid) {
-      ImGuizmo::DrawGrid(
-          glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
-          glm::value_ptr(cameraComp.GetProjMatrixPerspective(width, height)),
-          glm::value_ptr(mat4(1.0f)), gizmoGridSize);
-    }
+    // if (showGizmoGrid) {
+    //   ImGuizmo::DrawGrid(
+    //       glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
+    //       glm::value_ptr(cameraComp.GetProjMatrixPerspective(width, height)),
+    //       glm::value_ptr(mat4(1.0f)), gizmoGridSize);
+    // }
     if (selectedEntity != (ECS::EntityID)(-1)) {
       Entity *selected = Core.EManager.EntityFromID(selectedEntity);
       mat4 modelTransform = selected->GetModelMatrix();

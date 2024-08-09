@@ -113,17 +113,11 @@ bool Motion::LoadFromBVH(string filename) {
               jointChannels.push_back(numChannels);
               // process the channels, assume that the rotation channels
               // are always behind the position channels
-              if (numChannels == 3) {
+              if (numChannels == 3 || numChannels == 6) {
                 // only rotation channels
-                int a = lineSeg[2][0] - 'X';
-                int b = lineSeg[3][0] - 'X';
-                int c = lineSeg[4][0] - 'X';
-                jointChannelsOrder.push_back(a * 100 + b * 10 + c);
-              } else if (numChannels == 6) {
-                // position + rotation channels
-                int a = lineSeg[5][0] - 'X';
-                int b = lineSeg[6][0] - 'X';
-                int c = lineSeg[7][0] - 'X';
+                int a = lineSeg[numChannels - 1][0] - 'X';
+                int b = lineSeg[numChannels][0] - 'X';
+                int c = lineSeg[numChannels + 1][0] - 'X';
                 jointChannelsOrder.push_back(a * 100 + b * 10 + c);
               } else
                 throw std::runtime_error(
@@ -334,7 +328,8 @@ vector<vec3> Pose::GetGlobalPositions() {
   for (int curJoint = 0; curJoint < jointNum; ++curJoint) {
     // compute the orientation
     int parentInd = skeleton->jointParent[curJoint];
-    if (parentInd == -1) parentInd = 0;
+    if (parentInd == -1)
+      parentInd = 0;
     parentOrientation = orientations[parentInd];
     parentPosition = positions[parentInd];
     orientations[curJoint] = parentOrientation * jointRotations[curJoint];
