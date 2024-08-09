@@ -11,13 +11,6 @@
 
 namespace Resource {
 
-#define EULER_XYZ 12
-#define EULER_XZY 21
-#define EULER_YXZ 102
-#define EULER_YZX 120
-#define EULER_ZXY 201
-#define EULER_ZYX 210
-
 struct Skeleton {
   std::string skeletonName;
   // the parent joint should always have a lower index than its children
@@ -26,14 +19,17 @@ struct Skeleton {
   std::vector<int> jointParent;
   std::vector<std::vector<int>> jointChildren;
 
-  // for bvh file format only
-  std::vector<int> jointChannels;
-  std::vector<int> jointChannelsOrder;
-
   int GetNumJoints() { return jointNames.size(); }
 };
 
 struct Pose {
+  Pose() = default;
+  ~Pose() {
+    skeleton = nullptr;
+    jointPositions.clear();
+    jointRotations.clear();
+  }
+
   Skeleton *skeleton = nullptr;
 
   // these arrays should have the size of skeleton.GetNumJoints()
@@ -41,7 +37,7 @@ struct Pose {
   // local positions of all joints
   std::vector<glm::vec3> jointPositions;
   // local rotations of all joints in euler angles
-  std::vector<glm::vec3> jointRotations;
+  std::vector<glm::quat> jointRotations;
 
   std::vector<glm::vec3> GetGlobalPositions() {}
   std::vector<glm::quat> GetGlobalRotations() {}
@@ -57,10 +53,13 @@ struct Motion {
   // We assume that the root's position channels always has the order XYZ, 
   // while the rotation channels can have arbitrary orders, 
   // the rotation channels can only follow behind the position channels.
+  // Be aware that the euler angles in bvh file should 
+  // be parsed in reversed order, xyz rotation should be quaternion qx*qy*qz.
   bool LoadFromBVH(std::string filename);
   // The saved bvh file's position channels will always be XYZ, 
-  // the rotation channels will have the same order as it the loaded file and 
+  // the rotation channels will be ZYX and 
   // can only follow behind the position channels.
+  // Only the root joint has 6 dofs, the rest joints only have 3 dofs.
   bool SaveToBVH(std::string filename);
 };
 
