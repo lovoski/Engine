@@ -7,6 +7,7 @@
 
 #include "System/Render/FrameBuffer.hpp"
 #include "System/Render/RenderSystem.hpp"
+#include "System/Camera/CameraSystem.hpp"
 
 namespace aEngine {
 
@@ -39,9 +40,11 @@ Scene::~Scene() {
 void Scene::Start() {
   // register all the systems
   RegisterSystem<RenderSystem>();
+  RegisterSystem<CameraSystem>();
 
   // start all the systems
   GetSystemInstance<RenderSystem>()->Start();
+  GetSystemInstance<CameraSystem>()->Start();
 }
 
 void Scene::Update() {
@@ -90,6 +93,26 @@ void Scene::Destroy() {
 
   // destroy all the systems
   GetSystemInstance<RenderSystem>()->Destroy();
+  GetSystemInstance<CameraSystem>()->Destroy();
+}
+
+bool Scene::LoopCursorInSceneWindow() {
+  glm::vec2 cursorPos = Context.currentMousePosition;
+  if (!InSceneWindow(cursorPos.x, cursorPos.y)) {
+    cursorPos -= Context.sceneWindowPos;
+    while (cursorPos.x < 0.0f)
+      cursorPos.x += Context.sceneWindowSize.x;
+    while (cursorPos.x > Context.sceneWindowSize.x)
+      cursorPos.x -= Context.sceneWindowSize.x;
+    while (cursorPos.y < 0.0f)
+      cursorPos.y += Context.sceneWindowSize.y;
+    while (cursorPos.y > Context.sceneWindowSize.y)
+      cursorPos.y -= Context.sceneWindowSize.y;
+    cursorPos += Context.sceneWindowPos;
+    glfwSetCursorPos(Context.window, cursorPos.x, cursorPos.y);
+    return false;
+  } else
+    return true;
 }
 
 bool Scene::GetActiveCamera(EntityID &camera) {

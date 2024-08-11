@@ -7,6 +7,7 @@ namespace aEngine {
 
 namespace VisUtils {
 
+// TODO: the width property don't work on my device, use geometry shader
 void DrawLine3D(glm::vec3 p0, glm::vec3 p1, float thickness, glm::vec3 color,
                 glm::mat4 vp) {
   static unsigned int vao, vbo;
@@ -53,6 +54,7 @@ template <typename T> struct PlainVertex {
 using PlainVertexi = PlainVertex<int>;
 using PlainVertexf = PlainVertex<float>;
 
+// TODO: some shadow-ish issue with the code
 void DrawGrid(unsigned int gridSize, glm::vec3 color, glm::mat4 mvp) {
   static unsigned int vao, vbo;
   static int savedGridSize = -1;
@@ -107,10 +109,8 @@ void DrawGrid(unsigned int gridSize, glm::vec3 color, glm::mat4 mvp) {
   lineShader->SetMat4("mvp", mvp);
   glBindVertexArray(vao);
   // draw the normal grid lines
-  glLineWidth(1.0f);
   glDrawArrays(GL_LINES, 0, points.size() - 4);
   // draw the axis lines
-  glLineWidth(1.5f);
   glDrawArrays(GL_LINES, points.size() - 4, 4);
   glBindVertexArray(0);
 }

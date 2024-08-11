@@ -1,30 +1,35 @@
 /**
  * Each scene instance will maintain its own instances
- * of the entities, components and systems. The `Update` 
- * function in each scene does the logic update (update hierarchy 
- * transform, system related to positions etc.), the `RenderBegin` 
- * function render the scene from activeCamera to the frameBuffer. 
+ * of the entities, components and systems. The `Update`
+ * function in each scene does the logic update (update hierarchy
+ * transform, system related to positions etc.), the `RenderBegin`
+ * function render the scene from activeCamera to the frameBuffer.
  * The `RenderEnd` swaps the framebuffer.
  */
 
 #pragma once
 
-#include "Base/Types.hpp"
+#include "Base/BaseComponent.hpp"
 #include "Base/BaseSystem.hpp"
 #include "Base/ComponentList.hpp"
-#include "Base/BaseComponent.hpp"
+#include "Base/Types.hpp"
 
-#include "Global.hpp"
+
 #include "Component/Light.hpp"
+#include "Global.hpp"
 #include "System/Render/FrameBuffer.hpp"
+
 
 namespace aEngine {
 
+class Engine;
+
 struct SceneContext {
   FrameBuffer *frameBuffer;
-  
+
   // Keep a reference to the window
   GLFWwindow *window;
+  Engine *engine;
 
   // Grid options
   bool showGrid;
@@ -42,6 +47,9 @@ struct SceneContext {
   std::string sceneFilePath;
   glm::vec2 sceneWindowSize;
   glm::vec2 sceneWindowPos;
+
+  // Other settings
+  glm::vec2 currentMousePosition;
 
   // Scene lights
   std::vector<Light> activeLights;
@@ -217,7 +225,8 @@ public:
       json["p"] = m_position;
       json["r"] = m_eulerAngles;
       json["s"] = m_scale;
-      json["parent"] = parent == nullptr ? "none" : std::to_string((int)parent->ID);
+      json["parent"] =
+          parent == nullptr ? "none" : std::to_string((int)parent->ID);
       json["name"] = name;
     }
 
@@ -233,7 +242,9 @@ public:
       return sceneManager->HasComponent<T>(ID);
     }
 
-    template <typename T> T &GetComponent() { return sceneManager->GetComponent<T>(ID); }
+    template <typename T> T &GetComponent() {
+      return sceneManager->GetComponent<T>(ID);
+    }
 
     void Destroy() { sceneManager->DestroyEntity(ID); }
 
@@ -392,6 +403,15 @@ public:
   // is a valid camera entity (has camera component), otherwise returns false.
   bool SetActiveCamera(EntityID camera);
 
+  bool Scene::LoopCursorInSceneWindow();
+
+  bool InSceneWindow(float x, float y) {
+    return x >= Context.sceneWindowPos.x &&
+           x <= Context.sceneWindowPos.x + Context.sceneWindowSize.x &&
+           y >= Context.sceneWindowPos.y &&
+           y <= Context.sceneWindowPos.y + Context.sceneWindowSize.y;
+  }
+
   // Serialize current scene to a json file
   Json Serialize();
 
@@ -543,4 +563,4 @@ using Entity = Scene::Entity;
 // alias to entity
 using Transform = Scene::Entity;
 
-};
+}; // namespace aEngine

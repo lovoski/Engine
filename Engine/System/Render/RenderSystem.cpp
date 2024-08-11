@@ -45,7 +45,8 @@ void RenderSystem::RenderBegin() {
 
     // draw the grid in 3d space
     if (sceneManager->Context.showGrid)
-      VisUtils::DrawGrid(sceneManager->Context.gridSize, sceneManager->Context.gridColor);
+      VisUtils::DrawGrid(sceneManager->Context.gridSize,
+                         sceneManager->Context.gridColor, projMat * viewMat);
   }
 
   // // layer 3: on top

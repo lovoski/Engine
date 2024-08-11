@@ -30,9 +30,19 @@ Engine::Engine(int width, int height)
   scene = new Scene(width, height);
   // pass the pointer of current windows to context
   scene->Context.window = window;
+  scene->Context.engine = this;
 
   // setup the user pointer so we can register events
   glfwSetWindowUserPointer(window, this);
+
+  MouseMoveCallbacks.push_back([](Engine *engine, double x, double y) {
+    // update mouse current position
+    engine->GetScene()->Context.currentMousePosition = glm::vec2(x, y);
+  });
+  MouseScrollCallbacks.push_back([](Engine *engine, double x, double y) {
+    engine->_mouseScrollOffsets = glm::vec2(x, y);
+    engine->ActionQueue.push_back({ACTION_TYPE::MOUSE_SCROLL, (void*)&engine->_mouseScrollOffsets});
+  });
 
   // setup the callbacks
   glfwSetCursorPosCallback(window, [](GLFWwindow *wnd, double x, double y) {
@@ -72,6 +82,7 @@ Engine::~Engine() {
 }
 
 void Engine::Update() {
+  ActionQueue.clear(); // clear the action queue
   glfwPollEvents(); // poll the events
   scene->Update();  // call the Update and LateUpdate
 }

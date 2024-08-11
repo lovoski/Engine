@@ -9,6 +9,16 @@
 
 namespace aEngine {
 
+// TODO: the event system
+enum ACTION_TYPE {
+  MOUSE_SCROLL
+};
+
+struct Action {
+  ACTION_TYPE type;
+  void *payload;
+};
+
 class Engine {
 public:
   Engine(int width, int height);
@@ -37,6 +47,10 @@ public:
   std::vector<std::function<void(Engine *)>> WindowCloseCallbacks;
   std::vector<std::function<void(Engine *, double, double)>> MouseScrollCallbacks;
   std::vector<std::function<void(Engine *, int, int)>> ResizeCallbacks;
+
+  std::vector<Action> ActionQueue;
+
+  glm::vec2 _mouseScrollOffsets;
 
 private:
   Scene *scene;
