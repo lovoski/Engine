@@ -179,7 +179,7 @@ void Editor::EntitiesWindow() {
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("IMPORT_MODEL_ASSETS")) {
       char *modelPath = (char *)payload->Data;
-      Console.Log("[info]: import modelfrom %s\n", modelPath);
+      // Console.Log("[info]: import model from %s\n", modelPath);
       auto modelMeshes = Loader.GetModel(modelPath);
       auto parentEntity = GWORLD.AddNewEntity();
       parentEntity->name = fs::path(modelPath).stem().string();
