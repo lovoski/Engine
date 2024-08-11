@@ -28,8 +28,6 @@ namespace aEngine {
 class Engine;
 
 struct SceneContext {
-  FrameBuffer *frameBuffer;
-
   // Keep a reference to the window
   GLFWwindow *window;
   Engine *engine;

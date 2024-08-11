@@ -18,6 +18,14 @@ struct EditorContext {
   // imgui io
   ImGuiIO *io;
 
+  // The framebuffer storing scene's rendering
+  FrameBuffer *frameBuffer;
+
+  static EditorContext &Ref() {
+    static EditorContext context;
+    return context;
+  }
+
   void Reset() {
     mCurrentGizmoMode = ImGuizmo::MODE::WORLD;
     mCurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
@@ -27,6 +35,9 @@ struct EditorContext {
     layoutFileName = "layout.ini";
   }
 };
+
+// Make editor context a singleton
+static EditorContext &context = EditorContext::Ref();
 
 class Editor {
 public:
@@ -45,8 +56,6 @@ private:
 
   unsigned int quadVAO, quadVBO;
   Render::Shader *quadShader;
-
-  EditorContext context;
 
   void MainMenuBar();
   void EntitiesWindow();

@@ -30,8 +30,6 @@ Scene::Scene() {
 
 Scene::~Scene() {
   delete nullEntity;
-  if (Context.frameBuffer)
-    delete Context.frameBuffer;
 }
 
 void Scene::Start() {
@@ -58,11 +56,9 @@ void Scene::Update() {
 }
 
 void Scene::RenderBegin() {
-  Context.frameBuffer->Bind();
   GetSystemInstance<RenderSystem>()->RenderBegin();
   // enable the scripts to draw something in the scene
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
-  Context.frameBuffer->Unbind();
 }
 
 void Scene::RenderEnd() {

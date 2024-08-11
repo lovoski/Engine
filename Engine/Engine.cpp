@@ -27,7 +27,6 @@ Engine::Engine(int width, int height)
   }
 
   // pass the pointer of current windows to context
-  GWORLD.Context.frameBuffer = new FrameBuffer(width, height);
   GWORLD.Context.sceneWindowSize = glm::vec2(width, height);
   GWORLD.Context.sceneWindowPos = glm::vec2(0.0f);
   GWORLD.Context.window = window;
