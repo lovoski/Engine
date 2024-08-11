@@ -18,46 +18,32 @@ RenderSystem::RenderSystem() {
 RenderSystem::~RenderSystem() {}
 
 void RenderSystem::RenderBegin() {
-  sceneManager->Context.frameBuffer->Bind();
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  // // layer 1: background
-  // glDisable(GL_DEPTH_TEST);
-  // glEnable(GL_DEPTH_TEST);
 
-  // layer 2: objects
   EntityID cameraID;
   // draw the objects only with an active camera
-  if (sceneManager->GetActiveCamera(cameraID)) {
-    auto camera = sceneManager->EntityFromID(cameraID);
+  if (scene->GetActiveCamera(cameraID)) {
+    auto camera = scene->EntityFromID(cameraID);
     auto cameraComp = camera->GetComponent<Camera>();
     glm::mat4 viewMat = cameraComp.GetViewMatrix(*camera);
     glm::mat4 projMat = cameraComp.GetProjMatrixPerspective(
-        sceneManager->Context.sceneWindowSize.x,
-        sceneManager->Context.sceneWindowSize.y);
+        scene->Context.sceneWindowSize.x, scene->Context.sceneWindowSize.y);
     for (auto entID : entities) {
-      auto entity = sceneManager->EntityFromID(entID);
+      auto entity = scene->EntityFromID(entID);
       auto matComp = entity->GetComponent<Material>();
       auto renderer = entity->GetComponent<MeshRenderer>();
       renderer.ForwardRender(projMat, viewMat, camera, entity, &matComp,
-                             sceneManager->Context.activeLights);
+                             scene->Context.activeLights);
     }
 
     // draw the grid in 3d space
-    if (sceneManager->Context.showGrid)
-      VisUtils::DrawGrid(sceneManager->Context.gridSize,
-                         sceneManager->Context.gridColor, projMat * viewMat);
+    if (scene->Context.showGrid)
+      VisUtils::DrawGrid(scene->Context.gridSize, projMat * viewMat,
+                         scene->Context.gridColor);
   }
-
-  // // layer 3: on top
-  // glDisable(GL_DEPTH_TEST);
-  // this->guiLayer();
-  // glEnable(GL_DEPTH_TEST);
-  sceneManager->Context.frameBuffer->Unbind();
 }
 
-void RenderSystem::RenderEnd() {
-  glfwSwapBuffers(sceneManager->Context.window);
-}
+void RenderSystem::RenderEnd() { glfwSwapBuffers(scene->Context.window); }
 
 }; // namespace aEngine

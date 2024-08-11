@@ -29,7 +29,7 @@ public:
   virtual void Render() {}
   virtual void Destroy() {}
 
-  Scene *sceneManager;
+  Scene *scene;
 
 protected:
   EntitySignature signature;

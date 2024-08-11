@@ -1,5 +1,18 @@
 #include "Editor.hpp"
 
+#include "Component/NativeScript.hpp"
+#include "Scripts/CameraController.hpp"
+
+void BuildTestScene(Engine *engine) {
+  auto ent = engine->GetScene()->AddNewEntity();
+  ent->AddComponent<aEngine::NativeScript>();
+  ent->GetComponent<aEngine::NativeScript>().Bind<CameraController>(ent);
+
+  auto cam = engine->GetScene()->AddNewEntity();
+  cam->AddComponent<Camera>();
+  engine->GetScene()->SetActiveCamera(cam->ID);
+}
+
 Editor::Editor(int width, int height) {
   engine = new Engine(width, height);
   quadShader = new Render::Shader();
@@ -47,6 +60,9 @@ void Editor::Start() {
 
   ImGui_ImplGlfw_InitForOpenGL(engine->GetScene()->Context.window, true);
   ImGui_ImplOpenGL3_Init("#version 460");
+
+  // TODO: remove this in final version
+  BuildTestScene(engine);
 }
 
 void Editor::Run(bool release) {

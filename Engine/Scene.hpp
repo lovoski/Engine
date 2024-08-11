@@ -73,7 +73,7 @@ public:
   public:
     friend class Scene;
 
-    Entity(EntityID id, Scene *scene) : ID(id), sceneManager(scene) {
+    Entity(EntityID id, Scene *scene) : ID(id), scene(scene) {
       m_scale = glm::vec3(1.0f);
       m_position = glm::vec3(0.0f);
       m_eulerAngles = glm::vec3(0.0f);
@@ -231,22 +231,22 @@ public:
     }
 
     template <typename T, typename... Args> void AddComponent(Args &&...args) {
-      sceneManager->AddComponent<T>(ID, std::forward<Args>(args)...);
+      scene->AddComponent<T>(ID, std::forward<Args>(args)...);
     }
 
     template <typename T> void RemoveComponent() {
-      sceneManager->RemoveComponent<T>(ID);
+      scene->RemoveComponent<T>(ID);
     }
 
     template <typename T> const bool HasComponent() {
-      return sceneManager->HasComponent<T>(ID);
+      return scene->HasComponent<T>(ID);
     }
 
     template <typename T> T &GetComponent() {
-      return sceneManager->GetComponent<T>(ID);
+      return scene->GetComponent<T>(ID);
     }
 
-    void Destroy() { sceneManager->DestroyEntity(ID); }
+    void Destroy() { scene->DestroyEntity(ID); }
 
     void AssignChild(Entity *c) {
       if (c == nullptr)
@@ -292,12 +292,12 @@ public:
     }
 
     EntityID ID;
+    Scene *scene;
     std::string name = "New Entity ";
     Entity *parent = nullptr;
     std::vector<Entity *> children;
 
   protected:
-    Scene *sceneManager;
 
     glm::vec3 m_position;
     glm::vec3 m_scale;
@@ -377,7 +377,7 @@ public:
       AddEntityToSystem(entity, system.get());
     }
     // don't start the system during registration
-    system->sceneManager = this;
+    system->scene = this;
     registeredSystems[systemType] = std::move(system);
   }
 

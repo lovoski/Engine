@@ -7,7 +7,7 @@
 
 #include "System/Render/FrameBuffer.hpp"
 #include "System/Render/RenderSystem.hpp"
-#include "System/Camera/CameraSystem.hpp"
+#include "System/NativeScript/NativeScriptSystem.hpp"
 
 namespace aEngine {
 
@@ -40,11 +40,11 @@ Scene::~Scene() {
 void Scene::Start() {
   // register all the systems
   RegisterSystem<RenderSystem>();
-  RegisterSystem<CameraSystem>();
+  RegisterSystem<NativeScriptSystem>();
 
   // start all the systems
   GetSystemInstance<RenderSystem>()->Start();
-  GetSystemInstance<CameraSystem>()->Start();
+  GetSystemInstance<NativeScriptSystem>()->Start();
 }
 
 void Scene::Update() {
@@ -61,7 +61,11 @@ void Scene::Update() {
 }
 
 void Scene::RenderBegin() {
+  Context.frameBuffer->Bind();
   GetSystemInstance<RenderSystem>()->RenderBegin();
+  // enable the scripts to draw something in the scene
+  GetSystemInstance<NativeScriptSystem>()->DrawToScene();
+  Context.frameBuffer->Unbind();
 }
 
 void Scene::RenderEnd() {
@@ -93,7 +97,6 @@ void Scene::Destroy() {
 
   // destroy all the systems
   GetSystemInstance<RenderSystem>()->Destroy();
-  GetSystemInstance<CameraSystem>()->Destroy();
 }
 
 bool Scene::LoopCursorInSceneWindow() {
