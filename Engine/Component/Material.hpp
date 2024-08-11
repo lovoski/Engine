@@ -2,6 +2,7 @@
 
 #include "Global.hpp"
 #include "Utils/AssetsType.hpp"
+#include "Utils/AssetsLoader.hpp"
 #include "Base/BaseComponent.hpp"
 
 namespace aEngine {

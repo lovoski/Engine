@@ -23,27 +23,27 @@ void RenderSystem::RenderBegin() {
 
   EntityID cameraID;
   // draw the objects only with an active camera
-  if (scene->GetActiveCamera(cameraID)) {
-    auto camera = scene->EntityFromID(cameraID);
+  if (GWORLD.GetActiveCamera(cameraID)) {
+    auto camera = GWORLD.EntityFromID(cameraID);
     auto cameraComp = camera->GetComponent<Camera>();
     glm::mat4 viewMat = cameraComp.GetViewMatrix(*camera);
     glm::mat4 projMat = cameraComp.GetProjMatrixPerspective(
-        scene->Context.sceneWindowSize.x, scene->Context.sceneWindowSize.y);
+        GWORLD.Context.sceneWindowSize.x, GWORLD.Context.sceneWindowSize.y);
     for (auto entID : entities) {
-      auto entity = scene->EntityFromID(entID);
+      auto entity = GWORLD.EntityFromID(entID);
       auto matComp = entity->GetComponent<Material>();
       auto renderer = entity->GetComponent<MeshRenderer>();
       renderer.ForwardRender(projMat, viewMat, camera, entity, &matComp,
-                             scene->Context.activeLights);
+                             GWORLD.Context.activeLights);
     }
 
     // draw the grid in 3d space
-    if (scene->Context.showGrid)
-      VisUtils::DrawGrid(scene->Context.gridSize, projMat * viewMat,
-                         scene->Context.gridColor);
+    if (GWORLD.Context.showGrid)
+      VisUtils::DrawGrid(GWORLD.Context.gridSize, projMat * viewMat,
+                         GWORLD.Context.gridColor);
   }
 }
 
-void RenderSystem::RenderEnd() { glfwSwapBuffers(scene->Context.window); }
+void RenderSystem::RenderEnd() { glfwSwapBuffers(GWORLD.Context.window); }
 
 }; // namespace aEngine

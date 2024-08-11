@@ -18,7 +18,7 @@ using std::vector;
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
 inline void DrawTransformGUI(EntityID selectedEntity, Engine *engine) {
-  auto transform = engine->GetScene()->EntityFromID(selectedEntity);
+  auto transform = GWORLD.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
     ImGui::MenuItem("Global Properties", nullptr, nullptr, false);
     vec3 position = transform->Position();
@@ -43,7 +43,7 @@ inline void DrawTransformGUI(EntityID selectedEntity, Engine *engine) {
 }
 
 inline void DrawCameraGUI(EntityID selectedEntity, Engine *engine) {
-  auto &camera = engine->GetScene()->GetComponent<Camera>(selectedEntity);
+  auto &camera = GWORLD.GetComponent<Camera>(selectedEntity);
   if (ImGui::TreeNode("Camera")) {
     ImGui::DragFloat(" :Fov  Y", &camera.fovY, 1.0f, 0.0f, 150.0f);
     ImGui::DragFloat(" :Z Near", &camera.zNear, 0.001f, 0.0000001f, 10.0f);
@@ -53,7 +53,7 @@ inline void DrawCameraGUI(EntityID selectedEntity, Engine *engine) {
 }
 
 inline void DrawBaseMaterialGUI(EntityID selectedEntity, Engine *engine) {
-  auto &material = engine->GetScene()->GetComponent<Material>(selectedEntity);
+  auto &material = GWORLD.GetComponent<Material>(selectedEntity);
   if (ImGui::TreeNode("Material")) {
     const ImVec2 sizeAvailable = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("BaseMaterialEditor", {-1, sizeAvailable.y});
@@ -293,7 +293,7 @@ inline void DrawBaseMaterialGUI(EntityID selectedEntity, Engine *engine) {
         auto newPass = Loader.GetMaterial(info);
         if (newPass != nullptr) // setup new pass if the pointer is not null
           material.passes[0] = Loader.GetMaterial(info);
-        // engine->GetScene()->EntityFromID(entity->ID)->AssignChild(newChild);
+        // GWORLD.EntityFromID(entity->ID)->AssignChild(newChild);
       }
       ImGui::EndDragDropTarget();
     }
@@ -302,7 +302,7 @@ inline void DrawBaseMaterialGUI(EntityID selectedEntity, Engine *engine) {
 }
 
 inline void DrawBaseLightGUI(EntityID selectedEntity, Engine *engine) {
-  auto &light = engine->GetScene()->GetComponent<Light>(selectedEntity);
+  auto &light = GWORLD.GetComponent<Light>(selectedEntity);
   if (ImGui::TreeNode("Base Light")) {
     const char *comboItems[] = {"Directional light", "Point light",
                                 "Spot light"};
@@ -341,16 +341,16 @@ void Editor::InspectorWindow() {
   // }
   if (context.selectedEntity != (EntityID)(-1)) {
     string entityName =
-        "Active Entity : " + engine->GetScene()->EntityFromID(context.selectedEntity)->name;
+        "Active Entity : " + GWORLD.EntityFromID(context.selectedEntity)->name;
     ImGui::SeparatorText(entityName.c_str());
     ImGui::BeginChild("Components List",
                       {-1, ImGui::GetContentRegionAvail().y});
     DrawTransformGUI(context.selectedEntity, engine);
-    if (engine->GetScene()->HasComponent<Camera>(context.selectedEntity))
+    if (GWORLD.HasComponent<Camera>(context.selectedEntity))
       DrawCameraGUI(context.selectedEntity, engine);
-    if (engine->GetScene()->HasComponent<Material>(context.selectedEntity))
+    if (GWORLD.HasComponent<Material>(context.selectedEntity))
       DrawBaseMaterialGUI(context.selectedEntity, engine);
-    if (engine->GetScene()->HasComponent<Light>(context.selectedEntity))
+    if (GWORLD.HasComponent<Light>(context.selectedEntity))
       DrawBaseLightGUI(context.selectedEntity, engine);
     ImGui::EndChild();
   }

@@ -149,13 +149,10 @@ void MaterialData::LoadShader(string vsp, string fsp, string gsp) {
     shader = new Render::Shader();
   if (!shader->LoadAndRecompileShader(vsp, fsp, gsp)) {
     // set shader to error shader if the load, compile and link falied
-    if (!shader->LoadAndRecompileShader(ErrorShaderPath + ".vert", ErrorShaderPath + ".frag"))
-      Console.Log("[error]: failed to load error shader at %s\n", ErrorShaderPath.c_str());
-    else {
-      vertShaderPath = "Built in error shader";
-      fragShaderPath = "Built in error shader";
-      geomShaderPath = "none";
-    }
+    shader->LoadAndRecompileShaderSource(errorVS, errorFS);
+    vertShaderPath = "Built in error shader";
+    fragShaderPath = "Built in error shader";
+    geomShaderPath = "none";
   } else {
     vertShaderPath = vsp;
     fragShaderPath = fsp;

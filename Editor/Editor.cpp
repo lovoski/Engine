@@ -4,13 +4,13 @@
 #include "Scripts/CameraController.hpp"
 
 void BuildTestScene(Engine *engine) {
-  auto ent = engine->GetScene()->AddNewEntity();
+  auto ent = GWORLD.AddNewEntity();
   ent->AddComponent<aEngine::NativeScript>();
-  ent->GetComponent<aEngine::NativeScript>().Bind<CameraController>(ent);
+  ent->GetComponent<aEngine::NativeScript>().Bind<CameraController>();
 
-  auto cam = engine->GetScene()->AddNewEntity();
+  auto cam = GWORLD.AddNewEntity();
   cam->AddComponent<Camera>();
-  engine->GetScene()->SetActiveCamera(cam->ID);
+  GWORLD.SetActiveCamera(cam->ID);
 }
 
 Editor::Editor(int width, int height) {
@@ -58,7 +58,7 @@ void Editor::Start() {
 
   context.io->IniFilename = context.layoutFileName;
 
-  ImGui_ImplGlfw_InitForOpenGL(engine->GetScene()->Context.window, true);
+  ImGui_ImplGlfw_InitForOpenGL(GWORLD.Context.window, true);
   ImGui_ImplOpenGL3_Init("#version 460");
 
   // TODO: remove this in final version
@@ -71,10 +71,10 @@ void Editor::Run(bool release) {
     // this callback only works at release build
     engine->ResizeCallbacks.push_back([](Engine *engine, int w, int h) {
       glViewport(0, 0, w, h);
-      engine->GetScene()->Context.sceneWindowSize = glm::vec2(w, h);
-      engine->GetScene()->Context.frameBuffer->RescaleFrameBuffer(w, h);
-      engine->GetScene()->RenderBegin();
-      engine->GetScene()->RenderEnd();
+      GWORLD.Context.sceneWindowSize = glm::vec2(w, h);
+      GWORLD.Context.frameBuffer->RescaleFrameBuffer(w, h);
+      GWORLD.RenderBegin();
+      GWORLD.RenderEnd();
     });
 
     while (engine->Run()) {
@@ -90,7 +90,7 @@ void Editor::Run(bool release) {
       // }
       glUniform1i(location, 1);
       glBindTexture(GL_TEXTURE_2D,
-                    engine->GetScene()->Context.frameBuffer->GetFrameTexture());
+                    GWORLD.Context.frameBuffer->GetFrameTexture());
       glBindVertexArray(quadVAO);
       glDrawArrays(GL_TRIANGLES, 0, 6);
       engine->RenderEnd();
@@ -111,21 +111,21 @@ void Editor::Run(bool release) {
       auto size = ImGui::GetContentRegionAvail();
       auto pos = ImGui::GetWindowPos();
       ImGui::Image(
-          (void*)engine->GetScene()->Context.frameBuffer->GetFrameTexture(),
+          (void*)GWORLD.Context.frameBuffer->GetFrameTexture(),
           size, ImVec2(0, 1), ImVec2(1, 0));
-      if (engine->GetScene()->Context.sceneWindowSize.x != size.x ||
-          engine->GetScene()->Context.sceneWindowSize.y != size.y) {
-        engine->GetScene()->Context.frameBuffer->RescaleFrameBuffer(size.x,
+      if (GWORLD.Context.sceneWindowSize.x != size.x ||
+          GWORLD.Context.sceneWindowSize.y != size.y) {
+        GWORLD.Context.frameBuffer->RescaleFrameBuffer(size.x,
                                                                     size.y);
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
           Console.Log("[error]: Rescaled framebuffer is not complete\n");
-        engine->GetScene()->Context.sceneWindowSize = {size.x, size.y};
+        GWORLD.Context.sceneWindowSize = {size.x, size.y};
         glViewport(0, 0, size.x, size.y);
         // render additional frame to avoid flashing
         engine->RenderBegin();
         engine->RenderEnd();
       }
-      engine->GetScene()->Context.sceneWindowPos = {pos.x, pos.y};
+      GWORLD.Context.sceneWindowPos = {pos.x, pos.y};
       DrawGizmos(pos.x, pos.y, size.x, size.y);
       ImGui::EndChild();
       ImGui::End();
@@ -164,13 +164,13 @@ void Editor::MainMenuBar() {
             "chooseprojectrootdir", "Choose Project Root", nullptr, config);
       }
       if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
-        std::string sceneFilePath = engine->GetScene()->Context.sceneFilePath;
+        std::string sceneFilePath = GWORLD.Context.sceneFilePath;
         std::ofstream sceneFileOutput(sceneFilePath);
         if (!sceneFileOutput.is_open()) {
           Console.Log("[error]: can't save scene to %s\n",
                       sceneFilePath.c_str());
         } else {
-          sceneFileOutput << engine->GetScene()->Serialize();
+          sceneFileOutput << GWORLD.Serialize();
           Console.Log("[info]: save scene to %s\n", sceneFilePath.c_str());
         }
         sceneFileOutput.close();
@@ -189,11 +189,11 @@ void Editor::MainMenuBar() {
           context.mCurrentGizmoMode = ImGuizmo::WORLD;
         ImGui::Separator();
         ImGui::MenuItem("Grid Options", nullptr, nullptr, false);
-        ImGui::Checkbox("Show Grid", &engine->GetScene()->Context.showGrid);
+        ImGui::Checkbox("Show Grid", &GWORLD.Context.showGrid);
         ImGui::PushItemWidth(100);
-        int gridSize = engine->GetScene()->Context.gridSize;
+        int gridSize = GWORLD.Context.gridSize;
         ImGui::InputInt("Grid Size", &gridSize);
-        engine->GetScene()->Context.gridSize = gridSize;
+        GWORLD.Context.gridSize = gridSize;
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }

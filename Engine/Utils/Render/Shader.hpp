@@ -168,8 +168,26 @@ private:
   }
 };
 
-// the default path to error shader
-const std::string ErrorShaderPath = "./Assets/shaders/mesh/error";
+const std::string errorVS = R"(
+#version 460 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
+uniform mat4 ModelToWorldPoint;
+uniform mat4 View;
+uniform mat4 Projection;
+void main() {
+  gl_Position = Projection * View * ModelToWorldPoint * vec4(aPos, 1.0);
+}
+)";
+const std::string errorFS = R"(
+#version 460 core
+out vec4 FragColor;
+void main() {
+  FragColor = vec4(0.702, 0.2314, 0.7725, 1.0);
+}
+)";
+
 // the default diffuse shader
 const std::string DiffuseShaderPath = "./Assets/shaders/mesh/diffuse";
 

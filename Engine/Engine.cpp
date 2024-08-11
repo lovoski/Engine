@@ -26,18 +26,19 @@ Engine::Engine(int width, int height)
     return;
   }
 
-  // create the default scene with the same size as the window
-  scene = new Scene(width, height);
   // pass the pointer of current windows to context
-  scene->Context.window = window;
-  scene->Context.engine = this;
+  GWORLD.Context.frameBuffer = new FrameBuffer(width, height);
+  GWORLD.Context.sceneWindowSize = glm::vec2(width, height);
+  GWORLD.Context.sceneWindowPos = glm::vec2(0.0f);
+  GWORLD.Context.window = window;
+  GWORLD.Context.engine = this;
 
   // setup the user pointer so we can register events
   glfwSetWindowUserPointer(window, this);
 
   MouseMoveCallbacks.push_back([](Engine *engine, double x, double y) {
     // update mouse current position
-    engine->GetScene()->Context.currentMousePosition = glm::vec2(x, y);
+    GWORLD.Context.currentMousePosition = glm::vec2(x, y);
   });
   MouseScrollCallbacks.push_back([](Engine *engine, double x, double y) {
     engine->_mouseScrollOffsets = glm::vec2(x, y);
@@ -75,23 +76,20 @@ void Engine::Shutdown() {
 }
 
 Engine::~Engine() {
-  if (scene) {
-    scene->Destroy();
-    delete scene;
-  }
+  GWORLD.Destroy();
 }
 
 void Engine::Update() {
   ActionQueue.clear(); // clear the action queue
   glfwPollEvents(); // poll the events
-  scene->Update();  // call the Update and LateUpdate
+  GWORLD.Update();  // call the Update and LateUpdate
 }
-void Engine::RenderBegin() { scene->RenderBegin(); }
-void Engine::RenderEnd() { scene->RenderEnd(); }
+void Engine::RenderBegin() { GWORLD.RenderBegin(); }
+void Engine::RenderEnd() { GWORLD.RenderEnd(); }
 void Engine::Start() { 
   // load default assets from the loader
   Loader.LoadDefaultAssets();
-  scene->Start();
+  GWORLD.Start();
 }
 bool Engine::Run() { return !glfwWindowShouldClose(window); }
 

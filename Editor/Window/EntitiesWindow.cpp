@@ -16,7 +16,7 @@ using std::string;
 using std::vector;
 
 inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
-                             ImGuiTreeNodeFlags nodeFlag, Engine *engine) {
+                             ImGuiTreeNodeFlags nodeFlag) {
   bool isSelected = selectedEntity == entity->ID;
   ImGuiTreeNodeFlags finalFlag = nodeFlag;
   if (isSelected)
@@ -38,7 +38,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("CHANGE_ENTITY_HIERARCHY")) {
       Entity *newChild = *(Entity **)payload->Data;
-      engine->GetScene()->EntityFromID(entity->ID)->AssignChild(newChild);
+      GWORLD.EntityFromID(entity->ID)->AssignChild(newChild);
     }
     ImGui::EndDragDropTarget();
   }
@@ -53,7 +53,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
                     entity->name.c_str());
       else
         Console.Log("[info]: Destroy entity %s\n", entity->name.c_str());
-      engine->GetScene()->DestroyEntity(entity->ID);
+      GWORLD.DestroyEntity(entity->ID);
       selectedEntity = (EntityID)(-1);
       ImGui::CloseCurrentPopup();
     }
@@ -63,7 +63,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
       static char entityNewName[50] = {0};
       ImGui::InputText("##renameentity", entityNewName, sizeof(entityNewName));
       if (ImGui::Button("Confirm")) {
-        engine->GetScene()->EntityFromID(selectedEntity)->name = entityNewName;
+        GWORLD.EntityFromID(selectedEntity)->name = entityNewName;
         std::strcpy(entityNewName, "");
         ImGui::CloseCurrentPopup();
       }
@@ -74,7 +74,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
   }
   if (nodeOpen) {
     for (auto child : entity->children)
-      DrawHierarchyGUI(child, selectedEntity, nodeFlag, engine);
+      DrawHierarchyGUI(child, selectedEntity, nodeFlag);
     ImGui::TreePop();
   }
 }
@@ -97,39 +97,39 @@ void Editor::EntitiesWindow() {
     if (ImGui::BeginMenu("Create Entity")) {
       ImGui::MenuItem("Entity Types", nullptr, nullptr, false);
       if (ImGui::MenuItem("Null Entity")) {
-        engine->GetScene()->AddNewEntity();
+        GWORLD.AddNewEntity();
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Cube")) {
-        auto cube = engine->GetScene()->AddNewEntity();
+        auto cube = GWORLD.AddNewEntity();
         cube->name = "Cube";
         cube->AddComponent<Material>();
         cube->AddComponent<MeshRenderer>(
             Loader.GetMesh("::cubePrimitive", ""));
       }
       if (ImGui::MenuItem("Plane")) {
-        auto plane = engine->GetScene()->AddNewEntity();
+        auto plane = GWORLD.AddNewEntity();
         plane->name = "Plane";
         plane->AddComponent<Material>();
         plane->AddComponent<MeshRenderer>(
             Loader.GetMesh("::planePrimitive", ""));
       }
       if (ImGui::MenuItem("Sphere")) {
-        auto sphere = engine->GetScene()->AddNewEntity();
+        auto sphere = GWORLD.AddNewEntity();
         sphere->name = "Sphere";
         sphere->AddComponent<Material>();
         sphere->AddComponent<MeshRenderer>(
             Loader.GetMesh("::spherePrimitive", ""));
       }
       if (ImGui::MenuItem("Cylinder")) {
-        auto cylinder = engine->GetScene()->AddNewEntity();
+        auto cylinder = GWORLD.AddNewEntity();
         cylinder->name = "Cylinder";
         cylinder->AddComponent<Material>();
         cylinder->AddComponent<MeshRenderer>(
             Loader.GetMesh("::cylinderPrimitive", ""));
       }
       if (ImGui::MenuItem("Cone")) {
-        auto cone = engine->GetScene()->AddNewEntity();
+        auto cone = GWORLD.AddNewEntity();
         cone->name = "Cone";
         cone->AddComponent<Material>();
         cone->AddComponent<MeshRenderer>(
@@ -137,27 +137,27 @@ void Editor::EntitiesWindow() {
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Camera")) {
-        auto camera = engine->GetScene()->AddNewEntity();
+        auto camera = GWORLD.AddNewEntity();
         camera->name = "Camera";
         camera->AddComponent<Camera>();
-        engine->GetScene()->SetActiveCamera(camera->ID);
+        GWORLD.SetActiveCamera(camera->ID);
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Directional Light")) {
-        auto dLight = engine->GetScene()->AddNewEntity();
+        auto dLight = GWORLD.AddNewEntity();
         dLight->name = "Light";
         dLight->SetGlobalRotationDegree(vec3(180.0f, 0.0f, 0.0f));
         dLight->AddComponent<Light>();
         dLight->GetComponent<Light>().type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
       }
       if (ImGui::MenuItem("Point Light")) {
-        auto pLight = engine->GetScene()->AddNewEntity();
+        auto pLight = GWORLD.AddNewEntity();
         pLight->name = "Point light";
         pLight->AddComponent<Light>();
         pLight->GetComponent<Light>().type = LIGHT_TYPE::POINT_LIGHT;
       }
       if (ImGui::MenuItem("Spot Light")) {
-        auto sLight = engine->GetScene()->AddNewEntity();
+        auto sLight = GWORLD.AddNewEntity();
         sLight->name = "Spot light";
         sLight->AddComponent<Light>();
         sLight->GetComponent<Light>().type = LIGHT_TYPE::SPOT_LIGHT;
@@ -167,12 +167,12 @@ void Editor::EntitiesWindow() {
     ImGui::EndPopup();
   }
   ImGui::BeginChild("Entities List", {-1, ImGui::GetContentRegionAvail().y});
-  auto entities = engine->GetScene()->HierarchyRoots;
+  auto entities = GWORLD.HierarchyRoots;
   static ImGuiTreeNodeFlags guiTreeNodeFlags =
       ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
       ImGuiTreeNodeFlags_SpanAvailWidth;
   for (auto i = 0; i < entities.size(); ++i) {
-    DrawHierarchyGUI(entities[i], context.selectedEntity, guiTreeNodeFlags, engine);
+    DrawHierarchyGUI(entities[i], context.selectedEntity, guiTreeNodeFlags);
   }
   ImGui::EndChild();
   if (ImGui::BeginDragDropTarget()) {
@@ -181,10 +181,10 @@ void Editor::EntitiesWindow() {
       char *modelPath = (char *)payload->Data;
       Console.Log("[info]: import modelfrom %s\n", modelPath);
       auto modelMeshes = Loader.GetModel(modelPath);
-      auto parentEntity = engine->GetScene()->AddNewEntity();
+      auto parentEntity = GWORLD.AddNewEntity();
       parentEntity->name = fs::path(modelPath).stem().string();
       for (auto cmesh : modelMeshes) {
-        auto childEntity = engine->GetScene()->AddNewEntity();
+        auto childEntity = GWORLD.AddNewEntity();
         childEntity->name = cmesh->identifier;
         childEntity->AddComponent<Material>();
         childEntity->AddComponent<MeshRenderer>(cmesh);

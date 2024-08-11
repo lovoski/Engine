@@ -307,10 +307,15 @@ public:
     glm::vec3 m_eulerAngles;
   };
 
-  Scene(float sceneWidth, float sceneHeight);
+  Scene();
   Scene(const Scene &) = delete;
   const Scene &operator=(Scene &) = delete;
   ~Scene();
+
+  static Scene &Ref() {
+    static Scene reference;
+    return reference;
+  }
 
   template <typename T, typename... Args>
   void AddComponent(const EntityID entity, Args &&...args) {
@@ -380,7 +385,6 @@ public:
       AddEntityToSystem(entity, system.get());
     }
     // don't start the system during registration
-    system->scene = this;
     registeredSystems[systemType] = std::move(system);
   }
 
@@ -561,6 +565,8 @@ private:
   std::map<SystemTypeID, std::shared_ptr<BaseSystem>> registeredSystems;
   std::map<ComponentTypeID, std::shared_ptr<IComponentList>> componentsArrays;
 };
+
+static Scene &GWORLD = Scene::Ref();
 
 using Entity = Scene::Entity;
 // alias to entity

@@ -1,6 +1,8 @@
 /**
  * Engine is a helper class to maintain the scenes
- * while Editor provides GUI access to the api provided by Engine
+ * while Editor provides GUI access to the api provided by Engine.
+ * 
+ * Never use `GWORLD` singletom itself to create application.
  */
 #pragma once
 
@@ -38,8 +40,6 @@ public:
 
   void Shutdown();
 
-  Scene *GetScene() const { return scene; }
-
   const int GetKey(int key);
   const int GetMouseButton(int button);
 
@@ -53,8 +53,6 @@ public:
   glm::vec2 _mouseScrollOffsets;
 
 private:
-  Scene *scene;
-
   int windowWidth, windowHeight;
 
   GLFWwindow *window;

@@ -8,13 +8,11 @@ namespace aEngine {
 struct NativeScript : public aEngine::BaseComponent {
 
   // Bind a scriptable object to current component
-  // TODO: there could be some better ways to do it,
-  // passing the pointer of the entity feel not right
-  template <typename T> void Bind(Entity *entity) {
+  template <typename T> void Bind() {
     // create an instance of the scriptable
     instance = new T();
     // set up entity for this script instance
-    instance->entity = entity;
+    instance->entity = GWORLD.EntityFromID(entityID);
     instance->Start();
   }
 

@@ -29,8 +29,6 @@ public:
   virtual void Render() {}
   virtual void Destroy() {}
 
-  Scene *scene;
-
 protected:
   EntitySignature signature;
   std::set<EntityID> entities;

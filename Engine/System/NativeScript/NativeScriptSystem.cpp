@@ -11,7 +11,7 @@ NativeScriptSystem::NativeScriptSystem() {
 void NativeScriptSystem::Update() {
   // update all the entities with a valid script instance
   for (auto entity : entities) {
-    auto entityObject = scene->EntityFromID(entity);
+    auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
     if (nsc.instance != nullptr) {
       nsc.instance->Update();
@@ -22,7 +22,7 @@ void NativeScriptSystem::Update() {
 void NativeScriptSystem::LateUpdate() {
   // update all the entities with a valid script instance
   for (auto entity : entities) {
-    auto entityObject = scene->EntityFromID(entity);
+    auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
     if (nsc.instance != nullptr) {
       nsc.instance->LateUpdate();
@@ -32,7 +32,7 @@ void NativeScriptSystem::LateUpdate() {
 
 void NativeScriptSystem::DrawToScene() {
   for (auto entity : entities) {
-    auto entityObject = scene->EntityFromID(entity);
+    auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
     if (nsc.instance != nullptr) {
       nsc.instance->DrawToScene();
