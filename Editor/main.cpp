@@ -1,16 +1,13 @@
-#include "Engine.hpp"
-
-using namespace std;
-using namespace aEngine;
+#include "Editor.hpp"
 
 int main() {
-  Engine engine(1920, 1080);
-  engine.Start();
-  while (engine.Run()) {
-    engine.Update();
+  Editor editor(1920, 1080);
+  editor.Start();
 
-    engine.RenderBegin();
-    engine.RenderEnd();
-  }
+  // the main loop
+  editor.Run(false);
+
+  editor.Shutdown();
+
   return 0;
 }

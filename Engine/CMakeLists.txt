@@ -21,7 +21,6 @@ include_directories(
 set(aEngine_DEPS glad glfw stb glm imgui assimp)
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
-  ${PROJECT_SOURCE_DIR}/Test
   ${PROJECT_SOURCE_DIR}/System
   ${PROJECT_SOURCE_DIR}/Utils
   ${PROJECT_SOURCE_DIR}/Component

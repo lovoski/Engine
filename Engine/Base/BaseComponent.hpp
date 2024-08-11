@@ -11,8 +11,6 @@ public:
   virtual ~BaseComponent() = default;
   const EntityID GetID() const { return entityID; }
 
-  virtual void Draw() {}
-
   virtual Json Serialize() { return Json(); }
   virtual void Deserialize(Json &json) {}
 

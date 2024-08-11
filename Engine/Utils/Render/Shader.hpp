@@ -166,11 +166,9 @@ private:
 };
 
 // the default path to error shader
-const std::string ErrorShaderPath = "./default/shaders/error";
+const std::string ErrorShaderPath = "./Assets/shaders/mesh/error";
 // the default diffuse shader
-const std::string DiffuseShaderPath = "./default/shaders/diffuse";
-// the default pbr shader
-const std::string PBRShaderPath = "./default/shaders/pbr";
+const std::string DiffuseShaderPath = "./Assets/shaders/mesh/diffuse";
 
 }; // namespace Render
 

@@ -15,25 +15,48 @@
 #include "Base/BaseComponent.hpp"
 
 #include "Global.hpp"
+#include "Component/Light.hpp"
 #include "System/Render/FrameBuffer.hpp"
 
 namespace aEngine {
 
 struct SceneContext {
   FrameBuffer *frameBuffer;
+  
+  // Keep a reference to the window
+  GLFWwindow *window;
 
   // Grid options
   bool showGrid;
   unsigned int gridSize;
+  glm::vec3 gridColor;
 
   // Camera related
   bool hasActiveCamera;
   EntityID activeCamera;
 
+  // Debug draw options
+  bool enableDebugDraw;
+
   // Scene serialization
   std::string sceneFilePath;
   glm::vec2 sceneWindowSize;
   glm::vec2 sceneWindowPos;
+
+  // Scene lights
+  std::vector<Light> activeLights;
+
+  void Reset() {
+    showGrid = true;
+    gridSize = 10;
+    gridColor = glm::vec3(1.0f);
+    hasActiveCamera = false;
+    activeCamera = (EntityID)(-1);
+    enableDebugDraw = true;
+    // Don't change the size and position of scene window
+    sceneFilePath = "::defaultScene";
+    activeLights.clear();
+  }
 };
 
 class Scene {

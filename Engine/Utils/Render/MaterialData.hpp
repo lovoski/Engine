@@ -79,11 +79,11 @@ bool MaterialData::AddVariable(std::string name, T value) {
     intVariables[idCounter] = value;
   } else if constexpr (std::is_same_v<T, float>) {
     floatVariables[idCounter] = value;
-  } else if constexpr (std::is_same_v<T, vec2>) {
+  } else if constexpr (std::is_same_v<T, glm::vec2>) {
     vec2Variables[idCounter] = value;
-  } else if constexpr (std::is_same_v<T, vec3>) {
+  } else if constexpr (std::is_same_v<T, glm::vec3>) {
     vec3Variables[idCounter] = value;
-  } else if constexpr (std::is_same_v<T, vec4>) {
+  } else if constexpr (std::is_same_v<T, glm::vec4>) {
     vec4Variables[idCounter] = value;
   } else if constexpr (std::is_same_v<T, Texture *>) {
     texVariables[idCounter] = value;
@@ -102,7 +102,7 @@ template <typename T> bool MaterialData::RemoveVariable(std::string name) {
     if (ele.second == name)
       idTBR = ele.first;
   if (idTBR == -1) {
-    cout << "variable " << name << " not found in material data" << endl;
+    std::cout << "variable " << name << " not found in material data" << std::endl;
     return false;
   }
   variableNames.erase(idTBR);
@@ -110,13 +110,13 @@ template <typename T> bool MaterialData::RemoveVariable(std::string name) {
     intVariables.erase(idTBR);
   } else if constexpr (std::is_same_v<T, float>) {
     floatVariables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, vec2>) {
+  } else if constexpr (std::is_same_v<T, glm::vec2>) {
     vec2Variables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, vec3>) {
+  } else if constexpr (std::is_same_v<T, glm::vec3>) {
     vec3Variables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, vec4>) {
+  } else if constexpr (std::is_same_v<T, glm::vec4>) {
     vec4Variables.erase(idTBR);
-  } else if constexpr (std::is_same_v<T, Resource::Texture *>) {
+  } else if constexpr (std::is_same_v<T, Texture *>) {
     texVariables.erase(idTBR);
   } else {
     cout << "removing unsupported type to material data, type: "

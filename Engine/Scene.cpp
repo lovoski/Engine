@@ -14,8 +14,9 @@ glm::vec3 Entity::WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 Entity::WorldLeft = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 Entity::WorldForward = glm::vec3(0.0f, 0.0f, 1.0f);
 
-Scene::Scene(float sceneWidth, float sceneHeight) : entityCount(0) {
+Scene::Scene(float sceneWidth, float sceneHeight) {
   // create the entities
+  entityCount = 0;
   nullEntity = new Entity((EntityID)(-1), this);
   for (EntityID entity = 0u; entity < MAX_ENTITY_COUNT; ++entity) {
     availableEntities.push(entity);
@@ -26,11 +27,7 @@ Scene::Scene(float sceneWidth, float sceneHeight) : entityCount(0) {
   Context.frameBuffer = new FrameBuffer(sceneWidth, sceneHeight);
   Context.sceneWindowSize = glm::vec2(sceneWidth, sceneHeight);
   Context.sceneWindowPos = glm::vec2(0.0f);
-  Context.showGrid = true;
-  Context.gridSize = 10;
-  Context.hasActiveCamera = false;
-  Context.activeCamera = (EntityID)(-1);
-  Context.sceneFilePath = "::defaultScene";
+  Context.Reset();
 }
 
 Scene::~Scene() {
@@ -81,11 +78,7 @@ void Scene::Reset() {
   entities.clear();
 
   // reset scene context
-  Context.showGrid = true;
-  Context.gridSize = 10;
-  Context.hasActiveCamera = false;
-  Context.activeCamera = (EntityID)(-1);
-  Context.sceneFilePath = "::defaultScene";
+  Context.Reset();
 }
 
 void Scene::Destroy() {
