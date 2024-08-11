@@ -76,25 +76,25 @@ void MaterialData::SetupLights(vector<Light> &lights) {
   unsigned int pointLightCounter = 0;
   unsigned int spotLightCounter = 0;
   // set the properties of different lights
-  for (auto &light : lights) {
-    // if (light.Type == Light::DIRECTIONAL_LIGHT) {
-    //   string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
-    //   string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
-    //   shader->SetVec3(lightDirName, Core.EManager.EntityFromID(light.GetID())->LocalForward);
-    //   shader->SetVec3(lightColorName, light.LightColor);
-    //   dirLightCounter++;
-    // } else if (light.Type == Light::POINT_LIGHT) {
-    //   string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
-    //   string lightColorName =
-    //       "pLightColor" + std::to_string(pointLightCounter);
-    //   shader->SetVec3(
-    //       lightPosName,
-    //       Core.EManager.EntityFromID(light.GetID())->Position());
-    //   shader->SetVec3(lightColorName, light.LightColor);
-    //   pointLightCounter++;
-    // } else if (light.Type == Light::SPOT_LIGHT) {
-    // }
-  }
+  // for (auto &light : lights) {
+  //   if (light.type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
+  //     string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
+  //     string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
+  //     shader->SetVec3(lightDirName, Core.EManager.EntityFromID(light.GetID())->LocalForward);
+  //     shader->SetVec3(lightColorName, light.lightColor);
+  //     dirLightCounter++;
+  //   } else if (light.type == LIGHT_TYPE::POINT_LIGHT) {
+  //     string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
+  //     string lightColorName =
+  //         "pLightColor" + std::to_string(pointLightCounter);
+  //     shader->SetVec3(
+  //         lightPosName,
+  //         Core.EManager.EntityFromID(light.GetID())->Position());
+  //     shader->SetVec3(lightColorName, light.lightColor);
+  //     pointLightCounter++;
+  //   } else if (light.Type == LIGHT_TYPE::SPOT_LIGHT) {
+  //   }
+  // }
   if (dirLightCounter == 0) {
     Console.Log("[error]: At least one directional light needed for the default shader\n");
   }

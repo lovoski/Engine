@@ -7,6 +7,8 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
+#include "Scene.hpp"
+
 namespace aEngine {
 
 using std::string;
@@ -89,6 +91,28 @@ Texture *AssetsLoader::GetTexture(string texturePath) {
     return newTexture;
   } else {
     return allTextures[texturePath];
+  }
+}
+
+std::vector<Render::Mesh *> AssetsLoader::GetModel(std::string modelPath) {
+  std::vector<Render::Mesh *> result;
+  if (allMeshes.find(modelPath) == allMeshes.end()) {
+    // load new model
+    auto modelMeshes = loadAndCreateMeshFromFile(modelPath);
+    if (modelMeshes.size() == 0) {
+      Console.Log("[error]: the file %s has no mesh\n", modelPath.c_str());
+      return result;
+    }
+    Console.Log("[info]: load model at %s\n", modelPath.c_str());
+    allMeshes[modelPath] = modelMeshes;
+    return modelMeshes;
+  } else {
+    auto meshes = allMeshes[modelPath];
+    if (modelPath[0] == ':') {
+      Console.Log("[info]: load primitive %s\n", modelPath.c_str());
+    } else
+      Console.Log("[info]: get cached model %s\n", modelPath.c_str());
+    return meshes;
   }
 }
 

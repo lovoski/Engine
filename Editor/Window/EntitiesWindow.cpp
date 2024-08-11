@@ -5,6 +5,7 @@
 #include "Component/MeshRenderer.hpp"
 #include "Component/Light.hpp"
 
+#include "Utils/Render/Mesh.hpp"
 #include "Utils/Render/Shader.hpp"
 #include "Utils/Render/MaterialData.hpp"
 
@@ -101,30 +102,35 @@ void Editor::EntitiesWindow() {
       ImGui::Separator();
       if (ImGui::MenuItem("Cube")) {
         auto cube = engine->GetScene()->AddNewEntity();
+        cube->name = "Cube";
         cube->AddComponent<Material>();
         cube->AddComponent<MeshRenderer>(
             Loader.GetMesh("::cubePrimitive", ""));
       }
       if (ImGui::MenuItem("Plane")) {
         auto plane = engine->GetScene()->AddNewEntity();
+        plane->name = "Plane";
         plane->AddComponent<Material>();
         plane->AddComponent<MeshRenderer>(
             Loader.GetMesh("::planePrimitive", ""));
       }
       if (ImGui::MenuItem("Sphere")) {
         auto sphere = engine->GetScene()->AddNewEntity();
+        sphere->name = "Sphere";
         sphere->AddComponent<Material>();
         sphere->AddComponent<MeshRenderer>(
             Loader.GetMesh("::spherePrimitive", ""));
       }
       if (ImGui::MenuItem("Cylinder")) {
         auto cylinder = engine->GetScene()->AddNewEntity();
+        cylinder->name = "Cylinder";
         cylinder->AddComponent<Material>();
         cylinder->AddComponent<MeshRenderer>(
             Loader.GetMesh("::cylinderPrimitive", ""));
       }
       if (ImGui::MenuItem("Cone")) {
         auto cone = engine->GetScene()->AddNewEntity();
+        cone->name = "Cone";
         cone->AddComponent<Material>();
         cone->AddComponent<MeshRenderer>(
             Loader.GetMesh("::conePrimitive", ""));
@@ -174,7 +180,17 @@ void Editor::EntitiesWindow() {
             ImGui::AcceptDragDropPayload("IMPORT_MODEL_ASSETS")) {
       char *modelPath = (char *)payload->Data;
       Console.Log("[info]: import modelfrom %s\n", modelPath);
-      // TODO: 
+      auto modelMeshes = Loader.GetModel(modelPath);
+      auto parentEntity = engine->GetScene()->AddNewEntity();
+      parentEntity->name = fs::path(modelPath).stem().string();
+      for (auto cmesh : modelMeshes) {
+        auto childEntity = engine->GetScene()->AddNewEntity();
+        childEntity->name = cmesh->identifier;
+        childEntity->AddComponent<Material>();
+        childEntity->AddComponent<MeshRenderer>(cmesh);
+        // setup parent child relation
+        parentEntity->AssignChild(childEntity);
+      }
       // auto modelEntity = Loader.GetModelEntity(modelPath);
     }
     ImGui::EndDragDropTarget();

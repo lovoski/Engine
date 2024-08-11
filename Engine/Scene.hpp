@@ -5,6 +5,9 @@
  * transform, system related to positions etc.), the `RenderBegin`
  * function render the scene from activeCamera to the frameBuffer.
  * The `RenderEnd` swaps the framebuffer.
+ * 
+ * However, the scene acts as a world query handle, so it being a singleton
+ * could really help with the coding.
  */
 
 #pragma once

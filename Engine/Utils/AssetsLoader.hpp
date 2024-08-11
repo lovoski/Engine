@@ -23,6 +23,7 @@ public:
 
   Texture *GetTexture(std::string texturePath);
   Render::Mesh *GetMesh(std::string modelPath, std::string identifier);
+  std::vector<Render::Mesh *> GetModel(std::string modelPath);
   Render::MaterialData *GetMaterial(std::string materialPath);
 private:
   // path to texture
