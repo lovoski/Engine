@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Global.hpp"
+#include <ShaderInclude.hpp>
 
 namespace aEngine {
 
@@ -14,7 +15,9 @@ public:
   Shader() {}
   ~Shader() { glDeleteProgram(ID); }
 
-  bool LoadAndRecompileShaderSource(std::string vss, std::string fss, std::string gss = "none") {
+  // Load shader code directly, create and link program
+  bool LoadAndRecompileShaderSource(std::string vss, std::string fss,
+                                    std::string gss = "none") {
     unsigned int vertex, fragment;
     // vertex shader
     const char *vShaderCode = vss.c_str();
@@ -56,9 +59,9 @@ public:
     return true;
   }
 
-  // Returns true if the shader is loaded, compiled and linked in the correct
-  // way Be carefully this function is very expensive
-  bool LoadAndRecompileShader(std::string vsp, std::string fsp, std::string gsp = "none") {
+  // Load shader from path, compile and link them into a program
+  bool LoadAndRecompileShader(std::string vsp, std::string fsp,
+                              std::string gsp = "none") {
     // delete previous program if exists
     if (ID != 0) {
       // free old shader if there's any
@@ -67,34 +70,12 @@ public:
     std::string vertexCode;
     std::string fragmentCode;
     std::string geometryCode = "none";
-    std::ifstream vShaderFile;
-    std::ifstream fShaderFile;
-    std::ifstream gShaderFile;
-    // ensure ifstream objects can throw exceptions:
-    vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
-      // open files
-      vShaderFile.open(vsp);
-      fShaderFile.open(fsp);
-      std::stringstream vShaderStream, fShaderStream;
-      // read file's buffer contents into streams
-      vShaderStream << vShaderFile.rdbuf();
-      fShaderStream << fShaderFile.rdbuf();
-      // close file handlers
-      vShaderFile.close();
-      fShaderFile.close();
-      // convert stream into string
-      vertexCode = vShaderStream.str();
-      fragmentCode = fShaderStream.str();
+      vertexCode = ShaderInclude::load(vsp, "//include");
+      fragmentCode = ShaderInclude::load(fsp, "//include");
       // if geometry shader path is present, also load a geometry shader
       if (gsp != "none") {
-        gShaderFile.open(gsp);
-        std::stringstream gShaderStream;
-        gShaderStream << gShaderFile.rdbuf();
-        gShaderFile.close();
-        geometryCode = gShaderStream.str();
+        geometryCode = ShaderInclude::load(gsp, "//include");
       }
     } catch (std::ifstream::failure &e) {
       Console.Log(

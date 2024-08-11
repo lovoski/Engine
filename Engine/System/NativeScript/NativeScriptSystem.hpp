@@ -10,7 +10,7 @@ public:
   ~NativeScriptSystem() {}
 
   void Update() override;
-  void LateUpdate() override;
+  void LateUpdate();
 
   void DrawToScene();
 

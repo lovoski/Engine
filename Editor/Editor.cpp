@@ -5,10 +5,12 @@
 
 void BuildTestScene(Engine *engine) {
   auto ent = GWORLD.AddNewEntity();
+  ent->name = "Script Base";
   ent->AddComponent<aEngine::NativeScript>();
   ent->GetComponent<aEngine::NativeScript>().Bind<CameraController>();
 
   auto cam = GWORLD.AddNewEntity();
+  cam->name = "Editor Cam";
   cam->AddComponent<Camera>();
   GWORLD.SetActiveCamera(cam->ID);
 }

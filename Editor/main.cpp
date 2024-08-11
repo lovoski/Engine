@@ -5,7 +5,7 @@ int main() {
   editor.Start();
 
   // the main loop
-  editor.Run(true);
+  editor.Run(false);
 
   editor.Shutdown();
 

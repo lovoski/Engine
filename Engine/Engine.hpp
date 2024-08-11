@@ -30,7 +30,7 @@ public:
 
   // Update all registered systems
   void Update();
-  // Render the scene in a framebuffer
+  // Render the scene to framebuffer
   void RenderBegin();
   // Swaps the front and back buffer
   void RenderEnd();

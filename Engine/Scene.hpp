@@ -117,6 +117,8 @@ public:
     // local axis are updated at the start of each loop
     glm::vec3 LocalUp, LocalLeft, LocalForward;
 
+    bool Enabled = true;
+
     // set global position
     void SetGlobalPosition(glm::vec3 p) {
       // change global position, modify local position to satisfy the global

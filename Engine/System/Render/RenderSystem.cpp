@@ -29,6 +29,7 @@ void RenderSystem::RenderBegin() {
     glm::mat4 viewMat = cameraComp.GetViewMatrix(*camera);
     glm::mat4 projMat = cameraComp.GetProjMatrixPerspective(
         GWORLD.Context.sceneWindowSize.x, GWORLD.Context.sceneWindowSize.y);
+    glEnable(GL_DEPTH_TEST);
     for (auto entID : entities) {
       auto entity = GWORLD.EntityFromID(entID);
       auto matComp = entity->GetComponent<Material>();

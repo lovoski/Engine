@@ -11,7 +11,9 @@ out vec3 normal;
 uniform mat4 ModelToWorldPoint;
 // transform vector from model space to world space
 uniform mat3 ModelToWorldDir;
+// transform world space to camera space
 uniform mat4 View;
+// transform camera space to screen
 uniform mat4 Projection;
 
 void main() {

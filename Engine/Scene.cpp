@@ -4,8 +4,10 @@
 #include "Component/Camera.hpp"
 #include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
+#include "Component/NativeScript.hpp"
 
 #include "System/Render/FrameBuffer.hpp"
+#include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
 
@@ -35,10 +37,12 @@ Scene::~Scene() {
 void Scene::Start() {
   // register all the systems
   RegisterSystem<RenderSystem>();
+  RegisterSystem<LightSystem>();
   RegisterSystem<NativeScriptSystem>();
 
   // start all the systems
   GetSystemInstance<RenderSystem>()->Start();
+  GetSystemInstance<LightSystem>()->Start();
   GetSystemInstance<NativeScriptSystem>()->Start();
 }
 
@@ -50,9 +54,9 @@ void Scene::Update() {
   // call update
   for (auto &system : registeredSystems)
     system.second->Update();
+
   // call late update
-  for (auto &system : registeredSystems)
-    system.second->LateUpdate();
+  GetSystemInstance<NativeScriptSystem>()->LateUpdate();
 }
 
 void Scene::RenderBegin() {
@@ -73,6 +77,7 @@ void Scene::Reset() {
   GetComponentList<aEngine::Light>()->data.clear();
   GetComponentList<aEngine::Material>()->data.clear();
   GetComponentList<aEngine::MeshRenderer>()->data.clear();
+  GetComponentList<aEngine::NativeScript>()->data.clear();
   HierarchyRoots.clear();
   entitiesSignatures.clear();
   entities.clear();
@@ -151,6 +156,10 @@ Entity *Scene::EntityFromID(const EntityID entity) {
 }
 
 void Scene::DestroyEntity(const EntityID entity) {
+  if (entity == Context.activeCamera) {
+    Console.Log("[info]: can't remove active camera\n");
+    return;
+  }
   if (entity >= MAX_ENTITY_COUNT)
     throw std::runtime_error("Destroying entity out of range");
   if (entitiesSignatures.find(entity) == entitiesSignatures.end())
