@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Entity.hpp"
 #include "Base/BaseComponent.hpp"
 
 namespace aEngine {
@@ -7,7 +8,7 @@ namespace aEngine {
 struct Camera : public aEngine::BaseComponent {
 
   // The camera looks at -LocalForward direction
-  glm::mat4 GetViewMatrix(Transform &transform) {
+  glm::mat4 GetViewMatrix(Entity &transform) {
     return glm::lookAt(transform.Position(), transform.Position() - transform.LocalForward, transform.LocalUp);
   }
 

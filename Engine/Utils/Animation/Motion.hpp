@@ -70,7 +70,12 @@ struct Motion {
   // Only the root joint has 6 dofs, the rest joints only have 3 dofs.
   bool SaveToBVH(std::string filename);
 
+  // Get the default pose with identity transform on all joints.
+  Pose GetRestPose();
+
   // Takes a float value as paramter, returns the slerp interpolated value.
+  // If the frame is not valid (<0 or >nframes), returns the first frame or last
+  // frame respectively.
   Pose At(float frame);
 };
 

@@ -9,7 +9,7 @@ public:
   NativeScriptSystem();
   ~NativeScriptSystem() {}
 
-  void Update() override;
+  void Update(float dt) override;
   void LateUpdate();
 
   void DrawToScene();

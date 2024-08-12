@@ -24,7 +24,7 @@ public:
   }
 
   virtual void Start() {}
-  virtual void Update() {}
+  virtual void Update(float dt) {}
   virtual void Destroy() {}
 
 protected:

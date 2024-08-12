@@ -58,7 +58,7 @@ void Scene::Update() {
 
   // call update
   for (auto &system : registeredSystems)
-    system.second->Update();
+    system.second->Update(Context.deltaTime);
 
   // call late update
   GetSystemInstance<NativeScriptSystem>()->LateUpdate();
@@ -72,6 +72,7 @@ void Scene::RenderBegin() {
   GetSystemInstance<RenderSystem>()->RenderBegin();
   // enable the scripts to draw something in the scene
   float t1 = glfwGetTime();
+  GetSystemInstance<AnimationSystem>()->Render();
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
   float t2 = glfwGetTime();
 

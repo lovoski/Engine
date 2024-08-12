@@ -4,6 +4,7 @@
 #include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/Light.hpp"
+#include "Component/Animator.hpp"
 
 #include "Utils/Render/Mesh.hpp"
 #include "Utils/Render/Shader.hpp"
@@ -76,6 +77,16 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
     for (auto child : entity->children)
       DrawHierarchyGUI(child, selectedEntity, nodeFlag);
     ImGui::TreePop();
+  }
+}
+
+void CreateBVHSkeletonHierarchy(Animation::Skeleton *skel, int currentJoint, glm::vec3 parentPos, Entity *parent) {
+  for (auto c : skel->jointChildren[currentJoint]) {
+    auto ce = GWORLD.AddNewEntity();
+    ce->name = skel->jointNames[c];
+    ce->SetGlobalPosition(parentPos + skel->jointOffset[c]);
+    parent->AssignChild(ce);
+    CreateBVHSkeletonHierarchy(skel, c, ce->Position(), ce);
   }
 }
 
@@ -201,6 +212,23 @@ void Editor::EntitiesWindow() {
       char *scenePath = (char *)payload->Data;
       // TODO: 
       // Core.ReloadScene(scenePath);
+    }
+    ImGui::EndDragDropTarget();
+  }
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("IMPORT_MOTION")) {
+      char *path = (char *)payload->Data;
+      if (fs::path(path).extension().string() == ".bvh") {
+        auto motion = Loader.GetMotion(path);
+        auto entity = GWORLD.AddNewEntity();
+        entity->name = motion->skeleton.jointNames[0];
+        entity->AddComponent<Animator>(motion);
+        // build motion hierarchy
+        CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), entity);
+        entity->GetComponent<Animator>().skeleton = entity;
+        entity->GetComponent<Animator>().ShowSkeleton = true;
+      }
     }
     ImGui::EndDragDropTarget();
   }

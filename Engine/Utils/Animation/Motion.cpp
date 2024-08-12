@@ -342,7 +342,15 @@ vector<vec3> Pose::GetGlobalPositions() {
 }
 
 Pose Motion::At(float frame) {
-  return Pose();
+  return poses[0];
+}
+
+Pose Motion::GetRestPose() {
+  Pose p;
+  p.skeleton = &skeleton;
+  p.jointPositions = vector<vec3>(skeleton.GetNumJoints(), vec3(0.0f));
+  p.jointRotations = vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
+  return p;
 }
 
 }; // namespace Animation

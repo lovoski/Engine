@@ -81,6 +81,26 @@ void AssetsLoader::LoadDefaultAssets() {
   GetMaterial("::base");
 }
 
+Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
+  if (allMotions.find(motionPath) == allMotions.end()) {
+    // load new motion
+    Animation::Motion *motion = new Animation::Motion();
+    std::string extension = fs::path(motionPath).extension().string();
+    if (extension == ".bvh") {
+      Console.Log("[info]: load motion data from %s\n", motionPath.c_str());
+      motion->LoadFromBVH(motionPath);
+      allMotions.insert(std::make_pair(motionPath, motion));
+      return motion;
+    } else {
+      Console.Log("[error]: unnsupported motion file extension %s\n", extension.c_str());
+      return nullptr;
+    }
+  } else {
+    Console.Log("[info]: get cached motion %s\n", motionPath.c_str());
+    return allMotions[motionPath];
+  }
+}
+
 Texture *AssetsLoader::GetTexture(string texturePath) {
   if (allTextures.find(texturePath) == allTextures.end()) {
     // load new texture

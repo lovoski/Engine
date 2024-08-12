@@ -201,6 +201,15 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
           ImGui::Text("Drop at the entity window to import");
           ImGui::EndDragDropSource();
         }
+      } else if (fileExtension == ".bvh") {
+        if (ImGui::BeginDragDropSource()) {
+          char filenameBuffer[100] = {0};
+          std::strcpy(filenameBuffer, entry.path().string().c_str());
+          ImGui::SetDragDropPayload("IMPORT_MOTION", filenameBuffer,
+                                    sizeof(filenameBuffer));
+          ImGui::Text("Drop at the entity window to import");
+          ImGui::EndDragDropSource();
+        }
       }
     }
     // right click context menu

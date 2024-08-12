@@ -5,7 +5,7 @@
  * transform, system related to positions etc.), the `RenderBegin`
  * function render the scene from activeCamera to the frameBuffer.
  * The `RenderEnd` swaps the framebuffer.
- * 
+ *
  * However, the scene acts as a world query handle, so it being a singleton
  * could really help with the coding.
  */
@@ -14,14 +14,14 @@
 
 #include "Base/BaseComponent.hpp"
 #include "Base/BaseSystem.hpp"
-#include "Base/Scriptable.hpp"
 #include "Base/ComponentList.hpp"
+#include "Base/Scriptable.hpp"
 #include "Base/Types.hpp"
 
-
 #include "Component/Light.hpp"
-#include "Global.hpp"
 #include "Entity.hpp"
+#include "Global.hpp"
+
 
 namespace aEngine {
 
@@ -73,6 +73,13 @@ struct SceneContext {
     // Don't change the size and position of scene window
     sceneFilePath = "::defaultScene";
     activeLights.clear();
+
+    lastTime = 0.0f;
+    deltaTime = 0.0f;
+    renderTime = 0.0f;
+    updateTime = 0.0f;
+    debugDrawTime = 0.0f;
+    hierarchyUpdateTime = 0.0f;
   }
 };
 
@@ -215,6 +222,8 @@ public:
 
   // Reset the scene context
   void Reset();
+
+  float GetTime() { return glfwGetTime(); }
 
   Entity *AddNewEntity();
   Entity *EntityFromID(const EntityID entity);

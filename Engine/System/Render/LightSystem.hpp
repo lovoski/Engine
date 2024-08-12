@@ -14,7 +14,7 @@ class LightSystem : public aEngine::BaseSystem {
 public:
   LightSystem() { AddComponentSignature<Light>(); }
 
-  void Update() override {
+  void Update(float dt) override {
     GWORLD.Context.activeLights.clear();
     for (auto id : entities) {
       if (GWORLD.EntityFromID(id)->Enabled)

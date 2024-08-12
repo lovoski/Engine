@@ -9,7 +9,7 @@ NativeScriptSystem::NativeScriptSystem() {
   AddComponentSignature<NativeScript>();
 }
 
-void NativeScriptSystem::Update() {
+void NativeScriptSystem::Update(float dt) {
   // update all the entities with a valid script instance
   for (auto entity : entities) {
     auto entityObject = GWORLD.EntityFromID(entity);

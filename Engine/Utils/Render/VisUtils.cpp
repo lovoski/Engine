@@ -24,7 +24,8 @@ void main() {
 )";
 
 // TODO: the width property don't work on my device, use geometry shader
-void DrawLine3D(glm::vec3 p0, glm::vec3 p1, glm::mat4 vp, glm::vec3 color, float thickness) {
+void DrawLine3D(glm::vec3 p0, glm::vec3 p1, glm::mat4 vp, glm::vec3 color,
+                float thickness) {
   static unsigned int vao, vbo;
   static bool openglObjectCreated = false;
   static Render::Shader *lineShader = new Render::Shader();
@@ -164,7 +165,8 @@ void main() {
   FragColor = vec4(color, 1.0);
 }
 )";
-void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp, glm::vec2 viewportSize, glm::vec3 color) {
+void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp,
+                glm::vec2 viewportSize, glm::vec3 color) {
   static unsigned int vao, vbo;
   static Render::Shader *squareShader = new Render::Shader();
   static bool shaderLoaded = false;
@@ -193,6 +195,47 @@ void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp, glm::vec2 viewpor
   glDrawArrays(GL_POINTS, 0, 1);
   glBindVertexArray(0);
 }
+
+std::string boneVS = R"(
+#version 460 core
+layout (location = 0) in vec3 aPos;
+uniform mat4 vp;
+void main() {
+  gl_Position = vp * vec4(aPos, 1.0);
+}
+)";
+std::string boneGS = R"(
+#version 460 core
+layout (lines) in;
+layout (lines, max_vertices = 10) out;
+uniform vec2 viewportSize;
+uniform float size;
+// gl_in[0] : start of a bone
+// gl_in[1] : end of a bone
+void main() {
+  float r = viewportSize.y/viewportSize.x;
+  float s = size * 0.1;
+  gl_Position = gl_in[0].gl_Position+vec4(r*s, s, 0.0, 0.0);
+  EmitVertex();
+  gl_Position = gl_in[0].gl_Position+vec4(r*s, -s, 0.0, 0.0);
+  EmitVertex();
+  gl_Position = gl_in[0].gl_Position+vec4(-r*s, s, 0.0, 0.0);
+  EmitVertex();
+  gl_Position = gl_in[0].gl_Position+vec4(-r*s, -s, 0.0, 0.0);
+  EmitVertex();
+  EndPrimitive();
+}
+)";
+std::string boneFS = R"(
+#version 460 core
+uniform vec3 color;
+out vec4 FragColor;
+void main() {
+  FragColor = vec4(color, 1.0);
+}
+)";
+void DrawBone(glm::vec3 start, glm::vec3 end, glm::mat4 vp,
+                glm::vec3 color) {}
 
 }; // namespace VisUtils
 
