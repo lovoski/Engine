@@ -1,7 +1,11 @@
+/**
+ * Update active camera in the scene with user input.
+ */
 #pragma once
 
+#include "Scene.hpp"
+#include "Base/Scriptable.hpp"
 #include "Component/Camera.hpp"
-#include "Component/Scriptable.hpp"
 
 #include "Utils/Render/VisUtils.hpp"
 

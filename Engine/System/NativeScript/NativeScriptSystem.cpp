@@ -1,6 +1,7 @@
-#include "System/NativeScript/NativeScriptSystem.hpp"
+#include "Base/Scriptable.hpp"
 #include "Component/NativeScript.hpp"
-#include "Component/Scriptable.hpp"
+#include "System/NativeScript/NativeScriptSystem.hpp"
+#include "Scene.hpp"
 
 namespace aEngine {
 
@@ -13,9 +14,10 @@ void NativeScriptSystem::Update() {
   for (auto entity : entities) {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
-    // if the script is intancianted and enabled
-    if (nsc.instance != nullptr && nsc.instance->Enabled) {
-      nsc.instance->Update();
+    for (auto instance : nsc.instances) {
+      if (instance.second != nullptr && instance.second->Enabled) {
+        instance.second->Update();
+      }
     }
   }
 }
@@ -25,8 +27,10 @@ void NativeScriptSystem::LateUpdate() {
   for (auto entity : entities) {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
-    if (nsc.instance != nullptr && nsc.instance->Enabled) {
-      nsc.instance->LateUpdate();
+    for (auto instance : nsc.instances) {
+      if (instance.second != nullptr && instance.second->Enabled) {
+        instance.second->LateUpdate();
+      }
     }
   }
 }
@@ -35,8 +39,10 @@ void NativeScriptSystem::DrawToScene() {
   for (auto entity : entities) {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
-    if (nsc.instance != nullptr && nsc.instance->Enabled) {
-      nsc.instance->DrawToScene();
+    for (auto instance : nsc.instances) {
+      if (instance.second != nullptr && instance.second->Enabled) {
+        instance.second->DrawToScene();
+      }
     }
   }
 }

@@ -2,6 +2,7 @@
 
 #include "Engine.hpp"
 #include "Utils/Render/Shader.hpp"
+#include "System/Render/FrameBuffer.hpp"
 
 using namespace aEngine;
 

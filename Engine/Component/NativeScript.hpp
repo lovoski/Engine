@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Base/BaseComponent.hpp"
-#include "Component/Scriptable.hpp"
+#include "Base/Scriptable.hpp"
 
 namespace aEngine {
 
@@ -10,24 +10,35 @@ struct NativeScript : public aEngine::BaseComponent {
   // Bind a scriptable object to current component
   template <typename T> void Bind() {
     // create an instance of the scriptable
-    instance = new T();
+    auto sid = ScriptableType<T>();
+    if (instances.find(sid) != instances.end()) {
+      // overwrite scriptable object
+      Console.Log("[info]: overwrite existing scriptable %s\n", typeid(T).name());
+      Unbind<T>();
+    }
+    Scriptable *instance = new T();
     // set up entity for this script instance
     instance->entity = GWORLD.EntityFromID(entityID);
     instance->Start();
+    instances[sid] = instance;
   }
 
   template <typename T> void Unbind() {
-    if (instance) {
-      instance = static_cast<T *>(instance);
+    auto sid = ScriptableType<T>();
+    if (instances.find(sid) == instances.end()) {
+      // unbind a scriptable that don't exists
+      Console.Log("[error]: unbind a scriptable don't exist %s\n", typeid(T).name());
+    } else {
+      auto instance = static_cast<T *>(instances[sid]);
       instance->Destroy();
-      delete instance;
-      instance = nullptr;
+      if (instance)
+        delete instance;
+      instances.erase(sid);
     }
   }
 
-  // A scriptable is attached to a native script component,
-  // which is located on a actual entity
-  Scriptable *instance;
+  // A scriptable component can hold multiple scriptable objects
+  std::map<ScriptableTypeID, Scriptable*> instances;
 };
 
 }; // namespace aEngine

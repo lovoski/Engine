@@ -2,12 +2,16 @@
 
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
+#include "Scripts/TestDebugDraw.hpp"
 
 void BuildTestScene(Engine *engine) {
   auto ent = GWORLD.AddNewEntity();
   ent->name = "Script Base";
   ent->AddComponent<aEngine::NativeScript>();
   ent->GetComponent<aEngine::NativeScript>().Bind<CameraController>();
+
+  ent->AddComponent<aEngine::NativeScript>();
+  ent->GetComponent<aEngine::NativeScript>().Bind<TestDebugDraw>();
 
   auto cam = GWORLD.AddNewEntity();
   cam->name = "Editor Cam";

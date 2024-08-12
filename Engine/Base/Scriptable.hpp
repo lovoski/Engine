@@ -4,9 +4,11 @@
  */
 #pragma once
 
-#include "../Scene.hpp"
+#include "Types.hpp"
 
 namespace aEngine {
+
+class Entity;
 
 class Scriptable {
 public:
@@ -30,9 +32,9 @@ public:
   // We can draw debug helpers with this function
   virtual void DrawToScene() {}
 
-  Entity *entity = nullptr;
-
   bool Enabled = true;
+
+  Entity *entity = nullptr;
 };
 
 };
