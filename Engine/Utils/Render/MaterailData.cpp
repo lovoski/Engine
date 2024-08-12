@@ -121,8 +121,8 @@ void MaterialData::setFixedVariables() {
 }
 
 void MaterialData::activateTextures() {
-  shader->Use();
-  unsigned int texCounter = 0;
+  shader->Use(); // activate the shader
+  int texCounter = 0;
   for (auto tex : texVariables) {
     // don't pass the texture to gpu if its a texture slot
     if (tex.second->path != "::textureSlot") {
@@ -131,14 +131,14 @@ void MaterialData::activateTextures() {
         break;
       }
        // active proper texture unit before binding
-      glActiveTexture(GL_TEXTURE0 + texCounter);
+      glActiveTexture(GL_TEXTURE0 + tex.second->id);
       string name = variableNames[tex.first];
       int location = glGetUniformLocation(shader->ID, name.c_str());
       if (location == -1) {
         // Console.Log("[warning]: uniform %s not found in shader\n", name.c_str());
         continue;
       }
-      glUniform1i(location, texCounter);
+      glUniform1i(location, tex.second->id);
       glBindTexture(GL_TEXTURE_2D, tex.second->id);
       texCounter++;
     }
