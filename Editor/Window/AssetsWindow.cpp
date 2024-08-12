@@ -173,7 +173,7 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
           ImGui::EndDragDropSource();
         }
       } else if (fileExtension == ".png" || fileExtension == ".bmp" ||
-                 fileExtension == ".jpg") {
+                 fileExtension == ".jpg" || fileExtension == ".tga") {
         if (ImGui::BeginDragDropSource()) {
           char textureFilenameBuffer[100] = {0};
           std::strcpy(textureFilenameBuffer, entry.path().string().c_str());
@@ -189,7 +189,7 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
           std::strcpy(textureFilenameBuffer, entry.path().string().c_str());
           ImGui::SetDragDropPayload("SHADER_OVERRIDE", textureFilenameBuffer,
                                     sizeof(textureFilenameBuffer));
-          ImGui::Text("Drop at the material texture spot to load");
+          ImGui::Text("Drop at the material texture slot to load");
           ImGui::EndDragDropSource();
         }
       } else if (fileExtension == ".scene") { // load a scene

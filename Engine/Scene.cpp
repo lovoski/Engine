@@ -160,6 +160,10 @@ Entity *Scene::AddNewEntity() {
 }
 
 Entity *Scene::EntityFromID(const EntityID entity) {
+  if (entity == (EntityID)(-1)) {
+    Console.Log("[error]: can't get entity index -1\n");
+    return nullEntity;
+  }
   if (entity >= MAX_ENTITY_COUNT)
     throw std::runtime_error(
         "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
