@@ -131,6 +131,8 @@ void Editor::Shutdown() {
 }
 
 void Editor::MainMenuBar() {
+  static bool showProfiler = false;
+
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
@@ -175,9 +177,9 @@ void Editor::MainMenuBar() {
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }
-      // if (ImGui::MenuItem("Show Profiler")) {
-      //   DrawProfiler();
-      // }
+      if (ImGui::MenuItem("Show Profiler")) {
+        showProfiler = true;
+      }
       // if (ImGui::MenuItem("Show Style Editor")) {
       //   ImGui::ShowStyleEditor();
       // }
@@ -194,6 +196,20 @@ void Editor::MainMenuBar() {
       context.activeBaseFolder = filePath;
     }
     ImGuiFileDialog::Instance()->Close();
+  }
+  if (showProfiler) {
+    ImGui::Begin("Profiler", &showProfiler);
+    ImGui::MenuItem("Frames Per Second:", nullptr, nullptr, false);
+    ImGui::Text("%d", (int)(1.0 / GWORLD.Context.deltaTime));
+    ImGui::MenuItem("Hierarchy Update:", nullptr, nullptr, false);
+    ImGui::Text("%.4f ms", GWORLD.Context.hierarchyUpdateTime * 1000);
+    ImGui::MenuItem("Main Update:", nullptr, nullptr, false);
+    ImGui::Text("%.4f ms", GWORLD.Context.updateTime * 1000);
+    ImGui::MenuItem("Main Render:", nullptr, nullptr, false);
+    ImGui::Text("%.4f ms", GWORLD.Context.renderTime * 1000);
+    ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
+    ImGui::Text("%.4f ms", GWORLD.Context.debugDrawTime * 1000);
+    ImGui::End();
   }
 }
 

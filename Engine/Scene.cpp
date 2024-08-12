@@ -1,15 +1,18 @@
 #include "Scene.hpp"
 
-#include "Component/Light.hpp"
 #include "Component/Camera.hpp"
+#include "Component/Light.hpp"
 #include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
+
+#include "System/Animation/AnimationSystem.hpp"
+#include "System/NativeScript/NativeScriptSystem.hpp"
 #include "System/Render/FrameBuffer.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
-#include "System/NativeScript/NativeScriptSystem.hpp"
+
 
 namespace aEngine {
 
@@ -30,26 +33,30 @@ Scene::Scene() {
   Context.Reset();
 }
 
-Scene::~Scene() {
-  delete nullEntity;
-}
+Scene::~Scene() { delete nullEntity; }
 
 void Scene::Start() {
   // register all the systems
   RegisterSystem<RenderSystem>();
   RegisterSystem<LightSystem>();
+  RegisterSystem<AnimationSystem>();
   RegisterSystem<NativeScriptSystem>();
 
   // start all the systems
   GetSystemInstance<RenderSystem>()->Start();
   GetSystemInstance<LightSystem>()->Start();
+  GetSystemInstance<AnimationSystem>()->Start();
   GetSystemInstance<NativeScriptSystem>()->Start();
 }
 
 void Scene::Update() {
+  // tick the timer
+  Context.deltaTime = Timer.Tick();
+  float t0 = Timer.CurrentTimeSeconds();
   // update the transforms first
   recomputeLocalAxis();
   rebuildHierarchyStructure();
+  float t1 = Timer.CurrentTimeSeconds();
 
   // call update
   for (auto &system : registeredSystems)
@@ -57,17 +64,24 @@ void Scene::Update() {
 
   // call late update
   GetSystemInstance<NativeScriptSystem>()->LateUpdate();
+  float t2 = Timer.CurrentTimeSeconds();
+  Context.hierarchyUpdateTime = t1 - t0;
+  Context.updateTime = t2 - t1;
 }
 
 void Scene::RenderBegin() {
+  float t0 = Timer.CurrentTimeSeconds();
   GetSystemInstance<RenderSystem>()->RenderBegin();
   // enable the scripts to draw something in the scene
+  float t1 = Timer.CurrentTimeSeconds();
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
+  float t2 = Timer.CurrentTimeSeconds();
+
+  Context.renderTime = t1 - t0;
+  Context.debugDrawTime = t2 - t1;
 }
 
-void Scene::RenderEnd() {
-  GetSystemInstance<RenderSystem>()->RenderEnd();
-}
+void Scene::RenderEnd() { GetSystemInstance<RenderSystem>()->RenderEnd(); }
 
 void Scene::Reset() {
   // reset entities
@@ -95,6 +109,9 @@ void Scene::Destroy() {
 
   // destroy all the systems
   GetSystemInstance<RenderSystem>()->Destroy();
+  GetSystemInstance<LightSystem>()->Destroy();
+  GetSystemInstance<AnimationSystem>()->Destroy();
+  GetSystemInstance<NativeScriptSystem>()->Destroy();
 }
 
 bool Scene::LoopCursorInSceneWindow() {
@@ -131,9 +148,9 @@ bool Scene::SetActiveCamera(EntityID camera) {
     Context.activeCamera = camera;
     Context.hasActiveCamera = true;
     return true;
-  } else return false;
+  } else
+    return false;
 }
-
 
 Entity *Scene::AddNewEntity() {
   const EntityID id = addNewEntity();
@@ -180,6 +197,35 @@ void Scene::DestroyEntity(const EntityID entity) {
     DestroyEntity(child->ID);
 }
 
+void Scene::recomputeLocalAxis() {
+  for (auto entity : entities) {
+    entity.second->UpdateLocalAxis();
+  }
+}
+
+void Scene::rebuildHierarchyStructure() {
+  HierarchyRoots.clear();
+  std::queue<Entity *> q;
+  for (auto entity : entities) {
+    if (entity.second->parent == nullptr) {
+      q.push(entity.second.get());
+      HierarchyRoots.push_back(entity.second.get());
+    }
+  }
+  while (!q.empty()) {
+    auto ent = q.front();
+    q.pop();
+    for (auto child : ent->children) {
+      // update global positions with local positions
+      child->m_position = child->LocalToGlobal(child->localPosition);
+      child->m_eulerAngles = glm::eulerAngles(child->GetParentOrientation() *
+                                              child->localRotation);
+      child->m_scale = child->parent->m_scale * child->localScale;
+      q.push(child);
+    }
+  }
+}
+
 // Serialize current scene to a json file
 Json Scene::Serialize() {
   Json json;
@@ -191,16 +237,20 @@ Json Scene::Serialize() {
   // if more components created, they need to be registered here to be
   // serialized
   for (auto camera : GetComponentList<Camera>()->data) {
-    json["components"]["camera"][std::to_string(camera.GetID())] = camera.Serialize();
+    json["components"]["camera"][std::to_string(camera.GetID())] =
+        camera.Serialize();
   }
   for (auto material : GetComponentList<Material>()->data) {
-    json["components"]["material"][std::to_string(material.GetID())] = material.Serialize();
+    json["components"]["material"][std::to_string(material.GetID())] =
+        material.Serialize();
   }
   for (auto light : GetComponentList<Light>()->data) {
-    json["components"]["light"][std::to_string(light.GetID())] = light.Serialize();
+    json["components"]["light"][std::to_string(light.GetID())] =
+        light.Serialize();
   }
   for (auto renderer : GetComponentList<MeshRenderer>()->data) {
-    json["components"]["renderer"][std::to_string(renderer.GetID())] = renderer.Serialize();
+    json["components"]["renderer"][std::to_string(renderer.GetID())] =
+        renderer.Serialize();
   }
 
   // scene specific settings
@@ -259,8 +309,7 @@ void Scene::DeserializeReset(Json &json) {
     newEntity->SetGlobalScale(entJson["s"].get<glm::vec3>());
     newEntity->SetGlobalRotation(entJson["r"].get<glm::vec3>());
     if (entJson.value("parent", "none") != "none") {
-      auto oldParentID =
-          (EntityID)std::stoi(entJson.value("parent", "none"));
+      auto oldParentID = (EntityID)std::stoi(entJson.value("parent", "none"));
       auto parent = EntityFromID(old2new[oldParentID]);
       parent->AssignChild(newEntity);
     }
@@ -280,8 +329,7 @@ void Scene::DeserializeReset(Json &json) {
         // this component belongs to the entity
         newEntity->AddComponent<Material>();
         newEntity->GetComponent<Material>().Deserialize(
-            json["components"]["material"]
-                            [std::to_string((int)old)]);
+            json["components"]["material"][std::to_string((int)old)]);
       }
     }
     for (auto compJson : json["components"]["light"].items()) {
@@ -299,8 +347,7 @@ void Scene::DeserializeReset(Json &json) {
         // this component belongs to the entity
         newEntity->AddComponent<MeshRenderer>();
         newEntity->GetComponent<MeshRenderer>().Deserialize(
-            json["components"]["renderer"]
-                            [std::to_string((int)old)]);
+            json["components"]["renderer"][std::to_string((int)old)]);
       }
     }
   }
@@ -310,5 +357,4 @@ void Scene::DeserializeReset(Json &json) {
     SetActiveCamera(old2new[json["scene"]["activeCamera"]]);
 }
 
-
-};
+}; // namespace aEngine

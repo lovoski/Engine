@@ -31,6 +31,8 @@ public:
   virtual void DrawToScene() {}
 
   Entity *entity = nullptr;
+
+  bool Enabled = true;
 };
 
 };

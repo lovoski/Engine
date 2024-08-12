@@ -27,6 +27,33 @@ namespace aEngine {
 
 class Engine;
 
+class Time {
+public:
+  Time() {}
+  ~Time() {}
+  Time(const Time &) = delete;
+  const Time &operator=(const Time &) = delete;
+
+  static Time &Ref() {
+    static Time reference;
+    return reference;
+  }
+
+  float Tick() {
+    float cTime = glfwGetTime();
+    float deltaTime = cTime - lastTime;
+    lastTime = cTime;
+    return deltaTime;
+  }
+  float CurrentTimeSeconds() {
+    return glfwGetTime();
+  }
+private:
+  float lastTime = 0.0f;
+};
+
+static Time &Timer = Time::Ref();
+
 struct SceneContext {
   // Keep a reference to the window
   GLFWwindow *window;
@@ -54,6 +81,13 @@ struct SceneContext {
 
   // Scene lights
   std::vector<Light> activeLights;
+
+  // Time related
+  float deltaTime;
+  float renderTime;
+  float updateTime;
+  float debugDrawTime;
+  float hierarchyUpdateTime;
 
   void Reset() {
     showGrid = true;
@@ -525,35 +559,10 @@ private:
   }
 
   // the first
-  void recomputeLocalAxis() {
-    for (auto entity : entities) {
-      entity.second->UpdateLocalAxis();
-    }
-  }
+  void recomputeLocalAxis();
 
   // the second
-  void rebuildHierarchyStructure() {
-    HierarchyRoots.clear();
-    std::queue<Entity *> q;
-    for (auto entity : entities) {
-      if (entity.second->parent == nullptr) {
-        q.push(entity.second.get());
-        HierarchyRoots.push_back(entity.second.get());
-      }
-    }
-    while (!q.empty()) {
-      auto ent = q.front();
-      q.pop();
-      for (auto child : ent->children) {
-        // update global positions with local positions
-        child->m_position = child->LocalToGlobal(child->localPosition);
-        child->m_eulerAngles = glm::eulerAngles(child->GetParentOrientation() *
-                                                child->localRotation);
-        child->m_scale = child->parent->m_scale * child->localScale;
-        q.push(child);
-      }
-    }
-  }
+  void rebuildHierarchyStructure();
 
   // how many entities have been created
   EntityID entityCount;

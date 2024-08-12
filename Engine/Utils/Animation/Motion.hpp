@@ -69,6 +69,9 @@ struct Motion {
   // can only follow behind the position channels.
   // Only the root joint has 6 dofs, the rest joints only have 3 dofs.
   bool SaveToBVH(std::string filename);
+
+  // Takes a float value as paramter, returns the slerp interpolated value.
+  Pose At(float frame);
 };
 
 }; // namespace Animation

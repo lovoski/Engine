@@ -341,7 +341,9 @@ vector<vec3> Pose::GetGlobalPositions() {
   return positions;
 }
 
-// glm::vec2 Pose::GetFacingDirection() {}
+Pose Motion::At(float frame) {
+  return Pose();
+}
 
 }; // namespace Animation
 
