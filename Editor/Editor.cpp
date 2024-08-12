@@ -16,6 +16,9 @@ void BuildTestScene(Engine *engine) {
   auto cam = GWORLD.AddNewEntity();
   cam->name = "Editor Cam";
   cam->AddComponent<Camera>();
+  auto &camera = cam->GetComponent<Camera>();
+  camera.zFar = 1000.0f;
+  cam->SetGlobalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
   GWORLD.SetActiveCamera(cam->ID);
 }
 
@@ -249,7 +252,7 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
           glm::value_ptr(cameraComp.GetProjMatrixPerspective(width, height)),
           context.mCurrentGizmoOperation, context.mCurrentGizmoMode,
           glm::value_ptr(modelTransform), NULL, NULL);
-      if (ImGuizmo::IsUsing()) {
+      if (ImGuizmo::IsUsing() && ImGuizmo::IsOver()) {
         // update object transform with modified changes
         if (context.mCurrentGizmoOperation == ImGuizmo::TRANSLATE) {
           glm::vec3 position(modelTransform[3][0], modelTransform[3][1],

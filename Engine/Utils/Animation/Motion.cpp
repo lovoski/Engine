@@ -318,6 +318,7 @@ bool Motion::SaveToBVH(string filename) {
 vector<vec3> Pose::GetGlobalPositions() {
   int jointNum = skeleton->GetNumJoints();
   vector<vec3> positions(jointNum, vec3(0.0f));
+  positions[0] = jointPositions[0];
   if (jointNum != jointPositions.size() || jointNum != jointRotations.size()) {
     throw std::runtime_error(
         "inconsistent joint number between skeleton and pose data");
@@ -342,14 +343,35 @@ vector<vec3> Pose::GetGlobalPositions() {
 }
 
 Pose Motion::At(float frame) {
-  return poses[0];
+  if (frame <= 0.0f)
+    return poses[0];
+  if (frame >= poses.size() - 1)
+    return poses[poses.size() - 1];
+  unsigned int start = (unsigned int)frame;
+  unsigned int end = start + 1;
+  float alpha = frame - start;
+  // TODO: before i come up with a better solution without jittering
+  // Pose result;
+  // result.skeleton = &skeleton;
+  // result.jointPositions = vector<vec3>(skeleton.GetNumJoints(), vec3(0.0f));
+  // result.jointRotations =
+  //     vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
+  // result.jointPositions[0] = poses[start].jointPositions[0] * alpha +
+  //                            poses[end].jointPositions[0] * (1.0f - alpha);
+  // for (auto jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
+  //   result.jointRotations[jointInd] =
+  //       glm::slerp(poses[start].jointRotations[jointInd],
+  //                  poses[end].jointRotations[jointInd], alpha);
+  // }
+  return poses[start];
 }
 
 Pose Motion::GetRestPose() {
   Pose p;
   p.skeleton = &skeleton;
   p.jointPositions = vector<vec3>(skeleton.GetNumJoints(), vec3(0.0f));
-  p.jointRotations = vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
+  p.jointRotations =
+      vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
   return p;
 }
 

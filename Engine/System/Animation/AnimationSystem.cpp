@@ -10,12 +10,12 @@ namespace aEngine {
 void AnimationSystem::Update(float dt) {
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
-    auto animator = entity->GetComponent<Animator>();
+    auto &animator = entity->GetComponent<Animator>();
     if (animator.skeleton != nullptr && animator.motion != nullptr) {
       int nFrames = animator.motion->poses.size();
       if (nFrames != 0) {
         animator.CurrentFrame =
-            animator.CurrentFrame * (1.0f / animator.motion->fps) + dt;
+            animator.CurrentFrame + dt * animator.motion->fps;
         // make sure current frame is in range
         while (animator.CurrentFrame > nFrames)
           animator.CurrentFrame -= nFrames;
@@ -42,6 +42,13 @@ void AnimationSystem::Update(float dt) {
         }
         // the skeleton hierarchy entities should have
         // the same name as in the motion data
+        auto root = skeletonHierarchy.find(animator.motion->skeleton.jointNames[0]);
+        if (root == skeletonHierarchy.end()) {
+          Console.Log("[error]: root joint not found for %s\n", entity->name.c_str());
+          continue;
+        }
+        // setup the root translation first
+        root->second->localPosition = animator.CurrentPose.jointPositions[0];
         for (int boneInd = 0; boneInd < motionDataJointNum; ++boneInd) {
           std::string boneName =
               animator.CurrentPose.skeleton->jointNames[boneInd];
@@ -53,7 +60,6 @@ void AnimationSystem::Update(float dt) {
           }
           // setup local position and rotation for the bone entity
           // let hierarchy update system finish the rest
-          boneEntity->second->localPosition = animator.CurrentPose.jointPositions[boneInd];
           boneEntity->second->localRotation = animator.CurrentPose.jointRotations[boneInd];
         }
       }
@@ -71,24 +77,26 @@ void AnimationSystem::Render() {
     auto projMat = cameraComp.GetProjMatrixPerspective(viewport.x, viewport.y);
     auto vp = projMat * viewMat;
     // render skeleton if the flag is set
-    glDisable(GL_DEPTH_TEST);
+    // glDisable(GL_DEPTH_TEST);
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
-      auto animator = entity->GetComponent<Animator>();
+      auto &animator = entity->GetComponent<Animator>();
       if (animator.ShowSkeleton && animator.skeleton != nullptr && animator.motion != nullptr) {
         // draw animator.CurrentPose
-        auto positions = animator.CurrentPose.GetGlobalPositions();
-        auto children = animator.CurrentPose.skeleton->jointChildren;
-        auto skel = animator.CurrentPose.skeleton;
-        for (int jointInd = 0; jointInd < skel->GetNumJoints(); ++jointInd) {
-          for (auto cJoint : skel->jointChildren[jointInd]) {
-            // draw line to all its children
-            VisUtils::DrawLine3D(positions[jointInd], positions[cJoint], vp, glm::vec3(0.0f, 1.0f, 0.0f));
+        auto skel = animator.skeleton;
+        std::queue<Entity*> q;
+        q.push(skel);
+        while (!q.empty()) {
+          auto cur = q.front();
+          q.pop();
+          for (auto c : cur->children) {
+            q.push(c);
+            VisUtils::DrawLine3D(cur->Position(), c->Position(), vp, glm::vec3(0.0f, 1.0f, 0.0f));
           }
         }
       }
     }
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
   }
 }
 

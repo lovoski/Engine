@@ -216,17 +216,17 @@ void Scene::rebuildHierarchyStructure() {
       HierarchyRoots.push_back(entity.second.get());
     }
   }
+  // traverse the entities in a parent first fashion
   while (!q.empty()) {
     auto ent = q.front();
     q.pop();
-    for (auto child : ent->children) {
-      // update global positions with local positions
-      child->m_position = child->LocalToGlobal(child->localPosition);
-      child->m_eulerAngles = glm::eulerAngles(child->GetParentOrientation() *
-                                              child->localRotation);
-      child->m_scale = child->parent->m_scale * child->localScale;
+    // update global positions with local positions
+    ent->m_position = ent->LocalToGlobal(ent->localPosition);
+    ent->m_eulerAngles = glm::eulerAngles(ent->GetParentOrientation() *
+                                            ent->localRotation);
+    ent->m_scale = ent->GetParentScale() * ent->localScale;
+    for (auto child : ent->children)
       q.push(child);
-    }
   }
 }
 
