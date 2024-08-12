@@ -6,13 +6,11 @@
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
-
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
 #include "System/Render/FrameBuffer.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
-
 
 namespace aEngine {
 
@@ -51,12 +49,12 @@ void Scene::Start() {
 
 void Scene::Update() {
   // tick the timer
-  Context.deltaTime = Timer.Tick();
-  float t0 = Timer.CurrentTimeSeconds();
+  float t0 = glfwGetTime();
+  Context.lastTime = t0;
   // update the transforms first
   recomputeLocalAxis();
   rebuildHierarchyStructure();
-  float t1 = Timer.CurrentTimeSeconds();
+  float t1 = glfwGetTime();
 
   // call update
   for (auto &system : registeredSystems)
@@ -64,21 +62,22 @@ void Scene::Update() {
 
   // call late update
   GetSystemInstance<NativeScriptSystem>()->LateUpdate();
-  float t2 = Timer.CurrentTimeSeconds();
+  float t2 = glfwGetTime();
   Context.hierarchyUpdateTime = t1 - t0;
   Context.updateTime = t2 - t1;
 }
 
 void Scene::RenderBegin() {
-  float t0 = Timer.CurrentTimeSeconds();
+  float t0 = glfwGetTime();
   GetSystemInstance<RenderSystem>()->RenderBegin();
   // enable the scripts to draw something in the scene
-  float t1 = Timer.CurrentTimeSeconds();
+  float t1 = glfwGetTime();
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
-  float t2 = Timer.CurrentTimeSeconds();
+  float t2 = glfwGetTime();
 
   Context.renderTime = t1 - t0;
   Context.debugDrawTime = t2 - t1;
+  Context.deltaTime = t2 - Context.lastTime;
 }
 
 void Scene::RenderEnd() { GetSystemInstance<RenderSystem>()->RenderEnd(); }

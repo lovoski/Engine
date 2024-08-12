@@ -27,33 +27,6 @@ namespace aEngine {
 
 class Engine;
 
-class Time {
-public:
-  Time() {}
-  ~Time() {}
-  Time(const Time &) = delete;
-  const Time &operator=(const Time &) = delete;
-
-  static Time &Ref() {
-    static Time reference;
-    return reference;
-  }
-
-  float Tick() {
-    float cTime = glfwGetTime();
-    float deltaTime = cTime - lastTime;
-    lastTime = cTime;
-    return deltaTime;
-  }
-  float CurrentTimeSeconds() {
-    return glfwGetTime();
-  }
-private:
-  float lastTime = 0.0f;
-};
-
-static Time &Timer = Time::Ref();
-
 struct SceneContext {
   // Keep a reference to the window
   GLFWwindow *window;
@@ -83,6 +56,7 @@ struct SceneContext {
   std::vector<Light> activeLights;
 
   // Time related
+  float lastTime;
   float deltaTime;
   float renderTime;
   float updateTime;
