@@ -3,9 +3,10 @@
  */
 #pragma once
 
-#include "Scene.hpp"
 #include "Base/Scriptable.hpp"
 #include "Component/Camera.hpp"
+#include "Scene.hpp"
+
 
 #include "Utils/Render/VisUtils.hpp"
 
@@ -20,7 +21,11 @@ struct CameraController : public Scriptable {
     auto scene = entity->scene;
     if (scene->GetActiveCamera(camera)) {
       auto cameraObject = scene->EntityFromID(camera);
+      auto camPos = cameraObject->Position();
       auto sceneContext = scene->Context;
+      float movementSpeed =
+          0.01f + 0.01f * glm::dot(glm::vec3(camPos.x, 0.0f, camPos.z),
+                                   cameraObject->LocalForward);
       bool inSceneWindow =
           scene->InSceneWindow(sceneContext.currentMousePosition.x,
                                sceneContext.currentMousePosition.y);
@@ -31,7 +36,7 @@ struct CameraController : public Scriptable {
             glm::vec2 scrollOffset = (*(glm::vec2 *)action.payload);
             cameraObject->SetGlobalPosition(cameraObject->Position() -
                                             cameraObject->LocalForward *
-                                                scrollOffset.y * 0.1f);
+                                                scrollOffset.y * movementSpeed);
           }
         }
       }
@@ -49,8 +54,8 @@ struct CameraController : public Scriptable {
           // move the view position
           cameraObject->SetGlobalPosition(
               cameraObject->Position() -
-              0.1f * mouseOffset.x * cameraObject->LocalLeft +
-              0.1f * mouseOffset.y * cameraObject->LocalUp);
+              movementSpeed * mouseOffset.x * cameraObject->LocalLeft +
+              movementSpeed * mouseOffset.y * cameraObject->LocalUp);
         } else {
           // move the view direction
           cameraObject->SetGlobalRotation(cameraObject->EulerAngles() -
