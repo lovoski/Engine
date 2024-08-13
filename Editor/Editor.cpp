@@ -10,7 +10,6 @@ void BuildTestScene(Engine *engine) {
   ent->AddComponent<aEngine::NativeScript>();
   ent->GetComponent<aEngine::NativeScript>().Bind<CameraController>();
 
-  ent->AddComponent<aEngine::NativeScript>();
   ent->GetComponent<aEngine::NativeScript>().Bind<TestDebugDraw>();
 
   auto cam = GWORLD.AddNewEntity();

@@ -221,13 +221,16 @@ void Editor::EntitiesWindow() {
       char *path = (char *)payload->Data;
       if (fs::path(path).extension().string() == ".bvh") {
         auto motion = Loader.GetMotion(path);
-        auto entity = GWORLD.AddNewEntity();
-        entity->name = motion->skeleton.jointNames[0];
-        entity->AddComponent<Animator>(motion);
+        auto parent = GWORLD.AddNewEntity();
+        parent->name = fs::path(path).stem().string();
+        auto root = GWORLD.AddNewEntity();
+        root->name = motion->skeleton.jointNames[0];
+        root->AddComponent<Animator>(motion);
         // build motion hierarchy
-        CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), entity);
-        entity->GetComponent<Animator>().skeleton = entity;
-        entity->GetComponent<Animator>().ShowSkeleton = true;
+        CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), root);
+        root->GetComponent<Animator>().skeleton = root;
+        root->GetComponent<Animator>().ShowSkeleton = true;
+        parent->AssignChild(root);
       }
     }
     ImGui::EndDragDropTarget();

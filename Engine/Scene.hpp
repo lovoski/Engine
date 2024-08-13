@@ -22,7 +22,6 @@
 #include "Entity.hpp"
 #include "Global.hpp"
 
-
 namespace aEngine {
 
 class Engine;
@@ -62,6 +61,13 @@ struct SceneContext {
   float updateTime;
   float debugDrawTime;
   float hierarchyUpdateTime;
+
+  // Update deltaTime
+  void Tick() {
+    float c = glfwGetTime();
+    deltaTime = c - lastTime;
+    lastTime = c;
+  }
 
   void Reset() {
     showGrid = true;

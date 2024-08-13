@@ -1,9 +1,9 @@
 #include "System/Animation/AnimationSystem.hpp"
-#include "Utils/Animation/Motion.hpp"
-#include "Utils/Render/VisUtils.hpp"
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Scene.hpp"
+#include "Utils/Animation/Motion.hpp"
+#include "Utils/Render/VisUtils.hpp"
 
 namespace aEngine {
 
@@ -42,9 +42,11 @@ void AnimationSystem::Update(float dt) {
         }
         // the skeleton hierarchy entities should have
         // the same name as in the motion data
-        auto root = skeletonHierarchy.find(animator.motion->skeleton.jointNames[0]);
+        auto root =
+            skeletonHierarchy.find(animator.motion->skeleton.jointNames[0]);
         if (root == skeletonHierarchy.end()) {
-          Console.Log("[error]: root joint not found for %s\n", entity->name.c_str());
+          Console.Log("[error]: root joint not found for %s\n",
+                      entity->name.c_str());
           continue;
         }
         // setup the root translation first
@@ -54,13 +56,15 @@ void AnimationSystem::Update(float dt) {
               animator.CurrentPose.skeleton->jointNames[boneInd];
           auto boneEntity = skeletonHierarchy.find(boneName);
           if (boneEntity == skeletonHierarchy.end()) {
-            Console.Log("[error]: boneName %s not found in skeleton entities %s\n",
+            Console.Log(
+                "[error]: boneName %s not found in skeleton entities %s\n",
                 boneName.c_str(), animator.skeleton->name.c_str());
             break;
           }
           // setup local position and rotation for the bone entity
           // let hierarchy update system finish the rest
-          boneEntity->second->localRotation = animator.CurrentPose.jointRotations[boneInd];
+          boneEntity->second->localRotation =
+              animator.CurrentPose.jointRotations[boneInd];
         }
       }
     }
@@ -81,17 +85,20 @@ void AnimationSystem::Render() {
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto &animator = entity->GetComponent<Animator>();
-      if (animator.ShowSkeleton && animator.skeleton != nullptr && animator.motion != nullptr) {
+      if (animator.ShowSkeleton && animator.skeleton != nullptr &&
+          animator.motion != nullptr) {
         // draw animator.CurrentPose
         auto skel = animator.skeleton;
-        std::queue<Entity*> q;
+        std::queue<Entity *> q;
         q.push(skel);
         while (!q.empty()) {
           auto cur = q.front();
           q.pop();
           for (auto c : cur->children) {
             q.push(c);
-            VisUtils::DrawLine3D(cur->Position(), c->Position(), vp, glm::vec3(0.0f, 1.0f, 0.0f));
+            VisUtils::DrawBone(cur->Position(), c->Position(),
+                               GWORLD.Context.sceneWindowSize, vp,
+                               glm::vec3(0.0f, 1.0f, 0.0f));
           }
         }
       }

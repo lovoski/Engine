@@ -199,43 +199,109 @@ void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp,
 std::string boneVS = R"(
 #version 460 core
 layout (location = 0) in vec3 aPos;
-uniform mat4 vp;
+uniform mat4 mvp;
 void main() {
-  gl_Position = vp * vec4(aPos, 1.0);
+  gl_Position = mvp * vec4(aPos, 1.0);
 }
 )";
 std::string boneGS = R"(
 #version 460 core
 layout (lines) in;
-layout (lines, max_vertices = 10) out;
+layout (triangle_strip, max_vertices = 14) out;
+
 uniform vec2 viewportSize;
-uniform float size;
-// gl_in[0] : start of a bone
-// gl_in[1] : end of a bone
+out vec4 fragPos; // Output to the fragment shader
+
 void main() {
-  float r = viewportSize.y/viewportSize.x;
-  float s = size * 0.1;
-  gl_Position = gl_in[0].gl_Position+vec4(r*s, s, 0.0, 0.0);
+  float aspectRatio = viewportSize.y / viewportSize.x;
+  float size = length(gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz) * 0.05;
+  vec3 boneDir = normalize(gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz);
+
+  vec3 ortho1 = normalize(cross(boneDir, vec3(0.0, 0.0, 1.0)));
+  vec3 ortho2 = cross(boneDir, ortho1);
+
+  vec4 p0 = gl_in[0].gl_Position;
+  vec4 p1 = gl_in[1].gl_Position;
+
+  for (int i = 0; i < 6; ++i) {
+    float angle = 2.0 * 3.14159265 * i / 5.0;
+    vec3 offset = ortho1 * cos(angle) * size + ortho2 * sin(angle) * size;
+
+    gl_Position = p0 + vec4(offset, 0.0);
+    fragPos = gl_Position; // Pass the position to the fragment shader
+    EmitVertex();
+
+    gl_Position = p1 + vec4(offset * 0.5, 0.0);
+    fragPos = gl_Position; // Pass the position to the fragment shader
+    EmitVertex();
+  }
+  EndPrimitive();
+
+  gl_Position = p0;
+  fragPos = gl_Position; // Pass the position to the fragment shader
   EmitVertex();
-  gl_Position = gl_in[0].gl_Position+vec4(r*s, -s, 0.0, 0.0);
+
+  gl_Position = p1;
+  fragPos = gl_Position; // Pass the position to the fragment shader
   EmitVertex();
-  gl_Position = gl_in[0].gl_Position+vec4(-r*s, s, 0.0, 0.0);
-  EmitVertex();
-  gl_Position = gl_in[0].gl_Position+vec4(-r*s, -s, 0.0, 0.0);
-  EmitVertex();
+
   EndPrimitive();
 }
 )";
 std::string boneFS = R"(
 #version 460 core
 uniform vec3 color;
+in vec4 fragPos; // Input from the geometry shader
 out vec4 FragColor;
+
 void main() {
-  FragColor = vec4(color, 1.0);
+  // Calculate depth-based shading
+  float depth = gl_FragCoord.z / gl_FragCoord.w;
+  float factor = clamp(1.0 - depth, 0.0, 1.0);
+
+  // Mix the color based on the depth
+  vec3 shadedColor = mix(color * 0.5, color, factor);
+
+  FragColor = vec4(shadedColor, 1.0);
 }
 )";
-void DrawBone(glm::vec3 start, glm::vec3 end, glm::mat4 vp,
-                glm::vec3 color) {}
+void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 &vp,
+              glm::vec3 color) {
+  static unsigned int vao, vbo;
+  static bool openglObjectCreated = false;
+  static Render::Shader *boneShader = new Render::Shader();
+  static bool lineShaderLoaded = false;
+  if (!lineShaderLoaded) {
+    boneShader->LoadAndRecompileShaderSource(boneVS, boneFS, boneGS);
+    lineShaderLoaded = true;
+  }
+  if (!openglObjectCreated) {
+    float point[] = {1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f};
+    glGenBuffers(1, &vbo);
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                          (void *)0);
+    glBindVertexArray(0);
+    openglObjectCreated = true;
+  }
+  boneShader->Use();
+  boneShader->SetVec3("color", color);
+  boneShader->SetVec2("viewportSize", viewport);
+  glm::vec3 trans = (start + end) * 0.5f;
+  float scale = glm::length(start - end) * 0.5f;
+  glm::quat rot =
+      Math::FromToRotation(glm::vec3(1.0f, 0.0f, 0.0f), start - end);
+  boneShader->SetMat4("mvp", vp * glm::translate(glm::mat4(1.0f), trans) *
+                                glm::mat4_cast(rot) *
+                                glm::scale(glm::mat4(1.0f), glm::vec3(scale)));
+  glBindVertexArray(vao);
+  glDrawArrays(GL_LINES, 0, 2);
+  glBindVertexArray(0);
+}
 
 }; // namespace VisUtils
 

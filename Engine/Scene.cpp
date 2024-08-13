@@ -49,12 +49,12 @@ void Scene::Start() {
 
 void Scene::Update() {
   // tick the timer
-  float t0 = glfwGetTime();
-  Context.lastTime = t0;
+  Context.Tick();
+  float t0 = GetTime();
   // update the transforms first
   recomputeLocalAxis();
   rebuildHierarchyStructure();
-  float t1 = glfwGetTime();
+  float t1 = GetTime();
 
   // call update
   for (auto &system : registeredSystems)
@@ -62,19 +62,19 @@ void Scene::Update() {
 
   // call late update
   GetSystemInstance<NativeScriptSystem>()->LateUpdate();
-  float t2 = glfwGetTime();
+  float t2 = GetTime();
   Context.hierarchyUpdateTime = t1 - t0;
   Context.updateTime = t2 - t1;
 }
 
 void Scene::RenderBegin() {
-  float t0 = glfwGetTime();
+  float t0 = GetTime();
   GetSystemInstance<RenderSystem>()->RenderBegin();
   // enable the scripts to draw something in the scene
-  float t1 = glfwGetTime();
+  float t1 = GetTime();
   GetSystemInstance<AnimationSystem>()->Render();
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
-  float t2 = glfwGetTime();
+  float t2 = GetTime();
 
   Context.renderTime = t1 - t0;
   Context.debugDrawTime = t2 - t1;
