@@ -81,7 +81,6 @@ void AnimationSystem::Render() {
     auto projMat = cameraComp.GetProjMatrixPerspective(viewport.x, viewport.y);
     auto vp = projMat * viewMat;
     // render skeleton if the flag is set
-    // glDisable(GL_DEPTH_TEST);
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto &animator = entity->GetComponent<Animator>();
@@ -103,7 +102,6 @@ void AnimationSystem::Render() {
         }
       }
     }
-    // glEnable(GL_DEPTH_TEST);
   }
 }
 
