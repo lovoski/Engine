@@ -81,6 +81,11 @@ void Editor::Run(bool release) {
     while (engine->Run()) {
       engine->Update(); // logic update
 
+      // the engine will render scene to its framebuffer
+      context.frameBuffer->Bind();
+      engine->RenderBegin();
+      context.frameBuffer->Unbind();
+
       // start editor ui
       ImGui_ImplOpenGL3_NewFrame();
       ImGui_ImplGlfw_NewFrame();
@@ -118,11 +123,6 @@ void Editor::Run(bool release) {
       AssetsWindow();
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-      // the engine will render scene to its framebuffer
-      context.frameBuffer->Bind();
-      engine->RenderBegin();
-      context.frameBuffer->Unbind();
       engine->RenderEnd();
     }
   }

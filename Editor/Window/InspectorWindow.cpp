@@ -18,7 +18,6 @@ using std::vector;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
-// selectedEntity can't be -1
 inline void DrawTransformGUI(EntityID selectedEntity, Engine *engine) {
   auto transform = GWORLD.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
@@ -31,11 +30,11 @@ inline void DrawTransformGUI(EntityID selectedEntity, Engine *engine) {
     // printf("x=%f, y=%f, z=%f\n", angles.x, angles.y, angles.z);
     float positions[3] = {position.x, position.y, position.z};
     float scales[3] = {scale.x, scale.y, scale.z};
-    // float rotations[3] = {angles.x, angles.y, angles.z};
+    // float rotations[3] = {0.0f};
     if (ImGui::DragFloat3("Position", positions, 0.01f, -MAX_FLOAT, MAX_FLOAT))
       transform->SetGlobalPosition(
           vec3(positions[0], positions[1], positions[2]));
-    // if (ImGui::DragFloat3("Rotation", rotations, 1.0f)) {
+    // if (ImGui::DragFloat3("Rotation", rotations, 1.0f, 360.0f)) {
     //   transform->SetGlobalRotation(
     //       quat(glm::radians(vec3(rotations[0], rotations[1], rotations[2]))));
     // }
