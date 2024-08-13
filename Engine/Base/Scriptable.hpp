@@ -20,10 +20,10 @@ public:
   // with the Bind function
   virtual void Start() {}
 
-  virtual void Update() {}
+  virtual void Update(float dt) {}
   // LateUpdate will be called after all
   // Update functions are called
-  virtual void LateUpdate() {}
+  virtual void LateUpdate(float dt) {}
 
   // The destroy function is also called once
   // when the script instance is dettached from a entity

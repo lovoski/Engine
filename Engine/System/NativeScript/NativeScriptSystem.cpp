@@ -16,20 +16,20 @@ void NativeScriptSystem::Update(float dt) {
     auto nsc = entityObject->GetComponent<NativeScript>();
     for (auto instance : nsc.instances) {
       if (instance.second != nullptr && instance.second->Enabled) {
-        instance.second->Update();
+        instance.second->Update(dt);
       }
     }
   }
 }
 
-void NativeScriptSystem::LateUpdate() {
+void NativeScriptSystem::LateUpdate(float dt) {
   // update all the entities with a valid script instance
   for (auto entity : entities) {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
     for (auto instance : nsc.instances) {
       if (instance.second != nullptr && instance.second->Enabled) {
-        instance.second->LateUpdate();
+        instance.second->LateUpdate(dt);
       }
     }
   }

@@ -25,16 +25,17 @@ struct CameraController : public Scriptable {
     }
   }
 
-  void Update() override {
+  void Update(float dt) override {
     EntityID camera;
     auto scene = entity->scene;
     if (scene->GetActiveCamera(camera)) {
       auto cameraObject = scene->EntityFromID(camera);
       auto camPos = cameraObject->Position();
       auto sceneContext = scene->Context;
-      float movementSpeed =
-          0.01f + 0.01f * glm::dot(glm::vec3(camPos.x, 0.0f, camPos.z),
-                                   cameraObject->LocalForward);
+      // float movementSpeed =
+      //     0.01f + 0.01f * abs(glm::dot(glm::vec3(camPos.x, 0.0f, camPos.z),
+      //                              cameraObject->LocalForward));
+      float movementSpeed = 0.01f + dt * std::min(std::pow(glm::length(camPos), 1.6f), 4e2f);
       bool inSceneWindow =
           scene->InSceneWindow(sceneContext.currentMousePosition.x,
                                sceneContext.currentMousePosition.y);

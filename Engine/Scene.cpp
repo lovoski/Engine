@@ -61,7 +61,7 @@ void Scene::Update() {
     system.second->Update(Context.deltaTime);
 
   // call late update
-  GetSystemInstance<NativeScriptSystem>()->LateUpdate();
+  GetSystemInstance<NativeScriptSystem>()->LateUpdate(Context.deltaTime);
   float t2 = GetTime();
   Context.hierarchyUpdateTime = t1 - t0;
   Context.updateTime = t2 - t1;
