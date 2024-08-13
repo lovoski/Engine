@@ -222,8 +222,7 @@ void Scene::rebuildHierarchyStructure() {
     q.pop();
     // update global positions with local positions
     ent->m_position = ent->LocalToGlobal(ent->localPosition);
-    ent->m_eulerAngles = glm::eulerAngles(ent->GetParentOrientation() *
-                                            ent->localRotation);
+    ent->m_rotation = ent->GetParentOrientation() * ent->localRotation;
     ent->m_scale = ent->GetParentScale() * ent->localScale;
     for (auto child : ent->children)
       q.push(child);
@@ -311,7 +310,7 @@ void Scene::DeserializeReset(Json &json) {
     auto newEntity = EntityFromID(newID);
     newEntity->SetGlobalPosition(entJson["p"].get<glm::vec3>());
     newEntity->SetGlobalScale(entJson["s"].get<glm::vec3>());
-    newEntity->SetGlobalRotation(entJson["r"].get<glm::vec3>());
+    newEntity->SetGlobalRotation(entJson["r"].get<glm::quat>());
     if (entJson.value("parent", "none") != "none") {
       auto oldParentID = (EntityID)std::stoi(entJson.value("parent", "none"));
       auto parent = EntityFromID(old2new[oldParentID]);

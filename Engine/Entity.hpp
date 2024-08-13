@@ -12,7 +12,7 @@ public:
   Entity(EntityID id, Scene *scene) : ID(id), scene(scene) {
     m_scale = glm::vec3(1.0f);
     m_position = glm::vec3(0.0f);
-    m_eulerAngles = glm::vec3(0.0f);
+    m_rotation = glm::quat(1.0f, glm::vec3(0.0f));
   }
   ~Entity() {
     if (parent != nullptr) {
@@ -32,17 +32,16 @@ public:
   const glm::vec3 Scale() { return m_scale; };
   // global rotation (pitch, yaw, roll) = (x, y, z)
   // in radians
-  const glm::vec3 EulerAngles() { return m_eulerAngles; }
-  // euler angles in degree
-  const glm::vec3 EulerAnglesDegree() { return glm::degrees(m_eulerAngles); }
+  const glm::vec3 EulerAngles() { return glm::eulerAngles(m_rotation); }
   // global rotation
-  const glm::quat Rotation() { return glm::quat(m_eulerAngles); }
+  const glm::quat Rotation() { return m_rotation; }
   // position under world axis
   const glm::vec3 Position() { return m_position; }
 
   // scale relative to its parent's axis
   glm::vec3 localScale = glm::vec3(1.0f);
   // rotation relative to its parent's axis
+  // euler angles are hard to convert be local, use quaternion only
   glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
   // position relative to its parent's axis
   glm::vec3 localPosition = glm::vec3(0.0f);
@@ -55,95 +54,26 @@ public:
   bool Enabled = true;
 
   // set global position
-  void SetGlobalPosition(glm::vec3 p) {
-    // change global position, modify local position to satisfy the global
-    // position
-    m_position = p;
-    // the local axis will be updated in GlobalToLocal function call
-    localPosition = GlobalToLocal(p);
-  }
-  // set global rotation (pitch, yaw, roll) = (x, y, z)
-  // in degrees
-  void SetGlobalRotationDegree(glm::vec3 a) {
-    a = glm::radians(a);
-    SetGlobalRotation(a);
-  }
-  // set global rotation (pitch, yaw, roll) = (x, y, z)
-  // in radians
-  void SetGlobalRotation(glm::vec3 a) {
-    glm::quat parentOrien = GetParentOrientation();
-    localRotation = glm::inverse(parentOrien) * glm::quat(a);
-    m_eulerAngles = a;
-    UpdateLocalAxis();
-  }
-  // set global rotation
-  void SetGlobalRotation(glm::quat q) {
-    glm::quat parentOrien = GetParentOrientation();
-    localRotation = glm::inverse(parentOrien) * q;
-    m_eulerAngles = glm::eulerAngles(q);
-    UpdateLocalAxis();
-  }
+  void SetGlobalPosition(glm::vec3 p);
+  // set global rotation, mark quatDirty to true
+  void SetGlobalRotation(glm::quat q);
   // set global scale
-  void SetGlobalScale(glm::vec3 s) {
-    localScale = s / GetParentScale();
-    m_scale = s;
-  }
+  void SetGlobalScale(glm::vec3 s);
 
-  void UpdateLocalAxis() {
-    glm::quat q = GetParentOrientation() * localRotation;
-    LocalForward = q * WorldForward;
-    LocalLeft = q * WorldLeft;
-    LocalUp = q * WorldUp;
-  }
+  void UpdateLocalAxis();
 
   // global position to the local position relative to its parent
-  const glm::vec3 GlobalToLocal(glm::vec3 globalPos) {
-    glm::vec3 pLocalForward, pLocalLeft, pLocalUp;
-    GetParentLocalAxis(pLocalForward, pLocalLeft, pLocalUp);
-    // TODO: always remembers how to intiailize a matrix
-    glm::mat3 M_p(pLocalLeft, pLocalUp, pLocalForward);
-    glm::mat3 M(WorldLeft, WorldUp, WorldForward);
-    return glm::inverse(M_p) * M * (globalPos - GetParentPosition());
-  }
+  const glm::vec3 GlobalToLocal(glm::vec3 globalPos);
   // localposition relative to its parent to global position
-  const glm::vec3 LocalToGlobal(glm::vec3 localPos) {
-    glm::vec3 pLocalForward, pLocalLeft, pLocalUp;
-    GetParentLocalAxis(pLocalForward, pLocalLeft, pLocalUp);
-    glm::mat3 M_p(pLocalLeft, pLocalUp, pLocalForward);
-    glm::mat3 M(WorldLeft, WorldUp, WorldForward);
-    return (glm::inverse(M) * M_p * localPos) + GetParentPosition();
-  }
+  const glm::vec3 LocalToGlobal(glm::vec3 localPos);
 
-  const glm::vec3 GetParentScale() {
-    if (parent == nullptr)
-      return glm::vec3(1.0f);
-    else
-      return parent->m_scale;
-  }
+  const glm::vec3 GetParentScale();
 
-  const glm::vec3 GetParentPosition() {
-    if (parent == nullptr)
-      return glm::vec3(0.0f);
-    else
-      return parent->m_position;
-  }
+  const glm::vec3 GetParentPosition();
 
   // (self.orien = parent.orien * self.localRot)
   // or (self.globalRot = parent.globalRot * self.localRot)
-  const glm::quat GetParentOrientation() {
-    Entity *current = parent;
-    glm::quat q(1.0f, glm::vec3(0.0f)); // root.parent.orien
-    std::stack<glm::quat> s;
-    while (current != nullptr) {
-      s.push(current->localRotation); // cur.localRot
-      current = current->parent;
-    }
-    while (!s.empty()) {
-      q = q * s.top();
-      s.pop();
-    }
-    return q;
-  }
+  const glm::quat GetParentOrientation();
 
   void GetParentLocalAxis(glm::vec3 &pLocalForward, glm::vec3 &pLocalLeft,
                           glm::vec3 &pLocalUp);
@@ -182,7 +112,7 @@ public:
 protected:
   glm::vec3 m_position;
   glm::vec3 m_scale;
-  glm::vec3 m_eulerAngles;
+  glm::quat m_rotation;
 };
 
 }; // namespace aEngine

@@ -157,7 +157,7 @@ void Editor::EntitiesWindow() {
       if (ImGui::MenuItem("Directional Light")) {
         auto dLight = GWORLD.AddNewEntity();
         dLight->name = "Light";
-        dLight->SetGlobalRotationDegree(vec3(180.0f, 0.0f, 0.0f));
+        dLight->SetGlobalRotation(glm::quat(glm::radians(vec3(180.0f, 0.0f, 0.0f))));
         dLight->AddComponent<Light>();
         dLight->GetComponent<Light>().type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
       }

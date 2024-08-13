@@ -54,9 +54,83 @@ void Entity::GetParentLocalAxis(glm::vec3 &pLocalForward, glm::vec3 &pLocalLeft,
   }
 }
 
+void Entity::SetGlobalPosition(glm::vec3 p) {
+  // change global position, modify local position to satisfy the global
+  // position
+  m_position = p;
+  // the local axis will be updated in GlobalToLocal function call
+  localPosition = GlobalToLocal(p);
+}
+
+void Entity::SetGlobalRotation(glm::quat q) {
+  m_rotation = q;
+  // update local rotation
+  glm::quat parentOrien = GetParentOrientation();
+  localRotation = glm::inverse(parentOrien) * q;
+  UpdateLocalAxis();
+}
+
+void Entity::SetGlobalScale(glm::vec3 s) {
+  localScale = s / GetParentScale();
+  m_scale = s;
+}
+
+void Entity::UpdateLocalAxis() {
+  glm::quat q = GetParentOrientation() * localRotation;
+  LocalForward = q * WorldForward;
+  LocalLeft = q * WorldLeft;
+  LocalUp = q * WorldUp;
+}
+
+const glm::vec3 Entity::GlobalToLocal(glm::vec3 globalPos) {
+  glm::vec3 pLocalForward, pLocalLeft, pLocalUp;
+  GetParentLocalAxis(pLocalForward, pLocalLeft, pLocalUp);
+  // TODO: always remembers how to intiailize a matrix
+  glm::mat3 M_p(pLocalLeft, pLocalUp, pLocalForward);
+  glm::mat3 M(WorldLeft, WorldUp, WorldForward);
+  return glm::inverse(M_p) * M * (globalPos - GetParentPosition());
+}
+
+const glm::vec3 Entity::LocalToGlobal(glm::vec3 localPos) {
+  glm::vec3 pLocalForward, pLocalLeft, pLocalUp;
+  GetParentLocalAxis(pLocalForward, pLocalLeft, pLocalUp);
+  glm::mat3 M_p(pLocalLeft, pLocalUp, pLocalForward);
+  glm::mat3 M(WorldLeft, WorldUp, WorldForward);
+  return (glm::inverse(M) * M_p * localPos) + GetParentPosition();
+}
+
+const glm::vec3 Entity::GetParentScale() {
+  if (parent == nullptr)
+    return glm::vec3(1.0f);
+  else
+    return parent->m_scale;
+}
+
+const glm::vec3 Entity::GetParentPosition() {
+  if (parent == nullptr)
+    return glm::vec3(0.0f);
+  else
+    return parent->m_position;
+}
+
+const glm::quat Entity::GetParentOrientation() {
+  Entity *current = parent;
+  glm::quat q(1.0f, glm::vec3(0.0f)); // root.parent.orien
+  std::stack<glm::quat> s;
+  while (current != nullptr) {
+    s.push(current->localRotation); // cur.localRot
+    current = current->parent;
+  }
+  while (!s.empty()) {
+    q = q * s.top();
+    s.pop();
+  }
+  return q;
+}
+
 void Entity::Serialize(Json &json) {
   json["p"] = m_position;
-  json["r"] = m_eulerAngles;
+  json["r"] = m_rotation;
   json["s"] = m_scale;
   json["parent"] = parent == nullptr ? "none" : std::to_string((int)parent->ID);
   json["name"] = name;

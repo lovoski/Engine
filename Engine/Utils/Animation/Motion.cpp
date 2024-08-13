@@ -352,18 +352,16 @@ Pose Motion::At(float frame) {
   unsigned int start = (unsigned int)frame;
   unsigned int end = start + 1;
   float alpha = frame - start;
-  // TODO: before i come up with a better solution without jittering
   // Pose result;
   // result.skeleton = &skeleton;
-  // result.jointPositions = vector<vec3>(skeleton.GetNumJoints(), vec3(0.0f));
   // result.jointRotations =
   //     vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
-  // result.jointPositions[0] = poses[start].jointPositions[0] * alpha +
-  //                            poses[end].jointPositions[0] * (1.0f - alpha);
+  // result.rootLocalPosition = poses[start].rootLocalPosition * alpha +
+  //                            poses[end].rootLocalPosition * (1.0f - alpha);
   // for (auto jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
   //   result.jointRotations[jointInd] =
   //       glm::slerp(poses[start].jointRotations[jointInd],
-  //                  poses[end].jointRotations[jointInd], alpha);
+  //                  poses[end].jointRotations[jointInd], 1.0f - alpha);
   // }
   return poses[start];
 }

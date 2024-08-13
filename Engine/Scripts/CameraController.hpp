@@ -7,7 +7,6 @@
 #include "Component/Camera.hpp"
 #include "Scene.hpp"
 
-
 #include "Utils/Render/VisUtils.hpp"
 
 namespace aEngine {
@@ -15,6 +14,16 @@ namespace aEngine {
 struct CameraController : public Scriptable {
   bool mouseFirstMove = true;
   glm::vec2 mouseLastPos;
+
+  glm::vec3 cameraEuler;
+
+  void Start() override {
+    EntityID camera;
+    if (GWORLD.GetActiveCamera(camera)) {
+      auto cameraObject = GWORLD.EntityFromID(camera);
+      cameraEuler = cameraObject->EulerAngles();
+    }
+  }
 
   void Update() override {
     EntityID camera;
@@ -58,10 +67,8 @@ struct CameraController : public Scriptable {
               movementSpeed * mouseOffset.y * cameraObject->LocalUp);
         } else {
           // move the view direction
-          cameraObject->SetGlobalRotation(cameraObject->EulerAngles() -
-                                          glm::vec3(glm::radians(mouseOffset.y),
-                                                    glm::radians(mouseOffset.x),
-                                                    0.0f));
+          cameraEuler -= glm::radians(glm::vec3(mouseOffset.y, mouseOffset.x, 0.0f));
+          cameraObject->SetGlobalRotation(glm::quat(cameraEuler));
         }
         mouseLastPos = mouseCurrentPos;
       } else

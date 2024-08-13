@@ -247,12 +247,11 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
     if (context.selectedEntity != (EntityID)(-1)) {
       Entity *selected = GWORLD.EntityFromID(context.selectedEntity);
       glm::mat4 modelTransform = selected->GetModelMatrix();
-      ImGuizmo::Manipulate(
+      if (ImGuizmo::Manipulate(
           glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
           glm::value_ptr(cameraComp.GetProjMatrixPerspective(width, height)),
           context.mCurrentGizmoOperation, context.mCurrentGizmoMode,
-          glm::value_ptr(modelTransform), NULL, NULL);
-      if (ImGuizmo::IsUsing() && ImGuizmo::IsOver()) {
+          glm::value_ptr(modelTransform), NULL, NULL)) {
         // update object transform with modified changes
         if (context.mCurrentGizmoOperation == ImGuizmo::TRANSLATE) {
           glm::vec3 position(modelTransform[3][0], modelTransform[3][1],
@@ -262,7 +261,6 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
           glm::vec3 scale(glm::length(modelTransform[0]),
                           glm::length(modelTransform[1]),
                           glm::length(modelTransform[2]));
-
           if (context.mCurrentGizmoOperation == ImGuizmo::ROTATE) {
             glm::mat4 rotation = glm::mat4(
                 modelTransform[0] / scale.x, modelTransform[1] / scale.y,
