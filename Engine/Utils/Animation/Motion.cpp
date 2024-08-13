@@ -352,18 +352,18 @@ Pose Motion::At(float frame) {
   unsigned int start = (unsigned int)frame;
   unsigned int end = start + 1;
   float alpha = frame - start;
-  // Pose result;
-  // result.skeleton = &skeleton;
-  // result.jointRotations =
-  //     vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
-  // result.rootLocalPosition = poses[start].rootLocalPosition * alpha +
-  //                            poses[end].rootLocalPosition * (1.0f - alpha);
-  // for (auto jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
-  //   result.jointRotations[jointInd] =
-  //       glm::slerp(poses[start].jointRotations[jointInd],
-  //                  poses[end].jointRotations[jointInd], 1.0f - alpha);
-  // }
-  return poses[start];
+  Pose result;
+  result.skeleton = &skeleton;
+  result.jointRotations =
+      vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
+  result.rootLocalPosition = poses[start].rootLocalPosition * (1.0f - alpha) +
+                             poses[end].rootLocalPosition * alpha;
+  for (auto jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
+    result.jointRotations[jointInd] =
+        glm::slerp(poses[start].jointRotations[jointInd],
+                   poses[end].jointRotations[jointInd], alpha);
+  }
+  return result;
 }
 
 Pose Motion::GetRestPose() {

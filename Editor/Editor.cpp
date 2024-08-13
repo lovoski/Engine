@@ -86,6 +86,8 @@ void Editor::Run(bool release) {
       engine->RenderBegin();
       context.frameBuffer->Unbind();
 
+      float t0 = glfwGetTime();
+
       // start editor ui
       ImGui_ImplOpenGL3_NewFrame();
       ImGui_ImplGlfw_NewFrame();
@@ -123,6 +125,10 @@ void Editor::Run(bool release) {
       AssetsWindow();
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+      float t1 = glfwGetTime();
+      context.editorRenderTime = t1 - t0;
+
       engine->RenderEnd();
     }
   }
@@ -216,6 +222,8 @@ void Editor::MainMenuBar() {
     ImGui::Text("%.4f ms", GWORLD.Context.renderTime * 1000);
     ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
     ImGui::Text("%.4f ms", GWORLD.Context.debugDrawTime * 1000);
+    ImGui::MenuItem("Editor Render:", nullptr, nullptr, false);
+    ImGui::Text("%.4f ms", context.editorRenderTime * 1000);
     ImGui::End();
   }
 }
@@ -248,10 +256,11 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
       Entity *selected = GWORLD.EntityFromID(context.selectedEntity);
       glm::mat4 modelTransform = selected->GetModelMatrix();
       if (ImGuizmo::Manipulate(
-          glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
-          glm::value_ptr(cameraComp.GetProjMatrixPerspective(width, height)),
-          context.mCurrentGizmoOperation, context.mCurrentGizmoMode,
-          glm::value_ptr(modelTransform), NULL, NULL)) {
+              glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
+              glm::value_ptr(
+                  cameraComp.GetProjMatrixPerspective(width, height)),
+              context.mCurrentGizmoOperation, context.mCurrentGizmoMode,
+              glm::value_ptr(modelTransform), NULL, NULL)) {
         // update object transform with modified changes
         if (context.mCurrentGizmoOperation == ImGuizmo::TRANSLATE) {
           glm::vec3 position(modelTransform[3][0], modelTransform[3][1],
