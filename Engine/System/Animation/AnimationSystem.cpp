@@ -48,7 +48,7 @@ void AnimationSystem::Update(float dt) {
           continue;
         }
         // setup the root translation first
-        root->second->localPosition = animator.CurrentPose.jointPositions[0];
+        root->second->localPosition = animator.CurrentPose.rootLocalPosition;
         for (int boneInd = 0; boneInd < motionDataJointNum; ++boneInd) {
           std::string boneName =
               animator.CurrentPose.skeleton->jointNames[boneInd];

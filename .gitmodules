@@ -7,3 +7,6 @@
 [submodule "submodule/assimp"]
 	path = Engine/Deps/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "Engine/Deps/glslang"]
+	path = Engine/Deps/glslang
+	url = https://github.com/KhronosGroup/glslang.git

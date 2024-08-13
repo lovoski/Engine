@@ -31,14 +31,17 @@ struct Pose {
   Pose() = default;
   ~Pose() {
     skeleton = nullptr;
-    jointPositions.clear();
     jointRotations.clear();
+    rootLocalPosition = glm::vec3(0.0f);
   }
 
   Skeleton *skeleton = nullptr;
 
-  // local positions of all joints
-  std::vector<glm::vec3> jointPositions;
+  // // local positions of all joints
+  // std::vector<glm::vec3> jointPositions;
+
+  // local position for root joint only
+  glm::vec3 rootLocalPosition;
   // local rotations of all joints in euler angles
   std::vector<glm::quat> jointRotations;
 

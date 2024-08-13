@@ -176,8 +176,8 @@ bool Motion::LoadFromBVH(string filename) {
               for (int frameInd = 0; frameInd < poses.size(); ++frameInd) {
                 getline(fileInput, line);
                 lineSeg = SplitByWhiteSpace(line);
+                vector<vec3> jointPositions(jointNumber, vec3(0.0f));
                 poses[frameInd].skeleton = &this->skeleton;
-                poses[frameInd].jointPositions.resize(jointNumber, vec3(0.0f));
                 poses[frameInd].jointRotations.resize(jointNumber, vec3(0.0f));
                 int segInd = 0;
                 for (int jointInd = 0; jointInd < jointNumber; ++jointInd) {
@@ -186,7 +186,7 @@ bool Motion::LoadFromBVH(string filename) {
                     float x = std::stof(lineSeg[segInd++]),
                           y = std::stof(lineSeg[segInd++]),
                           z = std::stof(lineSeg[segInd++]);
-                    poses[frameInd].jointPositions[jointInd] = vec3(x, y, z);
+                    jointPositions[jointInd] = vec3(x, y, z);
                   }
                   if (jointChannels[jointInd] != 0) {
                     // set up rotations
@@ -206,6 +206,8 @@ bool Motion::LoadFromBVH(string filename) {
                         quat(1.0f, vec3(0.0f));
                   }
                 }
+                // setup the root translation only
+                poses[frameInd].rootLocalPosition = jointPositions[0];
               }
             }
           } else
@@ -297,9 +299,9 @@ bool Motion::SaveToBVH(string filename) {
       for (int jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
         if (skeleton.jointChildren[jointInd].size() != 0) {
           if (skeleton.jointParent[jointInd] == -1) {
-            fileOutput << poses[frameInd].jointPositions[jointInd].x << " "
-                       << poses[frameInd].jointPositions[jointInd].y << " "
-                       << poses[frameInd].jointPositions[jointInd].z << " ";
+            fileOutput << poses[frameInd].rootLocalPosition.x << " "
+                       << poses[frameInd].rootLocalPosition.y << " "
+                       << poses[frameInd].rootLocalPosition.z << " ";
           }
           vec3 euler =
               glm::eulerAngles(poses[frameInd].jointRotations[jointInd]);
@@ -318,8 +320,8 @@ bool Motion::SaveToBVH(string filename) {
 vector<vec3> Pose::GetGlobalPositions() {
   int jointNum = skeleton->GetNumJoints();
   vector<vec3> positions(jointNum, vec3(0.0f));
-  positions[0] = jointPositions[0];
-  if (jointNum != jointPositions.size() || jointNum != jointRotations.size()) {
+  positions[0] = rootLocalPosition;
+  if (jointNum != jointRotations.size()) {
     throw std::runtime_error(
         "inconsistent joint number between skeleton and pose data");
     return positions;
@@ -369,7 +371,7 @@ Pose Motion::At(float frame) {
 Pose Motion::GetRestPose() {
   Pose p;
   p.skeleton = &skeleton;
-  p.jointPositions = vector<vec3>(skeleton.GetNumJoints(), vec3(0.0f));
+  p.rootLocalPosition = vec3(0.0f);
   p.jointRotations =
       vector<quat>(skeleton.GetNumJoints(), quat(1.0f, vec3(0.0f)));
   return p;

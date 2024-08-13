@@ -1,0 +1,5 @@
+set(ENABLE_OPT OFF CACHE INTERNAL "" FORCE)
+set(GLSLANGLIBS
+  glslang
+  OSDependent
+  SPIRV)
