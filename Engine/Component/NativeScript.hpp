@@ -2,6 +2,7 @@
 
 #include "Base/BaseComponent.hpp"
 #include "Base/Scriptable.hpp"
+#include "Scene.hpp"
 
 namespace aEngine {
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Global.hpp"
+#include "Scene.hpp"
 #include "Base/Types.hpp"
 
 namespace aEngine {
@@ -9,7 +10,7 @@ class Entity {
 public:
   friend class Scene;
 
-  Entity(EntityID id, Scene *scene) : ID(id), scene(scene) {
+  Entity(EntityID id, Scene *s) : ID(id), scene(s) {
     m_scale = glm::vec3(1.0f);
     m_position = glm::vec3(0.0f);
     m_rotation = glm::quat(1.0f, glm::vec3(0.0f));

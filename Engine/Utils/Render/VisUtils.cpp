@@ -265,7 +265,7 @@ void main() {
   FragColor = vec4(shadedColor, 1.0);
 }
 )";
-void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 &vp,
+void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
               glm::vec3 color) {
   static unsigned int vao, vbo;
   static bool openglObjectCreated = false;

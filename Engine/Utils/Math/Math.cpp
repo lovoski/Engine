@@ -1,10 +1,12 @@
 #include "Utils/Math/Math.hpp"
+#include <cmath>
 
 using glm::quat;
 using glm::vec3;
 using glm::dot;
 using glm::normalize;
 using glm::cross;
+using std::sqrt;
 
 namespace aEngine {
 
@@ -23,7 +25,7 @@ quat FromToRotation(vec3 from, vec3 to) {
   }
   auto normal = normalize(cross(from, to));
   float theta = acos(cosTheta);
-  return quat(cos(theta / 2), sin(theta / 2) * normal);
+  return quat(cosf(theta / 2), sinf(theta / 2) * normal);
 }
 };
 

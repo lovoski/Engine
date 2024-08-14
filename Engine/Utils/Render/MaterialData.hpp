@@ -119,8 +119,8 @@ template <typename T> bool MaterialData::RemoveVariable(std::string name) {
   } else if constexpr (std::is_same_v<T, Texture *>) {
     texVariables.erase(idTBR);
   } else {
-    cout << "removing unsupported type to material data, type: "
-         << typeid(T).name() << endl;
+    std::cout << "removing unsupported type to material data, type: "
+         << typeid(T).name() << std::endl;
     return false;
   }
   return true;

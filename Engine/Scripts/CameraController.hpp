@@ -35,7 +35,7 @@ struct CameraController : public Scriptable {
       // float movementSpeed =
       //     0.01f + 0.01f * abs(glm::dot(glm::vec3(camPos.x, 0.0f, camPos.z),
       //                              cameraObject->LocalForward));
-      float movementSpeed = 0.01f + dt * std::min(std::pow(glm::length(camPos), 1.6f), 4e2f);
+      float movementSpeed = 0.01f + 0.3f * dt * std::min(std::pow(glm::length(camPos), 1.2f), 4e2f);
       bool inSceneWindow =
           scene->InSceneWindow(sceneContext.currentMousePosition.x,
                                sceneContext.currentMousePosition.y);

@@ -1,6 +1,7 @@
 #include "Base/Scriptable.hpp"
 #include "Component/NativeScript.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
+#include "Entity.hpp"
 #include "Scene.hpp"
 
 namespace aEngine {

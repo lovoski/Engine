@@ -3,6 +3,7 @@
 #include "Base/BaseComponent.hpp"
 #include "Component/Light.hpp"
 #include "Component/Material.hpp"
+#include "Entity.hpp"
 #include "Scene.hpp"
 #include "Utils/AssetsType.hpp"
 
@@ -14,8 +15,8 @@ struct MeshRenderer : public aEngine::BaseComponent {
   MeshRenderer(aEngine::Render::Mesh *mesh) : meshData(mesh) {}
   ~MeshRenderer() {}
 
-  void ForwardRender(glm::mat4 projMat, glm::mat4 viewMat, Transform *camera,
-                     Transform *object, Material *material,
+  void ForwardRender(glm::mat4 projMat, glm::mat4 viewMat, Entity *camera,
+                     Entity *object, Material *material,
                      std::vector<Light> &lights);
 
   Json Serialize() override;

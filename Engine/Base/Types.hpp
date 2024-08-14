@@ -53,6 +53,8 @@ template <typename T> inline SystemTypeID SystemType() noexcept {
   return typeID;
 }
 
+class Scriptable;
+
 // attach type id to scriptable class and return it
 template <typename T> inline ScriptableTypeID ScriptableType() noexcept {
   static_assert((std::is_base_of<Scriptable, T>::value &&

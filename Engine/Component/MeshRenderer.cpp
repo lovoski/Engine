@@ -19,7 +19,7 @@ void MeshRenderer::Deserialize(Json &json) {
 }
 
 void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
-                                 Transform *camera, Transform *object,
+                                 Entity *camera, Entity *object,
                                  Material *material,
                                  std::vector<Light> &lights) {
   // each materail could have multiple render passes in different render queues

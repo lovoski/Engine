@@ -19,12 +19,12 @@
 #include "Base/Types.hpp"
 
 #include "Component/Light.hpp"
-#include "Entity.hpp"
 #include "Global.hpp"
 
 namespace aEngine {
 
 class Engine;
+class Entity;
 
 struct SceneContext {
   // Keep a reference to the window
@@ -194,7 +194,7 @@ public:
   // is a valid camera entity (has camera component), otherwise returns false.
   bool SetActiveCamera(EntityID camera);
 
-  bool Scene::LoopCursorInSceneWindow();
+  bool LoopCursorInSceneWindow();
 
   bool InSceneWindow(float x, float y) {
     return x >= Context.sceneWindowPos.x &&
@@ -328,8 +328,5 @@ private:
 };
 
 static Scene &GWORLD = Scene::Ref();
-
-// Make alias for entity
-using Transform = Entity;
 
 }; // namespace aEngine

@@ -218,10 +218,9 @@ bool Motion::LoadFromBVH(string filename) {
         fileInput.close();
         return true;
       } else
-        throw std::exception(
-            ("the label should be ROOT instead of " + lineSeg[0]).c_str());
+        throw std::runtime_error("the label should be ROOT instead of " + lineSeg[0]);
     } else
-      throw std::exception("bvh file should start with HIERARCHY");
+      throw std::runtime_error("bvh file should start with HIERARCHY");
     fileInput.close();
     return false;
   }
