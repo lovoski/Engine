@@ -8,18 +8,30 @@
 namespace aEngine {
 
 void AnimationSystem::Update(float dt) {
+  if (enableAutoPlay) {
+    // update the global system frame index
+    systemCurrentFrame = systemCurrentFrame + dt * systemFPS;
+  }
+  if (systemEndFrame-systemStartFrame < 0) {
+    // flip the start frame and end frame
+    // if endframe < startframe
+    std::swap(systemStartFrame, systemEndFrame);
+  }
+  // loop systemCurrentFrame in range
+  int duration = systemEndFrame-systemStartFrame;
+  while (systemCurrentFrame < systemStartFrame)
+    systemCurrentFrame += duration;
+  while (systemCurrentFrame > systemEndFrame)
+    systemCurrentFrame -= duration;
+  // Console.Log("currentframe=%.3f\n", systemCurrentFrame);
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
     auto &animator = entity->GetComponent<Animator>();
     if (animator.skeleton != nullptr && animator.motion != nullptr) {
       int nFrames = animator.motion->poses.size();
       if (nFrames != 0) {
-        animator.CurrentFrame =
-            animator.CurrentFrame + dt * animator.motion->fps;
-        // make sure current frame is in range
-        while (animator.CurrentFrame > nFrames)
-          animator.CurrentFrame -= nFrames;
-        animator.CurrentPose = animator.motion->At(animator.CurrentFrame);
+        // sample animation from motion data of each animator
+        animator.CurrentPose = animator.motion->At(systemCurrentFrame);
         int motionDataJointNum = animator.CurrentPose.skeleton->GetNumJoints();
         // update the local positions of skeleton hierarchy
         // with animator's currentPose
@@ -87,9 +99,9 @@ void AnimationSystem::Render() {
       if (animator.ShowSkeleton && animator.skeleton != nullptr &&
           animator.motion != nullptr) {
         // draw animator.CurrentPose
-        auto skel = animator.skeleton;
+        auto root = animator.skeleton;
         std::queue<Entity *> q;
-        q.push(skel);
+        q.push(root);
         while (!q.empty()) {
           auto cur = q.front();
           q.pop();
@@ -97,7 +109,7 @@ void AnimationSystem::Render() {
             q.push(c);
             VisUtils::DrawBone(cur->Position(), c->Position(),
                                GWORLD.Context.sceneWindowSize, vp,
-                               glm::vec3(0.0f, 1.0f, 0.0f));
+                               animator.SkeletonColor);
           }
         }
       }

@@ -29,6 +29,8 @@ struct EditorContext {
     return context;
   }
 
+  // Reset editor context,
+  // this function should get called when reloading the scene
   void Reset() {
     mCurrentGizmoMode = ImGuizmo::MODE::WORLD;
     mCurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
@@ -59,10 +61,8 @@ public:
 private:
   Engine *engine;
 
-  unsigned int quadVAO, quadVBO;
-  Render::Shader *quadShader;
-
   void MainMenuBar();
+  void MainSequencer();
   void EntitiesWindow();
   void ConsoleWindow();
   void AssetsWindow();

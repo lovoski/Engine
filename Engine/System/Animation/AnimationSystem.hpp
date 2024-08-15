@@ -10,6 +10,9 @@ class AnimationSystem : public aEngine::BaseSystem {
 public:
   AnimationSystem() {
     AddComponentSignature<Animator>();
+    systemCurrentFrame = 0;
+    systemStartFrame = 0;
+    systemEndFrame = 1000;
   }
   ~AnimationSystem() {}
 
@@ -19,9 +22,11 @@ public:
   // draw its skeleton onto the scene.
   void Render();
 
-private:
-  float lastFrameTime;
-
+  int systemFPS = 30;
+  float systemCurrentFrame;
+  int systemStartFrame, systemEndFrame;
+  // automatically increase systemCurrentFrame according to dt and systemFPS
+  bool enableAutoPlay = false;
 };
 
 };

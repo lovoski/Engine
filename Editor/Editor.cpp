@@ -4,6 +4,8 @@
 #include "Scripts/CameraController.hpp"
 #include "Scripts/TestDebugDraw.hpp"
 
+#include "System/Animation/AnimationSystem.hpp"
+
 void BuildTestScene(Engine *engine) {
   auto ent = GWORLD.AddNewEntity();
   ent->name = "Script Base";
@@ -117,6 +119,7 @@ void Editor::Run(bool release) {
       ImGui::EndChild();
       ImGui::End();
 
+      MainSequencer();
       MainMenuBar();
       EntitiesWindow();
       ConsoleWindow();
@@ -140,6 +143,31 @@ void Editor::Shutdown() {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
   engine->Shutdown();
+}
+
+void Editor::MainSequencer() {
+  static AnimationSystem *system = GWORLD.GetSystemInstance<AnimationSystem>();
+  if (system == nullptr) {
+    system = GWORLD.GetSystemInstance<AnimationSystem>();
+  }
+  ImGui::Begin("Timeline");
+  ImGui::BeginChild("TimelineProperties", {-1, 50});
+  ImGui::Checkbox("Auto Play", &system->enableAutoPlay);
+  ImGui::SameLine();
+  int se[2] = {system->systemStartFrame, system->systemEndFrame};
+  ImGui::PushItemWidth(-1);
+  if (ImGui::InputInt2("##Start & End", se)) {
+    system->systemStartFrame = se[0];
+    system->systemEndFrame = se[1];
+  }
+  ImGui::PopItemWidth();
+  ImGui::EndChild();
+  ImGui::BeginChild("TimelineView", {-1, 60});
+  ImGui::PushItemWidth(-1);
+  ImGui::SliderFloat("##currenrFrame", &system->systemCurrentFrame, system->systemStartFrame, system->systemEndFrame);
+  ImGui::PopItemWidth();
+  ImGui::EndChild();
+  ImGui::End();
 }
 
 void Editor::MainMenuBar() {

@@ -220,16 +220,20 @@ void Editor::EntitiesWindow() {
             ImGui::AcceptDragDropPayload("IMPORT_MOTION")) {
       char *path = (char *)payload->Data;
       if (fs::path(path).extension().string() == ".bvh") {
+        // handle bvh mocap import
         auto motion = Loader.GetMotion(path);
         auto parent = GWORLD.AddNewEntity();
+        // attach animator component to a proxy entity
+        parent->AddComponent<Animator>(motion);
         parent->name = fs::path(path).stem().string();
         auto root = GWORLD.AddNewEntity();
         root->name = motion->skeleton.jointNames[0];
-        root->AddComponent<Animator>(motion);
         // build motion hierarchy
         CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), root);
-        root->GetComponent<Animator>().skeleton = root;
-        root->GetComponent<Animator>().ShowSkeleton = true;
+        // set up variables for animator component
+        parent->GetComponent<Animator>().skeleton = root;
+        parent->GetComponent<Animator>().ShowSkeleton = true;
+        // make skeleton hierarchy a child of proxy entity
         parent->AssignChild(root);
       }
     }

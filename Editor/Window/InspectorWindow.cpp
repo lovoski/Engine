@@ -1,6 +1,7 @@
 #include "../Editor.hpp"
 #include <limits>
 
+#include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
 #include "Component/Material.hpp"
@@ -18,7 +19,7 @@ using std::vector;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
-inline void DrawTransformGUI(EntityID selectedEntity, Engine *engine) {
+inline void DrawTransformGUI(EntityID selectedEntity) {
   auto transform = GWORLD.EntityFromID(selectedEntity);
   if (ImGui::TreeNode("Transform")) {
     ImGui::MenuItem("Global Properties", nullptr, nullptr, false);
@@ -36,7 +37,8 @@ inline void DrawTransformGUI(EntityID selectedEntity, Engine *engine) {
           vec3(positions[0], positions[1], positions[2]));
     // if (ImGui::DragFloat3("Rotation", rotations, 1.0f, 360.0f)) {
     //   transform->SetGlobalRotation(
-    //       quat(glm::radians(vec3(rotations[0], rotations[1], rotations[2]))));
+    //       quat(glm::radians(vec3(rotations[0], rotations[1],
+    //       rotations[2]))));
     // }
     if (ImGui::DragFloat3("Scale", scales, 0.01f, 0.0f, MAX_FLOAT))
       transform->SetGlobalScale(vec3(scales[0], scales[1], scales[2]));
@@ -44,7 +46,24 @@ inline void DrawTransformGUI(EntityID selectedEntity, Engine *engine) {
   }
 }
 
-inline void DrawCameraGUI(EntityID selectedEntity, Engine *engine) {
+inline void DrawAnimatorGUI(EntityID selectedEntity) {
+  auto entity = GWORLD.EntityFromID(selectedEntity);
+  auto &animator = entity->GetComponent<Animator>();
+  if (ImGui::TreeNode("Animator")) {
+    ImGui::MenuItem("Skeleton", nullptr, nullptr, false);
+    ImGui::Checkbox("Show Skeleton", &animator.ShowSkeleton);
+    float skeletonColor[3] = {animator.SkeletonColor.x,
+                              animator.SkeletonColor.y,
+                              animator.SkeletonColor.z};
+    if (ImGui::ColorEdit3("Skeleton Color", skeletonColor)) {
+      animator.SkeletonColor =
+          glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
+    }
+    ImGui::TreePop();
+  }
+}
+
+inline void DrawCameraGUI(EntityID selectedEntity) {
   auto &camera = GWORLD.GetComponent<Camera>(selectedEntity);
   if (ImGui::TreeNode("Camera")) {
     ImGui::DragFloat(" :Fov  Y", &camera.fovY, 1.0f, 0.0f, 150.0f);
@@ -54,7 +73,7 @@ inline void DrawCameraGUI(EntityID selectedEntity, Engine *engine) {
   }
 }
 
-inline void DrawBaseMaterialGUI(EntityID selectedEntity, Engine *engine) {
+inline void DrawBaseMaterialGUI(EntityID selectedEntity) {
   auto &material = GWORLD.GetComponent<Material>(selectedEntity);
   if (ImGui::TreeNode("Material")) {
     const ImVec2 sizeAvailable = ImGui::GetContentRegionAvail();
@@ -303,7 +322,7 @@ inline void DrawBaseMaterialGUI(EntityID selectedEntity, Engine *engine) {
   }
 }
 
-inline void DrawBaseLightGUI(EntityID selectedEntity, Engine *engine) {
+inline void DrawBaseLightGUI(EntityID selectedEntity) {
   auto &light = GWORLD.GetComponent<Light>(selectedEntity);
   if (ImGui::TreeNode("Base Light")) {
     const char *comboItems[] = {"Directional light", "Point light",
@@ -347,13 +366,15 @@ void Editor::InspectorWindow() {
     ImGui::SeparatorText(entityName.c_str());
     ImGui::BeginChild("Components List",
                       {-1, ImGui::GetContentRegionAvail().y});
-    DrawTransformGUI(context.selectedEntity, engine);
+    DrawTransformGUI(context.selectedEntity);
     if (GWORLD.HasComponent<Camera>(context.selectedEntity))
-      DrawCameraGUI(context.selectedEntity, engine);
+      DrawCameraGUI(context.selectedEntity);
     if (GWORLD.HasComponent<Material>(context.selectedEntity))
-      DrawBaseMaterialGUI(context.selectedEntity, engine);
+      DrawBaseMaterialGUI(context.selectedEntity);
     if (GWORLD.HasComponent<Light>(context.selectedEntity))
-      DrawBaseLightGUI(context.selectedEntity, engine);
+      DrawBaseLightGUI(context.selectedEntity);
+    if (GWORLD.HasComponent<Animator>(context.selectedEntity))
+      DrawAnimatorGUI(context.selectedEntity);
     ImGui::EndChild();
   }
   ImGui::End();
