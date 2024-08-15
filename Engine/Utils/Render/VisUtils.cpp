@@ -217,23 +217,31 @@ void main() {
     vec3 end = gl_in[1].gl_Position.xyz;
 
     // Compute direction and orthogonal vectors
-    vec3 direction = normalize(end - start);
+    vec3 dir = end - start;
+    vec3 direction = normalize(dir);
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 right = normalize(cross(direction, up));
+    float dirOffset = 0.07;
     up = cross(right, direction);
 
     // Define the four offset vectors for the octahedral shape
     vec3 offsets[4] = {
-        right * radius,
-        -right * radius,
-        up * radius,
-        -up * radius
+        right * radius + dirOffset * dir,
+        up * radius + dirOffset * dir,
+        -right * radius + dirOffset * dir,
+        -up * radius + dirOffset * dir
     };
 
     // Generate the edges of the octahedron
     for (int i = 0; i < 4; ++i) {
         // Lines connecting start point to the offset points
         gl_Position = mvp * vec4(start, 1.0);
+        EmitVertex();
+        gl_Position = mvp * vec4(start + offsets[i], 1.0);
+        EmitVertex();
+        EndPrimitive();
+
+        gl_Position = mvp * vec4(start + offsets[(i+1)%4], 1.0);
         EmitVertex();
         gl_Position = mvp * vec4(start + offsets[i], 1.0);
         EmitVertex();
@@ -282,7 +290,7 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
     openglObjectCreated = true;
   }
   boneShader->Use();
-  boneShader->SetFloat("radius", 0.07f); // Adjust the radius as necessary
+  boneShader->SetFloat("radius", 0.1f); // Adjust the radius as necessary
   boneShader->SetVec3("color", color);
   boneShader->SetVec2("viewportSize", viewport);
   glm::vec3 trans = (start + end) * 0.5f;
