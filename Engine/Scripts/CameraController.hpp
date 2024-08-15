@@ -17,6 +17,12 @@ struct CameraController : public Scriptable {
 
   glm::vec3 cameraEuler;
 
+  // Some parameter related to camera control
+  float initialOffset = 0.01f;
+  float initialFactor = 0.6f;
+  float speedPow = 1.5f;
+  float maxSpeed = 8e2f;
+
   void Start() override {
     EntityID camera;
     if (GWORLD.GetActiveCamera(camera)) {
@@ -35,7 +41,10 @@ struct CameraController : public Scriptable {
       // float movementSpeed =
       //     0.01f + 0.01f * abs(glm::dot(glm::vec3(camPos.x, 0.0f, camPos.z),
       //                              cameraObject->LocalForward));
-      float movementSpeed = 0.01f + 0.3f * dt * std::min(std::pow(glm::length(camPos), 1.2f), 4e2f);
+      float movementSpeed =
+          initialOffset +
+          initialFactor * dt *
+              std::min(std::pow(glm::length(camPos), speedPow), maxSpeed);
       bool inSceneWindow =
           scene->InSceneWindow(sceneContext.currentMousePosition.x,
                                sceneContext.currentMousePosition.y);
@@ -68,13 +77,22 @@ struct CameraController : public Scriptable {
               movementSpeed * mouseOffset.y * cameraObject->LocalUp);
         } else {
           // move the view direction
-          cameraEuler -= glm::radians(glm::vec3(mouseOffset.y, mouseOffset.x, 0.0f));
+          cameraEuler -=
+              glm::radians(glm::vec3(mouseOffset.y, mouseOffset.x, 0.0f));
           cameraObject->SetGlobalRotation(glm::quat(cameraEuler));
         }
         mouseLastPos = mouseCurrentPos;
       } else
         mouseFirstMove = true;
     }
+  }
+
+  void DrawInspectorGUI() override {
+    DrawInspectorGUIDefault();
+    ImGui::SliderFloat("offset", &initialOffset, 0.0f, 1.0f);
+    ImGui::SliderFloat("sensitiviy", &initialFactor, 0.0f, 2.0f);
+    ImGui::SliderFloat("pow", &speedPow, 1.0f, 3.0f);
+    ImGui::SliderFloat("upper bound", &maxSpeed, 100, 1e3);
   }
 };
 

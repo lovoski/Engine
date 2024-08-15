@@ -6,6 +6,7 @@
 #include "Component/Light.hpp"
 #include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
+#include "Component/NativeScript.hpp"
 
 #include "Utils/Render/MaterialData.hpp"
 #include "Utils/Render/Shader.hpp"
@@ -66,9 +67,22 @@ inline void DrawAnimatorGUI(EntityID selectedEntity) {
 inline void DrawCameraGUI(EntityID selectedEntity) {
   auto &camera = GWORLD.GetComponent<Camera>(selectedEntity);
   if (ImGui::TreeNode("Camera")) {
-    ImGui::DragFloat(" :Fov  Y", &camera.fovY, 1.0f, 0.0f, 150.0f);
-    ImGui::DragFloat(" :Z Near", &camera.zNear, 0.001f, 0.0000001f, 10.0f);
-    ImGui::DragFloat(" :Z  Far", &camera.zFar, 0.1f, 20.0f, 2000.0f);
+    ImGui::DragFloat("FovY", &camera.fovY, 1.0f, 0.0f, 150.0f);
+    ImGui::DragFloat("zNear", &camera.zNear, 0.001f, 0.0000001f, 10.0f);
+    ImGui::DragFloat("zFar", &camera.zFar, 0.1f, 20.0f, 2000.0f);
+    ImGui::TreePop();
+  }
+}
+
+inline void DrawNativeScriptGUI(EntityID selectedEntity) {
+  auto &nativeScript = GWORLD.GetComponent<NativeScript>(selectedEntity);
+  if (ImGui::TreeNode("Native Script")) {
+    for (auto instance : nativeScript.instances) {
+      if (instance.second != nullptr) {
+        // if this is a valid scriptable
+        instance.second->DrawInspectorGUI();
+      }
+    }
     ImGui::TreePop();
   }
 }
@@ -375,6 +389,8 @@ void Editor::InspectorWindow() {
       DrawBaseLightGUI(context.selectedEntity);
     if (GWORLD.HasComponent<Animator>(context.selectedEntity))
       DrawAnimatorGUI(context.selectedEntity);
+    if (GWORLD.HasComponent<NativeScript>(context.selectedEntity))
+      DrawNativeScriptGUI(context.selectedEntity);
     ImGui::EndChild();
   }
   ImGui::End();
