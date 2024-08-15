@@ -38,6 +38,18 @@ struct NativeScript : public aEngine::BaseComponent {
     }
   }
 
+  void DrawInspectorGUI() override {
+    if (ImGui::TreeNode("Native Script")) {
+      for (auto instance : instances) {
+        if (instance.second != nullptr) {
+          // if this is a valid scriptable
+          instance.second->DrawInspectorGUI();
+        }
+      }
+      ImGui::TreePop();
+    }
+  }
+
   // A scriptable component can hold multiple scriptable objects
   std::map<ScriptableTypeID, Scriptable*> instances;
 };

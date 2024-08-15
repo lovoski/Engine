@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Entity.hpp"
 #include "Base/BaseComponent.hpp"
+#include "Entity.hpp"
 #include "Utils/Animation/Motion.hpp"
 
 namespace aEngine {
@@ -13,6 +13,20 @@ struct Animator : public BaseComponent {
     CurrentPose = motion->poses[0];
   }
   ~Animator() {}
+
+  void DrawInspectorGUI() override {
+    if (ImGui::TreeNode("Animator")) {
+      ImGui::MenuItem("Skeleton", nullptr, nullptr, false);
+      ImGui::Checkbox("Show Skeleton", &ShowSkeleton);
+      float skeletonColor[3] = {SkeletonColor.x, SkeletonColor.y,
+                                SkeletonColor.z};
+      if (ImGui::ColorEdit3("Skeleton Color", skeletonColor)) {
+        SkeletonColor =
+            glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
+      }
+      ImGui::TreePop();
+    }
+  }
 
   // Skeleton visualization related
   // This entity should be the root joint
@@ -28,4 +42,4 @@ struct Animator : public BaseComponent {
   Animation::Motion *motion = nullptr;
 };
 
-};
+}; // namespace aEngine

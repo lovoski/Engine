@@ -14,6 +14,8 @@ public:
   virtual Json Serialize() { return Json(); }
   virtual void Deserialize(Json &json) {}
 
+  virtual void DrawInspectorGUI() {}
+
 protected:
   friend class Scene;
   EntityID entityID;

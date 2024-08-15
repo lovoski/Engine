@@ -3,6 +3,7 @@
  */
 #include "Global.hpp"
 #include "Base/Scriptable.hpp"
+#include "Base/BaseComponent.hpp"
 
 namespace aEngine {
 
