@@ -164,7 +164,8 @@ void Editor::MainSequencer() {
   ImGui::EndChild();
   ImGui::BeginChild("TimelineView", {-1, 60});
   ImGui::PushItemWidth(-1);
-  ImGui::SliderFloat("##currenrFrame", &system->systemCurrentFrame, system->systemStartFrame, system->systemEndFrame);
+  ImGui::SliderFloat("##currenrFrame", &system->systemCurrentFrame,
+                     system->systemStartFrame, system->systemEndFrame);
   ImGui::PopItemWidth();
   ImGui::EndChild();
   ImGui::End();
@@ -210,7 +211,14 @@ void Editor::MainMenuBar() {
         ImGui::Separator();
         ImGui::MenuItem("Grid Options", nullptr, nullptr, false);
         ImGui::Checkbox("Show Grid", &GWORLD.Context.showGrid);
-        ImGui::PushItemWidth(100);
+        float gridColor[3] = {GWORLD.Context.gridColor.x,
+                              GWORLD.Context.gridColor.y,
+                              GWORLD.Context.gridColor.z};
+        if (ImGui::ColorEdit3("##Grid Color", gridColor)) {
+          GWORLD.Context.gridColor =
+              glm::vec3(gridColor[0], gridColor[1], gridColor[2]);
+        }
+        ImGui::PushItemWidth(120);
         int gridSize = GWORLD.Context.gridSize;
         ImGui::InputInt("Grid Size", &gridSize);
         GWORLD.Context.gridSize = gridSize;

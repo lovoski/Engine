@@ -72,7 +72,7 @@ struct SceneContext {
   void Reset() {
     showGrid = true;
     gridSize = 10;
-    gridColor = glm::vec3(1.0f);
+    gridColor = glm::vec3(0.5f);
     hasActiveCamera = false;
     activeCamera = (EntityID)(-1);
     enableDebugDraw = true;
