@@ -42,7 +42,7 @@ struct Pose {
 
   // local position for root joint only
   glm::vec3 rootLocalPosition;
-  // local rotations of all joints in euler angles
+  // local rotations of all joints in quaternion
   std::vector<glm::quat> jointRotations;
 
   // Perform FK to get global positions for all joints.

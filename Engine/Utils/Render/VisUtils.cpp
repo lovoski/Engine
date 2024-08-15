@@ -197,72 +197,65 @@ void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp,
 }
 
 std::string boneVS = R"(
-#version 460 core
-layout (location = 0) in vec3 aPos;
-uniform mat4 mvp;
+#version 330 core
+layout(location = 0) in vec3 aPos;
+
 void main() {
-  gl_Position = mvp * vec4(aPos, 1.0);
+    gl_Position = vec4(aPos, 1.0);
 }
 )";
 std::string boneGS = R"(
-#version 460 core
-layout (lines) in;
-layout (triangle_strip, max_vertices = 14) out;
+#version 330 core
+layout(lines) in;
+layout(line_strip, max_vertices = 24) out;
 
-uniform vec2 viewportSize;
-out vec4 fragPos; // Output to the fragment shader
+uniform mat4 mvp;
+uniform float radius;
 
 void main() {
-  float aspectRatio = viewportSize.y / viewportSize.x;
-  float size = length(gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz) * 0.05;
-  vec3 boneDir = normalize(gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz);
+    vec3 start = gl_in[0].gl_Position.xyz;
+    vec3 end = gl_in[1].gl_Position.xyz;
 
-  vec3 ortho1 = normalize(cross(boneDir, vec3(0.0, 0.0, 1.0)));
-  vec3 ortho2 = cross(boneDir, ortho1);
+    // Compute direction and orthogonal vectors
+    vec3 direction = normalize(end - start);
+    vec3 up = vec3(0.0, 1.0, 0.0);
+    vec3 right = normalize(cross(direction, up));
+    up = cross(right, direction);
 
-  vec4 p0 = gl_in[0].gl_Position;
-  vec4 p1 = gl_in[1].gl_Position;
+    // Define the four offset vectors for the octahedral shape
+    vec3 offsets[4] = {
+        right * radius,
+        -right * radius,
+        up * radius,
+        -up * radius
+    };
 
-  for (int i = 0; i < 6; ++i) {
-    float angle = 2.0 * 3.14159265 * i / 5.0;
-    vec3 offset = ortho1 * cos(angle) * size + ortho2 * sin(angle) * size;
+    // Generate the edges of the octahedron
+    for (int i = 0; i < 4; ++i) {
+        // Lines connecting start point to the offset points
+        gl_Position = mvp * vec4(start, 1.0);
+        EmitVertex();
+        gl_Position = mvp * vec4(start + offsets[i], 1.0);
+        EmitVertex();
+        EndPrimitive();
 
-    gl_Position = p0 + vec4(offset, 0.0);
-    fragPos = gl_Position; // Pass the position to the fragment shader
-    EmitVertex();
-
-    gl_Position = p1 + vec4(offset * 0.5, 0.0);
-    fragPos = gl_Position; // Pass the position to the fragment shader
-    EmitVertex();
-  }
-  EndPrimitive();
-
-  gl_Position = p0;
-  fragPos = gl_Position; // Pass the position to the fragment shader
-  EmitVertex();
-
-  gl_Position = p1;
-  fragPos = gl_Position; // Pass the position to the fragment shader
-  EmitVertex();
-
-  EndPrimitive();
+        // Lines connecting the start and end offset points
+        gl_Position = mvp * vec4(start + offsets[i], 1.0);
+        EmitVertex();
+        gl_Position = mvp * vec4(end, 1.0);
+        EmitVertex();
+        EndPrimitive();
+    }
 }
 )";
 std::string boneFS = R"(
-#version 460 core
-uniform vec3 color;
-in vec4 fragPos; // Input from the geometry shader
+#version 330 core
 out vec4 FragColor;
 
+uniform vec3 color; // Color of the wireframe
+
 void main() {
-  // Calculate depth-based shading
-  float depth = gl_FragCoord.z / gl_FragCoord.w;
-  float factor = clamp(1.0 - depth, 0.0, 1.0);
-
-  // Mix the color based on the depth
-  vec3 shadedColor = mix(color * 0.5, color, factor);
-
-  FragColor = vec4(shadedColor, 1.0);
+    FragColor = vec4(color, 1.0);
 }
 )";
 void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
@@ -289,15 +282,17 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
     openglObjectCreated = true;
   }
   boneShader->Use();
+  boneShader->SetFloat("radius", 0.07f); // Adjust the radius as necessary
   boneShader->SetVec3("color", color);
   boneShader->SetVec2("viewportSize", viewport);
   glm::vec3 trans = (start + end) * 0.5f;
   float scale = glm::length(start - end) * 0.5f;
   glm::quat rot =
       Math::FromToRotation(glm::vec3(1.0f, 0.0f, 0.0f), start - end);
-  boneShader->SetMat4("mvp", vp * glm::translate(glm::mat4(1.0f), trans) *
+  glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), trans) *
                                 glm::mat4_cast(rot) *
-                                glm::scale(glm::mat4(1.0f), glm::vec3(scale)));
+                                glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+  boneShader->SetMat4("mvp", vp * modelMat);
   glBindVertexArray(vao);
   glDrawArrays(GL_LINES, 0, 2);
   glBindVertexArray(0);
