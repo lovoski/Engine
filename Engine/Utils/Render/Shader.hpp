@@ -79,7 +79,7 @@ public:
       }
     } catch (std::ifstream::failure &e) {
       Console.Log(
-          "[error]: failed to load shader, initialize as error shader%s\n",
+          "[error]: failed to load shader from path, %s\n",
           e.what());
       return false;
     }
@@ -170,7 +170,89 @@ void main() {
 )";
 
 // the default diffuse shader
-const std::string DiffuseShaderPath = "./Assets/shaders/mesh/diffuse";
+const std::string diffuseVS = R"(
+#version 460 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
+out vec3 normal;
+// transform point from model space to world space
+uniform mat4 ModelToWorldPoint;
+// transform vector from model space to world space
+uniform mat3 ModelToWorldDir;
+// transform world space to camera space
+uniform mat4 View;
+// transform camera space to screen
+uniform mat4 Projection;
+void main() {
+  normal = ModelToWorldDir * aNormal;
+  gl_Position = Projection * View * ModelToWorldPoint * vec4(aPos, 1.0);
+}
+)";
+
+const std::string diffuseFS = R"(
+#version 460 core
+uniform vec3 Albedo;
+uniform vec3 dLightDir0;
+uniform vec3 dLightColor0;
+uniform float Ambient;
+in vec2 texCoord;
+in vec3 normal;
+out vec4 FragColor;
+void main() {
+  // ambient
+  vec3 ambient = Ambient * dLightColor0;
+  // diffuse
+  vec3 Normal = normalize(normal);
+  vec3 LightDir = -dLightDir0;
+  float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
+  vec3 diffuse = lambert * dLightColor0 * Albedo;
+  vec3 result = ambient + diffuse;
+  FragColor = vec4(result, 1.0);
+}
+)";
+
+const std::string deformableVS = R"(
+#version 460 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
+out vec3 normal;
+// transform point from model space to world space
+uniform mat4 ModelToWorldPoint;
+// transform vector from model space to world space
+uniform mat3 ModelToWorldDir;
+// transform world space to camera space
+uniform mat4 View;
+// transform camera space to screen
+uniform mat4 Projection;
+void main() {
+  normal = ModelToWorldDir * aNormal;
+  gl_Position = Projection * View * ModelToWorldPoint * vec4(aPos, 1.0);
+}
+)";
+
+const std::string deformableFS = R"(
+#version 460 core
+uniform vec3 Albedo;
+uniform vec3 dLightDir0;
+uniform vec3 dLightColor0;
+uniform float Ambient;
+in vec2 texCoord;
+in vec3 normal;
+out vec4 FragColor;
+void main() {
+  // ambient
+  vec3 ambient = Ambient * dLightColor0;
+  // diffuse
+  vec3 Normal = normalize(normal);
+  vec3 LightDir = -dLightDir0;
+  float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
+  vec3 diffuse = lambert * dLightColor0 * Albedo;
+  vec3 result = ambient + diffuse;
+  FragColor = vec4(result, 1.0);
+}
+)";
 
 }; // namespace Render
 

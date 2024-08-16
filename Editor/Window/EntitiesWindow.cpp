@@ -1,14 +1,13 @@
 #include "../Editor.hpp"
 
-#include "Component/Camera.hpp"
-#include "Component/Material.hpp"
-#include "Component/MeshRenderer.hpp"
-#include "Component/Light.hpp"
 #include "Component/Animator.hpp"
+#include "Component/Camera.hpp"
+#include "Component/Light.hpp"
+#include "Component/MeshRenderer.hpp"
 
+#include "Utils/Render/MaterialData.hpp"
 #include "Utils/Render/Mesh.hpp"
 #include "Utils/Render/Shader.hpp"
-#include "Utils/Render/MaterialData.hpp"
 
 using glm::vec2;
 using glm::vec3;
@@ -30,8 +29,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
     selectedEntity = entity->ID;
   // drag drop control
   if (ImGui::BeginDragDropSource()) {
-    ImGui::SetDragDropPayload("ENTITYID_DATA", &entity,
-                              sizeof(Entity *));
+    ImGui::SetDragDropPayload("ENTITYID_DATA", &entity, sizeof(Entity *));
     ImGui::Text("Drag drop to change hierarchy");
     ImGui::EndDragDropSource();
   }
@@ -81,7 +79,8 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
   }
 }
 
-void CreateBVHSkeletonHierarchy(Animation::Skeleton *skel, int currentJoint, glm::vec3 parentPos, Entity *parent) {
+void CreateBVHSkeletonHierarchy(Animation::Skeleton *skel, int currentJoint,
+                                glm::vec3 parentPos, Entity *parent) {
   for (auto c : skel->jointChildren[currentJoint]) {
     auto ce = GWORLD.AddNewEntity();
     ce->name = skel->jointNames[c];
@@ -115,37 +114,40 @@ void Editor::EntitiesWindow() {
       if (ImGui::MenuItem("Cube")) {
         auto cube = GWORLD.AddNewEntity();
         cube->name = "Cube";
-        cube->AddComponent<Material>();
-        cube->AddComponent<MeshRenderer>(
-            Loader.GetMesh("::cubePrimitive", ""));
+        cube->AddComponent<MeshRenderer>(Loader.GetMesh("::cubePrimitive", ""));
+        cube->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+            nullptr, "Cube Mat");
       }
       if (ImGui::MenuItem("Plane")) {
         auto plane = GWORLD.AddNewEntity();
         plane->name = "Plane";
-        plane->AddComponent<Material>();
         plane->AddComponent<MeshRenderer>(
             Loader.GetMesh("::planePrimitive", ""));
+        plane->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+            nullptr, "Plane Mat");
       }
       if (ImGui::MenuItem("Sphere")) {
         auto sphere = GWORLD.AddNewEntity();
         sphere->name = "Sphere";
-        sphere->AddComponent<Material>();
         sphere->AddComponent<MeshRenderer>(
             Loader.GetMesh("::spherePrimitive", ""));
+        sphere->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+            nullptr, "Sphere Mat");
       }
       if (ImGui::MenuItem("Cylinder")) {
         auto cylinder = GWORLD.AddNewEntity();
         cylinder->name = "Cylinder";
-        cylinder->AddComponent<Material>();
         cylinder->AddComponent<MeshRenderer>(
             Loader.GetMesh("::cylinderPrimitive", ""));
+        cylinder->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+            nullptr, "Cylinder Mat");
       }
       if (ImGui::MenuItem("Cone")) {
         auto cone = GWORLD.AddNewEntity();
         cone->name = "Cone";
-        cone->AddComponent<Material>();
-        cone->AddComponent<MeshRenderer>(
-            Loader.GetMesh("::conePrimitive", ""));
+        cone->AddComponent<MeshRenderer>(Loader.GetMesh("::conePrimitive", ""));
+        cone->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+            nullptr, "Cone Mat");
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Camera")) {
@@ -158,7 +160,8 @@ void Editor::EntitiesWindow() {
       if (ImGui::MenuItem("Directional Light")) {
         auto dLight = GWORLD.AddNewEntity();
         dLight->name = "Light";
-        dLight->SetGlobalRotation(glm::quat(glm::radians(vec3(180.0f, 0.0f, 0.0f))));
+        dLight->SetGlobalRotation(
+            glm::quat(glm::radians(vec3(180.0f, 0.0f, 0.0f))));
         dLight->AddComponent<Light>();
         dLight->GetComponent<Light>().type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
       }
@@ -214,11 +217,14 @@ void Editor::EntitiesWindow() {
         auto modelMeshes = Loader.GetModel(filename.string());
         auto parentEntity = GWORLD.AddNewEntity();
         parentEntity->name = filename.stem().string();
+        // create one unified material for the whole object
+        auto unifyMat = Loader.InstatiateMaterial<Render::DiffuseMaterial>(
+            filename.stem().string());
         for (auto cmesh : modelMeshes) {
           auto childEntity = GWORLD.AddNewEntity();
           childEntity->name = cmesh->identifier;
-          childEntity->AddComponent<Material>();
           childEntity->AddComponent<MeshRenderer>(cmesh);
+          childEntity->GetComponent<MeshRenderer>().AddPass(unifyMat, unifyMat->identifier);
           // setup parent child relation
           parentEntity->AssignChild(childEntity);
         }
@@ -226,7 +232,7 @@ void Editor::EntitiesWindow() {
         // fbx model possibly contains animation data
         Console.Log("fbx model import\n");
       }
-      // TODO: 
+      // TODO:
       // Core.ReloadScene(scenePath);
     }
     ImGui::EndDragDropTarget();

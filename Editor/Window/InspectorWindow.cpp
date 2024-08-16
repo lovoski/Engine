@@ -4,8 +4,8 @@
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
-#include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
+#include "Component/DeformMeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
 #include "Utils/Render/MaterialData.hpp"
@@ -73,14 +73,14 @@ void Editor::InspectorWindow() {
     DrawTransformGUI(context.selectedEntity);
     if (GWORLD.HasComponent<Camera>(context.selectedEntity))
       GWORLD.GetComponent<Camera>(context.selectedEntity).DrawInspectorGUI();
-    if (GWORLD.HasComponent<Material>(context.selectedEntity))
-      GWORLD.GetComponent<Material>(context.selectedEntity).DrawInspectorGUI();
     if (GWORLD.HasComponent<Light>(context.selectedEntity))
       GWORLD.GetComponent<Light>(context.selectedEntity).DrawInspectorGUI();
     if (GWORLD.HasComponent<Animator>(context.selectedEntity))
       GWORLD.GetComponent<Animator>(context.selectedEntity).DrawInspectorGUI();
     if (GWORLD.HasComponent<NativeScript>(context.selectedEntity))
       GWORLD.GetComponent<NativeScript>(context.selectedEntity).DrawInspectorGUI();
+    if (GWORLD.HasComponent<MeshRenderer>(context.selectedEntity))
+      GWORLD.GetComponent<MeshRenderer>(context.selectedEntity).DrawInspectorGUI();
     ImGui::EndChild();
   }
   ImGui::End();

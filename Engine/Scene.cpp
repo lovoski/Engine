@@ -2,7 +2,6 @@
 
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
-#include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
@@ -89,7 +88,6 @@ void Scene::Reset() {
     DestroyEntity(root->ID);
   GetComponentList<aEngine::Camera>()->data.clear();
   GetComponentList<aEngine::Light>()->data.clear();
-  GetComponentList<aEngine::Material>()->data.clear();
   GetComponentList<aEngine::MeshRenderer>()->data.clear();
   GetComponentList<aEngine::NativeScript>()->data.clear();
   HierarchyRoots.clear();
@@ -243,10 +241,6 @@ Json Scene::Serialize() {
     json["components"]["camera"][std::to_string(camera.GetID())] =
         camera.Serialize();
   }
-  for (auto material : GetComponentList<Material>()->data) {
-    json["components"]["material"][std::to_string(material.GetID())] =
-        material.Serialize();
-  }
   for (auto light : GetComponentList<Light>()->data) {
     json["components"]["light"][std::to_string(light.GetID())] =
         light.Serialize();
@@ -324,15 +318,6 @@ void Scene::DeserializeReset(Json &json) {
         newEntity->AddComponent<Camera>();
         newEntity->GetComponent<Camera>().Deserialize(
             json["components"]["camera"][std::to_string((int)old)]);
-      }
-    }
-    for (auto compJson : json["components"]["material"].items()) {
-      EntityID belongs = (EntityID)std::stoi(compJson.key());
-      if (belongs == old) {
-        // this component belongs to the entity
-        newEntity->AddComponent<Material>();
-        newEntity->GetComponent<Material>().Deserialize(
-            json["components"]["material"][std::to_string((int)old)]);
       }
     }
     for (auto compJson : json["components"]["light"].items()) {

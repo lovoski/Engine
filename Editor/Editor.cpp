@@ -1,9 +1,10 @@
 #include "Editor.hpp"
 
+#include "Component/DeformMeshRenderer.hpp"
+#include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
 #include "Scripts/TestDebugDraw.hpp"
-
 #include "System/Animation/AnimationSystem.hpp"
 
 void BuildTestScene(Engine *engine) {
@@ -19,8 +20,21 @@ void BuildTestScene(Engine *engine) {
   cam->AddComponent<Camera>();
   auto &camera = cam->GetComponent<Camera>();
   camera.zFar = 1000.0f;
-  cam->SetGlobalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+  cam->SetGlobalPosition(glm::vec3(0.0f, 3.0f, 5.0f));
   GWORLD.SetActiveCamera(cam->ID);
+
+  auto dLight = GWORLD.AddNewEntity();
+  dLight->name = "Light";
+  dLight->SetGlobalRotation(
+      glm::quat(glm::radians(glm::vec3(180.0f, 0.0f, 0.0f))));
+  dLight->AddComponent<Light>();
+  dLight->GetComponent<Light>().type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+
+  auto cube = GWORLD.AddNewEntity();
+  cube->name = "Cube";
+  cube->AddComponent<MeshRenderer>(Loader.GetMesh("::cubePrimitive", ""));
+  cube->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+      nullptr, "Cube Mat");
 }
 
 Editor::Editor(int width, int height) {

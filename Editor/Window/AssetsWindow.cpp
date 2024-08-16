@@ -1,7 +1,6 @@
 #include "../Editor.hpp"
 
 #include "Component/Camera.hpp"
-#include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/Light.hpp"
 

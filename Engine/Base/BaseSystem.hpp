@@ -19,16 +19,14 @@ public:
 
   const EntitySignature GetSignatureOne() const { return signatureOne; }
 
-  // Add some component to a system, call this function in the overriden
-  // constructor, this would require one entity to obtain all the mentioned
-  // components to be update by the system.
+  // Add some component to a system, the entity must has all component
+  // registered with this function
   template <typename T> void AddComponentSignatureRequireAll() {
     signature.insert(ComponentType<T>());
   }
 
-  // Add some component to a system, this only require one entity to have
-  // one of the components mentioned to be updated by the system.
-  // This function is seperated from the RequireAll function.
+  // Add some component to a system, the entity must has at least one of the 
+  // component registered with this function
   template <typename T> void AddComponentSignatureRequireOne() {
     signatureOne.insert(ComponentType<T>());
   }

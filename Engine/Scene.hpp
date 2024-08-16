@@ -295,21 +295,26 @@ private:
   bool BelongToSystem(const EntityID entity,
                       const EntitySignature &systemSignature,
                       const EntitySignature &systemSignatureOne) {
-    // if the entity has one of the signatures in the systemSignatureOne
+    // if the entity has at least one of the signatures in the systemSignatureOne
     // it will get updated by this system
     auto entitySignature = GetEntitySignature(entity);
-    for (const auto compType : systemSignatureOne) {
-      if (entitySignature->count(compType) == 1) {
-        return true;
+    if (systemSignatureOne.size() > 0) {
+      for (const auto compType : systemSignatureOne) {
+        if (entitySignature->count(compType) == 1) {
+          return true;
+        }
       }
+      // the entity don't have at least one component registered with
+      // RequireOne, condition not met
+      return false;
     }
-    // only when the component at least has all signatures required
-    // by the system, it will get updated by the system
+    // Assume the RequireOne condition is met
     for (const auto compType : systemSignature) {
       if (entitySignature->count(compType) == 0) {
         return false;
       }
     }
+    // The entity also has all components registered with RequireAll
     return true;
   }
 

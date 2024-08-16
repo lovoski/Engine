@@ -31,9 +31,9 @@ AssetsLoader::~AssetsLoader() {
       if (mesh)
         delete mesh;
   }
-  for (auto mat : allMaterials) {
-    if (mat.second)
-      delete mat.second;
+  for (auto shader : allShaders) {
+    if (shader.second)
+      delete shader.second;
   }
 }
 
@@ -75,10 +75,68 @@ void AssetsLoader::LoadDefaultAssets() {
   // load icons
   Texture *nullIcon = new Texture();
   nullIcon->id = loadAndCreateTextureFromFile("./Assets/icons/NULL.png");
+  nullIcon->path = "::NULL_ICON";
   allTextures.insert(std::make_pair("::NULL_ICON", nullIcon));
 
-  // load default material
-  GetMaterial("::base");
+  // load shaders
+  Render::Shader *diffuseShader = new Render::Shader();
+  diffuseShader->identifier = "::diffuse";
+  diffuseShader->LoadAndRecompileShaderSource(Render::diffuseVS,
+                                              Render::diffuseFS);
+  allShaders.insert(std::make_pair("::diffuse", diffuseShader));
+
+  Render::Shader *deformableShader = new Render::Shader();
+  deformableShader->identifier = "::deformable";
+  deformableShader->LoadAndRecompileShaderSource(Render::deformableVS,
+                                              Render::deformableFS);
+  allShaders.insert(std::make_pair("::deformable", deformableShader));
+
+  Render::Shader *errorShader = new Render::Shader();
+  errorShader->identifier = "::error";
+  errorShader->LoadAndRecompileShaderSource(Render::errorVS, Render::errorFS);
+  allShaders.insert(std::make_pair("::error", errorShader));
+}
+
+std::vector<std::string> AssetsLoader::GetIndetifiersForAllCachedMaterials() {
+  std::vector<std::string> result;
+  for (auto m : allMaterials)
+    result.push_back(m->identifier);
+  return result;
+}
+
+std::vector<std::string> AssetsLoader::GetIdentifiersForAllCachedShaders() {
+  std::vector<std::string> result;
+  for (auto s : allShaders) {
+    result.push_back(s.first);
+  }
+  return result;
+}
+Render::Shader *AssetsLoader::GetShader(std::string identifier) {
+  auto s = allShaders.find(identifier);
+  if (s == allShaders.end()) {
+    Console.Log("[error]: shader with identifier %s not found\n",
+                identifier.c_str());
+    return GetShader("::error");
+  } else {
+    Console.Log("[info]: get shader with identifier %s\n", identifier.c_str());
+    return (*s).second;
+  }
+}
+Render::Shader *AssetsLoader::GetShader(std::string vsp, std::string fsp,
+                                        std::string gsp) {
+  Render::Shader *newShader = new Render::Shader();
+  if (newShader->LoadAndRecompileShader(vsp, fsp, gsp)) {
+    // create identifier for this shader
+    newShader->identifier = fs::path(vsp).stem().string() + ":" +
+                            fs::path(fsp).stem().string() + ":" +
+                            fs::path(gsp).stem().string();
+    allShaders.insert(std::make_pair(newShader->identifier, newShader));
+    Console.Log("[info]: load shader from path, identifier as %s vsp=%s, "
+                "fsp=%s, gsp=%s\n",
+                newShader->identifier.c_str(), vsp.c_str(), fsp.c_str(), gsp.c_str());
+    return newShader;
+  } else
+    return GetShader(":error");
 }
 
 Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
@@ -92,7 +150,8 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
       allMotions.insert(std::make_pair(motionPath, motion));
       return motion;
     } else {
-      Console.Log("[error]: unnsupported motion file extension %s\n", extension.c_str());
+      Console.Log("[error]: unnsupported motion file extension %s\n",
+                  extension.c_str());
       return nullptr;
     }
   } else {
@@ -172,37 +231,6 @@ Render::Mesh *AssetsLoader::GetMesh(string modelPath, string identifier) {
         modelPath.c_str(), identifier.c_str());
     return nullptr;
   }
-}
-
-Render::MaterialData *AssetsLoader::GetMaterial(string materialPath) {
-  if (allMaterials.find(materialPath) == allMaterials.end()) {
-    // create a new material
-    Render::MaterialData *newMat = new Render::MaterialData();
-    if (materialPath == "::base") {
-      newMat->identifier = "base material";
-      newMat->path = "::base";
-      newMat->SetDiffuseMaterial(); // set to default material
-      newMat->LoadShader(); // the default material uses the default shaders
-    } else {                // load from file
-      std::ifstream input(materialPath);
-      if (!input.is_open()) {
-        Console.Log("[error]: can't open material data file %s\n",
-                    materialPath.c_str());
-        return nullptr;
-      }
-      // deserialize from material file
-      Json json;
-      input >> json;
-      // setup path and identifier for the material
-      newMat->path = materialPath;
-      newMat->identifier = fs::path(materialPath).stem().string();
-      newMat->Deserialize(json);
-      input.close();
-    }
-    allMaterials.insert(std::make_pair(materialPath, newMat));
-    return newMat;
-  } else
-    return allMaterials[materialPath];
 }
 
 unsigned int loadAndCreateTextureFromFile(string texturePath) {

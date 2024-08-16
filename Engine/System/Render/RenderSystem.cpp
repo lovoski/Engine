@@ -2,8 +2,8 @@
 #include "Scene.hpp"
 
 #include "Component/Camera.hpp"
+#include "Component/DeformMeshRenderer.hpp"
 #include "Component/Light.hpp"
-#include "Component/Material.hpp"
 #include "Component/MeshRenderer.hpp"
 
 #include "Utils/Render/VisUtils.hpp"
@@ -11,8 +11,8 @@
 namespace aEngine {
 
 RenderSystem::RenderSystem() {
-  AddComponentSignatureRequireAll<Material>();
-  AddComponentSignatureRequireAll<MeshRenderer>();
+  AddComponentSignatureRequireOne<MeshRenderer>();
+  AddComponentSignatureRequireOne<DeformMeshRenderer>();
 }
 
 RenderSystem::~RenderSystem() {}
@@ -32,10 +32,19 @@ void RenderSystem::RenderBegin() {
     glEnable(GL_DEPTH_TEST);
     for (auto entID : entities) {
       auto entity = GWORLD.EntityFromID(entID);
-      auto matComp = entity->GetComponent<Material>();
-      auto renderer = entity->GetComponent<MeshRenderer>();
-      renderer.ForwardRender(projMat, viewMat, camera, entity, &matComp,
+      if (entity->HasComponent<DeformMeshRenderer>()) {
+        auto renderer = entity->GetComponent<DeformMeshRenderer>();
+      } else if (entity->HasComponent<MeshRenderer>()) {
+        auto renderer = entity->GetComponent<MeshRenderer>();
+        renderer.ForwardRender(projMat, viewMat, camera, entity,
                              GWORLD.Context.activeLights);
+      } else {
+        Console.Log(
+            "[error]: entity %s shouldn't be updated by render system\n",
+            entity->name.c_str());
+      }
+      
+
     }
 
     // draw the grid in 3d space
