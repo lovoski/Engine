@@ -11,8 +11,8 @@
 namespace aEngine {
 
 RenderSystem::RenderSystem() {
-  AddComponentSignature<Material>();
-  AddComponentSignature<MeshRenderer>();
+  AddComponentSignatureRequireAll<Material>();
+  AddComponentSignatureRequireAll<MeshRenderer>();
 }
 
 RenderSystem::~RenderSystem() {}

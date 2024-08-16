@@ -7,7 +7,7 @@
 namespace aEngine {
 
 NativeScriptSystem::NativeScriptSystem() {
-  AddComponentSignature<NativeScript>();
+  AddComponentSignatureRequireAll<NativeScript>();
 }
 
 void NativeScriptSystem::Update(float dt) {

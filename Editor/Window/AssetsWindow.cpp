@@ -153,63 +153,14 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
     // judge the file type from its extension
     string fileExtension = entry.path().extension().string();
     if (!isDirectory) {
-      if (fileExtension == ".material") {
-        if (ImGui::BeginDragDropSource()) {
-          char matFilenameBuffer[100] = {0};
-          std::strcpy(matFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("MATERIAL_OVERRIDE", matFilenameBuffer,
-                                    sizeof(matFilenameBuffer));
-          ImGui::Text("Drop at a material component to override");
-          ImGui::EndDragDropSource();
-        }
-      } else if (fileExtension == ".obj" || fileExtension == ".fbx" ||
-                 fileExtension == ".gltf") {
-        if (ImGui::BeginDragDropSource()) {
-          char modelFilenameBuffer[100] = {0};
-          std::strcpy(modelFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("IMPORT_MODEL_ASSETS", modelFilenameBuffer,
-                                    sizeof(modelFilenameBuffer));
-          ImGui::Text("Drop at the entity window to import");
-          ImGui::EndDragDropSource();
-        }
-      } else if (fileExtension == ".png" || fileExtension == ".bmp" ||
-                 fileExtension == ".jpg" || fileExtension == ".tga") {
-        if (ImGui::BeginDragDropSource()) {
-          char textureFilenameBuffer[100] = {0};
-          std::strcpy(textureFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("LOAD_TEXTURE", textureFilenameBuffer,
-                                    sizeof(textureFilenameBuffer));
-          ImGui::Text("Drop at the material texture spot to load");
-          ImGui::EndDragDropSource();
-        }
-      } else if (fileExtension == ".vert" || fileExtension == ".frag" ||
-                 fileExtension == ".geom") {
-        if (ImGui::BeginDragDropSource()) {
-          char textureFilenameBuffer[100] = {0};
-          std::strcpy(textureFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("SHADER_OVERRIDE", textureFilenameBuffer,
-                                    sizeof(textureFilenameBuffer));
-          ImGui::Text("Drop at the material texture slot to load");
-          ImGui::EndDragDropSource();
-        }
-      } else if (fileExtension == ".scene") { // load a scene
-        if (ImGui::BeginDragDropSource()) {
-          char sceneFilenameBuffer[100] = {0};
-          std::strcpy(sceneFilenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("IMPORT_SCENE", sceneFilenameBuffer,
-                                    sizeof(sceneFilenameBuffer));
-          ImGui::Text("Drop at the entity window to import");
-          ImGui::EndDragDropSource();
-        }
-      } else if (fileExtension == ".bvh") {
-        if (ImGui::BeginDragDropSource()) {
-          char filenameBuffer[100] = {0};
-          std::strcpy(filenameBuffer, entry.path().string().c_str());
-          ImGui::SetDragDropPayload("IMPORT_MOTION", filenameBuffer,
-                                    sizeof(filenameBuffer));
-          ImGui::Text("Drop at the entity window to import");
-          ImGui::EndDragDropSource();
-        }
+      // make the file dragable
+      if (ImGui::BeginDragDropSource()) {
+        char nameBuffer[200] = {0};
+        std::strcpy(nameBuffer, entry.path().string().c_str());
+        ImGui::SetDragDropPayload("ASSET_FILENAME", nameBuffer,
+                                  sizeof(nameBuffer));
+        ImGui::Text("Drop at the entity window to import");
+        ImGui::EndDragDropSource();
       }
     }
     // right click context menu

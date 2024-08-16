@@ -30,14 +30,15 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
     selectedEntity = entity->ID;
   // drag drop control
   if (ImGui::BeginDragDropSource()) {
-    ImGui::SetDragDropPayload("CHANGE_ENTITY_HIERARCHY", &entity,
+    ImGui::SetDragDropPayload("ENTITYID_DATA", &entity,
                               sizeof(Entity *));
     ImGui::Text("Drag drop to change hierarchy");
     ImGui::EndDragDropSource();
   }
+  // reorder the entity hierarchy
   if (ImGui::BeginDragDropTarget()) {
     if (const ImGuiPayload *payload =
-            ImGui::AcceptDragDropPayload("CHANGE_ENTITY_HIERARCHY")) {
+            ImGui::AcceptDragDropPayload("ENTITYID_DATA")) {
       Entity *newChild = *(Entity **)payload->Data;
       GWORLD.EntityFromID(entity->ID)->AssignChild(newChild);
     }
@@ -188,44 +189,17 @@ void Editor::EntitiesWindow() {
   ImGui::EndChild();
   if (ImGui::BeginDragDropTarget()) {
     if (const ImGuiPayload *payload =
-            ImGui::AcceptDragDropPayload("IMPORT_MODEL_ASSETS")) {
-      char *modelPath = (char *)payload->Data;
-      // Console.Log("[info]: import model from %s\n", modelPath);
-      auto modelMeshes = Loader.GetModel(modelPath);
-      auto parentEntity = GWORLD.AddNewEntity();
-      parentEntity->name = fs::path(modelPath).stem().string();
-      for (auto cmesh : modelMeshes) {
-        auto childEntity = GWORLD.AddNewEntity();
-        childEntity->name = cmesh->identifier;
-        childEntity->AddComponent<Material>();
-        childEntity->AddComponent<MeshRenderer>(cmesh);
-        // setup parent child relation
-        parentEntity->AssignChild(childEntity);
-      }
-      // auto modelEntity = Loader.GetModelEntity(modelPath);
-    }
-    ImGui::EndDragDropTarget();
-  }
-  if (ImGui::BeginDragDropTarget()) {
-    if (const ImGuiPayload *payload =
-            ImGui::AcceptDragDropPayload("IMPORT_SCENE")) {
-      char *scenePath = (char *)payload->Data;
-      // TODO: 
-      // Core.ReloadScene(scenePath);
-    }
-    ImGui::EndDragDropTarget();
-  }
-  if (ImGui::BeginDragDropTarget()) {
-    if (const ImGuiPayload *payload =
-            ImGui::AcceptDragDropPayload("IMPORT_MOTION")) {
-      char *path = (char *)payload->Data;
-      if (fs::path(path).extension().string() == ".bvh") {
+            ImGui::AcceptDragDropPayload("ASSET_FILENAME")) {
+      char *assetFilename = (char *)payload->Data;
+      fs::path filename = fs::path(assetFilename);
+      std::string extension = filename.extension().string();
+      if (extension == ".bvh") {
         // handle bvh mocap import
-        auto motion = Loader.GetMotion(path);
+        auto motion = Loader.GetMotion(filename.string());
         auto parent = GWORLD.AddNewEntity();
         // attach animator component to a proxy entity
         parent->AddComponent<Animator>(motion);
-        parent->name = fs::path(path).stem().string();
+        parent->name = filename.stem().string();
         auto root = GWORLD.AddNewEntity();
         root->name = motion->skeleton.jointNames[0];
         // build motion hierarchy
@@ -235,7 +209,25 @@ void Editor::EntitiesWindow() {
         parent->GetComponent<Animator>().ShowSkeleton = true;
         // make skeleton hierarchy a child of proxy entity
         parent->AssignChild(root);
+      } else if (extension == ".obj" || extension == ".off") {
+        // handle plane model import
+        auto modelMeshes = Loader.GetModel(filename.string());
+        auto parentEntity = GWORLD.AddNewEntity();
+        parentEntity->name = filename.stem().string();
+        for (auto cmesh : modelMeshes) {
+          auto childEntity = GWORLD.AddNewEntity();
+          childEntity->name = cmesh->identifier;
+          childEntity->AddComponent<Material>();
+          childEntity->AddComponent<MeshRenderer>(cmesh);
+          // setup parent child relation
+          parentEntity->AssignChild(childEntity);
+        }
+      } else if (extension == ".fbx") {
+        // fbx model possibly contains animation data
+        Console.Log("fbx model import\n");
       }
+      // TODO: 
+      // Core.ReloadScene(scenePath);
     }
     ImGui::EndDragDropTarget();
   }

@@ -12,7 +12,7 @@ namespace aEngine {
 
 class LightSystem : public aEngine::BaseSystem {
 public:
-  LightSystem() { AddComponentSignature<Light>(); }
+  LightSystem() { AddComponentSignatureRequireAll<Light>(); }
 
   void Update(float dt) override {
     GWORLD.Context.activeLights.clear();

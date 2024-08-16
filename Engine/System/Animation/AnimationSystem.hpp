@@ -9,7 +9,7 @@ namespace aEngine {
 class AnimationSystem : public aEngine::BaseSystem {
 public:
   AnimationSystem() {
-    AddComponentSignature<Animator>();
+    AddComponentSignatureRequireAll<Animator>();
     systemCurrentFrame = 0;
     systemStartFrame = 0;
     systemEndFrame = 1000;

@@ -19,10 +19,13 @@ void AnimationSystem::Update(float dt) {
   }
   // loop systemCurrentFrame in range
   int duration = systemEndFrame-systemStartFrame;
-  while (systemCurrentFrame < systemStartFrame)
-    systemCurrentFrame += duration;
-  while (systemCurrentFrame > systemEndFrame)
-    systemCurrentFrame -= duration;
+  if (duration != 0) {
+    // avoid dead loop
+    while (systemCurrentFrame < systemStartFrame)
+      systemCurrentFrame += duration;
+    while (systemCurrentFrame > systemEndFrame)
+      systemCurrentFrame -= duration;
+  }
   // Console.Log("currentframe=%.3f\n", systemCurrentFrame);
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
@@ -102,6 +105,10 @@ void AnimationSystem::Render() {
         auto root = animator.skeleton;
         std::queue<Entity *> q;
         q.push(root);
+        if (animator.SkeletonOnTop)
+          glDisable(GL_DEPTH_TEST);
+        else
+          glEnable(GL_DEPTH_TEST);
         while (!q.empty()) {
           auto cur = q.front();
           q.pop();
@@ -112,6 +119,10 @@ void AnimationSystem::Render() {
                                animator.SkeletonColor);
           }
         }
+        if (animator.SkeletonOnTop)
+          glEnable(GL_DEPTH_TEST);
+        else
+          glDisable(GL_DEPTH_TEST);
       }
     }
   }

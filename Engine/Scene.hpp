@@ -283,7 +283,7 @@ private:
   // add an entity to the system if it belongs to the system
   // if the entity don't belong to the system, erase it
   void AddEntityToSystem(const EntityID entity, BaseSystem *system) {
-    if (BelongToSystem(entity, system->GetSignature())) {
+    if (BelongToSystem(entity, system->GetSignature(), system->GetSignatureOne())) {
       system->AddEntity(entity);
     } else {
       system->RemoveEntity(entity);
@@ -293,9 +293,20 @@ private:
   // check if an entity belongs to the system by comparing their signatures
   // mind that an entity can have more components than the system's requirement
   bool BelongToSystem(const EntityID entity,
-                      const EntitySignature &systemSignature) {
+                      const EntitySignature &systemSignature,
+                      const EntitySignature &systemSignatureOne) {
+    // if the entity has one of the signatures in the systemSignatureOne
+    // it will get updated by this system
+    auto entitySignature = GetEntitySignature(entity);
+    for (const auto compType : systemSignatureOne) {
+      if (entitySignature->count(compType) == 1) {
+        return true;
+      }
+    }
+    // only when the component at least has all signatures required
+    // by the system, it will get updated by the system
     for (const auto compType : systemSignature) {
-      if (GetEntitySignature(entity)->count(compType) == 0) {
+      if (entitySignature->count(compType) == 0) {
         return false;
       }
     }
