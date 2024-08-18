@@ -100,7 +100,9 @@ void Editor::Run(bool release) {
       engine->RenderBegin();
       context.frameBuffer->Unbind();
 
-      float t0 = glfwGetTime();
+      float currentTime = glfwGetTime();
+      context.editorDeltaRender = currentTime - context.editorLastRender;
+      context.editorLastRender = currentTime;
 
       // start editor ui
       ImGui_ImplOpenGL3_NewFrame();
@@ -140,9 +142,6 @@ void Editor::Run(bool release) {
       AssetsWindow();
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-      float t1 = glfwGetTime();
-      context.editorRenderTime = t1 - t0;
 
       engine->RenderEnd();
     }
@@ -262,19 +261,32 @@ void Editor::MainMenuBar() {
     ImGuiFileDialog::Instance()->Close();
   }
   if (showProfiler) {
+    static float lastTime = 0.0f;
+    static float displayDeltaTime = GWORLD.Context.deltaTime, hut = 0.0f,
+                 ut = 0.0f, rt = 0.05, ddt = 0.0f, ert = 0.0f;
+    lastTime += GWORLD.Context.deltaTime;
+    if (lastTime >= 0.2f) {
+      displayDeltaTime = GWORLD.Context.deltaTime;
+      hut = GWORLD.Context.hierarchyUpdateTime;
+      ut = GWORLD.Context.updateTime;
+      rt = GWORLD.Context.renderTime;
+      ddt = GWORLD.Context.debugDrawTime;
+      ert = context.editorDeltaRender;
+      lastTime = 0.0f;
+    }
     ImGui::Begin("Profiler", &showProfiler);
     ImGui::MenuItem("Frames Per Second:", nullptr, nullptr, false);
-    ImGui::Text("%d", (int)(1.0 / GWORLD.Context.deltaTime));
+    ImGui::Text("%d", (int)(1.0 / displayDeltaTime));
     ImGui::MenuItem("Hierarchy Update:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", GWORLD.Context.hierarchyUpdateTime * 1000);
+    ImGui::Text("%.4f ms", hut * 1000);
     ImGui::MenuItem("Main Update:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", GWORLD.Context.updateTime * 1000);
+    ImGui::Text("%.4f ms", ut * 1000);
     ImGui::MenuItem("Main Render:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", GWORLD.Context.renderTime * 1000);
+    ImGui::Text("%.4f ms", rt * 1000);
     ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", GWORLD.Context.debugDrawTime * 1000);
+    ImGui::Text("%.4f ms", ddt * 1000);
     ImGui::MenuItem("Editor Render:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", context.editorRenderTime * 1000);
+    ImGui::Text("%.4f ms", ert * 1000);
     ImGui::End();
   }
 }

@@ -22,7 +22,7 @@ struct EditorContext {
   // The framebuffer storing scene's rendering
   FrameBuffer *frameBuffer;
 
-  float editorRenderTime;
+  float editorLastRender, editorDeltaRender;
 
   static EditorContext &Ref() {
     static EditorContext context;
@@ -39,7 +39,8 @@ struct EditorContext {
     activeBaseFolder = ".";
     layoutFileName = "layout.ini";
 
-    editorRenderTime = 0.0f;
+    editorLastRender = 0.0f;
+    editorDeltaRender = 0.0f;
   }
 };
 

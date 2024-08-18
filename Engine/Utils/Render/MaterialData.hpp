@@ -11,6 +11,11 @@ namespace aEngine {
 
 namespace Render {
 
+enum RENDER_QUEUE {
+  OPAQUE,
+  TRANSPARENT
+};
+
 bool ActivateTexture2D(Texture &texture, Shader *shader, std::string name,
                        int slot);
 

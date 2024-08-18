@@ -77,7 +77,6 @@ void Scene::RenderBegin() {
 
   Context.renderTime = t1 - t0;
   Context.debugDrawTime = t2 - t1;
-  Context.deltaTime = t2 - Context.lastTime;
 }
 
 void Scene::RenderEnd() { GetSystemInstance<RenderSystem>()->RenderEnd(); }
