@@ -1,4 +1,3 @@
-#include "Component/DeformMeshRenderer.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Utils/AssetsLoader.hpp"
 #include "Utils/AssetsType.hpp"
@@ -46,7 +45,5 @@ void MeshRenderer::DrawInspectorGUI() {
     ImGui::TreePop();
   }
 }
-
-void DeformMeshRenderer::ForwardRender() {}
 
 }; // namespace aEngine

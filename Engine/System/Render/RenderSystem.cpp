@@ -2,7 +2,6 @@
 #include "Scene.hpp"
 
 #include "Component/Camera.hpp"
-#include "Component/DeformMeshRenderer.hpp"
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
 
@@ -12,7 +11,6 @@ namespace aEngine {
 
 RenderSystem::RenderSystem() {
   AddComponentSignatureRequireOne<MeshRenderer>();
-  AddComponentSignatureRequireOne<DeformMeshRenderer>();
 }
 
 RenderSystem::~RenderSystem() {}
@@ -32,24 +30,14 @@ void RenderSystem::RenderBegin() {
     glEnable(GL_DEPTH_TEST);
     for (auto entID : entities) {
       auto entity = GWORLD.EntityFromID(entID);
-      if (entity->HasComponent<DeformMeshRenderer>()) {
-        auto renderer = entity->GetComponent<DeformMeshRenderer>();
-      } else if (entity->HasComponent<MeshRenderer>()) {
-        auto renderer = entity->GetComponent<MeshRenderer>();
-        renderer.ForwardRender(projMat, viewMat, camera, entity,
+      auto renderer = entity->GetComponent<MeshRenderer>();
+      renderer.ForwardRender(projMat, viewMat, camera, entity,
                              GWORLD.Context.activeLights);
-      } else {
-        Console.Log(
-            "[error]: entity %s shouldn't be updated by render system\n",
-            entity->name.c_str());
-      }
-      
-
     }
 
     // draw the grid in 3d space
     if (GWORLD.Context.showGrid)
-      VisUtils::DrawGrid(GWORLD.Context.gridSize, projMat * viewMat,
+      VisUtils::DrawGrid(GWORLD.Context.gridSize, GWORLD.Context.gridSpacing, projMat * viewMat,
                          GWORLD.Context.gridColor);
   }
 }

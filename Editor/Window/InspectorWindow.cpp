@@ -5,7 +5,6 @@
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
-#include "Component/DeformMeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
 #include "Utils/Render/MaterialData.hpp"

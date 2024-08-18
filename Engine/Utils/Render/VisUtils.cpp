@@ -70,9 +70,9 @@ using PlainVertexi = PlainVertex<int>;
 using PlainVertexf = PlainVertex<float>;
 
 // TODO: some shadow-ish issue with the code
-void DrawGrid(unsigned int gridSize, glm::mat4 mvp, glm::vec3 color) {
+void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp, glm::vec3 color) {
   static unsigned int vao, vbo;
-  static int savedGridSize = -1;
+  static int savedGridSize = -1, savedGridSpacing = -1;
   static bool openglObjectCreated = false;
   static std::vector<PlainVertexf> points;
   static Render::Shader *lineShader = new Render::Shader();
@@ -87,9 +87,10 @@ void DrawGrid(unsigned int gridSize, glm::mat4 mvp, glm::vec3 color) {
     glGenVertexArrays(1, &vao);
     openglObjectCreated = true;
   }
-  if (savedGridSize != gridSize) {
+  if (savedGridSize != gridSize || savedGridSpacing != gridSpacing) {
     // reallocate the data if grid size changes
     int current = gridSize;
+    int spacing = gridSpacing;
     float sizef = static_cast<float>(gridSize);
     points.clear();
     while (current > 0) {
@@ -102,7 +103,7 @@ void DrawGrid(unsigned int gridSize, glm::mat4 mvp, glm::vec3 color) {
       points.push_back({currentf, 0, -sizef});
       points.push_back({-currentf, 0, sizef});
       points.push_back({-currentf, 0, -sizef});
-      current--;
+      current -= spacing;
     }
     points.push_back({sizef, 0, 0});
     points.push_back({-sizef, 0, 0});
@@ -117,6 +118,7 @@ void DrawGrid(unsigned int gridSize, glm::mat4 mvp, glm::vec3 color) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
     glBindVertexArray(0);
     savedGridSize = gridSize;
+    savedGridSpacing = gridSpacing;
   }
   lineShader->Use();
   lineShader->SetVec3("color", color);

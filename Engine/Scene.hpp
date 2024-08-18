@@ -34,6 +34,7 @@ struct SceneContext {
   // Grid options
   bool showGrid;
   unsigned int gridSize;
+  unsigned int gridSpacing;
   glm::vec3 gridColor;
 
   // Camera related
@@ -72,6 +73,7 @@ struct SceneContext {
   void Reset() {
     showGrid = true;
     gridSize = 10;
+    gridSpacing = 1;
     gridColor = glm::vec3(0.5f);
     hasActiveCamera = false;
     activeCamera = (EntityID)(-1);

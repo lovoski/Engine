@@ -1,6 +1,5 @@
 #include "Editor.hpp"
 
-#include "Component/DeformMeshRenderer.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
@@ -234,8 +233,11 @@ void Editor::MainMenuBar() {
         }
         ImGui::PushItemWidth(120);
         int gridSize = GWORLD.Context.gridSize;
-        ImGui::InputInt("Grid Size", &gridSize);
-        GWORLD.Context.gridSize = gridSize;
+        if (ImGui::InputInt("Grid Size", &gridSize))
+          GWORLD.Context.gridSize = gridSize;
+        int gridSpacing = GWORLD.Context.gridSpacing;
+        if (ImGui::InputInt("Grid Spacing", &gridSpacing))
+          GWORLD.Context.gridSpacing = gridSpacing;
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }
