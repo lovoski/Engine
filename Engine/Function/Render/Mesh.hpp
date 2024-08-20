@@ -18,6 +18,7 @@ public:
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
   VAO vao;
+  Buffer vbo, ebo;
 
   Buffer defaultStates, skeletonTransforms;
 
@@ -48,8 +49,6 @@ public:
   }
 
 private:
-  Buffer vbo, ebo;
-
   // initializes all the buffer objects/arrays
   void setupMesh();
 };

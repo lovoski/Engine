@@ -7,29 +7,22 @@
 #include "Component/Camera.hpp"
 #include "Scene.hpp"
 
+#include "Function/Math/Math.hpp"
 #include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
 
-struct CameraController : public Scriptable {
+struct EditorCameraController : public Scriptable {
   bool mouseFirstMove = true;
   glm::vec2 mouseLastPos;
 
-  glm::vec3 cameraEuler;
+  glm::vec3 cameraPivot = glm::vec3(0.0f);
 
   // Some parameter related to camera control
   float initialOffset = 0.01f;
   float initialFactor = 0.6f;
   float speedPow = 1.5f;
   float maxSpeed = 8e2f;
-
-  void Start() override {
-    EntityID camera;
-    if (GWORLD.GetActiveCamera(camera)) {
-      auto cameraObject = GWORLD.EntityFromID(camera);
-      cameraEuler = cameraObject->EulerAngles();
-    }
-  }
 
   void Update(float dt) override {
     EntityID camera;
@@ -71,19 +64,37 @@ struct CameraController : public Scriptable {
         glm::vec2 mouseOffset = 0.1f * (mouseCurrentPos - mouseLastPos);
         if (sceneContext.engine->GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
           // move the view position
-          cameraObject->SetGlobalPosition(
-              cameraObject->Position() -
-              movementSpeed * mouseOffset.x * cameraObject->LocalLeft +
-              movementSpeed * mouseOffset.y * cameraObject->LocalUp);
+          glm::vec3 positionDelta =
+              -movementSpeed * mouseOffset.x * cameraObject->LocalLeft +
+              movementSpeed * mouseOffset.y * cameraObject->LocalUp;
+          cameraPivot += positionDelta;
+          cameraObject->SetGlobalPosition(cameraObject->Position() +
+                                          positionDelta);
         } else {
-          // move the view direction
-          cameraEuler -=
-              glm::radians(glm::vec3(mouseOffset.y, mouseOffset.x, 0.0f));
-          cameraObject->SetGlobalRotation(glm::quat(cameraEuler));
+          // repose the camera
+          glm::vec3 posVector = cameraObject->Position();
+          glm::quat rotY =
+              glm::quat(glm::radians(glm::vec3(0.0f, -mouseOffset.x, 0.0f)));
+          float dotProduct =
+              glm::dot(glm::normalize(cameraObject->Position() - cameraPivot),
+                       Entity::WorldUp);
+          glm::quat rotX = glm::angleAxis(glm::radians(-mouseOffset.y),
+                                          cameraObject->LocalLeft);
+          glm::vec3 newPos = rotY * rotX * posVector;
+          cameraObject->SetGlobalPosition(newPos);
         }
         mouseLastPos = mouseCurrentPos;
       } else
         mouseFirstMove = true;
+      glm::vec3 lastLeft = cameraObject->LocalLeft;
+      glm::vec3 forward = normalize(cameraObject->Position() - cameraPivot);
+      glm::vec3 up = Entity::WorldUp;
+      glm::vec3 left = normalize(cross(up, forward));
+      // flip left if non-consistent
+      if (glm::dot(lastLeft, left) < 0.0f) left *= -1;
+      up = normalize(cross(forward, left));
+      glm::mat3 rot(left, up, forward);
+      cameraObject->SetGlobalRotation(glm::quat_cast(rot));
     }
   }
 
@@ -93,6 +104,14 @@ struct CameraController : public Scriptable {
     ImGui::SliderFloat("sensitiviy", &initialFactor, 0.0f, 2.0f);
     ImGui::SliderFloat("pow", &speedPow, 1.0f, 3.0f);
     ImGui::SliderFloat("upper bound", &maxSpeed, 100, 1e3);
+    float pivot[3] = {cameraPivot.x, cameraPivot.y, cameraPivot.z};
+    if (ImGui::DragFloat3("camera pivot", pivot, 0.1f,
+                          -std::numeric_limits<float>::max() / 3,
+                          std::numeric_limits<float>::max() / 3)) {
+      cameraPivot.x = pivot[0];
+      cameraPivot.y = pivot[1];
+      cameraPivot.z = pivot[2];
+    }
   }
 };
 

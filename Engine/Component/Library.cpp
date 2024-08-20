@@ -27,7 +27,7 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
                                  std::vector<Light> &lights) {
   // apply all the deformers before actual rendering
   for (auto deformer : deformers) {
-    deformer->DeformMesh(object);
+    deformer->DeformMesh(object, true);
   }
   for (auto pass : passes) {
     pass->GetShader()->Use();
@@ -62,6 +62,8 @@ void MeshRenderer::DrawInspectorGUI() {
 std::vector<glm::mat4> Animator::GetSkeletonTransforms() {
   std::vector<glm::mat4> result(CurrentPose.skeleton->GetNumJoints(),
                                 glm::mat4(1.0f));
+  // capture position, rotation of joints, convert these information into matrices
+
   return result;
 }
 

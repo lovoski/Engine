@@ -27,6 +27,16 @@ quat FromToRotation(vec3 from, vec3 to) {
   float theta = acos(cosTheta);
   return quat(cosf(theta / 2), sinf(theta / 2) * normal);
 }
+
+quat LookAtRotation(vec3 forward, vec3 up) {
+  forward = normalize(forward);
+  up = normalize(up);
+  vec3 left = normalize(cross(up, forward));
+  up = normalize(cross(forward, left));
+  glm::mat3 rot(left, up, forward);
+  return glm::quat_cast(rot);
+}
+
 };
 
 };
