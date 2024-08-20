@@ -2,7 +2,7 @@
 
 #include "Base/BaseComponent.hpp"
 #include "Entity.hpp"
-#include "Utils/Animation/Motion.hpp"
+#include "Function/Animation/Motion.hpp"
 
 namespace aEngine {
 
@@ -30,6 +30,9 @@ struct Animator : public BaseComponent {
       ImGui::TreePop();
     }
   }
+
+  // Get transformation matrics needed for skeleton animation
+  std::vector<glm::mat4> GetSkeletonTransforms();
 
   // Skeleton visualization related
   // This entity should be the root joint

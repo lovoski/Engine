@@ -4,8 +4,8 @@
 #include "Component/MeshRenderer.hpp"
 #include "Component/Light.hpp"
 
-#include "Utils/Render/Shader.hpp"
-#include "Utils/Render/MaterialData.hpp"
+#include "Function/Render/Shader.hpp"
+#include "Function/Render/MaterialData.hpp"
 
 using glm::vec2;
 using glm::vec3;

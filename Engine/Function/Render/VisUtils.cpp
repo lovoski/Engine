@@ -1,6 +1,6 @@
-#include "Utils/Render/VisUtils.hpp"
-#include "Utils/Math/Math.hpp"
-#include "Utils/Render/Shader.hpp"
+#include "Function/Render/VisUtils.hpp"
+#include "Function/Math/Math.hpp"
+#include "Function/Render/Shader.hpp"
 
 namespace aEngine {
 

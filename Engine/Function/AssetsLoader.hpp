@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Global.hpp"
-#include "Utils/AssetsType.hpp"
-#include "Utils/Render/MaterialData.hpp"
-#include "Utils/Animation/Motion.hpp"
-#include "Utils/General/ComputeShader.hpp"
+#include "Function/AssetsType.hpp"
+#include "Function/Render/MaterialData.hpp"
+#include "Function/Animation/Motion.hpp"
+#include "Function/General/ComputeShader.hpp"
 
 namespace aEngine {
 

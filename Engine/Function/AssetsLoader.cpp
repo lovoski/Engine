@@ -1,8 +1,8 @@
-#include "Utils/AssetsLoader.hpp"
-#include "Utils/Render/Deformable.hpp"
-#include "Utils/Render/MaterialData.hpp"
-#include "Utils/Render/Mesh.hpp"
-#include "Utils/Render/Shader.hpp"
+#include "Function/AssetsLoader.hpp"
+#include "Function/Render/MaterialData.hpp"
+#include "Function/Render/Mesh.hpp"
+#include "Function/Render/Shader.hpp"
+#include "Function/General/Deformers.hpp"
 
 
 #include <assimp/Importer.hpp>
@@ -51,10 +51,10 @@ void AssetsLoader::LoadDefaultAssets() {
   // plane
   vector<Vertex> vertices;
   vector<unsigned int> indices;
-  vertices.push_back({{ 0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 1.0f}});
-  vertices.push_back({{ 0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 1.0f}});
+  vertices.push_back({{ 0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
+  vertices.push_back({{ 0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}});
+  vertices.push_back({{-0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}});
+  vertices.push_back({{-0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}});
   indices = {0, 1, 3, 1, 2, 3};
   auto planePrimitive = new Render::Mesh(vertices, indices);
   planePrimitive->identifier = "plane";
@@ -87,10 +87,10 @@ void AssetsLoader::LoadDefaultAssets() {
                                               Render::diffuseFS);
   allShaders.insert(std::make_pair("::diffuse", diffuseShader));
 
-  // ComputeShader *skeletonAnimDeform = new ComputeShader(Render::skelAnimComp);
-  // skeletonAnimDeform->identifier = "::skelAnim";
-  // allComputeShaders.insert(
-  //     std::make_pair(skeletonAnimDeform->identifier, skeletonAnimDeform));
+  ComputeShader *skeletonAnimDeform = new ComputeShader(skinnedMeshDeform);
+  skeletonAnimDeform->identifier = "::skinnedMeshDeform";
+  allComputeShaders.insert(
+      std::make_pair(skeletonAnimDeform->identifier, skeletonAnimDeform));
 
   Render::Shader *errorShader = new Render::Shader();
   errorShader->identifier = "::error";
@@ -322,15 +322,17 @@ Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
     }
     // texture coordinates
     if (mesh->mTextureCoords[0]) { // if this model contains texture coordinates
-      glm::vec2 vec;
+      glm::vec4 vec;
       // a vertex can contain up to 8 different texture coordinates. We thus
       // make the assumption that we won't use models where a vertex can have
       // multiple texture coordinates so we always take the first set (0).
       vec.x = mesh->mTextureCoords[0][i].x;
       vec.y = mesh->mTextureCoords[0][i].y;
+      vec.z = 1.0f;
+      vec.w = 1.0f;
       vertex.TexCoords = vec;
     } else
-      vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+      vertex.TexCoords = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
     vertices.push_back(vertex);
   }

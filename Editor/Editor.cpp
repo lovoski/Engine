@@ -48,7 +48,10 @@ void Editor::Start() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 
-  ImGui::StyleColorsLight();
+  ImGui::StyleColorsDark();
+  auto &style = ImGui::GetStyle();
+  style.FrameBorderSize = 1.0f;
+  style.FrameRounding = 3.0f;
 
   // setup imguizmo
   context.mCurrentGizmoOperation = ImGuizmo::TRANSLATE;

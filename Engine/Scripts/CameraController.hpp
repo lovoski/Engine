@@ -7,7 +7,7 @@
 #include "Component/Camera.hpp"
 #include "Scene.hpp"
 
-#include "Utils/Render/VisUtils.hpp"
+#include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
 

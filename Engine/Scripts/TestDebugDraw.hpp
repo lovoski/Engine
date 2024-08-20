@@ -2,7 +2,7 @@
 
 #include "Base/Scriptable.hpp"
 #include "Scene.hpp"
-#include "Utils/Render/VisUtils.hpp"
+#include "Function/Render/VisUtils.hpp"
 
 #include "Component/Camera.hpp"
 

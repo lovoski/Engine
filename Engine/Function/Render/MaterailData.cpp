@@ -1,7 +1,7 @@
 #include "Entity.hpp"
 #include "Scene.hpp"
-#include "Utils/AssetsLoader.hpp"
-#include "Utils/Render/MaterialData.hpp"
+#include "Function/AssetsLoader.hpp"
+#include "Function/Render/MaterialData.hpp"
 
 namespace aEngine {
 

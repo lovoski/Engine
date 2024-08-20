@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Scene.hpp"
-#include "Utils/AssetsLoader.hpp"
+#include "Function/AssetsLoader.hpp"
 
 namespace aEngine {
 

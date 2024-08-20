@@ -2,8 +2,8 @@
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Scene.hpp"
-#include "Utils/Animation/Motion.hpp"
-#include "Utils/Render/VisUtils.hpp"
+#include "Function/Animation/Motion.hpp"
+#include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
 

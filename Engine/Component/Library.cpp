@@ -1,10 +1,11 @@
+#include "Component/Animator.hpp"
 #include "Component/MeshRenderer.hpp"
-#include "Utils/AssetsLoader.hpp"
-#include "Utils/AssetsType.hpp"
-#include "Utils/Render/MaterialData.hpp"
-#include "Utils/Render/Mesh.hpp"
-#include "Utils/Render/Shader.hpp"
-#include "Utils/Render/VisUtils.hpp"
+#include "Function/AssetsLoader.hpp"
+#include "Function/AssetsType.hpp"
+#include "Function/Render/MaterialData.hpp"
+#include "Function/Render/Mesh.hpp"
+#include "Function/Render/Shader.hpp"
+#include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
 
@@ -24,6 +25,10 @@ void MeshRenderer::Deserialize(Json &json) {
 void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
                                  Entity *camera, Entity *object,
                                  std::vector<Light> &lights) {
+  // apply all the deformers before actual rendering
+  for (auto deformer : deformers) {
+    deformer->DeformMesh(object);
+  }
   for (auto pass : passes) {
     pass->GetShader()->Use();
     pass->SetupLights(GWORLD.Context.activeLights);
@@ -35,7 +40,15 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
 
 void MeshRenderer::DrawInspectorGUI() {
   if (ImGui::TreeNode("MeshRenderer")) {
-    if (ImGui::TreeNode("Passes")) {
+    ImGui::MenuItem("Options", nullptr, nullptr, false);
+    if (ImGui::TreeNode("Deformers")) {
+      for (auto deformer : deformers) {
+        ImGui::Separator();
+        deformer->DrawInspectorGUI();
+      }
+      ImGui::TreePop();
+    }
+    if (ImGui::TreeNode("Render Passes")) {
       for (auto pass : passes) {
         ImGui::Separator();
         pass->DrawInspectorGUI();
@@ -44,6 +57,12 @@ void MeshRenderer::DrawInspectorGUI() {
     }
     ImGui::TreePop();
   }
+}
+
+std::vector<glm::mat4> Animator::GetSkeletonTransforms() {
+  std::vector<glm::mat4> result(CurrentPose.skeleton->GetNumJoints(),
+                                glm::mat4(1.0f));
+  return result;
 }
 
 }; // namespace aEngine

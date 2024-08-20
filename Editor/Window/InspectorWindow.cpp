@@ -7,8 +7,8 @@
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
-#include "Utils/Render/MaterialData.hpp"
-#include "Utils/Render/Shader.hpp"
+#include "Function/Render/MaterialData.hpp"
+#include "Function/Render/Shader.hpp"
 
 using glm::quat;
 using glm::vec2;

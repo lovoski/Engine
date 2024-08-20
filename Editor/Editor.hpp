@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Engine.hpp"
-#include "Utils/Render/Shader.hpp"
+#include "Function/Render/Shader.hpp"
+#include "Function/AssetsLoader.hpp"
 #include "System/Render/FrameBuffer.hpp"
 
 using namespace aEngine;

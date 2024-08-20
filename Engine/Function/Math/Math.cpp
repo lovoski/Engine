@@ -1,4 +1,4 @@
-#include "Utils/Math/Math.hpp"
+#include "Function/Math/Math.hpp"
 #include <cmath>
 
 using glm::quat;

@@ -5,7 +5,7 @@
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
 
-#include "Utils/Render/VisUtils.hpp"
+#include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
 
@@ -37,8 +37,8 @@ void RenderSystem::RenderBegin() {
 
     // draw the grid in 3d space
     if (GWORLD.Context.showGrid)
-      VisUtils::DrawGrid(GWORLD.Context.gridSize, GWORLD.Context.gridSpacing, projMat * viewMat,
-                         GWORLD.Context.gridColor);
+      VisUtils::DrawGrid(GWORLD.Context.gridSize, GWORLD.Context.gridSpacing,
+                         projMat * viewMat, GWORLD.Context.gridColor);
   }
 }
 

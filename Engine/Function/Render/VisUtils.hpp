@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Global.hpp"
-#include "Utils/Animation/Motion.hpp"
+#include "Function/Animation/Motion.hpp"
 
 namespace aEngine {
 
