@@ -35,6 +35,7 @@ struct MeshRenderer : public aEngine::BaseComponent {
     }
   }
 
+  bool deformable = false;
   Render::Mesh *meshData = nullptr;
 
   std::vector<Render::BaseMaterial *> passes;

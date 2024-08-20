@@ -4,6 +4,7 @@
 #include "Utils/AssetsType.hpp"
 #include "Utils/Render/MaterialData.hpp"
 #include "Utils/Animation/Motion.hpp"
+#include "Utils/General/ComputeShader.hpp"
 
 namespace aEngine {
 
@@ -39,6 +40,7 @@ public:
   }
   std::vector<std::string> GetIndetifiersForAllCachedMaterials();
 
+  ComputeShader *GetLoadedComputeShader(std::string identifier);
   // Load cached shader with identifiers
   Render::Shader *GetShader(std::string identifier);
   // Load new shader from file path
@@ -52,8 +54,10 @@ private:
   std::map<std::string, Texture *> allTextures;
   // path to model, one model could contain multiple meshes
   std::map<std::string, std::vector<Render::Mesh *>> allMeshes;
-  // path to shader data
+  // identifier to shader data
   std::map<std::string, Render::Shader *> allShaders;
+  // identifier to compute shader
+  std::map<std::string, ComputeShader *> allComputeShaders;
   // path to motion data
   std::map<std::string, Animation::Motion *> allMotions;
 

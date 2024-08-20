@@ -74,7 +74,7 @@ protected:
 
 class DiffuseMaterial : public BaseMaterial {
 public:
-  DiffuseMaterial(bool deformable = false);
+  DiffuseMaterial();
 
   float Ambient = 0.1f;
   glm::vec3 Albedo = glm::vec3(1.0f);

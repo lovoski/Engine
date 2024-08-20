@@ -1,7 +1,9 @@
 #include "Utils/AssetsLoader.hpp"
+#include "Utils/Render/Deformable.hpp"
 #include "Utils/Render/MaterialData.hpp"
 #include "Utils/Render/Mesh.hpp"
 #include "Utils/Render/Shader.hpp"
+
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -49,10 +51,10 @@ void AssetsLoader::LoadDefaultAssets() {
   // plane
   vector<Vertex> vertices;
   vector<unsigned int> indices;
-  vertices.push_back({{0.5f, 0.0f, 0.5f}, {0.0, 1.0, 0.0}, {1.0f, 1.0f}});
-  vertices.push_back({{0.5f, 0.0f, -0.5f}, {0.0, 1.0, 0.0}, {1.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.0f, -0.5f}, {0.0, 1.0, 0.0}, {0.0f, 0.0f}});
-  vertices.push_back({{-0.5f, 0.0f, 0.5f}, {0.0, 1.0, 0.0}, {0.0f, 1.0f}});
+  vertices.push_back({{ 0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 1.0f}});
+  vertices.push_back({{ 0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 0.0f}});
+  vertices.push_back({{-0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 1.0f}});
   indices = {0, 1, 3, 1, 2, 3};
   auto planePrimitive = new Render::Mesh(vertices, indices);
   planePrimitive->identifier = "plane";
@@ -85,11 +87,10 @@ void AssetsLoader::LoadDefaultAssets() {
                                               Render::diffuseFS);
   allShaders.insert(std::make_pair("::diffuse", diffuseShader));
 
-  Render::Shader *deformableShader = new Render::Shader();
-  deformableShader->identifier = "::deformable";
-  deformableShader->LoadAndRecompileShaderSource(Render::deformableVS,
-                                              Render::deformableFS);
-  allShaders.insert(std::make_pair("::deformable", deformableShader));
+  // ComputeShader *skeletonAnimDeform = new ComputeShader(Render::skelAnimComp);
+  // skeletonAnimDeform->identifier = "::skelAnim";
+  // allComputeShaders.insert(
+  //     std::make_pair(skeletonAnimDeform->identifier, skeletonAnimDeform));
 
   Render::Shader *errorShader = new Render::Shader();
   errorShader->identifier = "::error";
@@ -133,10 +134,22 @@ Render::Shader *AssetsLoader::GetShader(std::string vsp, std::string fsp,
     allShaders.insert(std::make_pair(newShader->identifier, newShader));
     Console.Log("[info]: load shader from path, identifier as %s vsp=%s, "
                 "fsp=%s, gsp=%s\n",
-                newShader->identifier.c_str(), vsp.c_str(), fsp.c_str(), gsp.c_str());
+                newShader->identifier.c_str(), vsp.c_str(), fsp.c_str(),
+                gsp.c_str());
     return newShader;
   } else
     return GetShader(":error");
+}
+ComputeShader *AssetsLoader::GetLoadedComputeShader(std::string identifier) {
+  auto s = allComputeShaders.find(identifier);
+  if (s == allComputeShaders.end()) {
+    Console.Log("[error]: shader with identifier %s not found\n",
+                identifier.c_str());
+    return nullptr;
+  } else {
+    Console.Log("[info]: get shader with identifier %s\n", identifier.c_str());
+    return (*s).second;
+  }
 }
 
 Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
@@ -292,17 +305,19 @@ Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
   // walk through each of the mesh's vertices
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
     Vertex vertex;
-    glm::vec3 vector;
+    glm::vec4 vector;
     // positions
     vector.x = mesh->mVertices[i].x;
     vector.y = mesh->mVertices[i].y;
     vector.z = mesh->mVertices[i].z;
+    vector.w = 1.0f;
     vertex.Position = vector;
     // normals
     if (mesh->HasNormals()) {
       vector.x = mesh->mNormals[i].x;
       vector.y = mesh->mNormals[i].y;
       vector.z = mesh->mNormals[i].z;
+      vector.w = 0.0f;
       vertex.Normal = vector;
     }
     // texture coordinates

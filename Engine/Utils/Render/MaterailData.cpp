@@ -74,8 +74,7 @@ void BaseMaterial::SetVariables(glm::mat4 &model, glm::mat4 &view,
   if (shader != nullptr) {
     shader->Use();
     glm::mat4 ModelToWorldPoint = model;
-    glm::mat3 ModelToWorldDir =
-        glm::transpose(glm::inverse(glm::mat3(ModelToWorldPoint)));
+    glm::mat3 ModelToWorldDir = glm::mat3(ModelToWorldPoint);
     shader->SetMat4("Projection", projection);
     shader->SetMat4("View", view);
     shader->SetMat4("ModelToWorldPoint", ModelToWorldPoint);
@@ -87,13 +86,9 @@ void BaseMaterial::SetVariables(glm::mat4 &model, glm::mat4 &view,
 
 // ----------------------Diffuse Material------------------------------
 
-DiffuseMaterial::DiffuseMaterial(bool deformable) {
+DiffuseMaterial::DiffuseMaterial() {
   // initialize shader to defualt value
-  if (deformable) {
-    shader = Loader.GetShader("::deformable");
-  } else {
-    shader = Loader.GetShader("::diffuse");
-  }
+  shader = Loader.GetShader("::diffuse");
 }
 
 void DiffuseMaterial::DrawInspectorGUI() {

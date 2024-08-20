@@ -140,6 +140,7 @@ void Editor::Run(bool release) {
       ConsoleWindow();
       InspectorWindow();
       AssetsWindow();
+      ImGui::EndFrame();
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -263,7 +264,7 @@ void Editor::MainMenuBar() {
   if (showProfiler) {
     static float lastTime = 0.0f;
     static float displayDeltaTime = GWORLD.Context.deltaTime, hut = 0.0f,
-                 ut = 0.0f, rt = 0.05, ddt = 0.0f, ert = 0.0f;
+                 ut = 0.0f, rt = 0.05, ddt = 0.0f, tt = 0.0f;
     lastTime += GWORLD.Context.deltaTime;
     if (lastTime >= 0.2f) {
       displayDeltaTime = GWORLD.Context.deltaTime;
@@ -271,7 +272,7 @@ void Editor::MainMenuBar() {
       ut = GWORLD.Context.updateTime;
       rt = GWORLD.Context.renderTime;
       ddt = GWORLD.Context.debugDrawTime;
-      ert = context.editorDeltaRender;
+      tt = GWORLD.Context.deltaTime;
       lastTime = 0.0f;
     }
     ImGui::Begin("Profiler", &showProfiler);
@@ -285,8 +286,8 @@ void Editor::MainMenuBar() {
     ImGui::Text("%.4f ms", rt * 1000);
     ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
     ImGui::Text("%.4f ms", ddt * 1000);
-    ImGui::MenuItem("Editor Render:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", ert * 1000);
+    ImGui::MenuItem("Delta Time:", nullptr, nullptr, false);
+    ImGui::Text("%.4f ms", tt * 1000);
     ImGui::End();
   }
 }
