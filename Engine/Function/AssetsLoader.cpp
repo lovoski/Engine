@@ -1,3 +1,7 @@
+#include "Component/Animator.hpp"
+#include "Component/MeshRenderer.hpp"
+#include "Component/NativeScript.hpp"
+
 #include "Function/AssetsLoader.hpp"
 #include "Function/General/Deformers.hpp"
 #include "Function/Render/MaterialData.hpp"
@@ -62,6 +66,8 @@ void processNode(aiNode *node, const aiScene *scene,
 void processSkeletonHierarchy(const aiScene *scene,
                               bool withEndEffectors = false);
 void processSkeletonAnimation(const aiScene *scene);
+void processBoneInfoOnly(aiMesh *mesh, const aiScene *scene);
+void processBoneNodeOnly(aiNode *node, const aiScene *scene);
 
 void AssetsLoader::LoadDefaultAssets() {
   // initialize all the primitives
@@ -324,33 +330,58 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     Console.Log("[error]: Assimp error: %s\n", importer.GetErrorString());
     return nullptr;
   }
-  processNode(scene->mRootNode, scene, meshes, modelPath);
-  processSkeletonHierarchy(scene);
-
   auto globalParent = GWORLD.AddNewEntity();
   globalParent->name = fs::path(modelPath).filename().stem().string();
-  globalParent->AddComponent<Animator>();
-  std::vector<Entity *> joints;
-  for (int i = 0; i < boneInfos.size(); ++i) {
-    auto c = GWORLD.AddNewEntity();
-    c->name = boneInfos[i].boneName;
-    c->SetLocalPosition(boneInfos[i].localPosition);
-    c->SetLocalRotation(boneInfos[i].localRotation);
-    c->SetLocalScale(boneInfos[i].localScale);
-    joints.push_back(c);
+
+  if (allMeshes.find(modelPath) == allMeshes.end()) {
+    processNode(scene->mRootNode, scene, meshes, modelPath);
+    allMeshes.insert(std::make_pair(modelPath, meshes));
+  } else {
+    processBoneNodeOnly(scene->mRootNode, scene);
+    meshes = allMeshes[modelPath];
   }
-  for (int i = 0; i < boneInfos.size(); ++i) {
-    if (boneInfos[i].parentIndex == -1) {
-      joints[i]->parent = globalParent;
-      globalParent->children.push_back(joints[i]);
-      globalParent->GetComponent<Animator>().skeleton = joints[i];
-    } else {
-      joints[i]->parent = joints[boneInfos[i].parentIndex];
-      joints[i]->parent->children.push_back(joints[i]);
+  // add meshrenderer
+  auto meshParent = GWORLD.AddNewEntity();
+  meshParent->name = "Mesh";
+  globalParent->AssignChild(meshParent);
+  auto globalMaterial =
+      Loader.InstatiateMaterial<Render::DiffuseMaterial>(globalParent->name);
+  for (auto mesh : meshes) {
+    auto c = GWORLD.AddNewEntity();
+    c->name = mesh->identifier;
+    c->AddComponent<MeshRenderer>(mesh);
+    c->GetComponent<MeshRenderer>().AddPass(globalMaterial,
+                                            globalMaterial->identifier);
+    meshParent->AssignChild(c);
+  }
+  processSkeletonHierarchy(scene);
+
+  if (boneInfoMap.size() >= 1) {
+    globalParent->AddComponent<Animator>();
+    std::vector<Entity *> joints;
+    for (int i = 0; i < boneInfos.size(); ++i) {
+      auto c = GWORLD.AddNewEntity();
+      c->name = boneInfos[i].boneName;
+      c->SetLocalPosition(boneInfos[i].localPosition);
+      c->SetLocalRotation(boneInfos[i].localRotation);
+      c->SetLocalScale(boneInfos[i].localScale);
+      joints.push_back(c);
+    }
+    for (int i = 0; i < boneInfos.size(); ++i) {
+      if (boneInfos[i].parentIndex == -1) {
+        joints[i]->parent = globalParent;
+        globalParent->children.push_back(joints[i]);
+        globalParent->GetComponent<Animator>().skeleton = joints[i];
+      } else {
+        joints[i]->parent = joints[boneInfos[i].parentIndex];
+        joints[i]->parent->children.push_back(joints[i]);
+      }
     }
   }
 
   processSkeletonAnimation(scene);
+
+  return globalParent;
 }
 
 vector<Render::Mesh *> loadAndCreateMeshFromFile(string modelPath) {
@@ -479,6 +510,38 @@ void processSkeletonHierarchy(const aiScene *scene, bool withEndEffectors) {
 }
 void processSkeletonAnimation(const aiScene *scene) {}
 
+void processBoneNodeOnly(aiNode *node, const aiScene *scene) {
+  for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+    aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+    processBoneInfoOnly(mesh, scene);
+  }
+  for (unsigned int i = 0; i < node->mNumChildren; i++) {
+    processBoneNodeOnly(node->mChildren[i], scene);
+  }
+}
+void processBoneInfoOnly(aiMesh *mesh, const aiScene *scene) {
+  // process the bone info
+  for (unsigned int i = 0; i < mesh->mNumBones; ++i) {
+    aiBone *bone = mesh->mBones[i];
+    std::string boneName = bone->mName.C_Str();
+    auto it = boneInfoMap.find(boneName);
+    int boneID;
+    if (it == boneInfoMap.end()) {
+      Console.Log("[info]: insert new bone %s\n", boneName.c_str());
+      boneID = boneCounter++;
+      BoneInfo boneInfo;
+      boneInfo.boneName = boneName;
+      boneInfo.offsetMatrix = ConvertMatrixToGLMFormat(bone->mOffsetMatrix);
+      boneInfoMap[boneName] = boneID;
+      boneInfos.push_back(boneInfo);
+    } else {
+      Console.Log("[info]: duplicate bone %s found in file\n",
+                  boneName.c_str());
+      boneID = (*it).second;
+    }
+  }
+}
+
 Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
                           string &modelPath) {
   vector<Vertex> vertices(mesh->mNumVertices);
@@ -523,6 +586,15 @@ Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
     vertices[i] = vertex;
   }
 
+  // now wak through each of the mesh's faces (a face is a mesh its triangle)
+  // and retrieve the corresponding vertex indices.
+  for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+    aiFace face = mesh->mFaces[i];
+    // retrieve all indices of the face and store them in the indices vector
+    for (unsigned int j = 0; j < face.mNumIndices; j++)
+      indices.push_back(face.mIndices[j]);
+  }
+
   // process the bone info
   for (unsigned int i = 0; i < mesh->mNumBones; ++i) {
     aiBone *bone = mesh->mBones[i];
@@ -557,15 +629,6 @@ Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
         }
       }
     }
-  }
-
-  // now wak through each of the mesh's faces (a face is a mesh its triangle)
-  // and retrieve the corresponding vertex indices.
-  for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-    aiFace face = mesh->mFaces[i];
-    // retrieve all indices of the face and store them in the indices vector
-    for (unsigned int j = 0; j < face.mNumIndices; j++)
-      indices.push_back(face.mIndices[j]);
   }
 
   Render::Mesh *loadedMesh = new Render::Mesh(vertices, indices);
