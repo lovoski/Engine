@@ -105,7 +105,7 @@ struct EditorCameraController : public Scriptable {
     ImGui::SliderFloat("pow", &speedPow, 1.0f, 3.0f);
     ImGui::SliderFloat("upper bound", &maxSpeed, 100, 1e3);
     float pivot[3] = {cameraPivot.x, cameraPivot.y, cameraPivot.z};
-    if (ImGui::DragFloat3("camera pivot", pivot, 0.1f,
+    if (ImGui::DragFloat3("camera pivot", pivot, 0.01f,
                           -std::numeric_limits<float>::max() / 3,
                           std::numeric_limits<float>::max() / 3)) {
       cameraPivot.x = pivot[0];

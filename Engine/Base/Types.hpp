@@ -12,7 +12,7 @@ class BaseSystem;
 class BaseComponent;
 
 const size_t MAX_ENTITY_COUNT = 5000;
-const size_t MAX_COMPONENT_COUNT = 32;
+const size_t MAX_COMPONENT_COUNT = 128;
 
 using EntityID = size_t;
 using SystemTypeID = size_t;

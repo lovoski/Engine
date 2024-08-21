@@ -339,7 +339,7 @@ private:
   Entity *nullEntity;
   std::queue<EntityID> availableEntities;
   // every time a entity is created, a signature for it will also be created
-  std::map<EntityID, std::shared_ptr<Entity>> entities;
+  std::map<EntityID, Entity *> entities;
   std::map<EntityID, std::shared_ptr<EntitySignature>> entitiesSignatures;
   std::map<SystemTypeID, std::shared_ptr<BaseSystem>> registeredSystems;
   std::map<ComponentTypeID, std::shared_ptr<IComponentList>> componentsArrays;

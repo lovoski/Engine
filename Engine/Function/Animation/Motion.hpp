@@ -19,7 +19,12 @@ namespace Animation {
 struct Skeleton {
   std::string skeletonName;
   std::vector<std::string> jointNames;
+  // local position to joints' parent
   std::vector<glm::vec3> jointOffset;
+  // local rotation to joints' parent
+  std::vector<glm::quat> jointRotation;
+  // local scale to joints' parent
+  std::vector<glm::vec3> jointScale;
   std::vector<int> jointParent;
   std::vector<std::vector<int>> jointChildren;
 

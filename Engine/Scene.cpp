@@ -151,8 +151,7 @@ bool Scene::SetActiveCamera(EntityID camera) {
 
 Entity *Scene::AddNewEntity() {
   const EntityID id = addNewEntity();
-  entities.insert(
-      std::make_pair(id, std::move(std::make_shared<Entity>(id, this))));
+  entities.insert(std::make_pair(id, new Entity(id, this)));
   entities[id]->name += std::to_string(id);
   return &(*(entities[id]));
 }
@@ -182,20 +181,37 @@ void Scene::DestroyEntity(const EntityID entity) {
     throw std::runtime_error("Destroying entity out of range");
   if (entitiesSignatures.find(entity) == entitiesSignatures.end())
     throw std::runtime_error("Destroying entity do not exists");
-  auto children = entities[entity]->children;
-  entitiesSignatures.erase(entity);
-  entities.erase(entity);
-  for (auto &array : componentsArrays) {
-    array.second->Erase(entity);
+  auto ptr = entities[entity];
+  std::stack<Entity *> s1, s2;
+  s1.push(ptr);
+
+  auto handleDestroy = [&](EntityID id) {
+    entitiesSignatures.erase(id);
+    entities.erase(id);
+    for (auto &array : componentsArrays) {
+      array.second->Erase(id);
+    }
+    // the destroyed entity won't appear in any systems
+    for (auto &system : registeredSystems) {
+      system.second->RemoveEntity(id);
+    }
+    entityCount--;
+    availableEntities.push(id);
+  };
+
+  while (!s1.empty()) {
+    auto cur = s1.top();
+    s2.push(cur);
+    s1.pop();
+    for (auto child : cur->children)
+      s1.push(child);
   }
-  // the destroyed entity won't appear in any systems
-  for (auto &system : registeredSystems) {
-    system.second->RemoveEntity(entity);
+  while (!s2.empty()) {
+    auto cur = s2.top();
+    handleDestroy(cur->ID);
+    delete cur;
+    s2.pop();
   }
-  entityCount--;
-  availableEntities.push(entity);
-  for (auto child : children)
-    DestroyEntity(child->ID);
 }
 
 void Scene::recomputeLocalAxis() {
@@ -206,24 +222,32 @@ void Scene::recomputeLocalAxis() {
 
 void Scene::rebuildHierarchyStructure() {
   HierarchyRoots.clear();
-  std::queue<Entity *> q;
+  std::queue<std::pair<Entity *, bool>> q;
   for (auto entity : entities) {
     if (entity.second->parent == nullptr) {
-      q.push(entity.second.get());
-      HierarchyRoots.push_back(entity.second.get());
+      q.push(std::make_pair(entity.second, entity.second->transformDirty));
+      HierarchyRoots.push_back(entity.second);
     }
   }
   // traverse the entities in a parent first fashion
+  // int counter = 0;
+  // static int globalCounter = 0;
   while (!q.empty()) {
-    auto ent = q.front();
+    auto [ent, dirty] = q.front();
     q.pop();
-    // update global positions with local positions
-    ent->m_position = ent->LocalToGlobal(ent->localPosition);
-    ent->m_rotation = ent->GetParentOrientation() * ent->localRotation;
-    ent->m_scale = ent->GetParentScale() * ent->localScale;
     for (auto child : ent->children)
-      q.push(child);
+      q.push(std::make_pair(child, dirty || child->transformDirty));
+    // update global positions with local positions
+    if (dirty) {
+      // counter++;
+      ent->m_position = ent->LocalToGlobal(ent->localPosition);
+      ent->m_rotation = ent->GetParentOrientation() * ent->localRotation;
+      ent->m_scale = ent->GetParentScale() * ent->localScale;
+      ent->transformDirty = false;
+    }
   }
+  // if (counter > 1)
+  //   std::cout << globalCounter++ << ": update " << counter << " times one frame" << std::endl;
 }
 
 // Serialize current scene to a json file

@@ -65,7 +65,7 @@ void AnimationSystem::Update(float dt) {
           continue;
         }
         // setup the root translation first
-        root->second->localPosition = animator.CurrentPose.rootLocalPosition;
+        root->second->SetLocalPosition(animator.CurrentPose.rootLocalPosition);
         for (int boneInd = 0; boneInd < motionDataJointNum; ++boneInd) {
           std::string boneName =
               animator.CurrentPose.skeleton->jointNames[boneInd];
@@ -78,8 +78,7 @@ void AnimationSystem::Update(float dt) {
           }
           // setup local position and rotation for the bone entity
           // let hierarchy update system finish the rest
-          boneEntity->second->localRotation =
-              animator.CurrentPose.jointRotations[boneInd];
+          boneEntity->second->SetLocalRotation(animator.CurrentPose.jointRotations[boneInd]);
         }
       }
     }
@@ -99,8 +98,7 @@ void AnimationSystem::Render() {
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto &animator = entity->GetComponent<Animator>();
-      if (animator.ShowSkeleton && animator.skeleton != nullptr &&
-          animator.motion != nullptr) {
+      if (animator.ShowSkeleton && animator.skeleton != nullptr) {
         // draw animator.CurrentPose
         auto root = animator.skeleton;
         std::queue<Entity *> q;

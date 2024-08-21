@@ -49,6 +49,8 @@ public:
   // Get identifiers for all cached shaders
   std::vector<std::string> GetIdentifiersForAllCachedShaders();
 
+  Entity *LoadAndCreateEntityFromFile(std::string modelPath);
+
 private:
   // path to texture
   std::map<std::string, Texture *> allTextures;

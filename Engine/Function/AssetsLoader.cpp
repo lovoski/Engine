@@ -1,9 +1,8 @@
 #include "Function/AssetsLoader.hpp"
+#include "Function/General/Deformers.hpp"
 #include "Function/Render/MaterialData.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/Shader.hpp"
-#include "Function/General/Deformers.hpp"
-
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -15,6 +14,21 @@ namespace aEngine {
 
 using std::string;
 using std::vector;
+
+struct BoneInfo {
+  std::string boneName;
+  glm::mat4 offsetMatrix;
+  glm::vec3 localPosition = glm::vec3(0.0f);
+  glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
+  glm::vec3 localScale = glm::vec3(1.0f);
+  int parentIndex =
+      -1; // Index of the parent bone in the hierarchy (-1 if root)
+  std::vector<int> children; // Indices of child bones
+};
+
+int boneCounter = 0;
+std::map<std::string, int> boneInfoMap; // Map bone name to BoneInfo
+std::vector<BoneInfo> boneInfos;
 
 AssetsLoader::AssetsLoader() {
   // stb image library setup
@@ -45,16 +59,27 @@ Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
                           string &modelPath);
 void processNode(aiNode *node, const aiScene *scene,
                  vector<Render::Mesh *> &meshes, string &modelPath);
+void processSkeletonHierarchy(const aiScene *scene,
+                              bool withEndEffectors = false);
+void processSkeletonAnimation(const aiScene *scene);
 
 void AssetsLoader::LoadDefaultAssets() {
   // initialize all the primitives
   // plane
   vector<Vertex> vertices;
   vector<unsigned int> indices;
-  vertices.push_back({{ 0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}});
-  vertices.push_back({{ 0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {1.0f, 0.0f, 1.0f, 1.0f}});
-  vertices.push_back({{-0.5f, 0.0f, -0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}});
-  vertices.push_back({{-0.5f, 0.0f,  0.5f, 1.0f}, {0.0, 1.0, 0.0, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f}});
+  vertices.push_back({{0.5f, 0.0f, 0.5f, 1.0f},
+                      {0.0, 1.0, 0.0, 0.0f},
+                      {1.0f, 1.0f, 1.0f, 1.0f}});
+  vertices.push_back({{0.5f, 0.0f, -0.5f, 1.0f},
+                      {0.0, 1.0, 0.0, 0.0f},
+                      {1.0f, 0.0f, 1.0f, 1.0f}});
+  vertices.push_back({{-0.5f, 0.0f, -0.5f, 1.0f},
+                      {0.0, 1.0, 0.0, 0.0f},
+                      {0.0f, 0.0f, 1.0f, 1.0f}});
+  vertices.push_back({{-0.5f, 0.0f, 0.5f, 1.0f},
+                      {0.0, 1.0, 0.0, 0.0f},
+                      {0.0f, 1.0f, 1.0f, 1.0f}});
   indices = {0, 1, 3, 1, 2, 3};
   auto planePrimitive = new Render::Mesh(vertices, indices);
   planePrimitive->identifier = "plane";
@@ -283,7 +308,56 @@ unsigned int loadAndCreateTextureFromFile(string texturePath) {
   return textureID;
 }
 
+Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
+  // clean up globa variables
+  boneCounter = 0;
+  boneInfos.clear();
+  boneInfoMap.clear();
+
+  Assimp::Importer importer;
+  vector<Render::Mesh *> meshes;
+  const aiScene *scene = importer.ReadFile(
+      modelPath.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+                             aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+  if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
+      !scene->mRootNode) {
+    Console.Log("[error]: Assimp error: %s\n", importer.GetErrorString());
+    return nullptr;
+  }
+  processNode(scene->mRootNode, scene, meshes, modelPath);
+  processSkeletonHierarchy(scene);
+
+  auto globalParent = GWORLD.AddNewEntity();
+  globalParent->name = fs::path(modelPath).filename().stem().string();
+  globalParent->AddComponent<Animator>();
+  std::vector<Entity *> joints;
+  for (int i = 0; i < boneInfos.size(); ++i) {
+    auto c = GWORLD.AddNewEntity();
+    c->name = boneInfos[i].boneName;
+    c->SetLocalPosition(boneInfos[i].localPosition);
+    c->SetLocalRotation(boneInfos[i].localRotation);
+    c->SetLocalScale(boneInfos[i].localScale);
+    joints.push_back(c);
+  }
+  for (int i = 0; i < boneInfos.size(); ++i) {
+    if (boneInfos[i].parentIndex == -1) {
+      joints[i]->parent = globalParent;
+      globalParent->children.push_back(joints[i]);
+      globalParent->GetComponent<Animator>().skeleton = joints[i];
+    } else {
+      joints[i]->parent = joints[boneInfos[i].parentIndex];
+      joints[i]->parent->children.push_back(joints[i]);
+    }
+  }
+
+  processSkeletonAnimation(scene);
+}
+
 vector<Render::Mesh *> loadAndCreateMeshFromFile(string modelPath) {
+  boneCounter = 0;
+  boneInfos.clear();
+  boneInfoMap.clear();
+
   Assimp::Importer importer;
   vector<Render::Mesh *> meshes;
   const aiScene *scene = importer.ReadFile(
@@ -298,9 +372,116 @@ vector<Render::Mesh *> loadAndCreateMeshFromFile(string modelPath) {
   return meshes;
 }
 
+glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4 &from) {
+  glm::mat4 to;
+  to[0][0] = from.a1;
+  to[0][1] = from.b1;
+  to[0][2] = from.c1;
+  to[0][3] = from.d1;
+  to[1][0] = from.a2;
+  to[1][1] = from.b2;
+  to[1][2] = from.c2;
+  to[1][3] = from.d2;
+  to[2][0] = from.a3;
+  to[2][1] = from.b3;
+  to[2][2] = from.c3;
+  to[2][3] = from.d3;
+  to[3][0] = from.a4;
+  to[3][1] = from.b4;
+  to[3][2] = from.c4;
+  to[3][3] = from.d4;
+  return to;
+}
+
+void DecomposeTransform(const glm::mat4 &transform, glm::vec3 &outPosition,
+                        glm::quat &outRotation, glm::vec3 &outScale) {
+  glm::mat4 localMatrix(transform);
+
+  // Extract the translation
+  outPosition = glm::vec3(localMatrix[3]);
+
+  // Extract the scale
+  glm::vec3 scale;
+  scale.x = glm::length(glm::vec3(localMatrix[0]));
+  scale.y = glm::length(glm::vec3(localMatrix[1]));
+  scale.z = glm::length(glm::vec3(localMatrix[2]));
+
+  // Normalize the matrix columns to remove the scale from the rotation matrix
+  if (scale.x != 0)
+    localMatrix[0] /= scale.x;
+  if (scale.y != 0)
+    localMatrix[1] /= scale.y;
+  if (scale.z != 0)
+    localMatrix[2] /= scale.z;
+
+  // Extract the rotation
+  outRotation = glm::quat_cast(localMatrix);
+
+  outScale = scale;
+}
+
+void processSkeletonHierarchy(const aiScene *scene, bool withEndEffectors) {
+  std::queue<aiNode *> q;
+  q.push(scene->mRootNode);
+  std::string rootNodeName;
+  while (!q.empty()) {
+    auto cur = q.front();
+    string name = cur->mName.C_Str();
+    auto parent = cur->mParent;
+    q.pop();
+    auto it = boneInfoMap.find(name);
+    // end effectors
+    if (withEndEffectors) {
+      int subSlashPos = name.rfind("_");
+      string subfix = name.substr(subSlashPos + 1);
+      if (subSlashPos != std::string::npos &&
+          (subfix == "END" || subfix == "end" || subfix == "End")) {
+        auto parentIt = boneInfoMap.find(name.substr(0, subSlashPos));
+        if (parentIt != boneInfoMap.end()) {
+          boneInfoMap[name] = boneCounter++;
+          BoneInfo info;
+          info.parentIndex = (*parentIt).second;
+          info.boneName = name;
+          DecomposeTransform(ConvertMatrixToGLMFormat(cur->mTransformation),
+                             info.localPosition, info.localRotation,
+                             info.localScale);
+          boneInfos.push_back(info);
+        } else {
+          Console.Log("[error]: can't find parent for end effector %s\n",
+                      name.c_str());
+        }
+      }
+    }
+    if (it != boneInfoMap.end()) {
+      // if this node is a bone
+      if (parent == nullptr) {
+        boneInfos[(*it).second].parentIndex = -1;
+      } else {
+        auto parentIt = boneInfoMap.find(parent->mName.C_Str());
+        if (parentIt == boneInfoMap.end()) {
+          boneInfos[(*it).second].parentIndex = -1;
+          rootNodeName = name;
+        } else {
+          // maintain the skeleton hierarchy
+          auto &info = boneInfos[(*it).second];
+          info.parentIndex = (*parentIt).second;
+          boneInfos[(*parentIt).second].children.push_back((*it).second);
+          DecomposeTransform(ConvertMatrixToGLMFormat(cur->mTransformation),
+                             info.localPosition, info.localRotation,
+                             info.localScale);
+        }
+      }
+    }
+    for (int i = 0; i < cur->mNumChildren; ++i) {
+      q.push(cur->mChildren[i]);
+    }
+  }
+}
+void processSkeletonAnimation(const aiScene *scene) {}
+
 Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
                           string &modelPath) {
-  vector<Vertex> vertices;
+  vector<Vertex> vertices(mesh->mNumVertices);
   vector<unsigned int> indices;
   // walk through each of the mesh's vertices
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
@@ -321,7 +502,8 @@ Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
       vertex.Normal = vector;
     }
     // texture coordinates
-    if (mesh->mTextureCoords[0]) { // if this model contains texture coordinates
+    if (mesh->mTextureCoords[0]) { // if this model contains texture
+                                   // coordinates
       glm::vec4 vec;
       // a vertex can contain up to 8 different texture coordinates. We thus
       // make the assumption that we won't use models where a vertex can have
@@ -334,8 +516,49 @@ Render::Mesh *processMesh(aiMesh *mesh, const aiScene *scene,
     } else
       vertex.TexCoords = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
-    vertices.push_back(vertex);
+    for (unsigned int k = 0; k < MAX_BONES; ++k) {
+      vertex.BoneId[k] = 0;
+      vertex.BoneWeight[k] = 0.0f;
+    }
+    vertices[i] = vertex;
   }
+
+  // process the bone info
+  for (unsigned int i = 0; i < mesh->mNumBones; ++i) {
+    aiBone *bone = mesh->mBones[i];
+    std::string boneName = bone->mName.C_Str();
+    auto it = boneInfoMap.find(boneName);
+    int boneID;
+    if (it == boneInfoMap.end()) {
+      Console.Log("[info]: insert new bone %s\n", boneName.c_str());
+      boneID = boneCounter++;
+      BoneInfo boneInfo;
+      boneInfo.boneName = boneName;
+      boneInfo.offsetMatrix = ConvertMatrixToGLMFormat(bone->mOffsetMatrix);
+      boneInfoMap[boneName] = boneID;
+      boneInfos.push_back(boneInfo);
+    } else {
+      Console.Log("[info]: duplicate bone %s found in file\n",
+                  boneName.c_str());
+      boneID = (*it).second;
+    }
+
+    for (unsigned int j = 0; j < bone->mNumWeights; ++j) {
+      aiVertexWeight weight = bone->mWeights[j];
+      unsigned int vertexID = weight.mVertexId;
+      float boneWeight = weight.mWeight;
+
+      // find an empty slot in the vertex and fill in data
+      for (int k = 0; k < MAX_BONES; ++k) {
+        if (vertices[vertexID].BoneWeight[k] == 0.0f) {
+          vertices[vertexID].BoneId[k] = boneID;
+          vertices[vertexID].BoneWeight[k] = boneWeight;
+          break;
+        }
+      }
+    }
+  }
+
   // now wak through each of the mesh's faces (a face is a mesh its triangle)
   // and retrieve the corresponding vertex indices.
   for (unsigned int i = 0; i < mesh->mNumFaces; i++) {

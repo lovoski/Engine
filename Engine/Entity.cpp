@@ -60,6 +60,7 @@ void Entity::SetGlobalPosition(glm::vec3 p) {
   m_position = p;
   // the local axis will be updated in GlobalToLocal function call
   localPosition = GlobalToLocal(p);
+  transformDirty = true;
 }
 
 void Entity::SetGlobalRotation(glm::quat q) {
@@ -68,11 +69,13 @@ void Entity::SetGlobalRotation(glm::quat q) {
   glm::quat parentOrien = GetParentOrientation();
   localRotation = glm::inverse(parentOrien) * q;
   UpdateLocalAxis();
+  transformDirty = true;
 }
 
 void Entity::SetGlobalScale(glm::vec3 s) {
   localScale = s / GetParentScale();
   m_scale = s;
+  transformDirty = true;
 }
 
 void Entity::UpdateLocalAxis() {

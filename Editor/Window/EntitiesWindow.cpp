@@ -230,7 +230,7 @@ void Editor::EntitiesWindow() {
         }
       } else if (extension == ".fbx") {
         // fbx model possibly contains animation data
-        Console.Log("fbx model import\n");
+        auto modelMeshes = Loader.LoadAndCreateEntityFromFile(filename.string());
       }
       // TODO:
       // Core.ReloadScene(scenePath);

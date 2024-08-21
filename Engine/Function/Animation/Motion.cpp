@@ -159,6 +159,14 @@ bool Motion::LoadFromBVH(string filename) {
           }
         }
 
+        // initialize jointRotation and jointScale
+        // bvh format don't store localRotation and localScale
+        // of a skeleton hierarchy, initialize to identity transform
+        skeleton.jointRotation = std::vector<glm::quat>(
+            skeleton.GetNumJoints(), glm::quat(1.0f, vec3(0.0f)));
+        skeleton.jointScale =
+            std::vector<glm::vec3>(skeleton.GetNumJoints(), glm::vec3(1.0f));
+
         // parse pose data
         getline(fileInput, line);
         lineSeg = SplitByWhiteSpace(line);
@@ -218,7 +226,8 @@ bool Motion::LoadFromBVH(string filename) {
         fileInput.close();
         return true;
       } else
-        throw std::runtime_error("the label should be ROOT instead of " + lineSeg[0]);
+        throw std::runtime_error("the label should be ROOT instead of " +
+                                 lineSeg[0]);
     } else
       throw std::runtime_error("bvh file should start with HIERARCHY");
     fileInput.close();

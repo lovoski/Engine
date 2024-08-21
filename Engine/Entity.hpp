@@ -39,13 +39,22 @@ public:
   // position under world axis
   const glm::vec3 Position() { return m_position; }
 
-  // scale relative to its parent's axis
-  glm::vec3 localScale = glm::vec3(1.0f);
-  // rotation relative to its parent's axis
-  // euler angles are hard to convert be local, use quaternion only
-  glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
-  // position relative to its parent's axis
-  glm::vec3 localPosition = glm::vec3(0.0f);
+  const glm::vec3 LocalPosition() { return localPosition; }
+  const glm::quat LocalRotation() { return localRotation; }
+  const glm::vec3 LocalScale() { return localScale; }
+
+  void SetLocalPosition(glm::vec3 p) {
+    localPosition = p;
+    transformDirty = true;
+  }
+  void SetLocalRotation(glm::quat q) {
+    localRotation = q;
+    transformDirty = true;
+  }
+  void SetLocalScale(glm::vec3 s) {
+    localScale = s;
+    transformDirty = true;
+  }
 
   static glm::vec3 WorldUp, WorldLeft, WorldForward;
 
@@ -108,6 +117,16 @@ public:
   std::vector<Entity *> children;
 
 protected:
+  bool transformDirty = true;
+
+  // scale relative to its parent's axis
+  glm::vec3 localScale = glm::vec3(1.0f);
+  // rotation relative to its parent's axis
+  // euler angles are hard to convert be local, use quaternion only
+  glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
+  // position relative to its parent's axis
+  glm::vec3 localPosition = glm::vec3(0.0f);
+
   glm::vec3 m_position;
   glm::vec3 m_scale;
   glm::quat m_rotation;
