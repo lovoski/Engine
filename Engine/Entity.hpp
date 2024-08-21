@@ -1,8 +1,8 @@
 #pragma once
 
+#include "Base/Types.hpp"
 #include "Global.hpp"
 #include "Scene.hpp"
-#include "Base/Types.hpp"
 
 namespace aEngine {
 
@@ -99,10 +99,7 @@ public:
 
   void AssignChild(Entity *c);
 
-  glm::mat4 GetModelMatrix() {
-    return glm::translate(glm::mat4(1.0f), m_position) *
-           glm::mat4_cast(Rotation()) * glm::scale(glm::mat4(1.0f), m_scale);
-  }
+  glm::mat4 GetModelMatrix();
 
   EntityID ID;
   Scene *scene;

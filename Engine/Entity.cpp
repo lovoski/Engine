@@ -128,6 +128,11 @@ const glm::quat Entity::GetParentOrientation() {
   return q;
 }
 
+glm::mat4 Entity::GetModelMatrix() {
+  return glm::translate(glm::mat4(1.0f), m_position) *
+         glm::mat4_cast(Rotation()) * glm::scale(glm::mat4(1.0f), m_scale);
+}
+
 void Entity::Serialize(Json &json) {
   json["p"] = m_position;
   json["r"] = m_rotation;
