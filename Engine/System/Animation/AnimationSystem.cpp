@@ -41,6 +41,7 @@ void AnimationSystem::Update(float dt) {
         // sample animation from motion data of each animator
         animator.CurrentPose =
             animator.motion->At(GWORLD.Context.AnimSystemCurrentFrame);
+        // animator.CurrentPose = animator.motion->GetRestPose();
         int motionDataJointNum = animator.CurrentPose.skeleton->GetNumJoints();
         // update the local positions of skeleton hierarchy
         // with animator's currentPose

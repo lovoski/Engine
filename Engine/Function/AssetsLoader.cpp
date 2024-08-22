@@ -19,12 +19,19 @@ using std::vector;
 
 struct BoneInfo {
   std::string boneName;
+  fbxsdk::FbxNode *node;
   glm::vec3 localPosition = glm::vec3(0.0f);
   glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
   glm::vec3 localScale = glm::vec3(1.0f);
   int parentIndex =
       -1; // Index of the parent bone in the hierarchy (-1 if root)
   std::vector<int> children; // Indices of child bones
+};
+
+struct KeyFrame {
+  glm::vec3 localPosition;
+  glm::quat localRotation;
+  glm::vec3 localScale;
 };
 
 AssetsLoader::AssetsLoader() {
@@ -307,6 +314,7 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   globalParent->name = fs::path(modelPath).filename().stem().string();
 
   Animation::Skeleton *skel = nullptr;
+  Animation::Motion *motion = nullptr;
   vector<Render::Mesh *> meshes;
   if (allMeshes.find(modelPath) == allMeshes.end()) {
     // new asset
@@ -319,6 +327,10 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   if (it != allSkeletons.end()) {
     // this model contains skeleton
     skel = (*it).second;
+  }
+  auto motionIt = allMotions.find(modelPath);
+  if (motionIt != allMotions.end()) {
+    motion = (*motionIt).second;
   }
 
   auto meshParent = GWORLD.AddNewEntity();
@@ -356,14 +368,18 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     }
     globalParent->AddComponent<Animator>();
     globalParent->GetComponent<Animator>().skeleton = joints[0];
+    if (motion != nullptr) {
+      globalParent->GetComponent<Animator>().motion = motion;
+    }
   }
 
   return globalParent;
 }
 
 void ExtractBoneTransforms(fbxsdk::FbxNode *node, glm::vec3 &localPosition,
-                           glm::quat &localRotation, glm::vec3 &localScale) {
-  fbxsdk::FbxAMatrix transformMatrix = node->EvaluateLocalTransform();
+                           glm::quat &localRotation, glm::vec3 &localScale,
+                           fbxsdk::FbxTime frameTime = FBXSDK_TIME_INFINITE) {
+  fbxsdk::FbxAMatrix transformMatrix = node->EvaluateLocalTransform(frameTime);
 
   // Extract local position, rotation, and scale from the evaluated matrix
   localPosition = glm::vec3(static_cast<float>(transformMatrix.GetT()[0]),
@@ -514,8 +530,7 @@ Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh,
       if (boneMapping.find(boneName) == boneMapping.end()) {
         BoneInfo newBone;
         newBone.boneName = boneName;
-        // newBone.offsetMatrix = ToMat4(
-        //     cluster->mTransformLink);
+        newBone.node = cluster->GetLink();
         // Extract and set localPosition, localRotation, localScale
         ExtractBoneTransforms(cluster->GetLink(), newBone.localPosition,
                               newBone.localRotation, newBone.localScale);
@@ -638,6 +653,34 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
     TraverseNode(rootNode, meshes, globalBones, boneMapping);
   }
   if (globalBones.size() > 1 && boneMapping.size() > 1) {
+    // load animation if there's any
+    // assume that there's only one skeleton in the file
+    vector<vector<KeyFrame>> animationPerJoint(globalBones.size(),
+                                               vector<KeyFrame>());
+    int animStackCount = scene->GetSrcObjectCount<fbxsdk::FbxAnimStack>();
+    for (int i = 0; i < animStackCount; ++i) {
+      fbxsdk::FbxAnimStack *animStack =
+          scene->GetSrcObject<fbxsdk::FbxAnimStack>(i);
+      fbxsdk::FbxTimeSpan timeSpan;
+      timeSpan = animStack->GetLocalTimeSpan();
+      fbxsdk::FbxTime start = timeSpan.GetStart();
+      fbxsdk::FbxTime end = timeSpan.GetStop();
+      fbxsdk::FbxTime duration = end - start;
+      int fps = GWORLD.Context.AnimSystemFPS;
+      fbxsdk::FbxTime frameTime;
+      frameTime.SetFrame(1, fbxsdk::FbxTime::eFrames30);
+      for (fbxsdk::FbxTime currentTime = start; currentTime < end;
+           currentTime += frameTime) {
+        for (int jointInd = 0; jointInd < globalBones.size(); ++jointInd) {
+          auto node = globalBones[jointInd].node;
+          KeyFrame kf;
+          ExtractBoneTransforms(node, kf.localPosition, kf.localRotation,
+                                kf.localScale, currentTime);
+          animationPerJoint[jointInd].push_back(kf);
+        }
+      }
+    }
+
     // create skeleton, register it in allSkeletons
     Animation::Skeleton *skel = new Animation::Skeleton();
     std::map<int, int> old2new;
@@ -658,7 +701,7 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
       while (!oldIds.empty()) {
         auto cur = oldIds.top();
         oldIds.pop();
-        old2new.insert(std::make_pair(cur, skel->jointNames.size()));
+        old2new.insert(std::make_pair(cur, (int)skel->jointNames.size()));
         auto &curRef = globalBones[cur];
         skel->jointNames.push_back(curRef.boneName);
         skel->jointOffset.push_back(curRef.localPosition);
@@ -675,6 +718,29 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
         skel->jointParent[newId] = old2new[globalBones[oldId].parentIndex];
         for (auto child : globalBones[oldId].children)
           skel->jointChildren[newId].push_back(old2new[child]);
+      }
+      // create motion for the skeleton
+      int numFrames = animationPerJoint[0].size();
+      int numJoints = animationPerJoint.size();
+      if (numFrames > 0) {
+        Animation::Motion *motion = new Animation::Motion();
+        motion->fps = 30; // use 30fps by default
+        motion->skeleton = *skel;
+        allMotions.insert(std::make_pair(modelPath, motion));
+        for (int frameInd = 0; frameInd < numFrames; ++frameInd) {
+          Animation::Pose pose;
+          pose.skeleton = skel;
+          pose.jointRotations.resize(numJoints, glm::quat(1.0f, glm::vec3(0.0f)));
+          for (int oldJointInd = 0; oldJointInd < numJoints; ++oldJointInd) {
+            int newJointInd = old2new[oldJointInd];
+            if (newJointInd == 0) {
+              // process localPosition only for root joint
+              pose.rootLocalPosition = animationPerJoint[oldJointInd][frameInd].localPosition;
+            }
+            pose.jointRotations[newJointInd] = animationPerJoint[oldJointInd][frameInd].localRotation;
+          }
+          motion->poses.push_back(pose);
+        }
       }
     } else {
       Console.Log("[error]: skeleton in file %s has no root joint\n",

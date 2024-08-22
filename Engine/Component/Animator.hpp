@@ -10,7 +10,7 @@ struct Animator : public BaseComponent {
   Animator() {}
   Animator(Animation::Motion *m) : motion(m) {
     // the default pose
-    CurrentPose = motion->poses[0];
+    CurrentPose = motion->GetRestPose();
   }
   ~Animator() {}
 
