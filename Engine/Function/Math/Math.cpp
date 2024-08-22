@@ -37,6 +37,34 @@ quat LookAtRotation(vec3 forward, vec3 up) {
   return glm::quat_cast(rot);
 }
 
+void DecomposeTransform(const glm::mat4 &transform, glm::vec3 &outPosition,
+                        glm::quat &outRotation, glm::vec3 &outScale) {
+  glm::mat4 localMatrix(transform);
+
+  // Extract the translation
+  outPosition = glm::vec3(localMatrix[3]);
+
+  // Extract the scale
+  glm::vec3 scale;
+  scale.x = glm::length(glm::vec3(localMatrix[0]));
+  scale.y = glm::length(glm::vec3(localMatrix[1]));
+  scale.z = glm::length(glm::vec3(localMatrix[2]));
+
+  // Normalize the matrix columns to remove the scale from the rotation matrix
+  if (scale.x != 0)
+    localMatrix[0] /= scale.x;
+  if (scale.y != 0)
+    localMatrix[1] /= scale.y;
+  if (scale.z != 0)
+    localMatrix[2] /= scale.z;
+
+  // Extract the rotation
+  outRotation = glm::quat_cast(localMatrix);
+
+  outScale = scale;
+}
+
+
 };
 
 };

@@ -18,12 +18,3 @@ add_subdirectory(Engine)
 add_executable(${PROJECT_NAME} ${editor_SOURCES})
 target_link_libraries(${PROJECT_NAME} libEngine)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-
-# copy default assets file to relative path of editor
-file(GLOB_RECURSE RESOURCE_FILES ${CMAKE_SOURCE_DIR}/Engine/Assets/**)
-foreach(RESOURCE_FILE ${RESOURCE_FILES})
-  file(RELATIVE_PATH RESOURCE_REL_PATH ${CMAKE_SOURCE_DIR}/Engine ${RESOURCE_FILE})
-  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND
-  ${CMAKE_COMMAND} -E copy_if_different ${RESOURCE_FILE}
-  $<TARGET_FILE_DIR:${PROJECT_NAME}>/${RESOURCE_REL_PATH})
-endforeach()

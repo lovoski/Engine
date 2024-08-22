@@ -15,19 +15,18 @@ add_subdirectory("Deps/stb")
 # onnx runtime
 include("cmake/FindONNXRuntime.cmake")
 
+# fbx sdk
+include("cmake/FindFBX.cmake")
+
 # glslang
 include("cmake/GLSLangConfig.cmake")
 add_subdirectory("Deps/glslang")
-
-# assimp
-include("cmake/AssimpConfig.cmake")
-add_subdirectory("Deps/assimp")
 
 include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb glm imgui assimp ${GLSLANGLIBS})
+set(aEngine_DEPS glad glfw stb glm imgui ${GLSLANGLIBS})
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System
@@ -38,6 +37,9 @@ set(aEngine_SOURCE_DIRS
 if (${NN_MODULE})
   list(APPEND aEngine_SOURCE_DIRS ${PROJECT_SOURCE_DIR}/NN)
   list(APPEND aEngine_DEPS onnxruntime)
+endif()
+if (${FBX_FOUND})
+  list(APPEND aEngine_DEPS fbx::sdk)
 endif()
 
 file(GLOB aEngine_SOURCES *.cpp)
