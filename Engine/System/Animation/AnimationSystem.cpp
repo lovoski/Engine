@@ -1,30 +1,35 @@
 #include "System/Animation/AnimationSystem.hpp"
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
-#include "Scene.hpp"
 #include "Function/Animation/Motion.hpp"
 #include "Function/Render/VisUtils.hpp"
+#include "Scene.hpp"
 
 namespace aEngine {
 
 void AnimationSystem::Update(float dt) {
-  if (enableAutoPlay) {
+  if (GWORLD.Context.AnimEnableAutoPlay) {
     // update the global system frame index
-    systemCurrentFrame = systemCurrentFrame + dt * systemFPS;
+    GWORLD.Context.AnimSystemCurrentFrame += dt * GWORLD.Context.AnimSystemFPS;
   }
-  if (systemEndFrame-systemStartFrame < 0) {
+  if (GWORLD.Context.AnimSystemEndFrame - GWORLD.Context.AnimSystemStartFrame <
+      0) {
     // flip the start frame and end frame
     // if endframe < startframe
-    std::swap(systemStartFrame, systemEndFrame);
+    std::swap(GWORLD.Context.AnimSystemStartFrame,
+              GWORLD.Context.AnimSystemEndFrame);
   }
   // loop systemCurrentFrame in range
-  int duration = systemEndFrame-systemStartFrame;
+  int duration =
+      GWORLD.Context.AnimSystemEndFrame - GWORLD.Context.AnimSystemStartFrame;
   if (duration != 0) {
     // avoid dead loop
-    while (systemCurrentFrame < systemStartFrame)
-      systemCurrentFrame += duration;
-    while (systemCurrentFrame > systemEndFrame)
-      systemCurrentFrame -= duration;
+    while (GWORLD.Context.AnimSystemCurrentFrame <
+           GWORLD.Context.AnimSystemStartFrame)
+      GWORLD.Context.AnimSystemCurrentFrame += duration;
+    while (GWORLD.Context.AnimSystemCurrentFrame >
+           GWORLD.Context.AnimSystemEndFrame)
+      GWORLD.Context.AnimSystemCurrentFrame -= duration;
   }
   // Console.Log("currentframe=%.3f\n", systemCurrentFrame);
   for (auto id : entities) {
@@ -34,7 +39,8 @@ void AnimationSystem::Update(float dt) {
       int nFrames = animator.motion->poses.size();
       if (nFrames != 0) {
         // sample animation from motion data of each animator
-        animator.CurrentPose = animator.motion->At(systemCurrentFrame);
+        animator.CurrentPose =
+            animator.motion->At(GWORLD.Context.AnimSystemCurrentFrame);
         int motionDataJointNum = animator.CurrentPose.skeleton->GetNumJoints();
         // update the local positions of skeleton hierarchy
         // with animator's currentPose
@@ -78,7 +84,8 @@ void AnimationSystem::Update(float dt) {
           }
           // setup local position and rotation for the bone entity
           // let hierarchy update system finish the rest
-          boneEntity->second->SetLocalRotation(animator.CurrentPose.jointRotations[boneInd]);
+          boneEntity->second->SetLocalRotation(
+              animator.CurrentPose.jointRotations[boneInd]);
         }
       }
     }

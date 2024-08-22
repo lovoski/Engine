@@ -223,7 +223,7 @@ void main() {
     vec3 direction = normalize(dir);
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 right = normalize(cross(direction, up));
-    float dirOffset = 0.07;
+    float dirOffset = 0.12;
     up = cross(right, direction);
 
     // Define the four offset vectors for the octahedral shape
@@ -292,7 +292,7 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
     openglObjectCreated = true;
   }
   boneShader->Use();
-  boneShader->SetFloat("radius", 0.1f); // Adjust the radius as necessary
+  boneShader->SetFloat("radius", 0.15f); // Adjust the radius as necessary
   boneShader->SetVec3("color", color);
   boneShader->SetVec2("viewportSize", viewport);
   glm::vec3 trans = (start + end) * 0.5f;

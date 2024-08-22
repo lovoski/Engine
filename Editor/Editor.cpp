@@ -162,26 +162,24 @@ void Editor::Shutdown() {
 }
 
 void Editor::MainSequencer() {
-  static AnimationSystem *system = GWORLD.GetSystemInstance<AnimationSystem>();
-  if (system == nullptr) {
-    system = GWORLD.GetSystemInstance<AnimationSystem>();
-  }
   ImGui::Begin("Timeline");
   ImGui::BeginChild("TimelineProperties", {-1, 50});
-  ImGui::Checkbox("Auto Play", &system->enableAutoPlay);
+  ImGui::Checkbox("Auto Play", &GWORLD.Context.AnimEnableAutoPlay);
   ImGui::SameLine();
-  int se[2] = {system->systemStartFrame, system->systemEndFrame};
+  int se[2] = {GWORLD.Context.AnimSystemStartFrame,
+               GWORLD.Context.AnimSystemEndFrame};
   ImGui::PushItemWidth(-1);
   if (ImGui::InputInt2("##Start & End", se)) {
-    system->systemStartFrame = se[0];
-    system->systemEndFrame = se[1];
+    GWORLD.Context.AnimSystemStartFrame = se[0];
+    GWORLD.Context.AnimSystemEndFrame = se[1];
   }
   ImGui::PopItemWidth();
   ImGui::EndChild();
   ImGui::BeginChild("TimelineView", {-1, 60});
   ImGui::PushItemWidth(-1);
-  ImGui::SliderFloat("##currenrFrame", &system->systemCurrentFrame,
-                     system->systemStartFrame, system->systemEndFrame);
+  ImGui::SliderFloat("##currenrFrame", &GWORLD.Context.AnimSystemCurrentFrame,
+                     GWORLD.Context.AnimSystemStartFrame,
+                     GWORLD.Context.AnimSystemEndFrame);
   ImGui::PopItemWidth();
   ImGui::EndChild();
   ImGui::End();

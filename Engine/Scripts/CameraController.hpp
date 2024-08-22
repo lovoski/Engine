@@ -74,7 +74,7 @@ struct EditorCameraController : public Scriptable {
           // repose the camera
           glm::vec3 posVector = cameraObject->Position();
           glm::quat rotY =
-              glm::quat(glm::radians(glm::vec3(0.0f, -mouseOffset.x, 0.0f)));
+              glm::angleAxis(glm::radians(-mouseOffset.x), glm::vec3(0.0f, 1.0f, 0.0f));
           float dotProduct =
               glm::dot(glm::normalize(cameraObject->Position() - cameraPivot),
                        Entity::WorldUp);

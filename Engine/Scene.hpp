@@ -55,6 +55,13 @@ struct SceneContext {
   // Scene lights
   std::vector<Light> activeLights;
 
+  // animation related
+  int AnimSystemFPS = 30;
+  float AnimSystemCurrentFrame;
+  int AnimSystemStartFrame, AnimSystemEndFrame;
+  // automatically increase systemCurrentFrame according to dt and systemFPS
+  bool AnimEnableAutoPlay = false;
+
   // Time related
   float lastTime;
   float deltaTime;
@@ -81,6 +88,12 @@ struct SceneContext {
     // Don't change the size and position of scene window
     sceneFilePath = "::defaultScene";
     activeLights.clear();
+
+    AnimSystemFPS = 30;
+    AnimEnableAutoPlay = false;
+    AnimSystemStartFrame = 0;
+    AnimSystemEndFrame = 1000;
+    AnimSystemCurrentFrame = 0.0f;
 
     lastTime = 0.0f;
     deltaTime = 0.0f;
