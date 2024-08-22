@@ -56,6 +56,8 @@ private:
   std::map<std::string, Texture *> allTextures;
   // path to model, one model could contain multiple meshes
   std::map<std::string, std::vector<Render::Mesh *>> allMeshes;
+  // from filepath to skeleton (actor)
+  std::map<std::string, Animation::Skeleton *> allSkeletons;
   // identifier to shader data
   std::map<std::string, Render::Shader *> allShaders;
   // identifier to compute shader
@@ -64,6 +66,8 @@ private:
   std::map<std::string, Animation::Motion *> allMotions;
 
   std::vector<Render::BaseMaterial *> allMaterials;
+
+  std::vector<Render::Mesh *> loadAndCreateMeshFromFile(std::string modelPath);
 };
 
 static AssetsLoader &Loader = AssetsLoader::Ref();

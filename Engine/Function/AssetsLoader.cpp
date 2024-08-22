@@ -19,7 +19,6 @@ using std::vector;
 
 struct BoneInfo {
   std::string boneName;
-  glm::mat4 offsetMatrix;
   glm::vec3 localPosition = glm::vec3(0.0f);
   glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
   glm::vec3 localScale = glm::vec3(1.0f);
@@ -27,10 +26,6 @@ struct BoneInfo {
       -1; // Index of the parent bone in the hierarchy (-1 if root)
   std::vector<int> children; // Indices of child bones
 };
-
-int boneCounter = 0;
-std::map<std::string, int> boneInfoMap; // Map bone name to BoneInfo
-std::vector<BoneInfo> boneInfos;
 
 AssetsLoader::AssetsLoader() {
   // stb image library setup
@@ -53,6 +48,11 @@ AssetsLoader::~AssetsLoader() {
     if (shader.second)
       delete shader.second;
   }
+  for (auto skeleton : allSkeletons) {
+    if (skeleton.second)
+      delete skeleton.second;
+  }
+  allSkeletons.clear();
 }
 
 unsigned int loadAndCreateTextureFromFile(string texturePath);
@@ -304,23 +304,92 @@ unsigned int loadAndCreateTextureFromFile(string texturePath) {
 }
 
 Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
-  // clean up globa variables
-  boneCounter = 0;
-  boneInfos.clear();
-  boneInfoMap.clear();
-
   auto globalParent = GWORLD.AddNewEntity();
   globalParent->name = fs::path(modelPath).filename().stem().string();
+
+  Animation::Skeleton *skel = nullptr;
+  vector<Render::Mesh *> meshes;
+  if (allMeshes.find(modelPath) == allMeshes.end()) {
+    // new asset
+    meshes = loadAndCreateMeshFromFile(modelPath);
+  } else {
+    meshes = allMeshes[modelPath];
+  }
+  auto it = allSkeletons.find(modelPath);
+  if (it != allSkeletons.end()) {
+    // this model contains skeleton
+    skel = (*it).second;
+  }
+
+  auto meshParent = GWORLD.AddNewEntity();
+  globalParent->AssignChild(meshParent);
+  meshParent->name = "mesh";
+  auto globalMaterial =
+      Loader.InstatiateMaterial<Render::DiffuseMaterial>(globalParent->name);
+  for (auto mesh : meshes) {
+    auto c = GWORLD.AddNewEntity();
+    c->name = mesh->identifier;
+    c->AddComponent<MeshRenderer>(mesh);
+    c->GetComponent<MeshRenderer>().AddPass(globalMaterial,
+                                            globalMaterial->identifier);
+    meshParent->AssignChild(c);
+  }
+
+  if (skel != nullptr) {
+    // create entities from children to parent
+    // traverse the joints in reversed order
+    int jointNum = skel->GetNumJoints();
+    vector<Entity *> joints;
+    // parent joint always has a smaller index than its children
+    for (int i = 0; i < jointNum; ++i) {
+      auto c = GWORLD.AddNewEntity();
+      c->name = skel->jointNames[i];
+      c->SetLocalPosition(skel->jointOffset[i]);
+      c->SetLocalRotation(skel->jointRotation[i]);
+      c->SetLocalScale(skel->jointScale[i]);
+      joints.push_back(c);
+      if (i == 0)
+        joints[i]->parent = globalParent;
+      else
+        joints[i]->parent = joints[skel->jointParent[i]];
+      joints[i]->parent->children.push_back(joints[i]);
+    }
+    globalParent->AddComponent<Animator>();
+    globalParent->GetComponent<Animator>().skeleton = joints[0];
+  }
 
   return globalParent;
 }
 
-Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh) {
+void ExtractBoneTransforms(fbxsdk::FbxNode *node, glm::vec3 &localPosition,
+                           glm::quat &localRotation, glm::vec3 &localScale) {
+  fbxsdk::FbxAMatrix transformMatrix = node->EvaluateLocalTransform();
+
+  // Extract local position, rotation, and scale from the evaluated matrix
+  localPosition = glm::vec3(static_cast<float>(transformMatrix.GetT()[0]),
+                            static_cast<float>(transformMatrix.GetT()[1]),
+                            static_cast<float>(transformMatrix.GetT()[2]));
+
+  fbxsdk::FbxQuaternion fbxRotation = transformMatrix.GetQ();
+  localRotation = glm::quat(static_cast<float>(fbxRotation[3]), // w
+                            static_cast<float>(fbxRotation[0]), // x
+                            static_cast<float>(fbxRotation[1]), // y
+                            static_cast<float>(fbxRotation[2])  // z
+  );
+
+  localScale = glm::vec3(static_cast<float>(transformMatrix.GetS()[0]),
+                         static_cast<float>(transformMatrix.GetS()[1]),
+                         static_cast<float>(transformMatrix.GetS()[2]));
+}
+Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh,
+                          std::vector<BoneInfo> &globalBones,
+                          std::unordered_map<std::string, int> &boneMapping) {
   // Triangulate the model if needed
   if (!mesh->IsTriangleMesh()) {
     fbxsdk::FbxGeometryConverter geometryConverter(
         mesh->GetNode()->GetScene()->GetFbxManager());
-    mesh = static_cast<fbxsdk::FbxMesh *>(geometryConverter.Triangulate(mesh, true));
+    mesh = static_cast<fbxsdk::FbxMesh *>(
+        geometryConverter.Triangulate(mesh, true));
   }
 
   // Get the number of control points (vertices) in the mesh
@@ -391,7 +460,8 @@ Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh) {
           fbxsdk::FbxVector2 uv;
           if (uvElement->GetMappingMode() ==
               fbxsdk::FbxGeometryElement::eByControlPoint) {
-            if (uvElement->GetReferenceMode() == fbxsdk::FbxGeometryElement::eDirect) {
+            if (uvElement->GetReferenceMode() ==
+                fbxsdk::FbxGeometryElement::eDirect) {
               uv = uvElement->GetDirectArray().GetAt(controlPointIndex);
             } else if (uvElement->GetReferenceMode() ==
                        fbxsdk::FbxGeometryElement::eIndexToDirect) {
@@ -431,29 +501,101 @@ Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh) {
     }
   }
 
+  int skinCount = mesh->GetDeformerCount(fbxsdk::FbxDeformer::eSkin);
+  for (int i = 0; i < skinCount; ++i) {
+    fbxsdk::FbxSkin *skin = static_cast<fbxsdk::FbxSkin *>(
+        mesh->GetDeformer(i, fbxsdk::FbxDeformer::eSkin));
+
+    for (int j = 0; j < skin->GetClusterCount(); ++j) {
+      fbxsdk::FbxCluster *cluster = skin->GetCluster(j);
+      std::string boneName = cluster->GetLink()->GetName();
+
+      // Check if the bone is already in the global bone structure
+      if (boneMapping.find(boneName) == boneMapping.end()) {
+        BoneInfo newBone;
+        newBone.boneName = boneName;
+        // newBone.offsetMatrix = ToMat4(
+        //     cluster->mTransformLink);
+        // Extract and set localPosition, localRotation, localScale
+        ExtractBoneTransforms(cluster->GetLink(), newBone.localPosition,
+                              newBone.localRotation, newBone.localScale);
+
+        // Optional: Extract and set localPosition, localRotation, localScale if
+        // needed Get parent bone index
+        fbxsdk::FbxNode *parentNode = cluster->GetLink()->GetParent();
+        if (parentNode) {
+          std::string parentName = parentNode->GetName();
+          if (boneMapping.find(parentName) != boneMapping.end()) {
+            newBone.parentIndex = boneMapping[parentName];
+            globalBones[newBone.parentIndex].children.push_back(
+                globalBones.size());
+          }
+        }
+
+        boneMapping[boneName] = globalBones.size();
+        globalBones.push_back(newBone);
+      }
+
+      int boneIndex = boneMapping[boneName];
+      int *controlPointIndices = cluster->GetControlPointIndices();
+      double *weights = cluster->GetControlPointWeights();
+
+      for (int k = 0; k < cluster->GetControlPointIndicesCount(); ++k) {
+        int controlPointIndex = controlPointIndices[k];
+        double weight = weights[k];
+
+        if (controlPointToVertexIndex.find(controlPointIndex) !=
+            controlPointToVertexIndex.end()) {
+          int vertexIndex = controlPointToVertexIndex[controlPointIndex];
+
+          // Find the smallest weight index to replace if necessary
+          for (int b = 0; b < MAX_BONES; ++b) {
+            if (meshVertices[vertexIndex].BoneWeight[b] == 0.0f) {
+              meshVertices[vertexIndex].BoneId[b] = boneIndex;
+              meshVertices[vertexIndex].BoneWeight[b] =
+                  static_cast<float>(weight);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  // Normalize the weights
+  for (auto &vertex : meshVertices) {
+    float totalWeight = 0.0f;
+    for (int b = 0; b < MAX_BONES; ++b) {
+      totalWeight += vertex.BoneWeight[b];
+    }
+    if (totalWeight > 0.0f) {
+      for (int b = 0; b < MAX_BONES; ++b) {
+        vertex.BoneWeight[b] /= totalWeight;
+      }
+    }
+  }
+
   // Create and return the mesh
   auto result = new Render::Mesh(meshVertices, meshIndices);
   result->identifier = mesh->GetNode()->GetName();
   return result;
 }
 
-void TraverseNode(fbxsdk::FbxNode *node, vector<Render::Mesh *> &meshes) {
+void TraverseNode(fbxsdk::FbxNode *node, vector<Render::Mesh *> &meshes,
+                  std::vector<BoneInfo> &globalBones,
+                  std::unordered_map<std::string, int> &boneMapping) {
   if (node) {
     fbxsdk::FbxMesh *mesh = node->GetMesh();
     if (mesh) {
-      meshes.push_back(ProcessMesh(mesh));
+      meshes.push_back(ProcessMesh(mesh, globalBones, boneMapping));
     }
     for (int i = 0; i < node->GetChildCount(); i++) {
-      TraverseNode(node->GetChild(i), meshes);
+      TraverseNode(node->GetChild(i), meshes, globalBones, boneMapping);
     }
   }
 }
 
-vector<Render::Mesh *> loadAndCreateMeshFromFile(string modelPath) {
-  boneCounter = 0;
-  boneInfos.clear();
-  boneInfoMap.clear();
-
+vector<Render::Mesh *>
+AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
   vector<Render::Mesh *> meshes;
 
   // Initialize the FBX SDK manager
@@ -490,8 +632,54 @@ vector<Render::Mesh *> loadAndCreateMeshFromFile(string modelPath) {
 
   // Traverse the scene to process each mesh
   fbxsdk::FbxNode *rootNode = scene->GetRootNode();
+  std::vector<BoneInfo> globalBones;
+  std::unordered_map<std::string, int> boneMapping;
   if (rootNode) {
-    TraverseNode(rootNode, meshes);
+    TraverseNode(rootNode, meshes, globalBones, boneMapping);
+  }
+  if (globalBones.size() > 1 && boneMapping.size() > 1) {
+    // create skeleton, register it in allSkeletons
+    Animation::Skeleton *skel = new Animation::Skeleton();
+    std::map<int, int> old2new;
+    allSkeletons.insert(std::make_pair(modelPath, skel));
+    // find the root joint
+    int rootJointOld = -1;
+    for (int i = 0; i < globalBones.size(); ++i) {
+      if (globalBones[i].parentIndex == -1) {
+        rootJointOld = i;
+        break;
+      }
+    }
+    if (rootJointOld != -1) {
+      std::stack<int> oldIds;
+      skel->skeletonName = "armature";
+      oldIds.push(rootJointOld);
+      old2new.insert(std::make_pair(-1, -1));
+      while (!oldIds.empty()) {
+        auto cur = oldIds.top();
+        oldIds.pop();
+        old2new.insert(std::make_pair(cur, skel->jointNames.size()));
+        auto &curRef = globalBones[cur];
+        skel->jointNames.push_back(curRef.boneName);
+        skel->jointOffset.push_back(curRef.localPosition);
+        skel->jointRotation.push_back(curRef.localRotation);
+        skel->jointScale.push_back(curRef.localScale);
+        for (auto child : globalBones[cur].children) {
+          oldIds.push(child);
+        }
+      }
+      skel->jointParent.resize(globalBones.size());
+      skel->jointChildren.resize(globalBones.size(), vector<int>());
+      for (int oldId = 0; oldId < globalBones.size(); ++oldId) {
+        int newId = old2new[oldId];
+        skel->jointParent[newId] = old2new[globalBones[oldId].parentIndex];
+        for (auto child : globalBones[oldId].children)
+          skel->jointChildren[newId].push_back(old2new[child]);
+      }
+    } else {
+      Console.Log("[error]: skeleton in file %s has no root joint\n",
+                  modelPath.c_str());
+    }
   }
 
   // Destroy the SDK manager and all associated objects
