@@ -56,7 +56,6 @@ AssetsLoader::~AssetsLoader() {
 }
 
 unsigned int loadAndCreateTextureFromFile(string texturePath);
-vector<Render::Mesh *> loadAndCreateMeshFromFile(string modelPath);
 
 void AssetsLoader::LoadDefaultAssets() {
   // initialize all the primitives
@@ -312,6 +311,7 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   if (allMeshes.find(modelPath) == allMeshes.end()) {
     // new asset
     meshes = loadAndCreateMeshFromFile(modelPath);
+    allMeshes.insert(std::make_pair(modelPath, meshes));
   } else {
     meshes = allMeshes[modelPath];
   }
