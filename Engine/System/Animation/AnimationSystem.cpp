@@ -2,6 +2,7 @@
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Function/Animation/Motion.hpp"
+#include "Function/Render/Mesh.hpp"
 #include "Function/Render/VisUtils.hpp"
 #include "Scene.hpp"
 #include "System/Animation/Common.hpp"
@@ -43,10 +44,10 @@ void AnimationSystem::Update(float dt) {
       int nFrames = animator.motion->poses.size();
       if (nFrames != 0) {
         // sample animation from motion data of each animator
-        animator.CurrentPose =
+        Animation::Pose CurrentPose =
             animator.motion->At(GWORLD.Context.AnimSystemCurrentFrame);
-        // animator.CurrentPose = animator.motion->GetRestPose();
-        int motionDataJointNum = animator.CurrentPose.skeleton->GetNumJoints();
+        // Animation::Pose CurrentPose = animator.motion->GetRestPose();
+        int motionDataJointNum = animator.actor->GetNumJoints();
         // update the local positions of skeleton hierarchy
         // with animator's currentPose
         std::map<std::string, Entity *> skeletonHierarchy;
@@ -66,10 +67,10 @@ void AnimationSystem::Update(float dt) {
           continue;
         }
         // setup the root translation first
-        root->second->SetLocalPosition(animator.CurrentPose.rootLocalPosition);
+        root->second->SetLocalPosition(CurrentPose.rootLocalPosition);
         for (int boneInd = 0; boneInd < motionDataJointNum; ++boneInd) {
           std::string boneName =
-              animator.CurrentPose.skeleton->jointNames[boneInd];
+              animator.actor->jointNames[boneInd];
           auto boneEntity = skeletonHierarchy.find(boneName);
           if (boneEntity == skeletonHierarchy.end()) {
             Console.Log(
@@ -80,8 +81,16 @@ void AnimationSystem::Update(float dt) {
           // setup local position and rotation for the bone entity
           // let hierarchy update system finish the rest
           boneEntity->second->SetLocalRotation(
-              animator.CurrentPose.jointRotations[boneInd]);
+              CurrentPose.jointRotations[boneInd]);
         }
+      }
+    }
+    // Deform the mesh with animation data
+    if (animator.skeleton != nullptr &&
+        GWORLD.EntityValid(animator.skeleton->ID)) {
+      for (auto mesh : animator.meshes) {
+        mesh->AnimationPossesed = true;
+        DeformSkinnedMesh(mesh, animator);
       }
     }
   }

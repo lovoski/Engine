@@ -36,12 +36,14 @@ public:
     glDeleteShader(compute);
   }
 
+  ~ComputeShader() { glDeleteProgram(ID); }
+
   // Use the program
   void Use() { glUseProgram(ID); }
 
   // Dispatch the compute shader
   void Dispatch(GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ) {
-    Use();
+    glUseProgram(ID);
     glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   }

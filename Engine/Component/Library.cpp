@@ -45,6 +45,7 @@ void Animator::DrawInspectorGUI() {
       SkeletonColor =
           glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
     }
+
     ImGui::MenuItem("Motion", nullptr, nullptr, false);
     ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
     ImGui::BeginChild("choosemotionsource", {-1, 30});
@@ -61,7 +62,6 @@ void Animator::DrawInspectorGUI() {
         std::map<std::string, Entity *> hierarchyMap;
         BuildSkeletonHierarchy(skeleton, hierarchyMap);
         if (restPose.jointRotations.size() == hierarchyMap.size()) {
-
         }
       }
       motion = nullptr;
@@ -83,6 +83,9 @@ void Animator::DrawInspectorGUI() {
       }
       ImGui::EndDragDropTarget();
     }
+
+    ImGui::MenuItem("Deforms", nullptr, nullptr, false);
+
     ImGui::TreePop();
   }
 }
@@ -103,14 +106,18 @@ void MeshRenderer::Deserialize(Json &json) {
 void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
                                  Entity *camera, Entity *object,
                                  std::vector<Light> &lights) {
-  // apply all the deformers before actual rendering
-  for (auto deformer : deformers) {
-    deformer->DeformMesh(object, true);
-  }
   for (auto pass : passes) {
     pass->GetShader()->Use();
     pass->SetupLights(GWORLD.Context.activeLights);
-    pass->SetVariables(object->GetModelMatrix(), viewMat, projMat,
+    auto modelMat = glm::mat4(1.0f);
+    if (!meshData->AnimationPossesed) {
+      modelMat = object->GetModelMatrix();
+    } else {
+      // reset mesh status at each render loop to 
+      // in case the animation system discard this mesh
+      meshData->AnimationPossesed = false;
+    }
+    pass->SetVariables(modelMat, viewMat, projMat,
                        -camera->LocalForward);
     meshData->Draw(*pass->GetShader());
   }
@@ -119,13 +126,6 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
 void MeshRenderer::DrawInspectorGUI() {
   if (ImGui::TreeNode("MeshRenderer")) {
     ImGui::MenuItem("Options", nullptr, nullptr, false);
-    if (ImGui::TreeNode("Deformers")) {
-      for (auto deformer : deformers) {
-        ImGui::Separator();
-        deformer->DrawInspectorGUI();
-      }
-      ImGui::TreePop();
-    }
     if (ImGui::TreeNode("Render Passes")) {
       for (auto pass : passes) {
         ImGui::Separator();
@@ -138,11 +138,16 @@ void MeshRenderer::DrawInspectorGUI() {
 }
 
 std::vector<glm::mat4> Animator::GetSkeletonTransforms() {
-  std::vector<glm::mat4> result(CurrentPose.skeleton->GetNumJoints(),
-                                glm::mat4(1.0f));
   // capture position, rotation of joints, convert these information into
   // matrices
-
+  std::map<std::string, Entity *> hierarchyMap;
+  BuildSkeletonHierarchy(skeleton, hierarchyMap);
+  std::vector<glm::mat4> result(hierarchyMap.size(), glm::mat4(1.0f));
+  for (int jointInd = 0; jointInd < hierarchyMap.size(); ++jointInd) {
+    auto jointName = actor->jointNames[jointInd];
+    auto jointEntity = hierarchyMap[actor->jointNames[jointInd]];
+    result[jointInd] = jointEntity->GetModelMatrix() * actor->offsetMatrices[jointInd];
+  }
   return result;
 }
 

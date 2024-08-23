@@ -32,7 +32,7 @@ public:
   // Create a new instance of this material by the type,
   // cache it in an internal array
   template <typename T>
-  Render::BaseMaterial *InstatiateMaterial(std::string identifier) {
+  Render::BaseMaterial *InstantiateMaterial(std::string identifier) {
     Render::BaseMaterial *material = new T();
     material->identifier = identifier;
     allMaterials.push_back(material);
@@ -40,7 +40,6 @@ public:
   }
   std::vector<std::string> GetIndetifiersForAllCachedMaterials();
 
-  ComputeShader *GetLoadedComputeShader(std::string identifier);
   // Load cached shader with identifiers
   Render::Shader *GetShader(std::string identifier);
   // Load new shader from file path
@@ -60,8 +59,6 @@ private:
   std::map<std::string, Animation::Skeleton *> allSkeletons;
   // identifier to shader data
   std::map<std::string, Render::Shader *> allShaders;
-  // identifier to compute shader
-  std::map<std::string, ComputeShader *> allComputeShaders;
   // path to motion data
   std::map<std::string, Animation::Motion *> allMotions;
 

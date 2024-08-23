@@ -3,7 +3,6 @@
 #include "Component/NativeScript.hpp"
 
 #include "Function/AssetsLoader.hpp"
-#include "Function/General/Deformers.hpp"
 #include "Function/Render/MaterialData.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/Shader.hpp"
@@ -23,6 +22,7 @@ struct BoneInfo {
   glm::vec3 localPosition = glm::vec3(0.0f);
   glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
   glm::vec3 localScale = glm::vec3(1.0f);
+  glm::mat4 offsetMatrix = glm::mat4(1.0f);
   int parentIndex =
       -1; // Index of the parent bone in the hierarchy (-1 if root)
   std::vector<int> children = std::vector<int>(); // Indices of child bones
@@ -113,11 +113,6 @@ void AssetsLoader::LoadDefaultAssets() {
                                               Render::diffuseFS);
   allShaders.insert(std::make_pair("::diffuse", diffuseShader));
 
-  ComputeShader *skeletonAnimDeform = new ComputeShader(skinnedMeshDeform);
-  skeletonAnimDeform->identifier = "::skinnedMeshDeform";
-  allComputeShaders.insert(
-      std::make_pair(skeletonAnimDeform->identifier, skeletonAnimDeform));
-
   Render::Shader *errorShader = new Render::Shader();
   errorShader->identifier = "::error";
   errorShader->LoadAndRecompileShaderSource(Render::errorVS, Render::errorFS);
@@ -165,17 +160,6 @@ Render::Shader *AssetsLoader::GetShader(std::string vsp, std::string fsp,
     return newShader;
   } else
     return GetShader(":error");
-}
-ComputeShader *AssetsLoader::GetLoadedComputeShader(std::string identifier) {
-  auto s = allComputeShaders.find(identifier);
-  if (s == allComputeShaders.end()) {
-    Console.Log("[error]: shader with identifier %s not found\n",
-                identifier.c_str());
-    return nullptr;
-  } else {
-    Console.Log("[info]: get shader with identifier %s\n", identifier.c_str());
-    return (*s).second;
-  }
 }
 
 Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
@@ -336,7 +320,7 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   globalParent->AssignChild(meshParent);
   meshParent->name = "mesh";
   auto globalMaterial =
-      Loader.InstatiateMaterial<Render::DiffuseMaterial>(globalParent->name);
+      Loader.InstantiateMaterial<Render::DiffuseMaterial>(globalParent->name);
   for (auto mesh : meshes) {
     auto c = GWORLD.AddNewEntity();
     c->name = mesh->identifier;
@@ -365,11 +349,14 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
         joints[i]->parent = joints[skel->jointParent[i]];
       joints[i]->parent->children.push_back(joints[i]);
     }
-    globalParent->AddComponent<Animator>();
+    globalParent->AddComponent<Animator>(skel);
     globalParent->GetComponent<Animator>().skeleton = joints[0];
     // if (motion != nullptr) {
     //   globalParent->GetComponent<Animator>().motion = motion;
     // }
+
+    // setup the meshes to be deformed
+    globalParent->GetComponent<Animator>().meshes = meshes;
   }
 
   return globalParent;
@@ -637,6 +624,44 @@ void TraverseNode(fbxsdk::FbxNode *node, vector<Render::Mesh *> &meshes,
   }
 }
 
+// Function to compute the global bind pose matrix
+glm::mat4 ComputeGlobalBindPoseMatrix(
+    const std::vector<BoneInfo> &joints, int jointIndex,
+    const std::vector<glm::mat4> &globalBindPoseMatrices) {
+  const BoneInfo &joint = joints[jointIndex];
+
+  // Create the local transform matrix
+  glm::mat4 T = glm::translate(glm::mat4(1.0f), joint.localPosition);
+  glm::mat4 R = glm::mat4_cast(joint.localRotation);
+  glm::mat4 S = glm::scale(glm::mat4(1.0f), joint.localScale);
+  glm::mat4 localTransform = T * R * S;
+
+  // Compute the global transform
+  if (joint.parentIndex != -1) {
+    // Multiply with the parent's global bind pose matrix if it has a parent
+    return globalBindPoseMatrices[joint.parentIndex] * localTransform;
+  } else {
+    // Root joint, so its global matrix is the local matrix
+    return localTransform;
+  }
+}
+
+// Function to build the offset matrices for all joints
+void BuildOffsetMatrices(std::vector<BoneInfo> &bones) {
+  std::vector<glm::mat4> globalBindPoseMatrices(bones.size());
+
+  // Compute global bind pose matrices for all joints
+  for (int i = 0; i < bones.size(); ++i) {
+    globalBindPoseMatrices[i] =
+        ComputeGlobalBindPoseMatrix(bones, i, globalBindPoseMatrices);
+  }
+
+  // Compute the offset matrix for each joint
+  for (int i = 0; i < bones.size(); ++i) {
+    bones[i].offsetMatrix = glm::inverse(globalBindPoseMatrices[i]);
+  }
+}
+
 vector<Render::Mesh *>
 AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
   vector<Render::Mesh *> meshes;
@@ -709,6 +734,9 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
       }
     }
 
+    // build offset matrices
+    BuildOffsetMatrices(globalBones);
+
     // create skeleton, register it in allSkeletons
     Animation::Skeleton *skel = new Animation::Skeleton();
     std::map<int, int> old2new;
@@ -735,6 +763,7 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
         skel->jointOffset.push_back(curRef.localPosition);
         skel->jointRotation.push_back(curRef.localRotation);
         skel->jointScale.push_back(curRef.localScale);
+        skel->offsetMatrices.push_back(curRef.offsetMatrix);
         for (auto child : globalBones[cur].children) {
           oldIds.push(child);
         }
@@ -746,6 +775,21 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
         skel->jointParent[newId] = old2new[globalBones[oldId].parentIndex];
         for (auto child : globalBones[oldId].children)
           skel->jointChildren[newId].push_back(old2new[child]);
+      }
+      // map the bone indices in vertices
+      for (auto mesh : meshes) {
+        for (int vid = 0; vid < mesh->vertices.size(); ++vid) {
+          for (int k = 0; k < MAX_BONES; ++k) {
+            if (mesh->vertices[vid].BoneId[k] != 0) {
+              mesh->vertices[vid].BoneId[k] =
+                  old2new[mesh->vertices[vid].BoneId[k]];
+            }
+          }
+        }
+        // update buffers of the mesh
+        mesh->vbo.SetDataAs(GL_ARRAY_BUFFER, mesh->vertices, GL_DYNAMIC_DRAW);
+        mesh->defaultStates.SetDataAs(GL_SHADER_STORAGE_BUFFER, mesh->vertices,
+                                      GL_DYNAMIC_DRAW);
       }
       // create motion for the skeleton
       int numFrames = animationPerJoint[0].size();

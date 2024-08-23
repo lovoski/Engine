@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Global.hpp"
 #include "Function/AssetsLoader.hpp"
 #include "Function/AssetsType.hpp"
 #include "Function/General/ComputeShader.hpp"
 #include "Function/Render/Buffers.hpp"
 #include "Function/Render/Shader.hpp"
-
+#include "Global.hpp"
 
 namespace aEngine {
 
@@ -20,10 +19,15 @@ public:
   VAO vao;
   Buffer vbo, ebo;
 
-  Buffer defaultStates, skeletonTransforms;
+  Buffer defaultStates;
 
   std::string identifier;
   std::string modelPath;
+
+  // Mark if the animation system is controlling the
+  // transform of this mesh, if so, additional transform won't be applied
+  // during rendering.
+  bool AnimationPossesed = false;
 
   // constructor
   Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
@@ -37,7 +41,6 @@ public:
     vbo.Delete();
     ebo.Delete();
     defaultStates.Delete();
-    skeletonTransforms.Delete();
   }
 
   // render the mesh

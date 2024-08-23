@@ -1,16 +1,19 @@
 #pragma once
 
-#include "Base/BaseComponent.hpp"
 #include "Entity.hpp"
+#include "Base/BaseComponent.hpp"
+
+#include "Function/Render/Mesh.hpp"
 #include "Function/Animation/Motion.hpp"
 
 namespace aEngine {
 
+class BaseDeformer;
+
 struct Animator : public BaseComponent {
-  Animator() {}
+  Animator(Animation::Skeleton *act) : actor(act) {}
   Animator(Animation::Motion *m) : motion(m) {
-    // the default pose
-    CurrentPose = motion->GetRestPose();
+    actor = &motion->skeleton;
   }
   ~Animator() {}
 
@@ -30,12 +33,17 @@ struct Animator : public BaseComponent {
   // name info
   std::string skeletonName = "", motionName = "";
 
-  // Cache pose data at this frame, this property
-  // is updated by the AnimationSystem each frame
-  Animation::Pose CurrentPose;
+  // Each animator must specify one actor
+  Animation::Skeleton *actor;
 
   // Stores the motion data
   Animation::Motion *motion = nullptr;
+
+  // All the meshes to be deformed,
+  // when one mesh is to be updated by the animator,
+  // the entity holding the MeshRenderer should keep it from 
+  // updated by the hierarchy system.
+  std::vector<Render::Mesh *> meshes;
 };
 
 }; // namespace aEngine

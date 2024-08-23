@@ -219,7 +219,7 @@ void Editor::EntitiesWindow() {
         auto parentEntity = GWORLD.AddNewEntity();
         parentEntity->name = filename.stem().string();
         // create one unified material for the whole object
-        auto unifyMat = Loader.InstatiateMaterial<Render::DiffuseMaterial>(
+        auto unifyMat = Loader.InstantiateMaterial<Render::DiffuseMaterial>(
             filename.stem().string());
         for (auto cmesh : modelMeshes) {
           auto childEntity = GWORLD.AddNewEntity();

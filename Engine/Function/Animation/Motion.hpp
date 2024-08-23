@@ -25,6 +25,8 @@ struct Skeleton {
   std::vector<glm::quat> jointRotation;
   // local scale to joints' parent
   std::vector<glm::vec3> jointScale;
+  // offset matrics needed for skinning
+  std::vector<glm::mat4> offsetMatrices;
   std::vector<int> jointParent;
   std::vector<std::vector<int>> jointChildren;
 
