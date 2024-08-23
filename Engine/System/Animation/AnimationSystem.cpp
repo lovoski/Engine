@@ -1,3 +1,4 @@
+#include "System/Animation/Common.hpp"
 #include "System/Animation/AnimationSystem.hpp"
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
@@ -46,17 +47,7 @@ void AnimationSystem::Update(float dt) {
         // update the local positions of skeleton hierarchy
         // with animator's currentPose
         std::map<std::string, Entity *> skeletonHierarchy;
-        std::queue<EntityID> q;
-        auto skel = animator.skeleton;
-        q.push(skel->ID);
-        while (!q.empty()) {
-          EntityID cur = q.front();
-          Entity *curEnt = GWORLD.EntityFromID(cur);
-          skeletonHierarchy.insert(std::make_pair(curEnt->name, curEnt));
-          q.pop();
-          for (auto c : curEnt->children)
-            q.push(c->ID);
-        }
+        BuildSkeletonHierarchy(animator.skeleton, skeletonHierarchy);
         if (skeletonHierarchy.size() != motionDataJointNum) {
           Console.Log("[error]: skeleton and motion data miss match for %s\n",
                       GWORLD.EntityFromID(animator.GetID())->name.c_str());

@@ -189,8 +189,7 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
       allMotions.insert(std::make_pair(motionPath, motion));
       return motion;
     } else {
-      Console.Log("[error]: unnsupported motion file extension %s\n",
-                  extension.c_str());
+      Console.Log("[error]: GetMotion only loads bvh motion\n");
       return nullptr;
     }
   } else {
@@ -368,9 +367,9 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     }
     globalParent->AddComponent<Animator>();
     globalParent->GetComponent<Animator>().skeleton = joints[0];
-    if (motion != nullptr) {
-      globalParent->GetComponent<Animator>().motion = motion;
-    }
+    // if (motion != nullptr) {
+    //   globalParent->GetComponent<Animator>().motion = motion;
+    // }
   }
 
   return globalParent;
