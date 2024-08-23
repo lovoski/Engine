@@ -63,23 +63,32 @@ void Editor::InspectorWindow() {
   //   ImGui::MenuItem("Window Options", nullptr, nullptr, false);
   //   ImGui::EndPopup();
   // }
-  if (context.selectedEntity != (EntityID)(-1)) {
+  static bool pannelLocked = false;
+  ImGui::Checkbox("Lock Panel", &pannelLocked);
+  if (!pannelLocked) {
+    context.lockedSelectedEntity = context.selectedEntity;
+  }
+  GWORLD.EntityValid(context.lockedSelectedEntity);
+  EntityID entity =
+      pannelLocked ? context.lockedSelectedEntity : context.selectedEntity;
+  // the entity must be valid
+  if (entity != (EntityID)(-1)) {
     string entityName =
-        "Active Entity : " + GWORLD.EntityFromID(context.selectedEntity)->name;
+        "Active Entity : " + GWORLD.EntityFromID(entity)->name;
     ImGui::SeparatorText(entityName.c_str());
     ImGui::BeginChild("Components List",
                       {-1, ImGui::GetContentRegionAvail().y});
-    DrawTransformGUI(context.selectedEntity);
-    if (GWORLD.HasComponent<Camera>(context.selectedEntity))
-      GWORLD.GetComponent<Camera>(context.selectedEntity).DrawInspectorGUI();
-    if (GWORLD.HasComponent<Light>(context.selectedEntity))
-      GWORLD.GetComponent<Light>(context.selectedEntity).DrawInspectorGUI();
-    if (GWORLD.HasComponent<Animator>(context.selectedEntity))
-      GWORLD.GetComponent<Animator>(context.selectedEntity).DrawInspectorGUI();
-    if (GWORLD.HasComponent<NativeScript>(context.selectedEntity))
-      GWORLD.GetComponent<NativeScript>(context.selectedEntity).DrawInspectorGUI();
-    if (GWORLD.HasComponent<MeshRenderer>(context.selectedEntity))
-      GWORLD.GetComponent<MeshRenderer>(context.selectedEntity).DrawInspectorGUI();
+    DrawTransformGUI(entity);
+    if (GWORLD.HasComponent<Camera>(entity))
+      GWORLD.GetComponent<Camera>(entity).DrawInspectorGUI();
+    if (GWORLD.HasComponent<Light>(entity))
+      GWORLD.GetComponent<Light>(entity).DrawInspectorGUI();
+    if (GWORLD.HasComponent<Animator>(entity))
+      GWORLD.GetComponent<Animator>(entity).DrawInspectorGUI();
+    if (GWORLD.HasComponent<NativeScript>(entity))
+      GWORLD.GetComponent<NativeScript>(entity).DrawInspectorGUI();
+    if (GWORLD.HasComponent<MeshRenderer>(entity))
+      GWORLD.GetComponent<MeshRenderer>(entity).DrawInspectorGUI();
     ImGui::EndChild();
   }
   ImGui::End();

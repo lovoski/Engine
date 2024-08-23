@@ -209,6 +209,10 @@ public:
   // is a valid camera entity (has camera component), otherwise returns false.
   bool SetActiveCamera(EntityID camera);
 
+  // Check if one entity is valid,
+  // return `false` and set id to -1 if not.
+  bool EntityValid(EntityID &id);
+
   bool LoopCursorInSceneWindow();
 
   bool InSceneWindow(float x, float y) {

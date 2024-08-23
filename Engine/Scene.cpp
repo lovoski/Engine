@@ -156,6 +156,15 @@ Entity *Scene::AddNewEntity() {
   return &(*(entities[id]));
 }
 
+bool Scene::EntityValid(EntityID &id) {
+  auto it = entities.find(id);
+  if (it == entities.end()) {
+    // this entity is not valid
+    id = (EntityID)(-1);
+    return false;
+  } else return true;
+}
+
 Entity *Scene::EntityFromID(const EntityID entity) {
   if (entity == (EntityID)(-1)) {
     Console.Log("[error]: can't get entity index -1\n");

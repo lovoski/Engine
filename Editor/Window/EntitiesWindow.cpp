@@ -54,6 +54,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
       else
         Console.Log("[info]: Destroy entity %s\n", entity->name.c_str());
       GWORLD.DestroyEntity(entity->ID);
+      // reset selected entity every time remove an entity
       selectedEntity = (EntityID)(-1);
       ImGui::CloseCurrentPopup();
     }
