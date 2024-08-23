@@ -25,7 +25,7 @@ struct BoneInfo {
   glm::vec3 localScale = glm::vec3(1.0f);
   int parentIndex =
       -1; // Index of the parent bone in the hierarchy (-1 if root)
-  std::vector<int> children; // Indices of child bones
+  std::vector<int> children = std::vector<int>(); // Indices of child bones
 };
 
 struct KeyFrame {
@@ -375,6 +375,15 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   return globalParent;
 }
 
+bool IsSkeletonNode(fbxsdk::FbxNode *node) {
+  if (!node)
+    return false;
+  fbxsdk::FbxNodeAttribute *attr = node->GetNodeAttribute();
+  if (attr && attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eSkeleton) {
+    return true;
+  }
+  return false;
+}
 void ExtractBoneTransforms(fbxsdk::FbxNode *node, glm::vec3 &localPosition,
                            glm::quat &localRotation, glm::vec3 &localScale,
                            fbxsdk::FbxTime frameTime = FBXSDK_TIME_INFINITE) {
@@ -527,30 +536,50 @@ Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh,
 
       // Check if the bone is already in the global bone structure
       if (boneMapping.find(boneName) == boneMapping.end()) {
+        // if not, insert it into the globalBones structure
         BoneInfo newBone;
         newBone.boneName = boneName;
-        newBone.node = cluster->GetLink();
-        // Extract and set localPosition, localRotation, localScale
-        ExtractBoneTransforms(cluster->GetLink(), newBone.localPosition,
-                              newBone.localRotation, newBone.localScale);
-
-        // Optional: Extract and set localPosition, localRotation, localScale if
-        // needed Get parent bone index
-        fbxsdk::FbxNode *parentNode = cluster->GetLink()->GetParent();
-        if (parentNode) {
-          std::string parentName = parentNode->GetName();
-          if (boneMapping.find(parentName) != boneMapping.end()) {
-            newBone.parentIndex = boneMapping[parentName];
-            globalBones[newBone.parentIndex].children.push_back(
-                globalBones.size());
-          }
-        }
-
         boneMapping[boneName] = globalBones.size();
         globalBones.push_back(newBone);
       }
 
+      // get the reference
       int boneIndex = boneMapping[boneName];
+
+      fbxsdk::FbxNode *parentNode = cluster->GetLink()->GetParent();
+      if (parentNode && IsSkeletonNode(parentNode)) {
+        // Check if the parent bone is already in the structure
+        std::string parentName = parentNode->GetName();
+        if (boneMapping.find(parentName) == boneMapping.end()) {
+          // insert the parent node if not exists
+          BoneInfo parentBone;
+          parentBone.boneName = parentName;
+          boneMapping[parentName] = globalBones.size();
+          globalBones.push_back(parentBone);
+        }
+        globalBones[boneIndex].parentIndex = boneMapping[parentName];
+        // insert to parent's children if its not a member
+        bool found = false;
+        for (auto child :
+             globalBones[globalBones[boneIndex].parentIndex].children) {
+          if (child == boneIndex) {
+            found = true;
+            break;
+          }
+        }
+        // if there's multiple meshes, the bone could potentially be added more
+        // than once
+        if (!found)
+          globalBones[globalBones[boneIndex].parentIndex].children.push_back(
+              boneIndex);
+      }
+
+      globalBones[boneIndex].node = cluster->GetLink();
+      ExtractBoneTransforms(cluster->GetLink(),
+                            globalBones[boneIndex].localPosition,
+                            globalBones[boneIndex].localRotation,
+                            globalBones[boneIndex].localScale);
+
       int *controlPointIndices = cluster->GetControlPointIndices();
       double *weights = cluster->GetControlPointWeights();
 
@@ -729,14 +758,17 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
         for (int frameInd = 0; frameInd < numFrames; ++frameInd) {
           Animation::Pose pose;
           pose.skeleton = skel;
-          pose.jointRotations.resize(numJoints, glm::quat(1.0f, glm::vec3(0.0f)));
+          pose.jointRotations.resize(numJoints,
+                                     glm::quat(1.0f, glm::vec3(0.0f)));
           for (int oldJointInd = 0; oldJointInd < numJoints; ++oldJointInd) {
             int newJointInd = old2new[oldJointInd];
             if (newJointInd == 0) {
               // process localPosition only for root joint
-              pose.rootLocalPosition = animationPerJoint[oldJointInd][frameInd].localPosition;
+              pose.rootLocalPosition =
+                  animationPerJoint[oldJointInd][frameInd].localPosition;
             }
-            pose.jointRotations[newJointInd] = animationPerJoint[oldJointInd][frameInd].localRotation;
+            pose.jointRotations[newJointInd] =
+                animationPerJoint[oldJointInd][frameInd].localRotation;
           }
           motion->poses.push_back(pose);
         }

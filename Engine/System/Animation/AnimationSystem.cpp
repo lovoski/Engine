@@ -1,10 +1,10 @@
-#include "System/Animation/Common.hpp"
 #include "System/Animation/AnimationSystem.hpp"
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Function/Animation/Motion.hpp"
 #include "Function/Render/VisUtils.hpp"
 #include "Scene.hpp"
+#include "System/Animation/Common.hpp"
 
 namespace aEngine {
 
@@ -36,7 +36,10 @@ void AnimationSystem::Update(float dt) {
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
     auto &animator = entity->GetComponent<Animator>();
-    if (animator.skeleton != nullptr && animator.motion != nullptr) {
+    // TODO: checking each entity in use is valid or not is redundent
+    // We need smart pointer to avoid invalid pointers
+    if (animator.skeleton != nullptr && animator.motion != nullptr &&
+        GWORLD.EntityValid(animator.skeleton->ID)) {
       int nFrames = animator.motion->poses.size();
       if (nFrames != 0) {
         // sample animation from motion data of each animator
@@ -97,7 +100,8 @@ void AnimationSystem::Render() {
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto &animator = entity->GetComponent<Animator>();
-      if (animator.ShowSkeleton && animator.skeleton != nullptr) {
+      if (animator.ShowSkeleton && animator.skeleton != nullptr &&
+          GWORLD.EntityValid(animator.skeleton->ID)) {
         // draw animator.CurrentPose
         auto root = animator.skeleton;
         std::queue<Entity *> q;

@@ -18,7 +18,7 @@ void BuildTestScene(Engine *engine) {
   cam->name = "Editor Cam";
   cam->AddComponent<Camera>();
   auto &camera = cam->GetComponent<Camera>();
-  camera.zFar = 1000.0f;
+  camera.zFar = 2000.0f;
   cam->SetGlobalPosition(glm::vec3(0.0f, 3.0f, 5.0f));
   GWORLD.SetActiveCamera(cam->ID);
 

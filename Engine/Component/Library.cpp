@@ -17,7 +17,7 @@ void Animator::DrawInspectorGUI() {
     ImGui::Checkbox("Show Skeleton", &ShowSkeleton);
     ImGui::Checkbox("Skeleton On Top", &SkeletonOnTop);
     ImGui::BeginChild("chooseskeletonroot", {-1, 30});
-    if (skeleton != nullptr) {
+    if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
       skeletonName = skeleton->name;
     }
     char skeletonNameBuf[100];
