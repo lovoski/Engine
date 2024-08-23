@@ -77,6 +77,4 @@ When I think about how the skinning should work, I really want the skinning logi
 
 So I decided to use geometry shader as a pre-process step to modify the vertex information before any actual rendering, so I can render the skinned mesh as if it were a normal static mesh.
 
-I created a duplicate of the original VBO to ensure this methods works whne there's more than one instance rendering the mesh data. At the end of each animation system update, I will deform the duplicated VBO with a geometry shader. Then render the deformed VBO with existing render system. More details can be found at `Engine/System/Animation/AnimationSystem` and `Engine/System/Animation/Common`. Here's a breif view of current animation:
-
-<iframe width="1163" height="682" src="https://www.youtube.com/embed/0StVJDh3Bks" title="engine demo 20240823 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+I created a duplicate of the original VBO to ensure this methods works whne there's more than one instance rendering the mesh data. At the end of each animation system update, I will deform the duplicated VBO with a geometry shader. Then render the deformed VBO with existing render system. More details can be found at `Engine/System/Animation/AnimationSystem` and `Engine/System/Animation/Common`.
