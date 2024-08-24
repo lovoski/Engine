@@ -45,7 +45,7 @@ public:
   void Dispatch(GLuint numGroupsX, GLuint numGroupsY, GLuint numGroupsZ) {
     glUseProgram(ID);
     glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
   }
 
 private:

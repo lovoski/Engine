@@ -4,12 +4,14 @@
 #include "Base/BaseComponent.hpp"
 
 #include "Function/Render/Mesh.hpp"
+#include "Function/Render/Buffers.hpp"
 #include "Function/Animation/Motion.hpp"
 
 namespace aEngine {
 
 class BaseDeformer;
 
+// Each animator must bind to one actor (Skeleton)
 struct Animator : public BaseComponent {
   Animator(Animation::Skeleton *act) : actor(act) {}
   Animator(Animation::Motion *m) : motion(m) {
@@ -38,12 +40,6 @@ struct Animator : public BaseComponent {
 
   // Stores the motion data
   Animation::Motion *motion = nullptr;
-
-  // All the meshes to be deformed,
-  // when one mesh is to be updated by the animator,
-  // the entity holding the MeshRenderer should keep it from 
-  // updated by the hierarchy system.
-  std::vector<Render::Mesh *> meshes;
 };
 
 }; // namespace aEngine

@@ -19,15 +19,8 @@ public:
   VAO vao;
   Buffer vbo, ebo;
 
-  Buffer defaultStates;
-
   std::string identifier;
   std::string modelPath;
-
-  // Mark if the animation system is controlling the
-  // transform of this mesh, if so, additional transform won't be applied
-  // during rendering.
-  bool AnimationPossesed = false;
 
   // constructor
   Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
@@ -35,21 +28,10 @@ public:
     this->indices = indices;
     setupMesh();
   }
-
-  ~Mesh() {
-    vao.Delete();
-    vbo.Delete();
-    ebo.Delete();
-    defaultStates.Delete();
-  }
+  ~Mesh() {}
 
   // render the mesh
-  void Draw(Shader &shader);
-
-  void InitializeDeformData() {
-    defaultStates.SetDataAs(GL_SHADER_STORAGE_BUFFER, vertices);
-    defaultStates.UnbindAs(GL_SHADER_STORAGE_BUFFER);
-  }
+  void Draw(Shader &shader, Buffer *targetVBO = nullptr);
 
 private:
   // initializes all the buffer objects/arrays

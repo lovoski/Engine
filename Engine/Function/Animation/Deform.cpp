@@ -1,7 +1,6 @@
-#include "System/Animation/Common.hpp"
-
-#include "Function/Render/Buffers.hpp"
+#include "Function/Animation/Deform.hpp"
 #include "Function/AssetsLoader.hpp"
+#include "Function/Render/Buffers.hpp"
 
 namespace aEngine {
 
@@ -66,22 +65,23 @@ void main() {
 }
 )";
 
-void DeformSkinnedMesh(Render::Mesh *mesh, Animator &animator) {
+void DeformSkinnedMesh(Render::Mesh *mesh, Animator *animator,
+                       Render::Buffer &targetVBO, Render::Buffer &matrices) {
   static ComputeShader cs(skinnedMeshDeform);
-  static Render::Buffer skeletonMatrices;
   cs.Use();
   // configure the inputs
-  mesh->defaultStates.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 0);
-  skeletonMatrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
-                                     animator.GetSkeletonTransforms());
-  skeletonMatrices.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 1);
+  mesh->vbo.BindAs(GL_SHADER_STORAGE_BUFFER);
+  mesh->vbo.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 0);
+  matrices.BindAs(GL_SHADER_STORAGE_BUFFER);
+  matrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
+                     animator->GetSkeletonTransforms());
+  matrices.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 1);
   // configure the outputs
-  mesh->vbo.BindAs(GL_ARRAY_BUFFER);
+  mesh->vbo.BindAs(GL_SHADER_STORAGE_BUFFER);
   mesh->vbo.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 2);
   int numVertices = mesh->vertices.size();
   int numWorkGroups = (numVertices - (numVertices % 64)) / 64 + 1;
-  if (glIsBuffer(mesh->defaultStates.GetID()) &&
-      glIsBuffer(mesh->vbo.GetID()))
+  if (glIsBuffer(mesh->vbo.GetID()) && glIsBuffer(targetVBO.GetID()))
     cs.Dispatch(numWorkGroups, 1, 1);
 }
 

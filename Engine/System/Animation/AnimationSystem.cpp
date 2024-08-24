@@ -2,10 +2,10 @@
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Function/Animation/Motion.hpp"
+#include "Function/Animation/Deform.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/VisUtils.hpp"
 #include "Scene.hpp"
-#include "System/Animation/Common.hpp"
 
 namespace aEngine {
 
@@ -85,14 +85,6 @@ void AnimationSystem::Update(float dt) {
         }
       }
     }
-    // Deform the mesh with animation data
-    if (animator.skeleton != nullptr &&
-        GWORLD.EntityValid(animator.skeleton->ID)) {
-      for (auto mesh : animator.meshes) {
-        mesh->AnimationPossesed = true;
-        DeformSkinnedMesh(mesh, animator);
-      }
-    }
   }
 }
 
@@ -111,7 +103,7 @@ void AnimationSystem::Render() {
       auto &animator = entity->GetComponent<Animator>();
       if (animator.ShowSkeleton && animator.skeleton != nullptr &&
           GWORLD.EntityValid(animator.skeleton->ID)) {
-        // draw animator.CurrentPose
+        // draw animator.skeleton
         auto root = animator.skeleton;
         std::queue<Entity *> q;
         q.push(root);

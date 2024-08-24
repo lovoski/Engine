@@ -2,8 +2,10 @@
 #include "Scene.hpp"
 
 #include "Component/Camera.hpp"
+#include "Component/DeformRenderer.hpp"
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
+
 
 #include "Function/Render/VisUtils.hpp"
 
@@ -11,6 +13,7 @@ namespace aEngine {
 
 RenderSystem::RenderSystem() {
   AddComponentSignatureRequireOne<MeshRenderer>();
+  AddComponentSignatureRequireOne<DeformRenderer>();
 }
 
 RenderSystem::~RenderSystem() {}
@@ -30,9 +33,15 @@ void RenderSystem::RenderBegin() {
     glEnable(GL_DEPTH_TEST);
     for (auto entID : entities) {
       auto entity = GWORLD.EntityFromID(entID);
-      auto renderer = entity->GetComponent<MeshRenderer>();
-      renderer.ForwardRender(projMat, viewMat, camera, entity,
-                             GWORLD.Context.activeLights);
+      if (entity->HasComponent<MeshRenderer>()) {
+        auto renderer = entity->GetComponent<MeshRenderer>();
+        renderer.ForwardRender(projMat, viewMat, camera, entity,
+                               GWORLD.Context.activeLights);
+      } else if (entity->HasComponent<DeformRenderer>()) {
+        auto renderer = entity->GetComponent<DeformRenderer>();
+        renderer.Render(projMat, viewMat, camera, entity,
+                               GWORLD.Context.activeLights);
+      }
     }
 
     // draw the grid in 3d space

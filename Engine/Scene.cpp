@@ -361,15 +361,15 @@ void Scene::DeserializeReset(Json &json) {
             json["components"]["light"][std::to_string((int)old)]);
       }
     }
-    for (auto compJson : json["components"]["renderer"].items()) {
-      EntityID belongs = (EntityID)std::stoi(compJson.key());
-      if (belongs == old) {
-        // this component belongs to the entity
-        newEntity->AddComponent<MeshRenderer>();
-        newEntity->GetComponent<MeshRenderer>().Deserialize(
-            json["components"]["renderer"][std::to_string((int)old)]);
-      }
-    }
+    // for (auto compJson : json["components"]["renderer"].items()) {
+    //   EntityID belongs = (EntityID)std::stoi(compJson.key());
+    //   if (belongs == old) {
+    //     // this component belongs to the entity
+    //     newEntity->AddComponent<MeshRenderer>();
+    //     newEntity->GetComponent<MeshRenderer>().Deserialize(
+    //         json["components"]["renderer"][std::to_string((int)old)]);
+    //   }
+    // }
   }
 
   // reset the scene variables

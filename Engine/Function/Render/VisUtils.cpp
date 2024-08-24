@@ -45,6 +45,7 @@ void DrawLine3D(glm::vec3 p0, glm::vec3 p1, glm::mat4 vp, glm::vec3 color,
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
                           (void *)0);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     openglObjectCreated = true;
   }
   lineShader->Use();
@@ -70,7 +71,8 @@ using PlainVertexi = PlainVertex<int>;
 using PlainVertexf = PlainVertex<float>;
 
 // TODO: some shadow-ish issue with the code
-void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp, glm::vec3 color) {
+void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp,
+              glm::vec3 color) {
   static unsigned int vao, vbo;
   static int savedGridSize = -1, savedGridSpacing = -1;
   static bool openglObjectCreated = false;
@@ -117,6 +119,7 @@ void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp, gl
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     savedGridSize = gridSize;
     savedGridSpacing = gridSpacing;
   }
@@ -187,6 +190,7 @@ void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp,
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
   }
   squareShader->Use();
   squareShader->SetVec3("color", color);
@@ -289,6 +293,7 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
                           (void *)0);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     openglObjectCreated = true;
   }
   boneShader->Use();
@@ -300,8 +305,8 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
   glm::quat rot =
       Math::FromToRotation(glm::vec3(1.0f, 0.0f, 0.0f), start - end);
   glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), trans) *
-                                glm::mat4_cast(rot) *
-                                glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+                       glm::mat4_cast(rot) *
+                       glm::scale(glm::mat4(1.0f), glm::vec3(scale));
   boneShader->SetMat4("mvp", vp * modelMat);
   glBindVertexArray(vao);
   glDrawArrays(GL_LINES, 0, 2);

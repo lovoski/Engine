@@ -1,6 +1,8 @@
 #include "Component/Animator.hpp"
+#include "Component/DeformRenderer.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
+
 
 #include "Function/AssetsLoader.hpp"
 #include "Function/Render/MaterialData.hpp"
@@ -316,20 +318,6 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     motion = (*motionIt).second;
   }
 
-  auto meshParent = GWORLD.AddNewEntity();
-  globalParent->AssignChild(meshParent);
-  meshParent->name = "mesh";
-  auto globalMaterial =
-      Loader.InstantiateMaterial<Render::DiffuseMaterial>(globalParent->name);
-  for (auto mesh : meshes) {
-    auto c = GWORLD.AddNewEntity();
-    c->name = mesh->identifier;
-    c->AddComponent<MeshRenderer>(mesh);
-    c->GetComponent<MeshRenderer>().AddPass(globalMaterial,
-                                            globalMaterial->identifier);
-    meshParent->AssignChild(c);
-  }
-
   if (skel != nullptr) {
     // create entities from children to parent
     // traverse the joints in reversed order
@@ -354,9 +342,29 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     // if (motion != nullptr) {
     //   globalParent->GetComponent<Animator>().motion = motion;
     // }
+  }
 
-    // setup the meshes to be deformed
-    globalParent->GetComponent<Animator>().meshes = meshes;
+  auto meshParent = GWORLD.AddNewEntity();
+  globalParent->AssignChild(meshParent);
+  meshParent->name = "mesh";
+  auto globalMaterial =
+      Loader.InstantiateMaterial<Render::DiffuseMaterial>(globalParent->name);
+  for (auto mesh : meshes) {
+    auto c = GWORLD.AddNewEntity();
+    c->name = mesh->identifier;
+    if (skel != nullptr) {
+      // add deform renderer
+      MeshRenderer renderer(mesh);
+      renderer.AddPass(globalMaterial, globalMaterial->identifier);
+      c->AddComponent<DeformRenderer>(renderer,
+                                      &globalParent->GetComponent<Animator>());
+      meshParent->AssignChild(c);
+    } else {
+      c->AddComponent<MeshRenderer>(mesh);
+      c->GetComponent<MeshRenderer>().AddPass(globalMaterial,
+                                              globalMaterial->identifier);
+      meshParent->AssignChild(c);
+    }
   }
 
   return globalParent;
@@ -787,9 +795,8 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
           }
         }
         // update buffers of the mesh
-        mesh->vbo.SetDataAs(GL_ARRAY_BUFFER, mesh->vertices, GL_DYNAMIC_DRAW);
-        mesh->defaultStates.SetDataAs(GL_SHADER_STORAGE_BUFFER, mesh->vertices,
-                                      GL_DYNAMIC_DRAW);
+        mesh->vbo.SetDataAs(GL_ARRAY_BUFFER, mesh->vertices, GL_STATIC_DRAW);
+        mesh->vbo.UnbindAs(GL_ARRAY_BUFFER);
       }
       // create motion for the skeleton
       int numFrames = animationPerJoint[0].size();

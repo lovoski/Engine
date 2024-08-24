@@ -6,12 +6,13 @@
 #include "Scene.hpp"
 #include "Function/AssetsType.hpp"
 #include "Function/AssetsLoader.hpp"
+
+#include "Function/Render/Buffers.hpp"
 #include "Function/Render/MaterialData.hpp"
 
 namespace aEngine {
 
 struct MeshRenderer : public aEngine::BaseComponent {
-  MeshRenderer() {}
   MeshRenderer(aEngine::Render::Mesh *mesh) : meshData(mesh) {}
   ~MeshRenderer() {}
 
@@ -36,7 +37,7 @@ struct MeshRenderer : public aEngine::BaseComponent {
   }
 
   Render::Mesh *meshData = nullptr;
-
+  Render::Buffer *targetVBO = nullptr;
   std::vector<Render::BaseMaterial *> passes;
 };
 

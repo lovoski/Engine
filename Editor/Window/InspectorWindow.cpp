@@ -6,6 +6,7 @@
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
+#include "Component/DeformRenderer.hpp"
 
 #include "Function/Render/MaterialData.hpp"
 #include "Function/Render/Shader.hpp"
@@ -89,6 +90,9 @@ void Editor::InspectorWindow() {
       GWORLD.GetComponent<NativeScript>(entity).DrawInspectorGUI();
     if (GWORLD.HasComponent<MeshRenderer>(entity))
       GWORLD.GetComponent<MeshRenderer>(entity).DrawInspectorGUI();
+    if (GWORLD.HasComponent<DeformRenderer>(entity)) {
+      GWORLD.GetComponent<DeformRenderer>(entity).DrawInspectorGUI();
+    }
     ImGui::EndChild();
   }
   ImGui::End();

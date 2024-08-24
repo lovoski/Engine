@@ -69,12 +69,4 @@ Check `Engine/Component/NativeScript.hpp` for more details.
 
 ## Animation System
 
-Currently, the animation system supported import `.bvh` and `.fbx` motion files. After the motion file is loaded, a Skeleton and related Motion will be created as described in `Engine/Function/Animation/Motion`.
-
-As the engine updates all hierarchy at the start of each loop, the local transforms of each joints will be converted to global transforms at the start of each frame, so I updated the local transforms in the `Update` function of `Engine/System/Animation/AnimationSystem`.
-
-When I think about how the skinning should work, I really want the skinning logic to be seperated from the render logic so that I can design a universal render framework that can be applied to all sorts of mesh without writing extra components like `DeformRenderer` etc.
-
-So I decided to use geometry shader as a pre-process step to modify the vertex information before any actual rendering, so I can render the skinned mesh as if it were a normal static mesh.
-
-I created a duplicate of the original VBO to ensure this methods works whne there's more than one instance rendering the mesh data. At the end of each animation system update, I will deform the duplicated VBO with a geometry shader. Then render the deformed VBO with existing render system. More details can be found at `Engine/System/Animation/AnimationSystem` and `Engine/System/Animation/Common`.
+...
