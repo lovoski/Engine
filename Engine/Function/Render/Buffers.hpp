@@ -10,10 +10,6 @@ namespace Render {
 class Buffer {
 public:
   Buffer() { glGenBuffers(1, &ID); }
-  ~Buffer() {
-    if (glIsBuffer(ID))
-      glDeleteBuffers(1, &ID);
-  }
   // Bind the buffer to target, setup the filled data in it.
   template <typename T>
   void SetDataAs(GLenum TARGET_BUFFER_NAME, const std::vector<T> &data,
@@ -44,7 +40,10 @@ public:
     glBindBuffer(TARGET_BUFFER_NAME, 0);
   }
   // Free the buffer from GPU
-  void Delete() { glDeleteBuffers(1, &ID); }
+  void Delete() {
+    if (glIsBuffer(ID))
+      glDeleteBuffers(1, &ID);
+  }
   GLuint GetID() const { return ID; }
 
 private:

@@ -77,12 +77,14 @@ void DeformSkinnedMesh(Render::Mesh *mesh, Animator *animator,
                      animator->GetSkeletonTransforms());
   matrices.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 1);
   // configure the outputs
-  mesh->vbo.BindAs(GL_SHADER_STORAGE_BUFFER);
-  mesh->vbo.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 2);
+  targetVBO.BindAs(GL_SHADER_STORAGE_BUFFER);
+  targetVBO.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 2);
   int numVertices = mesh->vertices.size();
   int numWorkGroups = (numVertices - (numVertices % 64)) / 64 + 1;
-  if (glIsBuffer(mesh->vbo.GetID()) && glIsBuffer(targetVBO.GetID()))
+  if (glIsBuffer(mesh->vbo.GetID()) && glIsBuffer(targetVBO.GetID()) &&
+      glIsBuffer(matrices.GetID()))
     cs.Dispatch(numWorkGroups, 1, 1);
+  glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 }; // namespace aEngine

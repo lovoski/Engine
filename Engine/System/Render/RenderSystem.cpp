@@ -34,11 +34,11 @@ void RenderSystem::RenderBegin() {
     for (auto entID : entities) {
       auto entity = GWORLD.EntityFromID(entID);
       if (entity->HasComponent<MeshRenderer>()) {
-        auto renderer = entity->GetComponent<MeshRenderer>();
+        auto &renderer = entity->GetComponent<MeshRenderer>();
         renderer.ForwardRender(projMat, viewMat, camera, entity,
                                GWORLD.Context.activeLights);
       } else if (entity->HasComponent<DeformRenderer>()) {
-        auto renderer = entity->GetComponent<DeformRenderer>();
+        auto &renderer = entity->GetComponent<DeformRenderer>();
         renderer.Render(projMat, viewMat, camera, entity,
                                GWORLD.Context.activeLights);
       }

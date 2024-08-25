@@ -10,12 +10,8 @@
 namespace aEngine {
 
 struct DeformRenderer : public aEngine::BaseComponent {
-  DeformRenderer(MeshRenderer mr, Animator *ar) : renderer(mr), animator(ar) {
-    targetVBO.SetDataAs(GL_SHADER_STORAGE_BUFFER, mr.meshData->vertices);
-    skeletonMatrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
-                               ar->GetSkeletonTransforms());
-  }
-  ~DeformRenderer() { targetVBO.Delete(); }
+  DeformRenderer(MeshRenderer mr, Animator *ar);
+  ~DeformRenderer();
 
   Animator *animator;
   MeshRenderer renderer;

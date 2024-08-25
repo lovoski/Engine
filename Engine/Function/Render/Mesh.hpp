@@ -11,12 +11,12 @@ namespace aEngine {
 
 namespace Render {
 
+// Each mesh object holds a initial opengl buffer object
 class Mesh {
 public:
   // mesh Data
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
-  VAO vao;
   Buffer vbo, ebo;
 
   std::string identifier;
@@ -28,10 +28,10 @@ public:
     this->indices = indices;
     setupMesh();
   }
-  ~Mesh() {}
-
-  // render the mesh
-  void Draw(Shader &shader, Buffer *targetVBO = nullptr);
+  ~Mesh() {
+    vbo.Delete();
+    ebo.Delete();
+  }
 
 private:
   // initializes all the buffer objects/arrays
