@@ -102,7 +102,9 @@ public:
     return scene->HasComponent<T>(ID);
   }
 
-  template <typename T> T &GetComponent() { return scene->GetComponent<T>(ID); }
+  template <typename T> std::shared_ptr<T> GetComponent() {
+    return scene->GetComponent<T>(ID);
+  }
 
   void Destroy();
 

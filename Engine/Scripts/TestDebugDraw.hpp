@@ -16,8 +16,8 @@ struct TestDebugDraw : public Scriptable {
     if (scene->GetActiveCamera(camera)) {
       auto cameraObject = scene->EntityFromID(camera);
       auto cameraComp = cameraObject->GetComponent<Camera>();
-      auto viewMat = cameraComp.GetViewMatrix(*cameraObject);
-      auto projMat = cameraComp.GetProjMatrixPerspective(
+      auto viewMat = cameraComp->GetViewMatrix(*cameraObject);
+      auto projMat = cameraComp->GetProjMatrixPerspective(
           scene->Context.sceneWindowSize.x, scene->Context.sceneWindowSize.y);
       VisUtils::DrawLine3D(glm::vec3(0.0f), glm::vec3(2.0f), projMat * viewMat,
                            glm::vec3(1.0f, 0.0f, 0.0f));

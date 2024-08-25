@@ -116,7 +116,7 @@ void Editor::EntitiesWindow() {
         auto cube = GWORLD.AddNewEntity();
         cube->name = "Cube";
         cube->AddComponent<MeshRenderer>(Loader.GetMesh("::cubePrimitive", ""));
-        cube->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+        cube->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
             nullptr, "Cube Mat");
       }
       if (ImGui::MenuItem("Plane")) {
@@ -124,7 +124,7 @@ void Editor::EntitiesWindow() {
         plane->name = "Plane";
         plane->AddComponent<MeshRenderer>(
             Loader.GetMesh("::planePrimitive", ""));
-        plane->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+        plane->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
             nullptr, "Plane Mat");
       }
       if (ImGui::MenuItem("Sphere")) {
@@ -132,7 +132,7 @@ void Editor::EntitiesWindow() {
         sphere->name = "Sphere";
         sphere->AddComponent<MeshRenderer>(
             Loader.GetMesh("::spherePrimitive", ""));
-        sphere->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+        sphere->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
             nullptr, "Sphere Mat");
       }
       if (ImGui::MenuItem("Cylinder")) {
@@ -140,14 +140,14 @@ void Editor::EntitiesWindow() {
         cylinder->name = "Cylinder";
         cylinder->AddComponent<MeshRenderer>(
             Loader.GetMesh("::cylinderPrimitive", ""));
-        cylinder->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+        cylinder->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
             nullptr, "Cylinder Mat");
       }
       if (ImGui::MenuItem("Cone")) {
         auto cone = GWORLD.AddNewEntity();
         cone->name = "Cone";
         cone->AddComponent<MeshRenderer>(Loader.GetMesh("::conePrimitive", ""));
-        cone->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+        cone->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
             nullptr, "Cone Mat");
       }
       ImGui::Separator();
@@ -164,19 +164,19 @@ void Editor::EntitiesWindow() {
         dLight->SetGlobalRotation(
             glm::quat(glm::radians(vec3(180.0f, 0.0f, 0.0f))));
         dLight->AddComponent<Light>();
-        dLight->GetComponent<Light>().type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+        dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
       }
       if (ImGui::MenuItem("Point Light")) {
         auto pLight = GWORLD.AddNewEntity();
         pLight->name = "Point light";
         pLight->AddComponent<Light>();
-        pLight->GetComponent<Light>().type = LIGHT_TYPE::POINT_LIGHT;
+        pLight->GetComponent<Light>()->type = LIGHT_TYPE::POINT_LIGHT;
       }
       if (ImGui::MenuItem("Spot Light")) {
         auto sLight = GWORLD.AddNewEntity();
         sLight->name = "Spot light";
         sLight->AddComponent<Light>();
-        sLight->GetComponent<Light>().type = LIGHT_TYPE::SPOT_LIGHT;
+        sLight->GetComponent<Light>()->type = LIGHT_TYPE::SPOT_LIGHT;
       }
       ImGui::EndMenu();
     }
@@ -209,8 +209,8 @@ void Editor::EntitiesWindow() {
         // build motion hierarchy
         CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), root);
         // set up variables for animator component
-        parent->GetComponent<Animator>().skeleton = root;
-        parent->GetComponent<Animator>().ShowSkeleton = true;
+        parent->GetComponent<Animator>()->skeleton = root;
+        parent->GetComponent<Animator>()->ShowSkeleton = true;
         // make skeleton hierarchy a child of proxy entity
         parent->AssignChild(root);
       } else if (extension == ".obj" || extension == ".off") {
@@ -225,7 +225,7 @@ void Editor::EntitiesWindow() {
           auto childEntity = GWORLD.AddNewEntity();
           childEntity->name = cmesh->identifier;
           childEntity->AddComponent<MeshRenderer>(cmesh);
-          childEntity->GetComponent<MeshRenderer>().AddPass(unifyMat, unifyMat->identifier);
+          childEntity->GetComponent<MeshRenderer>()->AddPass(unifyMat, unifyMat->identifier);
           // setup parent child relation
           parentEntity->AssignChild(childEntity);
         }

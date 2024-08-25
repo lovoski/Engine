@@ -10,6 +10,9 @@ namespace Render {
 class Buffer {
 public:
   Buffer() { glGenBuffers(1, &ID); }
+  ~Buffer() {
+    std::cout << "buffer deconstruct, id=" << ID << std::endl;
+  }
   // Bind the buffer to target, setup the filled data in it.
   template <typename T>
   void SetDataAs(GLenum TARGET_BUFFER_NAME, const std::vector<T> &data,
@@ -41,6 +44,7 @@ public:
   }
   // Free the buffer from GPU
   void Delete() {
+    std::cout << "buffer delete, id=" << ID << std::endl;
     if (glIsBuffer(ID))
       glDeleteBuffers(1, &ID);
   }
@@ -59,7 +63,10 @@ public:
 
   void Unbind() const { glBindVertexArray(0); }
 
-  void Delete() const { glDeleteVertexArrays(1, &ID); }
+  void Delete() const {
+    std::cout << "vao deleted, id=" << ID << std::endl;
+    glDeleteVertexArrays(1, &ID);
+  }
 
   void LinkAttrib(Buffer &vbo, GLuint layout, GLint size, GLenum type,
                   GLsizei stride, void *offset) {

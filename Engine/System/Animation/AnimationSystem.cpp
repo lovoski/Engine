@@ -36,31 +36,31 @@ void AnimationSystem::Update(float dt) {
   // Console.Log("currentframe=%.3f\n", systemCurrentFrame);
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
-    auto &animator = entity->GetComponent<Animator>();
+    auto animator = entity->GetComponent<Animator>();
     // TODO: checking each entity in use is valid or not is redundent
     // We need smart pointer to avoid invalid pointers
-    if (animator.skeleton != nullptr && animator.motion != nullptr &&
-        GWORLD.EntityValid(animator.skeleton->ID)) {
-      int nFrames = animator.motion->poses.size();
+    if (animator->skeleton != nullptr && animator->motion != nullptr &&
+        GWORLD.EntityValid(animator->skeleton->ID)) {
+      int nFrames = animator->motion->poses.size();
       if (nFrames != 0) {
         // sample animation from motion data of each animator
         Animation::Pose CurrentPose =
-            animator.motion->At(GWORLD.Context.AnimSystemCurrentFrame);
+            animator->motion->At(GWORLD.Context.AnimSystemCurrentFrame);
         // Animation::Pose CurrentPose = animator.motion->GetRestPose();
-        int motionDataJointNum = animator.actor->GetNumJoints();
+        int motionDataJointNum = animator->actor->GetNumJoints();
         // update the local positions of skeleton hierarchy
         // with animator's currentPose
         std::map<std::string, Entity *> skeletonHierarchy;
-        BuildSkeletonHierarchy(animator.skeleton, skeletonHierarchy);
+        BuildSkeletonHierarchy(animator->skeleton, skeletonHierarchy);
         if (skeletonHierarchy.size() != motionDataJointNum) {
           Console.Log("[error]: skeleton and motion data miss match for %s\n",
-                      GWORLD.EntityFromID(animator.GetID())->name.c_str());
+                      GWORLD.EntityFromID(animator->GetID())->name.c_str());
           continue; // process the next animator data
         }
         // the skeleton hierarchy entities should have
         // the same name as in the motion data
         auto root =
-            skeletonHierarchy.find(animator.motion->skeleton.jointNames[0]);
+            skeletonHierarchy.find(animator->motion->skeleton.jointNames[0]);
         if (root == skeletonHierarchy.end()) {
           Console.Log("[error]: root joint not found for %s\n",
                       entity->name.c_str());
@@ -70,12 +70,12 @@ void AnimationSystem::Update(float dt) {
         root->second->SetLocalPosition(CurrentPose.rootLocalPosition);
         for (int boneInd = 0; boneInd < motionDataJointNum; ++boneInd) {
           std::string boneName =
-              animator.actor->jointNames[boneInd];
+              animator->actor->jointNames[boneInd];
           auto boneEntity = skeletonHierarchy.find(boneName);
           if (boneEntity == skeletonHierarchy.end()) {
             Console.Log(
                 "[error]: boneName %s not found in skeleton entities %s\n",
-                boneName.c_str(), animator.skeleton->name.c_str());
+                boneName.c_str(), animator->skeleton->name.c_str());
             break;
           }
           // setup local position and rotation for the bone entity
@@ -94,20 +94,20 @@ void AnimationSystem::Render() {
     auto cameraObject = GWORLD.EntityFromID(camera);
     auto cameraComp = cameraObject->GetComponent<Camera>();
     auto viewport = GWORLD.Context.sceneWindowSize;
-    auto viewMat = cameraComp.GetViewMatrix(*cameraObject);
-    auto projMat = cameraComp.GetProjMatrixPerspective(viewport.x, viewport.y);
+    auto viewMat = cameraComp->GetViewMatrix(*cameraObject);
+    auto projMat = cameraComp->GetProjMatrixPerspective(viewport.x, viewport.y);
     auto vp = projMat * viewMat;
     // render skeleton if the flag is set
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
-      auto &animator = entity->GetComponent<Animator>();
-      if (animator.ShowSkeleton && animator.skeleton != nullptr &&
-          GWORLD.EntityValid(animator.skeleton->ID)) {
+      auto animator = entity->GetComponent<Animator>();
+      if (animator->ShowSkeleton && animator->skeleton != nullptr &&
+          GWORLD.EntityValid(animator->skeleton->ID)) {
         // draw animator.skeleton
-        auto root = animator.skeleton;
+        auto root = animator->skeleton;
         std::queue<Entity *> q;
         q.push(root);
-        if (animator.SkeletonOnTop)
+        if (animator->SkeletonOnTop)
           glDisable(GL_DEPTH_TEST);
         else
           glEnable(GL_DEPTH_TEST);
@@ -118,10 +118,10 @@ void AnimationSystem::Render() {
             q.push(c);
             VisUtils::DrawBone(cur->Position(), c->Position(),
                                GWORLD.Context.sceneWindowSize, vp,
-                               animator.SkeletonColor);
+                               animator->SkeletonColor);
           }
         }
-        if (animator.SkeletonOnTop)
+        if (animator->SkeletonOnTop)
           glEnable(GL_DEPTH_TEST);
         else
           glDisable(GL_DEPTH_TEST);

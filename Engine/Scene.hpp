@@ -53,7 +53,7 @@ struct SceneContext {
   glm::vec2 currentMousePosition;
 
   // Scene lights
-  std::vector<Light> activeLights;
+  std::vector<std::shared_ptr<Light>> activeLights;
 
   // animation related
   int AnimSystemFPS = 30;
@@ -126,8 +126,9 @@ public:
           "Component count limit reached (MAX_COMPONENT_COUNT)");
 
     // create the component with parameters
-    T component(std::forward<Args>(args)...);
-    component.entityID = entity;
+    std::shared_ptr<T> component =
+        std::make_shared<T>(std::forward<Args>(args)...);
+    component->entityID = entity;
     GetComponentList<T>()->Insert(component);
 
     // add the component to the very signature of this entity
@@ -153,7 +154,7 @@ public:
   }
 
   // find the component belongs to some entity
-  template <typename T> T &GetComponent(const EntityID entity) {
+  template <typename T> std::shared_ptr<T> GetComponent(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
       throw std::runtime_error(
           "EntityID out of range (MAX_ENTITY_COUNT) during GetComponent");
@@ -302,7 +303,8 @@ private:
   // add an entity to the system if it belongs to the system
   // if the entity don't belong to the system, erase it
   void AddEntityToSystem(const EntityID entity, BaseSystem *system) {
-    if (BelongToSystem(entity, system->GetSignature(), system->GetSignatureOne())) {
+    if (BelongToSystem(entity, system->GetSignature(),
+                       system->GetSignatureOne())) {
       system->AddEntity(entity);
     } else {
       system->RemoveEntity(entity);
@@ -314,8 +316,8 @@ private:
   bool BelongToSystem(const EntityID entity,
                       const EntitySignature &systemSignature,
                       const EntitySignature &systemSignatureOne) {
-    // if the entity has at least one of the signatures in the systemSignatureOne
-    // it will get updated by this system
+    // if the entity has at least one of the signatures in the
+    // systemSignatureOne it will get updated by this system
     auto entitySignature = GetEntitySignature(entity);
     if (systemSignatureOne.size() > 0) {
       for (const auto compType : systemSignatureOne) {

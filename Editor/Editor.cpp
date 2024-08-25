@@ -10,15 +10,15 @@ void BuildTestScene(Engine *engine) {
   auto ent = GWORLD.AddNewEntity();
   ent->name = "Script Base";
   ent->AddComponent<aEngine::NativeScript>();
-  ent->GetComponent<aEngine::NativeScript>().Bind<EditorCameraController>();
+  ent->GetComponent<aEngine::NativeScript>()->Bind<EditorCameraController>();
 
-  ent->GetComponent<aEngine::NativeScript>().Bind<TestDebugDraw>();
+  ent->GetComponent<aEngine::NativeScript>()->Bind<TestDebugDraw>();
 
   auto cam = GWORLD.AddNewEntity();
   cam->name = "Editor Cam";
   cam->AddComponent<Camera>();
-  auto &camera = cam->GetComponent<Camera>();
-  camera.zFar = 2000.0f;
+  auto camera = cam->GetComponent<Camera>();
+  camera->zFar = 2000.0f;
   cam->SetGlobalPosition(glm::vec3(0.0f, 3.0f, 5.0f));
   GWORLD.SetActiveCamera(cam->ID);
 
@@ -27,7 +27,7 @@ void BuildTestScene(Engine *engine) {
   dLight->SetGlobalRotation(
       glm::quat(glm::radians(glm::vec3(180.0f, 0.0f, 0.0f))));
   dLight->AddComponent<Light>();
-  dLight->GetComponent<Light>().type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+  dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
 
   // auto cube = GWORLD.AddNewEntity();
   // cube->name = "Cube";
@@ -316,14 +316,14 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(x, y, width, height);
     Entity *cameraEnt = GWORLD.EntityFromID(camera);
-    Camera &cameraComp = cameraEnt->GetComponent<Camera>();
+    auto cameraComp = cameraEnt->GetComponent<Camera>();
     if (context.selectedEntity != (EntityID)(-1)) {
       Entity *selected = GWORLD.EntityFromID(context.selectedEntity);
       glm::mat4 modelTransform = selected->GetModelMatrix();
       if (ImGuizmo::Manipulate(
-              glm::value_ptr(cameraComp.GetViewMatrix(*cameraEnt)),
+              glm::value_ptr(cameraComp->GetViewMatrix(*cameraEnt)),
               glm::value_ptr(
-                  cameraComp.GetProjMatrixPerspective(width, height)),
+                  cameraComp->GetProjMatrixPerspective(width, height)),
               context.mCurrentGizmoOperation, context.mCurrentGizmoMode,
               glm::value_ptr(modelTransform), NULL, NULL)) {
         // update object transform with modified changes

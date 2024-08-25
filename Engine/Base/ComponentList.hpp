@@ -13,39 +13,39 @@ public:
   virtual void Erase(const EntityID entity) {}
 };
 
-// which kind of component this list will stores
+// The component list will hold shared pointers of type T
 template <typename T> class ComponentList : public IComponentList {
 public:
   ComponentList() = default;
   ~ComponentList() = default;
 
   // insert one component to the list if it has not been added
-  void Insert(const T &component) {
-    auto comp = std::find_if(data.begin(), data.end(), [&](const T &c) {
-      return c.GetID() == component.GetID();
+  void Insert(const std::shared_ptr<T> component) {
+    auto comp = std::find_if(data.begin(), data.end(), [&](const std::shared_ptr<T> c) {
+      return c->GetID() == component->GetID();
     });
     if (comp == data.end()) {
       data.push_back(component);
     }
   }
 
-  T &Get(const EntityID entity) {
+  std::shared_ptr<T> Get(const EntityID entity) {
     auto comp = std::find_if(data.begin(), data.end(),
-                             [&](const T &c) { return c.GetID() == entity; });
+                             [&](const std::shared_ptr<T> c) { return c->GetID() == entity; });
     // if (comp == data.end())
     //   throw std::runtime_error("Trying to get non-existing component");
-    return *comp;
+    return (*comp);
   }
 
   void Erase(const EntityID entity) override final {
     auto comp = std::find_if(data.begin(), data.end(),
-                             [&](const T &c) { return c.GetID() == entity; });
+                             [&](const std::shared_ptr<T> c) { return c->GetID() == entity; });
     if (comp != data.end()) {
       data.erase(comp);
     }
   }
 
-  std::vector<T> data;
+  std::vector<std::shared_ptr<T>> data;
 };
 
 }; // namespace aEngine

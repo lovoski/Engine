@@ -27,19 +27,19 @@ void RenderSystem::RenderBegin() {
   if (GWORLD.GetActiveCamera(cameraID)) {
     auto camera = GWORLD.EntityFromID(cameraID);
     auto cameraComp = camera->GetComponent<Camera>();
-    glm::mat4 viewMat = cameraComp.GetViewMatrix(*camera);
-    glm::mat4 projMat = cameraComp.GetProjMatrixPerspective(
+    glm::mat4 viewMat = cameraComp->GetViewMatrix(*camera);
+    glm::mat4 projMat = cameraComp->GetProjMatrixPerspective(
         GWORLD.Context.sceneWindowSize.x, GWORLD.Context.sceneWindowSize.y);
     glEnable(GL_DEPTH_TEST);
     for (auto entID : entities) {
       auto entity = GWORLD.EntityFromID(entID);
       if (entity->HasComponent<MeshRenderer>()) {
         auto &renderer = entity->GetComponent<MeshRenderer>();
-        renderer.ForwardRender(projMat, viewMat, camera, entity,
+        renderer->ForwardRender(projMat, viewMat, camera, entity,
                                GWORLD.Context.activeLights);
       } else if (entity->HasComponent<DeformRenderer>()) {
         auto &renderer = entity->GetComponent<DeformRenderer>();
-        renderer.Render(projMat, viewMat, camera, entity,
+        renderer->Render(projMat, viewMat, camera, entity,
                                GWORLD.Context.activeLights);
       }
     }

@@ -13,10 +13,6 @@
 
 namespace aEngine {
 
-glm::vec3 Entity::WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-glm::vec3 Entity::WorldLeft = glm::vec3(1.0f, 0.0f, 0.0f);
-glm::vec3 Entity::WorldForward = glm::vec3(0.0f, 0.0f, 1.0f);
-
 Scene::Scene() {
   // create the entities
   entityCount = 0;
@@ -267,20 +263,20 @@ Json Scene::Serialize() {
     std::string currentEntityID = std::to_string((unsigned int)entity.first);
     entity.second->Serialize(json["entities"][currentEntityID]);
   }
-  // if more components created, they need to be registered here to be
-  // serialized
-  for (auto camera : GetComponentList<Camera>()->data) {
-    json["components"]["camera"][std::to_string(camera.GetID())] =
-        camera.Serialize();
-  }
-  for (auto light : GetComponentList<Light>()->data) {
-    json["components"]["light"][std::to_string(light.GetID())] =
-        light.Serialize();
-  }
-  for (auto renderer : GetComponentList<MeshRenderer>()->data) {
-    json["components"]["renderer"][std::to_string(renderer.GetID())] =
-        renderer.Serialize();
-  }
+  // // if more components created, they need to be registered here to be
+  // // serialized
+  // for (auto camera : GetComponentList<Camera>()->data) {
+  //   json["components"]["camera"][std::to_string(camera.GetID())] =
+  //       camera.Serialize();
+  // }
+  // for (auto light : GetComponentList<Light>()->data) {
+  //   json["components"]["light"][std::to_string(light.GetID())] =
+  //       light.Serialize();
+  // }
+  // for (auto renderer : GetComponentList<MeshRenderer>()->data) {
+  //   json["components"]["renderer"][std::to_string(renderer.GetID())] =
+  //       renderer.Serialize();
+  // }
 
   // scene specific settings
   EntityID camera;
@@ -342,25 +338,25 @@ void Scene::DeserializeReset(Json &json) {
       auto parent = EntityFromID(old2new[oldParentID]);
       parent->AssignChild(newEntity);
     }
-    // reload the components
-    for (auto compJson : json["components"]["camera"].items()) {
-      EntityID belongs = (EntityID)std::stoi(compJson.key());
-      if (belongs == old) {
-        // this component belongs to the entity
-        newEntity->AddComponent<Camera>();
-        newEntity->GetComponent<Camera>().Deserialize(
-            json["components"]["camera"][std::to_string((int)old)]);
-      }
-    }
-    for (auto compJson : json["components"]["light"].items()) {
-      EntityID belongs = (EntityID)std::stoi(compJson.key());
-      if (belongs == old) {
-        // this component belongs to the entity
-        newEntity->AddComponent<Light>();
-        newEntity->GetComponent<Light>().Deserialize(
-            json["components"]["light"][std::to_string((int)old)]);
-      }
-    }
+    // // reload the components
+    // for (auto compJson : json["components"]["camera"].items()) {
+    //   EntityID belongs = (EntityID)std::stoi(compJson.key());
+    //   if (belongs == old) {
+    //     // this component belongs to the entity
+    //     newEntity->AddComponent<Camera>();
+    //     newEntity->GetComponent<Camera>().Deserialize(
+    //         json["components"]["camera"][std::to_string((int)old)]);
+    //   }
+    // }
+    // for (auto compJson : json["components"]["light"].items()) {
+    //   EntityID belongs = (EntityID)std::stoi(compJson.key());
+    //   if (belongs == old) {
+    //     // this component belongs to the entity
+    //     newEntity->AddComponent<Light>();
+    //     newEntity->GetComponent<Light>().Deserialize(
+    //         json["components"]["light"][std::to_string((int)old)]);
+    //   }
+    // }
     // for (auto compJson : json["components"]["renderer"].items()) {
     //   EntityID belongs = (EntityID)std::stoi(compJson.key());
     //   if (belongs == old) {

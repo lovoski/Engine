@@ -81,17 +81,17 @@ void Editor::InspectorWindow() {
                       {-1, ImGui::GetContentRegionAvail().y});
     DrawTransformGUI(entity);
     if (GWORLD.HasComponent<Camera>(entity))
-      GWORLD.GetComponent<Camera>(entity).DrawInspectorGUI();
+      GWORLD.GetComponent<Camera>(entity)->DrawInspectorGUI();
     if (GWORLD.HasComponent<Light>(entity))
-      GWORLD.GetComponent<Light>(entity).DrawInspectorGUI();
+      GWORLD.GetComponent<Light>(entity)->DrawInspectorGUI();
     if (GWORLD.HasComponent<Animator>(entity))
-      GWORLD.GetComponent<Animator>(entity).DrawInspectorGUI();
+      GWORLD.GetComponent<Animator>(entity)->DrawInspectorGUI();
     if (GWORLD.HasComponent<NativeScript>(entity))
-      GWORLD.GetComponent<NativeScript>(entity).DrawInspectorGUI();
+      GWORLD.GetComponent<NativeScript>(entity)->DrawInspectorGUI();
     if (GWORLD.HasComponent<MeshRenderer>(entity))
-      GWORLD.GetComponent<MeshRenderer>(entity).DrawInspectorGUI();
+      GWORLD.GetComponent<MeshRenderer>(entity)->DrawInspectorGUI();
     if (GWORLD.HasComponent<DeformRenderer>(entity)) {
-      GWORLD.GetComponent<DeformRenderer>(entity).DrawInspectorGUI();
+      GWORLD.GetComponent<DeformRenderer>(entity)->DrawInspectorGUI();
     }
     ImGui::EndChild();
   }

@@ -47,7 +47,7 @@ public:
 
   // Setup lights in the environment automatically,
   // create variables with predefined names
-  void SetupLights(std::vector<Light> &lights);
+  void SetupLights(std::vector<std::shared_ptr<Light>> &lights);
 
   // To create custom material, override this function,
   // pass custom variables to the shader

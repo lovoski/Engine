@@ -3,6 +3,10 @@
 
 namespace aEngine {
 
+glm::vec3 Entity::WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 Entity::WorldLeft = glm::vec3(1.0f, 0.0f, 0.0f);
+glm::vec3 Entity::WorldForward = glm::vec3(0.0f, 0.0f, 1.0f);
+
 void Entity::Destroy() { scene->DestroyEntity(ID); }
 
 void Entity::AssignChild(Entity *c) {

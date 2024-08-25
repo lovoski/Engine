@@ -17,7 +17,8 @@ MeshRenderer::MeshRenderer(aEngine::Render::Mesh *mesh) : meshData(mesh) {
 }
 
 MeshRenderer::~MeshRenderer() {
-  std::cout << "mesh renderer descontruct" << std::endl;
+  std::cout << "descontruct mesh renderer" << std::endl;
+  vao.Delete();
 }
 
 void MeshRenderer::DrawMesh(Render::Shader &shader) {
@@ -45,7 +46,7 @@ void MeshRenderer::DrawMesh(Render::Shader &shader) {
 
 void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
                                  Entity *camera, Entity *object,
-                                 std::vector<Light> &lights) {
+                                 std::vector<std::shared_ptr<Light>> &lights) {
   for (auto pass : passes) {
     pass->GetShader()->Use();
     pass->SetupLights(GWORLD.Context.activeLights);

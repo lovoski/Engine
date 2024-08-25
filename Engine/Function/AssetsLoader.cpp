@@ -3,7 +3,6 @@
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
-
 #include "Function/AssetsLoader.hpp"
 #include "Function/Render/MaterialData.hpp"
 #include "Function/Render/Mesh.hpp"
@@ -338,7 +337,7 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
       joints[i]->parent->children.push_back(joints[i]);
     }
     globalParent->AddComponent<Animator>(skel);
-    globalParent->GetComponent<Animator>().skeleton = joints[0];
+    globalParent->GetComponent<Animator>()->skeleton = joints[0];
     // if (motion != nullptr) {
     //   globalParent->GetComponent<Animator>().motion = motion;
     // }
@@ -354,15 +353,15 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     c->name = mesh->identifier;
     if (skel != nullptr) {
       // add deform renderer
-      MeshRenderer renderer(mesh);
-      renderer.AddPass(globalMaterial, globalMaterial->identifier);
-      c->AddComponent<DeformRenderer>(renderer,
-                                      &globalParent->GetComponent<Animator>());
+      c->AddComponent<DeformRenderer>(
+          mesh, globalParent->GetComponent<Animator>().get());
+      c->GetComponent<DeformRenderer>()->AddPass(globalMaterial,
+                                                 globalMaterial->identifier);
       meshParent->AssignChild(c);
     } else {
       c->AddComponent<MeshRenderer>(mesh);
-      c->GetComponent<MeshRenderer>().AddPass(globalMaterial,
-                                              globalMaterial->identifier);
+      c->GetComponent<MeshRenderer>()->AddPass(globalMaterial,
+                                               globalMaterial->identifier);
       meshParent->AssignChild(c);
     }
   }

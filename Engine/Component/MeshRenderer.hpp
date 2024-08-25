@@ -18,7 +18,7 @@ struct MeshRenderer : public aEngine::BaseComponent {
   ~MeshRenderer();
 
   void ForwardRender(glm::mat4 projMat, glm::mat4 viewMat, Entity *camera,
-                     Entity *object, std::vector<Light> &lights);
+                     Entity *object, std::vector<std::shared_ptr<Light>> &lights);
 
   void DrawMesh(Render::Shader &shader);
 
