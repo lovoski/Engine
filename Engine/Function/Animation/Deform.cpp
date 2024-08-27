@@ -20,7 +20,7 @@ void BuildSkeletonHierarchy(Entity *root,
 
 static std::string skinnedMeshDeform = R"(
 #version 430 core
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define MAX_BONES 4
 struct Vertex {
   vec4 Position;
@@ -39,11 +39,8 @@ layout(std430, binding = 2) buffer VertexOutput {
   Vertex vOut[];
 };
 void main() {
-  uint index = gl_GlobalInvocationID.x + 
-               gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x + 
-               gl_GlobalInvocationID.z * gl_NumWorkGroups.x * gl_WorkGroupSize.x * 
-                                         gl_NumWorkGroups.y * gl_WorkGroupSize.y;
-
+  uint index = gl_GlobalInvocationID.x;
+  if (index >= vIn.length()) return;
   Vertex vtx = vIn[index];
   // Initialize the new position and normal
   vec4 newPosition = vec4(0.0);
@@ -75,16 +72,17 @@ void DeformSkinnedMesh(Render::Mesh *mesh, Animator *animator,
   matrices.BindAs(GL_SHADER_STORAGE_BUFFER);
   matrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
                      animator->GetSkeletonTransforms());
+  auto mats = animator->GetSkeletonTransforms();
   matrices.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 1);
   // configure the outputs
   targetVBO.BindAs(GL_SHADER_STORAGE_BUFFER);
   targetVBO.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 2);
   int numVertices = mesh->vertices.size();
-  int numWorkGroups = (numVertices - (numVertices % 64)) / 64 + 1;
+  int numWorkGroups = (numVertices + 63) / 64;
   if (glIsBuffer(mesh->vbo.GetID()) && glIsBuffer(targetVBO.GetID()) &&
       glIsBuffer(matrices.GetID()))
     cs.Dispatch(numWorkGroups, 1, 1);
-  glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+  glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 }
 
 }; // namespace aEngine

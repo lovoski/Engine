@@ -608,6 +608,11 @@ Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh,
       for (int b = 0; b < MAX_BONES; ++b) {
         vertex.BoneWeight[b] /= totalWeight;
       }
+    } else {
+      // TODO: be careful about this function
+      // If this vertex is not bind to any bone
+      // Bind it to root by default
+      vertex.BoneWeight[0] = 1.0f;
     }
   }
 
@@ -631,36 +636,34 @@ void TraverseNode(fbxsdk::FbxNode *node, vector<Render::Mesh *> &meshes,
   }
 }
 
-// Function to compute the global bind pose matrix
-glm::mat4 ComputeGlobalBindPoseMatrix(
-    const std::vector<BoneInfo> &joints, int jointIndex,
-    const std::vector<glm::mat4> &globalBindPoseMatrices) {
-  const BoneInfo &joint = joints[jointIndex];
-
-  // Create the local transform matrix
-  glm::mat4 T = glm::translate(glm::mat4(1.0f), joint.localPosition);
-  glm::mat4 R = glm::mat4_cast(joint.localRotation);
-  glm::mat4 S = glm::scale(glm::mat4(1.0f), joint.localScale);
-  glm::mat4 localTransform = T * R * S;
-
-  // Compute the global transform
-  if (joint.parentIndex != -1) {
-    // Multiply with the parent's global bind pose matrix if it has a parent
-    return globalBindPoseMatrices[joint.parentIndex] * localTransform;
-  } else {
-    // Root joint, so its global matrix is the local matrix
-    return localTransform;
-  }
-}
-
 // Function to build the offset matrices for all joints
 void BuildOffsetMatrices(std::vector<BoneInfo> &bones) {
   std::vector<glm::mat4> globalBindPoseMatrices(bones.size());
 
   // Compute global bind pose matrices for all joints
+  std::queue<int> q;
   for (int i = 0; i < bones.size(); ++i) {
-    globalBindPoseMatrices[i] =
-        ComputeGlobalBindPoseMatrix(bones, i, globalBindPoseMatrices);
+    if (bones[i].parentIndex == -1) {
+      q.push(i);
+      break;
+    }
+  }
+  while (!q.empty()) {
+    auto cur = q.front();
+    q.pop();
+    glm::mat4 T = glm::translate(glm::mat4(1.0f), bones[cur].localPosition);
+    glm::mat4 R = glm::mat4_cast(bones[cur].localRotation);
+    glm::mat4 S = glm::scale(glm::mat4(1.0f), bones[cur].localScale);
+    glm::mat4 localTransform = T * R * S;
+    if (bones[cur].parentIndex == -1) {
+      globalBindPoseMatrices[cur] = localTransform;
+    } else {
+      globalBindPoseMatrices[cur] =
+          globalBindPoseMatrices[bones[cur].parentIndex] * localTransform;
+    }
+    for (auto child : bones[cur].children) {
+      q.push(child);
+    }
   }
 
   // Compute the offset matrix for each joint
@@ -788,8 +791,9 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
         for (int vid = 0; vid < mesh->vertices.size(); ++vid) {
           for (int k = 0; k < MAX_BONES; ++k) {
             if (mesh->vertices[vid].BoneId[k] != 0) {
-              mesh->vertices[vid].BoneId[k] =
-                  old2new[mesh->vertices[vid].BoneId[k]];
+              int oldBoneInd = mesh->vertices[vid].BoneId[k];
+              int newBoneInd = old2new[oldBoneInd];
+              mesh->vertices[vid].BoneId[k] = newBoneInd;
             }
           }
         }

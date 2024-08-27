@@ -19,7 +19,7 @@ Another thing worth mentioning is that, all component instances are stored as `s
 
 ## How To Compile
 
-The project depends on OpenGL 4.3, FBX SDK 2020.3, ONNX runtime 1.9.0. Other dependencies can be directly retreived with `git clone --recursive ...`.
+The project depends on OpenGL 4.6, FBX SDK 2020.3, ONNX runtime 1.9.0. Other dependencies can be directly retreived with `git clone --recursive ...`.
 
 FBX SDK is required for `Engine/Function/AssetsLoader`, so you need to download the installer [here](https://aps.autodesk.com/developer/overview/fbx-sdk) and install it as autodesk described.
 
