@@ -1,7 +1,8 @@
+#include "Function/Render/RenderPass.hpp"
 #include "Entity.hpp"
-#include "Scene.hpp"
 #include "Function/AssetsLoader.hpp"
-#include "Function/Render/MaterialData.hpp"
+#include "Scene.hpp"
+
 
 namespace aEngine {
 
@@ -27,7 +28,7 @@ bool ActivateTexture2D(Texture &texture, Shader *shader, string name,
   return true;
 }
 
-void BaseMaterial::SetupLights(vector<std::shared_ptr<Light>> &lights) {
+void BasePass::SetupLights(vector<std::shared_ptr<Light>> &lights) {
   if (shader == nullptr)
     Console.Log("[error]: shader not setup for material %s\n",
                 identifier.c_str());
@@ -59,9 +60,9 @@ void BaseMaterial::SetupLights(vector<std::shared_ptr<Light>> &lights) {
   }
 }
 
-std::string BaseMaterial::getMaterialTypeName() { return typeid(*this).name(); }
+std::string BasePass::getMaterialTypeName() { return typeid(*this).name(); }
 
-void BaseMaterial::drawInspectorGUIDefault() {
+void BasePass::drawInspectorGUIDefault() {
   ImGui::MenuItem("Name:", nullptr, nullptr, false);
   ImGui::TextWrapped("%s", identifier.c_str());
   ImGui::MenuItem("Type:", nullptr, nullptr, false);
@@ -69,8 +70,8 @@ void BaseMaterial::drawInspectorGUIDefault() {
   ImGui::MenuItem("Properties:", nullptr, nullptr, false);
 }
 
-void BaseMaterial::SetVariables(glm::mat4 &model, glm::mat4 &view,
-                                glm::mat4 &projection, glm::vec3 &viewDir) {
+void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
+                         glm::mat4 &projection, glm::vec3 &viewDir) {
   if (shader != nullptr) {
     shader->Use();
     glm::mat4 ModelToWorldPoint = model;
@@ -115,6 +116,8 @@ void DiffuseMaterial::Deserialize(Json &json) {
   Ambient = json.value("Ambient", 0.1f);
   Albedo = json.value("Albedo", glm::vec3(1.0f));
 }
+
+std::string DiffuseMaterial::getMaterialTypeName() { return "Diffuse"; }
 
 }; // namespace Render
 

@@ -8,7 +8,7 @@
 #include "Component/NativeScript.hpp"
 #include "Component/DeformRenderer.hpp"
 
-#include "Function/Render/MaterialData.hpp"
+#include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
 
 using glm::quat;

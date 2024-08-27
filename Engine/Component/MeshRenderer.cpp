@@ -54,8 +54,9 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
     if (targetVBO == nullptr) {
       modelMat = object->GetModelMatrix();
     }
-    pass->SetVariables(modelMat, viewMat, projMat, -camera->LocalForward);
+    pass->SetupPass(modelMat, viewMat, projMat, -camera->LocalForward);
     DrawMesh(*pass->GetShader());
+    pass->FinishPass();
     // reset target vbo in case deformerrenderer discard it
     targetVBO = nullptr;
   }

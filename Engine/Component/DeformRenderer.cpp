@@ -29,14 +29,8 @@ void DeformRenderer::Render(glm::mat4 projMat, glm::mat4 viewMat,
 
 void DeformRenderer::DrawInspectorGUI() {
   if (ImGui::TreeNode("DeformRenderer")) {
-    ImGui::MenuItem("Options", nullptr, nullptr, false);
-    if (ImGui::TreeNode("Render Passes")) {
-      for (auto pass : renderer->passes) {
-        ImGui::Separator();
-        pass->DrawInspectorGUI();
-      }
-      ImGui::TreePop();
-    }
+    // ImGui::MenuItem("", nullptr, nullptr, false);
+    renderer->DrawInspectorGUI();
     ImGui::TreePop();
   }
 }

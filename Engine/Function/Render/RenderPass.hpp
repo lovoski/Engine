@@ -23,10 +23,10 @@ bool ActivateTexture2D(Texture &texture, Shader *shader, std::string name,
 // If the shader specified failed to load, a default error shader should be
 // applied The material data should be able to represent a complete render pass
 // In principle, each material should handle the shader loading at its constructor
-class BaseMaterial {
+class BasePass {
 public:
-  BaseMaterial() {}
-  ~BaseMaterial() {}
+  BasePass() {}
+  ~BasePass() {}
 
   std::string identifier;
   std::string path;
@@ -51,12 +51,14 @@ public:
 
   // To create custom material, override this function,
   // pass custom variables to the shader
-  // This function is called by default at the end of SetVariables
+  // This function is called by default at the end of SetupPass
   virtual void DrawInspectorGUI() { drawInspectorGUIDefault(); }
 
-  // This function will get called in the renderer
-  void SetVariables(glm::mat4 &model, glm::mat4 &view,
+  // This function will get called before the rendering
+  void SetupPass(glm::mat4 &model, glm::mat4 &view,
                            glm::mat4 &projection, glm::vec3 &viewDir);
+  // This function will get called after the rendering
+  virtual void FinishPass() {}
 
 protected:
   int idCounter = 0;
@@ -114,7 +116,7 @@ void main() {
 }
 )";
 
-class DiffuseMaterial : public BaseMaterial {
+class DiffuseMaterial : public BasePass {
 public:
   DiffuseMaterial();
 
@@ -129,6 +131,8 @@ public:
 protected:
 
   void setupCustomVariables() override;
+
+  std::string getMaterialTypeName() override;
 };
 
 }; // namespace Render

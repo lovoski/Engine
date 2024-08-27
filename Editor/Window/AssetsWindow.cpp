@@ -5,7 +5,7 @@
 #include "Component/Light.hpp"
 
 #include "Function/Render/Shader.hpp"
-#include "Function/Render/MaterialData.hpp"
+#include "Function/Render/RenderPass.hpp"
 
 using glm::vec2;
 using glm::vec3;

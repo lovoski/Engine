@@ -2,7 +2,7 @@
 
 #include "Global.hpp"
 #include "Function/AssetsType.hpp"
-#include "Function/Render/MaterialData.hpp"
+#include "Function/Render/RenderPass.hpp"
 #include "Function/Animation/Motion.hpp"
 #include "Function/General/ComputeShader.hpp"
 
@@ -32,8 +32,8 @@ public:
   // Create a new instance of this material by the type,
   // cache it in an internal array
   template <typename T>
-  Render::BaseMaterial *InstantiateMaterial(std::string identifier) {
-    Render::BaseMaterial *material = new T();
+  Render::BasePass *InstantiateMaterial(std::string identifier) {
+    Render::BasePass *material = new T();
     material->identifier = identifier;
     allMaterials.push_back(material);
     return material;
@@ -62,7 +62,7 @@ private:
   // path to motion data
   std::map<std::string, Animation::Motion *> allMotions;
 
-  std::vector<Render::BaseMaterial *> allMaterials;
+  std::vector<Render::BasePass *> allMaterials;
 
   std::vector<Render::Mesh *> loadAndCreateMeshFromFile(std::string modelPath);
 };

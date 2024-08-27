@@ -25,7 +25,7 @@ struct Texture {
 namespace Render {
 class Mesh;
 class Shader;
-class BaseMaterial;
+class BasePass;
 };
 
 namespace Geometry {
