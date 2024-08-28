@@ -116,7 +116,7 @@ void Editor::EntitiesWindow() {
         auto cube = GWORLD.AddNewEntity();
         cube->name = "Cube";
         cube->AddComponent<MeshRenderer>(Loader.GetMesh("::cubePrimitive", ""));
-        cube->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
+        cube->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Cube Mat");
       }
       if (ImGui::MenuItem("Plane")) {
@@ -124,7 +124,7 @@ void Editor::EntitiesWindow() {
         plane->name = "Plane";
         plane->AddComponent<MeshRenderer>(
             Loader.GetMesh("::planePrimitive", ""));
-        plane->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
+        plane->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Plane Mat");
       }
       if (ImGui::MenuItem("Sphere")) {
@@ -132,7 +132,7 @@ void Editor::EntitiesWindow() {
         sphere->name = "Sphere";
         sphere->AddComponent<MeshRenderer>(
             Loader.GetMesh("::spherePrimitive", ""));
-        sphere->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
+        sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Sphere Mat");
       }
       if (ImGui::MenuItem("Cylinder")) {
@@ -140,14 +140,14 @@ void Editor::EntitiesWindow() {
         cylinder->name = "Cylinder";
         cylinder->AddComponent<MeshRenderer>(
             Loader.GetMesh("::cylinderPrimitive", ""));
-        cylinder->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
+        cylinder->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Cylinder Mat");
       }
       if (ImGui::MenuItem("Cone")) {
         auto cone = GWORLD.AddNewEntity();
         cone->name = "Cone";
         cone->AddComponent<MeshRenderer>(Loader.GetMesh("::conePrimitive", ""));
-        cone->GetComponent<MeshRenderer>()->AddPass<Render::DiffuseMaterial>(
+        cone->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Cone Mat");
       }
       ImGui::Separator();
@@ -219,7 +219,7 @@ void Editor::EntitiesWindow() {
         auto parentEntity = GWORLD.AddNewEntity();
         parentEntity->name = filename.stem().string();
         // create one unified material for the whole object
-        auto unifyMat = Loader.InstantiateMaterial<Render::DiffuseMaterial>(
+        auto unifyMat = Loader.InstantiateMaterial<Render::Diffuse>(
             filename.stem().string());
         for (auto cmesh : modelMeshes) {
           auto childEntity = GWORLD.AddNewEntity();

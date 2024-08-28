@@ -29,10 +29,16 @@ void BuildTestScene(Engine *engine) {
   dLight->AddComponent<Light>();
   dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
 
+  auto sphere = GWORLD.AddNewEntity();
+  sphere->name = "Sphere";
+  sphere->AddComponent<MeshRenderer>(Loader.GetMesh("::spherePrimitive", ""));
+  sphere->GetComponent<MeshRenderer>()->AddPass<Render::OutlinePass>(nullptr, "Outline Pass");
+  sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(nullptr, "Diffuse Sphere");
+
   // auto cube = GWORLD.AddNewEntity();
   // cube->name = "Cube";
   // cube->AddComponent<MeshRenderer>(Loader.GetMesh("::cubePrimitive", ""));
-  // cube->GetComponent<MeshRenderer>().AddPass<Render::DiffuseMaterial>(
+  // cube->GetComponent<MeshRenderer>().AddPass<Render::Diffuse>(
   //     nullptr, "Cube Mat");
 }
 

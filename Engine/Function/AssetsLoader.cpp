@@ -14,6 +14,107 @@
 
 namespace aEngine {
 
+namespace Render {
+
+const std::string errorVS = R"(
+#version 460 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aNormal;
+layout (location = 2) in vec4 aTexCoord;
+uniform mat4 ModelToWorldPoint;
+uniform mat4 View;
+uniform mat4 Projection;
+void main() {
+  gl_Position = Projection * View * ModelToWorldPoint * aPos;
+}
+)";
+const std::string errorFS = R"(
+#version 460 core
+out vec4 FragColor;
+void main() {
+  FragColor = vec4(0.702, 0.2314, 0.7725, 1.0);
+}
+)";
+
+// the default diffuse shader
+const std::string diffuseVS = R"(
+#version 460 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aNormal;
+layout (location = 2) in vec4 aTexCoord;
+out vec3 normal;
+// transform point from model space to world space
+uniform mat4 ModelToWorldPoint;
+// transform vector from model space to world space
+uniform mat3 ModelToWorldDir;
+// transform world space to camera space
+uniform mat4 View;
+// transform camera space to screen
+uniform mat4 Projection;
+void main() {
+  normal = ModelToWorldDir * vec3(aNormal);
+  gl_Position = Projection * View * ModelToWorldPoint * aPos;
+}
+)";
+
+const std::string diffuseFS = R"(
+#version 430 core
+uniform vec3 Albedo;
+uniform vec3 dLightDir0;
+uniform vec3 dLightColor0;
+uniform float Ambient;
+in vec3 normal;
+out vec4 FragColor;
+void main() {
+  // ambient
+  vec3 ambient = Ambient * dLightColor0;
+  // diffuse
+  vec3 Normal = normalize(normal);
+  vec3 LightDir = -dLightDir0;
+  float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
+  vec3 diffuse = lambert * dLightColor0 * Albedo;
+  vec3 result = ambient + diffuse;
+  FragColor = vec4(result, 1.0);
+}
+)";
+
+const std::string outlineVS = R"(
+#version 460 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aNormal;
+layout (location = 2) in vec4 aTexCoord;
+
+uniform mat4 ModelToWorldPoint;
+uniform mat3 ModelToWorldDir;
+uniform mat4 View;
+uniform mat4 Projection;
+
+uniform vec3 ViewDir;
+
+uniform float OutlineWidth;
+
+void main() {
+  vec3 worldNormal = normalize(ModelToWorldDir * aNormal.xyz);
+  vec4 worldPos = ModelToWorldPoint * aPos;
+  worldPos = worldPos + vec4(worldNormal, 0.0) * OutlineWidth;
+  gl_Position = Projection * View * worldPos;
+}
+)";
+
+const std::string outlineFS = R"(
+#version 430 core
+
+uniform vec3 OutlineColor;
+
+out vec4 FragColor;
+
+void main() {
+  FragColor = vec4(OutlineColor, 1.0);
+}
+)";
+
+};
+
 using std::string;
 using std::vector;
 
@@ -118,6 +219,11 @@ void AssetsLoader::LoadDefaultAssets() {
   errorShader->identifier = "::error";
   errorShader->LoadAndRecompileShaderSource(Render::errorVS, Render::errorFS);
   allShaders.insert(std::make_pair("::error", errorShader));
+
+  Render::Shader *outlineShader = new Render::Shader();
+  outlineShader->identifier = "::outline";
+  outlineShader->LoadAndRecompileShaderSource(Render::outlineVS, Render::outlineFS);
+  allShaders.insert(std::make_pair("::outline", outlineShader));
 }
 
 std::vector<std::string> AssetsLoader::GetIndetifiersForAllCachedMaterials() {
@@ -347,7 +453,7 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   globalParent->AssignChild(meshParent);
   meshParent->name = "mesh";
   auto globalMaterial =
-      Loader.InstantiateMaterial<Render::DiffuseMaterial>(globalParent->name);
+      Loader.InstantiateMaterial<Render::Diffuse>(globalParent->name);
   for (auto mesh : meshes) {
     auto c = GWORLD.AddNewEntity();
     c->name = mesh->identifier;

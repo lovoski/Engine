@@ -3,7 +3,6 @@
 #include "Function/AssetsLoader.hpp"
 #include "Scene.hpp"
 
-
 namespace aEngine {
 
 namespace Render {
@@ -81,18 +80,18 @@ void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
     shader->SetMat4("ModelToWorldPoint", ModelToWorldPoint);
     shader->SetMat3("ModelToWorldDir", ModelToWorldDir);
     shader->SetVec3("ViewDir", viewDir);
-    setupCustomVariables();
+    additionalSetup();
   }
 };
 
 // ----------------------Diffuse Material------------------------------
 
-DiffuseMaterial::DiffuseMaterial() {
+Diffuse::Diffuse() {
   // initialize shader to defualt value
   shader = Loader.GetShader("::diffuse");
 }
 
-void DiffuseMaterial::DrawInspectorGUI() {
+void Diffuse::DrawInspectorGUI() {
   drawInspectorGUIDefault();
   ImGui::SliderFloat("Ambient", &Ambient, 0.0f, 1.0f);
   float albedoColor[3] = {Albedo.x, Albedo.y, Albedo.z};
@@ -101,23 +100,55 @@ void DiffuseMaterial::DrawInspectorGUI() {
   }
 }
 
-void DiffuseMaterial::setupCustomVariables() {
+void Diffuse::additionalSetup() {
   shader->Use();
   shader->SetVec3("Albedo", Albedo);
   shader->SetFloat("Ambient", Ambient);
 }
 
-void DiffuseMaterial::Serialize(Json &json) {
+void Diffuse::Serialize(Json &json) {
   json["matType"] = "diffuse";
   json["Albedo"] = Albedo;
   json["Ambient"] = Ambient;
 }
-void DiffuseMaterial::Deserialize(Json &json) {
+void Diffuse::Deserialize(Json &json) {
   Ambient = json.value("Ambient", 0.1f);
   Albedo = json.value("Albedo", glm::vec3(1.0f));
 }
 
-std::string DiffuseMaterial::getMaterialTypeName() { return "Diffuse"; }
+std::string Diffuse::getMaterialTypeName() { return "Diffuse"; }
+
+// ----------------------- Outline -----------------------
+
+OutlinePass::OutlinePass() { shader = Loader.GetShader("::outline"); }
+
+void OutlinePass::DrawInspectorGUI() {
+  drawInspectorGUIDefault();
+  ImGui::SliderFloat("Width", &OutlineWidth, 0.0f, 1.0f);
+  ImGui::SliderFloat("Weight", &OutlineWeight, 0.0f, 1.0f);
+  float outlineColor[3] = {OutlineColor.x, OutlineColor.y, OutlineColor.z};
+  if (ImGui::ColorEdit3("Color", outlineColor)) {
+    OutlineColor = glm::vec3(outlineColor[0], outlineColor[1], outlineColor[2]);
+  }
+}
+
+void OutlinePass::additionalSetup() {
+  shader->Use();
+  shader->SetFloat("OutlineWidth", OutlineWidth);
+  shader->SetFloat("OutlineWeight", OutlineWeight);
+  shader->SetVec3("OutlineColor", OutlineColor);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
+}
+
+void OutlinePass::FinishPass() {
+  glDisable(GL_CULL_FACE);
+}
+
+std::string OutlinePass::getMaterialTypeName() { return "Outline"; }
+
+void OutlinePass::Serialize(Json &json) {}
+void OutlinePass::Deserialize(Json &json) {}
 
 }; // namespace Render
 
