@@ -39,6 +39,8 @@ struct MeshRenderer : public aEngine::BaseComponent {
   }
 
   Render::VAO vao;
+  bool castShadow = true;
+  bool receiveShadow = true;
   Render::Mesh *meshData = nullptr;
   Render::Buffer *targetVBO = nullptr;
   std::vector<Render::BasePass *> passes;

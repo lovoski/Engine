@@ -4,6 +4,7 @@
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
 #include "Scripts/TestDebugDraw.hpp"
+#include "System/Render/RenderSystem.hpp"
 #include "System/Animation/AnimationSystem.hpp"
 
 void BuildTestScene(Engine *engine) {
@@ -32,8 +33,10 @@ void BuildTestScene(Engine *engine) {
   auto sphere = GWORLD.AddNewEntity();
   sphere->name = "Sphere";
   sphere->AddComponent<MeshRenderer>(Loader.GetMesh("::spherePrimitive", ""));
-  sphere->GetComponent<MeshRenderer>()->AddPass<Render::OutlinePass>(nullptr, "Outline Pass");
-  sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(nullptr, "Diffuse Sphere");
+  sphere->GetComponent<MeshRenderer>()->AddPass<Render::OutlinePass>(
+      nullptr, "Outline Pass");
+  sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
+      nullptr, "Diffuse Sphere");
 
   // auto cube = GWORLD.AddNewEntity();
   // cube->name = "Cube";
@@ -167,24 +170,25 @@ void Editor::Shutdown() {
 }
 
 void Editor::MainSequencer() {
+  auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
   ImGui::Begin("Timeline");
   ImGui::BeginChild("TimelineProperties", {-1, 50});
-  ImGui::Checkbox("Auto Play", &GWORLD.Context.AnimEnableAutoPlay);
+  ImGui::Checkbox("Auto Play", &animSystem->EnableAutoPlay);
   ImGui::SameLine();
-  int se[2] = {GWORLD.Context.AnimSystemStartFrame,
-               GWORLD.Context.AnimSystemEndFrame};
+  int se[2] = {animSystem->SystemStartFrame,
+               animSystem->SystemEndFrame};
   ImGui::PushItemWidth(-1);
   if (ImGui::InputInt2("##Start & End", se)) {
-    GWORLD.Context.AnimSystemStartFrame = se[0];
-    GWORLD.Context.AnimSystemEndFrame = se[1];
+    animSystem->SystemStartFrame = se[0];
+    animSystem->SystemEndFrame = se[1];
   }
   ImGui::PopItemWidth();
   ImGui::EndChild();
   ImGui::BeginChild("TimelineView", {-1, 60});
   ImGui::PushItemWidth(-1);
-  ImGui::SliderFloat("##currenrFrame", &GWORLD.Context.AnimSystemCurrentFrame,
-                     GWORLD.Context.AnimSystemStartFrame,
-                     GWORLD.Context.AnimSystemEndFrame);
+  ImGui::SliderFloat("##currenrFrame", &animSystem->SystemCurrentFrame,
+                     animSystem->SystemStartFrame,
+                     animSystem->SystemEndFrame);
   ImGui::PopItemWidth();
   ImGui::EndChild();
   ImGui::End();
@@ -218,6 +222,7 @@ void Editor::MainMenuBar() {
     }
     if (ImGui::BeginMenu("Window")) {
       if (ImGui::BeginMenu("Gizmos")) {
+        auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
         ImGui::MenuItem("Axis Space", nullptr, nullptr, false);
         if (ImGui::RadioButton("Local",
                                context.mCurrentGizmoMode == ImGuizmo::LOCAL))
@@ -228,21 +233,21 @@ void Editor::MainMenuBar() {
           context.mCurrentGizmoMode = ImGuizmo::WORLD;
         ImGui::Separator();
         ImGui::MenuItem("Grid Options", nullptr, nullptr, false);
-        ImGui::Checkbox("Show Grid", &GWORLD.Context.showGrid);
-        float gridColor[3] = {GWORLD.Context.gridColor.x,
-                              GWORLD.Context.gridColor.y,
-                              GWORLD.Context.gridColor.z};
+        ImGui::Checkbox("Show Grid", &renderSystem->showGrid);
+        float gridColor[3] = {renderSystem->gridColor.x,
+                              renderSystem->gridColor.y,
+                              renderSystem->gridColor.z};
         if (ImGui::ColorEdit3("##Grid Color", gridColor)) {
-          GWORLD.Context.gridColor =
+          renderSystem->gridColor =
               glm::vec3(gridColor[0], gridColor[1], gridColor[2]);
         }
         ImGui::PushItemWidth(120);
-        int gridSize = GWORLD.Context.gridSize;
+        int gridSize = renderSystem->gridSize;
         if (ImGui::InputInt("Grid Size", &gridSize))
-          GWORLD.Context.gridSize = gridSize;
-        int gridSpacing = GWORLD.Context.gridSpacing;
+          renderSystem->gridSize = gridSize;
+        int gridSpacing = renderSystem->gridSpacing;
         if (ImGui::InputInt("Grid Spacing", &gridSpacing))
-          GWORLD.Context.gridSpacing = gridSpacing;
+          renderSystem->gridSpacing = gridSpacing;
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }

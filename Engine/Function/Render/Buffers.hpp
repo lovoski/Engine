@@ -10,9 +10,7 @@ namespace Render {
 class Buffer {
 public:
   Buffer() { glGenBuffers(1, &ID); }
-  ~Buffer() {
-    LOG_F(1, "buffer deconstruct, id=%ld", ID);
-  }
+  ~Buffer() {}
   // Bind the buffer to target, setup the filled data in it.
   template <typename T>
   void SetDataAs(GLenum TARGET_BUFFER_NAME, const std::vector<T> &data,

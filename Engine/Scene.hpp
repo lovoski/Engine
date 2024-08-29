@@ -31,12 +31,6 @@ struct SceneContext {
   GLFWwindow *window;
   Engine *engine;
 
-  // Grid options
-  bool showGrid;
-  unsigned int gridSize;
-  unsigned int gridSpacing;
-  glm::vec3 gridColor;
-
   // Camera related
   bool hasActiveCamera;
   EntityID activeCamera;
@@ -55,13 +49,6 @@ struct SceneContext {
   // Scene lights
   std::vector<std::shared_ptr<Light>> activeLights;
 
-  // animation related
-  int AnimSystemFPS = 30;
-  float AnimSystemCurrentFrame;
-  int AnimSystemStartFrame, AnimSystemEndFrame;
-  // automatically increase systemCurrentFrame according to dt and systemFPS
-  bool AnimEnableAutoPlay = false;
-
   // Time related
   float lastTime;
   float deltaTime;
@@ -78,22 +65,12 @@ struct SceneContext {
   }
 
   void Reset() {
-    showGrid = true;
-    gridSize = 10;
-    gridSpacing = 1;
-    gridColor = glm::vec3(0.5f);
     hasActiveCamera = false;
     activeCamera = (EntityID)(-1);
     enableDebugDraw = true;
     // Don't change the size and position of scene window
     sceneFilePath = "::defaultScene";
     activeLights.clear();
-
-    AnimSystemFPS = 30;
-    AnimEnableAutoPlay = false;
-    AnimSystemStartFrame = 0;
-    AnimSystemEndFrame = 1000;
-    AnimSystemCurrentFrame = 0.0f;
 
     lastTime = 0.0f;
     deltaTime = 0.0f;

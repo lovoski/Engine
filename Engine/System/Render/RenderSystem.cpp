@@ -2,21 +2,11 @@
 #include "Scene.hpp"
 
 #include "Component/Camera.hpp"
-#include "Component/DeformRenderer.hpp"
 #include "Component/Light.hpp"
-#include "Component/MeshRenderer.hpp"
-
 
 #include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
-
-RenderSystem::RenderSystem() {
-  AddComponentSignatureRequireOne<MeshRenderer>();
-  AddComponentSignatureRequireOne<DeformRenderer>();
-}
-
-RenderSystem::~RenderSystem() {}
 
 void RenderSystem::RenderBegin() {
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -36,18 +26,17 @@ void RenderSystem::RenderBegin() {
       if (entity->HasComponent<MeshRenderer>()) {
         auto &renderer = entity->GetComponent<MeshRenderer>();
         renderer->ForwardRender(projMat, viewMat, camera.get(), entity.get(),
-                               GWORLD.Context.activeLights);
+                                GWORLD.Context.activeLights);
       } else if (entity->HasComponent<DeformRenderer>()) {
         auto &renderer = entity->GetComponent<DeformRenderer>();
         renderer->Render(projMat, viewMat, camera.get(), entity.get(),
-                               GWORLD.Context.activeLights);
+                         GWORLD.Context.activeLights);
       }
     }
 
     // draw the grid in 3d space
-    if (GWORLD.Context.showGrid)
-      VisUtils::DrawGrid(GWORLD.Context.gridSize, GWORLD.Context.gridSpacing,
-                         projMat * viewMat, GWORLD.Context.gridColor);
+    if (showGrid)
+      VisUtils::DrawGrid(gridSize, gridSpacing, projMat * viewMat, gridColor);
   }
 }
 

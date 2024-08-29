@@ -90,6 +90,10 @@ void Scene::Reset() {
 
   // reset scene context
   Context.Reset();
+  // reset system context
+  for (auto system : registeredSystems) {
+    system.second->Reset();
+  }
 }
 
 void Scene::Destroy() {

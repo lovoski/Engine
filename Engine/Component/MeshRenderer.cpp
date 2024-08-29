@@ -65,12 +65,12 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
 void MeshRenderer::DrawInspectorGUI() {
   if (ImGui::TreeNode("MeshRenderer")) {
     ImGui::MenuItem("Options", nullptr, nullptr, false);
-    if (ImGui::TreeNode("Render Passes")) {
-      for (auto pass : passes) {
-        ImGui::Separator();
-        pass->DrawInspectorGUI();
-      }
-      ImGui::TreePop();
+    ImGui::Checkbox("Cast Shadow", &castShadow);
+    ImGui::Checkbox("Receive Shadow", &receiveShadow);
+    ImGui::MenuItem("Render Passes", nullptr, nullptr, false);
+    for (auto pass : passes) {
+      ImGui::Separator();
+      pass->DrawInspectorGUI();
     }
     ImGui::TreePop();
   }

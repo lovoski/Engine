@@ -1,37 +1,37 @@
 #include "System/Animation/AnimationSystem.hpp"
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
-#include "Function/Animation/Motion.hpp"
 #include "Function/Animation/Deform.hpp"
+#include "Function/Animation/Motion.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/VisUtils.hpp"
 #include "Scene.hpp"
 
+
 namespace aEngine {
 
 void AnimationSystem::Update(float dt) {
-  if (GWORLD.Context.AnimEnableAutoPlay) {
+  if (EnableAutoPlay) {
     // update the global system frame index
-    GWORLD.Context.AnimSystemCurrentFrame += dt * GWORLD.Context.AnimSystemFPS;
+    SystemCurrentFrame += dt * SystemFPS;
   }
-  if (GWORLD.Context.AnimSystemEndFrame - GWORLD.Context.AnimSystemStartFrame <
-      0) {
+  if (SystemEndFrame - SystemStartFrame < 0) {
     // flip the start frame and end frame
     // if endframe < startframe
-    std::swap(GWORLD.Context.AnimSystemStartFrame,
-              GWORLD.Context.AnimSystemEndFrame);
+    std::swap(SystemStartFrame,
+              SystemEndFrame);
   }
   // loop systemCurrentFrame in range
   int duration =
-      GWORLD.Context.AnimSystemEndFrame - GWORLD.Context.AnimSystemStartFrame;
+      SystemEndFrame - SystemStartFrame;
   if (duration != 0) {
     // avoid dead loop
-    while (GWORLD.Context.AnimSystemCurrentFrame <
-           GWORLD.Context.AnimSystemStartFrame)
-      GWORLD.Context.AnimSystemCurrentFrame += duration;
-    while (GWORLD.Context.AnimSystemCurrentFrame >
-           GWORLD.Context.AnimSystemEndFrame)
-      GWORLD.Context.AnimSystemCurrentFrame -= duration;
+    while (SystemCurrentFrame <
+           SystemStartFrame)
+      SystemCurrentFrame += duration;
+    while (SystemCurrentFrame >
+           SystemEndFrame)
+      SystemCurrentFrame -= duration;
   }
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
@@ -44,7 +44,7 @@ void AnimationSystem::Update(float dt) {
       if (nFrames != 0) {
         // sample animation from motion data of each animator
         Animation::Pose CurrentPose =
-            animator->motion->At(GWORLD.Context.AnimSystemCurrentFrame);
+            animator->motion->At(SystemCurrentFrame);
         // Animation::Pose CurrentPose = animator.motion->GetRestPose();
         int motionDataJointNum = animator->actor->GetNumJoints();
         // update the local positions of skeleton hierarchy
@@ -52,7 +52,8 @@ void AnimationSystem::Update(float dt) {
         std::map<std::string, Entity *> skeletonHierarchy;
         BuildSkeletonHierarchy(animator->skeleton, skeletonHierarchy);
         if (skeletonHierarchy.size() != motionDataJointNum) {
-          LOG_F(ERROR, "skeleton and motion data miss match for %s", GWORLD.EntityFromID(animator->GetID())->name.c_str());
+          LOG_F(ERROR, "skeleton and motion data miss match for %s",
+                GWORLD.EntityFromID(animator->GetID())->name.c_str());
           continue; // process the next animator data
         }
         // the skeleton hierarchy entities should have
@@ -66,11 +67,11 @@ void AnimationSystem::Update(float dt) {
         // setup the root translation first
         root->second->SetLocalPosition(CurrentPose.rootLocalPosition);
         for (int boneInd = 0; boneInd < motionDataJointNum; ++boneInd) {
-          std::string boneName =
-              animator->actor->jointNames[boneInd];
+          std::string boneName = animator->actor->jointNames[boneInd];
           auto boneEntity = skeletonHierarchy.find(boneName);
           if (boneEntity == skeletonHierarchy.end()) {
-            LOG_F(ERROR, "boneName %s not found in skeleton entities %s", boneName.c_str(), animator->skeleton->name.c_str());
+            LOG_F(ERROR, "boneName %s not found in skeleton entities %s",
+                  boneName.c_str(), animator->skeleton->name.c_str());
             break;
           }
           // setup local position and rotation for the bone entity

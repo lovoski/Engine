@@ -25,15 +25,19 @@ public:
     signature.insert(ComponentType<T>());
   }
 
-  // Add some component to a system, the entity must has at least one of the 
+  // Add some component to a system, the entity must has at least one of the
   // component registered with this function
   template <typename T> void AddComponentSignatureRequireOne() {
     signatureOne.insert(ComponentType<T>());
   }
 
+  // Initialize system related resources
   virtual void Start() {}
   virtual void Update(float dt) {}
+  // Destroy system related resources
   virtual void Destroy() {}
+  // Reset local variables of the system.
+  virtual void Reset() {}
 
 protected:
   EntitySignature signature;

@@ -8,6 +8,7 @@
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
 
+#include "System/Animation/AnimationSystem.hpp"
 
 #include <fbxsdk.h>
 
@@ -822,6 +823,7 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
     vector<vector<KeyFrame>> animationPerJoint(globalBones.size(),
                                                vector<KeyFrame>());
     int animStackCount = scene->GetSrcObjectCount<fbxsdk::FbxAnimStack>();
+    auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
     for (int i = 0; i < animStackCount; ++i) {
       fbxsdk::FbxAnimStack *animStack =
           scene->GetSrcObject<fbxsdk::FbxAnimStack>(i);
@@ -830,7 +832,7 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
       fbxsdk::FbxTime start = timeSpan.GetStart();
       fbxsdk::FbxTime end = timeSpan.GetStop();
       fbxsdk::FbxTime duration = end - start;
-      int fps = GWORLD.Context.AnimSystemFPS;
+      int fps = animSystem->SystemFPS;
       fbxsdk::FbxTime frameTime;
       frameTime.SetFrame(1, fbxsdk::FbxTime::eFrames30);
       for (fbxsdk::FbxTime currentTime = start; currentTime < end;
