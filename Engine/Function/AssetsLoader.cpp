@@ -201,7 +201,8 @@ void AssetsLoader::LoadDefaultAssets() {
   vertices.push_back({{-0.5f, 0.0f, 0.5f, 1.0f},
                       {0.0, 1.0, 0.0, 0.0f},
                       {0.0f, 1.0f, 1.0f, 1.0f}});
-  indices = {0, 1, 3, 1, 2, 3};
+  // counter-clock wise
+  indices = {3, 1, 0, 3, 2, 1};
   auto planePrimitive = new Render::Mesh(vertices, indices);
   planePrimitive->identifier = "plane";
   planePrimitive->modelPath = "::planePrimitive";

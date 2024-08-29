@@ -20,8 +20,8 @@ struct Light : public aEngine::BaseComponent {
   unsigned int ShadowFBO, ShadowMap;
   unsigned int ShadowMapWidth = 1024, ShadowMapHeight = 1024;
 
-  float ShadowZNear = 0.1f, ShadowZFar = 100.0f;
-  float ShadowOrthoW = 100.0f, ShadowOrthoH = 100.0f;
+  float ShadowZNear = 0.1f, ShadowZFar = 10.0f;
+  float ShadowOrthoW = 10.0f, ShadowOrthoH = 10.0f;
 
   glm::mat4 GetShadowSpaceOrthoMatrix();
 

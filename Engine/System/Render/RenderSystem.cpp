@@ -21,9 +21,12 @@ void RenderSystem::bakeShadowMap() {
         renderer = entity->GetComponent<MeshRenderer>();
       } else if (entity->HasComponent<DeformRenderer>()) {
         renderer = entity->GetComponent<DeformRenderer>()->renderer;
+        entity->GetComponent<DeformRenderer>()->DeformMesh();
       }
-      shadowMapDirLight->SetMat4("Model", entity->GetModelMatrix());
-      renderer->DrawMesh(*shadowMapDirLight);
+      if (renderer->castShadow) {
+        shadowMapDirLight->SetMat4("Model", entity->GetModelMatrix());
+        renderer->DrawMesh(*shadowMapDirLight);
+      }
     }
     light->EndShadow();
   }

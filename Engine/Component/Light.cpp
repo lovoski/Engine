@@ -37,11 +37,14 @@ void Light::StartShadow() {
   glViewport(0, 0, ShadowMapWidth, ShadowMapHeight);
   glBindFramebuffer(GL_FRAMEBUFFER, ShadowFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
 }
 
 void Light::EndShadow() {
   glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
   glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+  glDisable(GL_CULL_FACE);
 }
 
 glm::mat4 Light::GetShadowSpaceOrthoMatrix() {

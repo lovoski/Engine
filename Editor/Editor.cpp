@@ -4,8 +4,8 @@
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
 #include "Scripts/TestDebugDraw.hpp"
-#include "System/Render/RenderSystem.hpp"
 #include "System/Animation/AnimationSystem.hpp"
+#include "System/Render/RenderSystem.hpp"
 
 void BuildTestScene(Engine *engine) {
   auto ent = GWORLD.AddNewEntity();
@@ -25,7 +25,7 @@ void BuildTestScene(Engine *engine) {
 
   auto dLight = GWORLD.AddNewEntity();
   dLight->name = "Light";
-  dLight->SetGlobalPosition({-2, 2, 2});
+  dLight->SetGlobalPosition({-2, 3, 2});
   dLight->SetGlobalRotation(
       glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
   dLight->AddComponent<Light>();
@@ -33,11 +33,19 @@ void BuildTestScene(Engine *engine) {
 
   auto sphere = GWORLD.AddNewEntity();
   sphere->name = "Sphere";
+  sphere->SetGlobalPosition({0.0f, 1.0f, 0.0f});
   sphere->AddComponent<MeshRenderer>(Loader.GetMesh("::spherePrimitive", ""));
   sphere->GetComponent<MeshRenderer>()->AddPass<Render::OutlinePass>(
       nullptr, "Outline Pass");
   sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
       nullptr, "Diffuse Sphere");
+
+  auto plane = GWORLD.AddNewEntity();
+  plane->name = "Ground";
+  plane->SetGlobalScale({10.0f, 1.0f, 10.0f});
+  plane->AddComponent<MeshRenderer>(Loader.GetMesh("::planePrimitive", ""));
+  plane->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(nullptr,
+                                                                "Ground Mat");
 
   // auto cube = GWORLD.AddNewEntity();
   // cube->name = "Cube";
@@ -171,8 +179,7 @@ void Editor::MainSequencer() {
   ImGui::BeginChild("TimelineProperties", {-1, 50});
   ImGui::Checkbox("Auto Play", &animSystem->EnableAutoPlay);
   ImGui::SameLine();
-  int se[2] = {animSystem->SystemStartFrame,
-               animSystem->SystemEndFrame};
+  int se[2] = {animSystem->SystemStartFrame, animSystem->SystemEndFrame};
   ImGui::PushItemWidth(-1);
   if (ImGui::InputInt2("##Start & End", se)) {
     animSystem->SystemStartFrame = se[0];
@@ -183,8 +190,7 @@ void Editor::MainSequencer() {
   ImGui::BeginChild("TimelineView", {-1, 60});
   ImGui::PushItemWidth(-1);
   ImGui::SliderFloat("##currenrFrame", &animSystem->SystemCurrentFrame,
-                     animSystem->SystemStartFrame,
-                     animSystem->SystemEndFrame);
+                     animSystem->SystemStartFrame, animSystem->SystemEndFrame);
   ImGui::PopItemWidth();
   ImGui::EndChild();
   ImGui::End();
@@ -334,12 +340,11 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
     if (context.selectedEntity != (EntityID)(-1)) {
       Entity *selected = GWORLD.EntityFromID(context.selectedEntity).get();
       glm::mat4 modelTransform = selected->GetModelMatrix();
-      if (ImGuizmo::Manipulate(
-              glm::value_ptr(cameraComp->ViewMat),
-              glm::value_ptr(
-                  cameraComp->ProjMat),
-              context.mCurrentGizmoOperation, context.mCurrentGizmoMode,
-              glm::value_ptr(modelTransform), NULL, NULL)) {
+      if (ImGuizmo::Manipulate(glm::value_ptr(cameraComp->ViewMat),
+                               glm::value_ptr(cameraComp->ProjMat),
+                               context.mCurrentGizmoOperation,
+                               context.mCurrentGizmoMode,
+                               glm::value_ptr(modelTransform), NULL, NULL)) {
         // update object transform with modified changes
         if (context.mCurrentGizmoOperation == ImGuizmo::TRANSLATE) {
           glm::vec3 position(modelTransform[3][0], modelTransform[3][1],
