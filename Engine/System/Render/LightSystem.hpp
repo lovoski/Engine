@@ -21,10 +21,10 @@ public:
   void Update(float dt) override {
     auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
     // Clear the light array
-    renderSystem->lights.clear();
+    renderSystem->Lights.clear();
     for (auto id : entities) {
       if (GWORLD.EntityFromID(id)->Enabled)
-        renderSystem->lights.push_back(GWORLD.GetComponent<Light>(id));
+        renderSystem->Lights.push_back(GWORLD.GetComponent<Light>(id));
     }
   }
 

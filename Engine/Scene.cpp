@@ -7,7 +7,6 @@
 
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
-#include "System/Render/FrameBuffer.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 #include "System/Render/CameraSystem.hpp"
@@ -68,7 +67,7 @@ void Scene::Update() {
 
 void Scene::ForceRender() {
   float t3 = GetTime();
-  GetSystemInstance<RenderSystem>()->RenderBegin();
+  GetSystemInstance<RenderSystem>()->Render();
   // enable the scripts to draw something in the scene
   float t4 = GetTime();
   GetSystemInstance<CameraSystem>()->Render();

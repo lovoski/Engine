@@ -229,21 +229,21 @@ void Editor::MainMenuBar() {
           context.mCurrentGizmoMode = ImGuizmo::WORLD;
         ImGui::Separator();
         ImGui::MenuItem("Grid Options", nullptr, nullptr, false);
-        ImGui::Checkbox("Show Grid", &renderSystem->showGrid);
-        float gridColor[3] = {renderSystem->gridColor.x,
-                              renderSystem->gridColor.y,
-                              renderSystem->gridColor.z};
+        ImGui::Checkbox("Show Grid", &renderSystem->ShowGrid);
+        float gridColor[3] = {renderSystem->GridColor.x,
+                              renderSystem->GridColor.y,
+                              renderSystem->GridColor.z};
         if (ImGui::ColorEdit3("##Grid Color", gridColor)) {
-          renderSystem->gridColor =
+          renderSystem->GridColor =
               glm::vec3(gridColor[0], gridColor[1], gridColor[2]);
         }
         ImGui::PushItemWidth(120);
-        int gridSize = renderSystem->gridSize;
+        int gridSize = renderSystem->GridSize;
         if (ImGui::InputInt("Grid Size", &gridSize))
-          renderSystem->gridSize = gridSize;
-        int gridSpacing = renderSystem->gridSpacing;
+          renderSystem->GridSize = gridSize;
+        int gridSpacing = renderSystem->GridSpacing;
         if (ImGui::InputInt("Grid Spacing", &gridSpacing))
-          renderSystem->gridSpacing = gridSpacing;
+          renderSystem->GridSpacing = gridSpacing;
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }
@@ -252,6 +252,18 @@ void Editor::MainMenuBar() {
       }
       // if (ImGui::MenuItem("Show Style Editor")) {
       //   ImGui::ShowStyleEditor();
+      // }
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Systems")) {
+      if (ImGui::BeginMenu("Render")) {
+        auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
+        ImGui::MenuItem("Shadows", nullptr, nullptr, false);
+        ImGui::Checkbox("Enable ShadowMaps", &renderSystem->EnableShadowMaps);
+        ImGui::EndMenu();
+      }
+      // if (ImGui::BeginMenu("Animation")) {
+      //   ImGui::EndMenu();
       // }
       ImGui::EndMenu();
     }

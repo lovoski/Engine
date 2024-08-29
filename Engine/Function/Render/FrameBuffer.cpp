@@ -1,5 +1,5 @@
 #include "Global.hpp"
-#include "System/Render/FrameBuffer.hpp"
+#include "Function/Render/FrameBuffer.hpp"
 
 namespace aEngine {
 

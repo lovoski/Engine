@@ -17,24 +17,31 @@ public:
   }
   ~RenderSystem() {}
 
-  void RenderBegin();
+  void Render();
   void RenderEnd();
 
   void Reset() override {
-    showGrid = true;
-    gridSize = 10;
-    gridSpacing = 1;
-    gridColor = glm::vec3(0.5f);
-    lights.clear();
+    ShowGrid = true;
+    GridSize = 10;
+    GridSpacing = 1;
+    GridColor = glm::vec3(0.5f);
+    Lights.clear();
+    EnableShadowMaps = true;
   }
 
   // Grid options
-  bool showGrid;
-  unsigned int gridSize;
-  unsigned int gridSpacing;
-  glm::vec3 gridColor;
+  bool ShowGrid;
+  unsigned int GridSize;
+  unsigned int GridSpacing;
+  glm::vec3 GridColor;
+  // Lights
+  std::vector<std::shared_ptr<Light>> Lights;
+  // Shadows
+  bool EnableShadowMaps = true;
+private:
 
-  std::vector<std::shared_ptr<Light>> lights;
+  void bakeShadowMap();
+
 };
 
 }; // namespace aEngine

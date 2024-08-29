@@ -8,7 +8,21 @@
 
 namespace aEngine {
 
-void RenderSystem::RenderBegin() {
+void RenderSystem::bakeShadowMap() {
+  for (auto light : Lights) {
+    for (auto id : entities) {
+      auto entity = GWORLD.EntityFromID(id);
+      std::shared_ptr<MeshRenderer> renderer;
+      if (entity->HasComponent<MeshRenderer>()) {
+        renderer = entity->GetComponent<MeshRenderer>();
+      } else if (entity->HasComponent<DeformRenderer>()) {
+        renderer = entity->GetComponent<DeformRenderer>()->renderer;
+      }
+    }
+  }
+}
+
+void RenderSystem::Render() {
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -21,29 +35,24 @@ void RenderSystem::RenderBegin() {
     glm::mat4 projMat = cameraComp->ProjMat;
     glEnable(GL_DEPTH_TEST);
     // Generate the shadow map
-    for (auto light : lights) {
-      if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
-        for (auto entityID : entities) {
-          auto entity = GWORLD.EntityFromID(entityID);
-        }
-      }
-    }
+    if (EnableShadowMaps)
+      bakeShadowMap();
     // The main render pass
     for (auto entityID : entities) {
       auto entity = GWORLD.EntityFromID(entityID);
       if (entity->HasComponent<MeshRenderer>()) {
-        auto &renderer = entity->GetComponent<MeshRenderer>();
+        auto renderer = entity->GetComponent<MeshRenderer>();
         renderer->ForwardRender(projMat, viewMat, camera.get(), entity.get(),
-                                lights);
+                                Lights);
       } else if (entity->HasComponent<DeformRenderer>()) {
-        auto &renderer = entity->GetComponent<DeformRenderer>();
-        renderer->Render(projMat, viewMat, camera.get(), entity.get(), lights);
+        auto renderer = entity->GetComponent<DeformRenderer>();
+        renderer->Render(projMat, viewMat, camera.get(), entity.get(), Lights);
       }
     }
 
     // draw the grid in 3d space
-    if (showGrid)
-      VisUtils::DrawGrid(gridSize, gridSpacing, projMat * viewMat, gridColor);
+    if (ShowGrid)
+      VisUtils::DrawGrid(GridSize, GridSpacing, projMat * viewMat, GridColor);
   }
 }
 
