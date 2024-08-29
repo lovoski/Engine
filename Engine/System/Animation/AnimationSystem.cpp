@@ -89,10 +89,7 @@ void AnimationSystem::Render() {
   if (GWORLD.GetActiveCamera(camera)) {
     auto cameraObject = GWORLD.EntityFromID(camera);
     auto cameraComp = cameraObject->GetComponent<Camera>();
-    auto viewport = GWORLD.Context.sceneWindowSize;
-    auto viewMat = cameraComp->GetViewMatrix(*cameraObject);
-    auto projMat = cameraComp->GetProjMatrixPerspective(viewport.x, viewport.y);
-    auto vp = projMat * viewMat;
+    auto vp = cameraComp->VP;
     // render skeleton if the flag is set
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);

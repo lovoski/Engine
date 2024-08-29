@@ -27,6 +27,10 @@ struct Camera : public aEngine::BaseComponent {
 
   float fovY = 45.0f, zNear = 0.1f, zFar = 100.0f;
 
+  // This variable is maintained by CameraSystem and gets updated
+  // in CameraSystem's Update function
+  glm::mat4 ViewMat, ProjMat, VP;
+
 };
 
 };

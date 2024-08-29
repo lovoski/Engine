@@ -209,10 +209,14 @@ public:
   // initialize scene context
   void Start();
 
-  // Update all the registered systems
+  // The main loop, update all the registered systems, do the main rendering
   void Update();
 
-  void RenderBegin();
+  // Do the main rendering, this function is called internally in Update,
+  // only call this function when there's additional need to do it
+  void ForceRender();
+
+  // Finish the render, swap framebuffer to display
   void RenderEnd();
 
   // Destroy all the registered systems

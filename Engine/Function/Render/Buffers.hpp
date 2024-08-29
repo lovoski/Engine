@@ -56,6 +56,7 @@ private:
 class VAO {
 public:
   VAO() { glGenVertexArrays(1, &ID); }
+  ~VAO() { Delete(); }
 
   void Bind() const { glBindVertexArray(ID); }
 
@@ -63,7 +64,8 @@ public:
 
   void Delete() const {
     LOG_F(1, "vao deleted, id=%ld", ID);
-    glDeleteVertexArrays(1, &ID);
+    if (glIsBuffer(ID))
+      glDeleteVertexArrays(1, &ID);
   }
 
   void LinkAttrib(Buffer &vbo, GLuint layout, GLint size, GLenum type,

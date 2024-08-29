@@ -62,6 +62,29 @@ void DrawLine3D(glm::vec3 p0, glm::vec3 p1, glm::mat4 vp, glm::vec3 color,
   glBindVertexArray(0);
 }
 
+void DrawLineStrip3D(std::vector<glm::vec3> &lineStrip, glm::mat4 vp,
+                     glm::vec3 color, float thickness) {
+  static Render::VAO vao;
+  static Render::Buffer vbo;
+  static Render::Shader *lineShader = new Render::Shader();
+  static bool shaderLoaded = false;
+  if (!shaderLoaded) {
+    lineShader->LoadAndRecompileShaderSource(lineVS, lineFS);
+    shaderLoaded = true;
+  }
+  // update data in buffer every time
+  vao.Bind();
+  vbo.BindAs(GL_ARRAY_BUFFER);
+  vbo.SetDataAs(GL_ARRAY_BUFFER, lineStrip, GL_STATIC_DRAW);
+  vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, sizeof(glm::vec3), (void *)0);
+  lineShader->Use();
+  lineShader->SetMat4("mvp", vp);
+  lineShader->SetVec3("color", color);
+  glDrawArrays(GL_LINE_STRIP, 0, lineStrip.size());
+  vao.Unbind();
+  vbo.UnbindAs(GL_ARRAY_BUFFER);
+}
+
 template <typename T> struct PlainVertex {
   T x, y, z;
   PlainVertex(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
@@ -80,7 +103,6 @@ void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp,
   static Render::Shader *lineShader = new Render::Shader();
   static bool lineShaderLoaded = false;
   if (!lineShaderLoaded) {
-    lineShader = new Render::Shader();
     lineShader->LoadAndRecompileShaderSource(lineVS, lineFS);
     lineShaderLoaded = true;
   }
@@ -311,6 +333,49 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
   glBindVertexArray(vao);
   glDrawArrays(GL_LINES, 0, 2);
   glBindVertexArray(0);
+}
+
+void DrawArrow(glm::vec3 start, glm::vec3 end, glm::mat4 vp, glm::vec3 color,
+               float size) {
+  static int segs = 12;
+  glm::vec3 dir = glm::normalize(end - start);
+  glm::vec3 normal =
+      glm::normalize(glm::cross(dir, glm::vec3(0.0f, 1.0f, 0.0f)));
+  std::vector<glm::vec3> strip1{start};
+  std::vector<glm::vec3> strip2{end + normal * size};
+  float rotDegree = glm::radians(360.0f / segs);
+  auto lastWalkDir = normal;
+  for (int i = 0; i < segs; ++i) {
+    auto walkDir = glm::angleAxis(rotDegree * (i + 1), dir) * normal;
+    strip1.push_back(end);
+    strip1.push_back(end + lastWalkDir * size);
+    strip1.push_back(end + dir * size * 1.8f);
+    strip1.push_back(end + walkDir * size);
+    strip2.push_back(end + walkDir * size);
+    lastWalkDir = walkDir;
+  }
+  DrawLineStrip3D(strip1, vp, color);
+  DrawLineStrip3D(strip2, vp, color);
+}
+
+void DrawDirectionalLight(glm::vec3 forward, glm::vec3 up, glm::vec3 left,
+                          glm::vec3 pos, glm::mat4 vp, float size) {
+  // construct the line strip needed
+  std::vector<glm::vec3> strip1{
+      pos + left * size * 1.5f - up * size,
+      pos - left * size * 1.5f + up * size,
+      pos - left * size * 1.5f - up * size,
+      pos + left * size * 1.5f + up * size,
+  };
+  std::vector<glm::vec3> strip2{
+      pos - left * size * 1.5f - up * size,
+      pos + left * size * 1.5f - up * size,
+      pos + left * size * 1.5f + up * size,
+      pos - left * size * 1.5f + up * size,
+  };
+  DrawLineStrip3D(strip1, vp, glm::vec3(0.0f, 1.0f, 0.0f));
+  DrawLineStrip3D(strip2, vp, glm::vec3(0.0f, 1.0f, 0.0f));
+  DrawArrow(pos, pos + forward * size, vp, glm::vec3(0.0f, 1.0f, 0.0f), size * 0.12f);
 }
 
 }; // namespace VisUtils

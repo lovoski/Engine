@@ -6,8 +6,11 @@
 #include "Base/BaseSystem.hpp"
 #include "Scene.hpp"
 
+#include "Component/Camera.hpp"
 #include "Component/Light.hpp"
 #include "System/Render/RenderSystem.hpp"
+
+#include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
 
@@ -27,14 +30,22 @@ public:
 
   // Draw visualizations for light sources
   void Render() {
-    for (auto id : entities) {
-      auto entity = GWORLD.EntityFromID(id);
-      auto lightComp = entity->GetComponent<Light>();
-      if (lightComp->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
-        
-      } else if (lightComp->type == LIGHT_TYPE::POINT_LIGHT) {
-
-      } else;
+    EntityID camera;
+    if (GWORLD.GetActiveCamera(camera)) {
+      auto cameraEntity = GWORLD.EntityFromID(camera);
+      auto cameraComp = cameraEntity->GetComponent<Camera>();
+      auto viewMat = cameraComp->ViewMat;
+      auto projMat = cameraComp->ProjMat;
+      for (auto id : entities) {
+        auto entity = GWORLD.EntityFromID(id);
+        auto lightComp = entity->GetComponent<Light>();
+        if (lightComp->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
+          VisUtils::DrawDirectionalLight(entity->LocalForward,
+                                         entity->LocalUp, entity->LocalLeft,
+                                         entity->Position(), projMat * viewMat);
+        } else if (lightComp->type == LIGHT_TYPE::POINT_LIGHT) {
+        }
+      }
     }
   }
 };

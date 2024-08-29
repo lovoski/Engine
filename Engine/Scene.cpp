@@ -10,6 +10,7 @@
 #include "System/Render/FrameBuffer.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
+#include "System/Render/CameraSystem.hpp"
 
 namespace aEngine {
 
@@ -30,12 +31,14 @@ Scene::~Scene() {}
 void Scene::Start() {
   // register all the systems
   RegisterSystem<RenderSystem>();
+  RegisterSystem<CameraSystem>();
   RegisterSystem<LightSystem>();
   RegisterSystem<AnimationSystem>();
   RegisterSystem<NativeScriptSystem>();
 
   // start all the systems
   GetSystemInstance<RenderSystem>()->Start();
+  GetSystemInstance<CameraSystem>()->Start();
   GetSystemInstance<LightSystem>()->Start();
   GetSystemInstance<AnimationSystem>()->Start();
   GetSystemInstance<NativeScriptSystem>()->Start();
@@ -59,20 +62,23 @@ void Scene::Update() {
   float t2 = GetTime();
   Context.hierarchyUpdateTime = t1 - t0;
   Context.updateTime = t2 - t1;
+
+  ForceRender();
 }
 
-void Scene::RenderBegin() {
-  float t0 = GetTime();
+void Scene::ForceRender() {
+  float t3 = GetTime();
   GetSystemInstance<RenderSystem>()->RenderBegin();
   // enable the scripts to draw something in the scene
-  float t1 = GetTime();
+  float t4 = GetTime();
+  GetSystemInstance<CameraSystem>()->Render();
   GetSystemInstance<LightSystem>()->Render();
   GetSystemInstance<AnimationSystem>()->Render();
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
-  float t2 = GetTime();
+  float t5 = GetTime();
 
-  Context.renderTime = t1 - t0;
-  Context.debugDrawTime = t2 - t1;
+  Context.renderTime = t4 - t3;
+  Context.debugDrawTime = t5 - t4;
 }
 
 void Scene::RenderEnd() { GetSystemInstance<RenderSystem>()->RenderEnd(); }
@@ -106,6 +112,7 @@ void Scene::Destroy() {
 
   // destroy all the systems
   GetSystemInstance<RenderSystem>()->Destroy();
+  GetSystemInstance<CameraSystem>()->Destroy();
   GetSystemInstance<LightSystem>()->Destroy();
   GetSystemInstance<AnimationSystem>()->Destroy();
   GetSystemInstance<NativeScriptSystem>()->Destroy();
@@ -184,7 +191,7 @@ std::shared_ptr<Entity> Scene::EntityFromID(const EntityID entity) {
 
 void Scene::DestroyEntity(const EntityID entity) {
   if (entity == Context.activeCamera) {
-    LOG_F(INFO, "can't remove active camera");
+    LOG_F(WARNING, "can't remove active camera");
     return;
   }
   if (entity >= MAX_ENTITY_COUNT)

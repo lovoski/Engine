@@ -28,11 +28,7 @@ public:
   const Engine &operator=(const Engine &) = delete;
   ~Engine();
 
-  // Update all registered systems
   void Update();
-  // Render the scene to framebuffer
-  void RenderBegin();
-  // Swaps the front and back buffer
   void RenderEnd();
 
   void Start();

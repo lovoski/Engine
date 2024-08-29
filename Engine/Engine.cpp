@@ -86,7 +86,6 @@ void Engine::Update() {
   glfwPollEvents(); // poll the events
   GWORLD.Update();  // call the Update and LateUpdate
 }
-void Engine::RenderBegin() { GWORLD.RenderBegin(); }
 void Engine::RenderEnd() { GWORLD.RenderEnd(); }
 void Engine::Start() { 
   // load default assets from the loader

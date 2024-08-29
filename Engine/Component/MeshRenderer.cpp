@@ -18,7 +18,6 @@ MeshRenderer::MeshRenderer(aEngine::Render::Mesh *mesh) : meshData(mesh) {
 
 MeshRenderer::~MeshRenderer() {
   LOG_F(1, "deconstruct mesh renderer");
-  vao.Delete();
 }
 
 void MeshRenderer::DrawMesh(Render::Shader &shader) {

@@ -25,8 +25,9 @@ void BuildTestScene(Engine *engine) {
 
   auto dLight = GWORLD.AddNewEntity();
   dLight->name = "Light";
+  dLight->SetGlobalPosition({-2, 2, 2});
   dLight->SetGlobalRotation(
-      glm::quat(glm::radians(glm::vec3(180.0f, 0.0f, 0.0f))));
+      glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
   dLight->AddComponent<Light>();
   dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
 
@@ -90,29 +91,24 @@ void Editor::Run(bool release) {
       glViewport(0, 0, w, h);
       context.frameBuffer->RescaleFrameBuffer(w, h);
       GWORLD.Context.sceneWindowSize = glm::vec2(w, h);
-      GWORLD.RenderBegin();
+      GWORLD.ForceRender();
       GWORLD.RenderEnd();
     });
 
     while (engine->Run()) {
-      // logic update
-      engine->Update();
-
       // directly render to default framebuffer
-      engine->RenderBegin();
+      engine->Update();
       engine->RenderEnd();
     }
   } else {
     // display the editor gui as usual
     while (engine->Run()) {
-      engine->Update(); // logic update
-
       // the engine will render scene to its framebuffer
       context.frameBuffer->Bind();
-      engine->RenderBegin();
+      engine->Update(); // logic update
       context.frameBuffer->Unbind();
 
-      float currentTime = glfwGetTime();
+      float currentTime = GWORLD.GetTime();
       context.editorDeltaRender = currentTime - context.editorLastRender;
       context.editorLastRender = currentTime;
 
@@ -137,7 +133,7 @@ void Editor::Run(bool release) {
         glViewport(0, 0, size.x, size.y);
         // render additional frame to avoid flashing
         context.frameBuffer->Bind();
-        engine->RenderBegin();
+        GWORLD.ForceRender();
         context.frameBuffer->Unbind();
         engine->RenderEnd();
       }

@@ -17,9 +17,8 @@ void RenderSystem::RenderBegin() {
   if (GWORLD.GetActiveCamera(cameraID)) {
     auto camera = GWORLD.EntityFromID(cameraID);
     auto cameraComp = camera->GetComponent<Camera>();
-    glm::mat4 viewMat = cameraComp->GetViewMatrix(*camera);
-    glm::mat4 projMat = cameraComp->GetProjMatrixPerspective(
-        GWORLD.Context.sceneWindowSize.x, GWORLD.Context.sceneWindowSize.y);
+    glm::mat4 viewMat = cameraComp->ViewMat;
+    glm::mat4 projMat = cameraComp->ProjMat;
     glEnable(GL_DEPTH_TEST);
     // Generate the shadow map
     for (auto light : lights) {
