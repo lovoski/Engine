@@ -171,12 +171,6 @@ void Editor::EntitiesWindow() {
         pLight->AddComponent<Light>();
         pLight->GetComponent<Light>()->type = LIGHT_TYPE::POINT_LIGHT;
       }
-      if (ImGui::MenuItem("Spot Light")) {
-        auto sLight = GWORLD.AddNewEntity();
-        sLight->name = "Spot light";
-        sLight->AddComponent<Light>();
-        sLight->GetComponent<Light>()->type = LIGHT_TYPE::SPOT_LIGHT;
-      }
       ImGui::EndMenu();
     }
     ImGui::EndPopup();

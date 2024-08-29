@@ -18,7 +18,6 @@
 #include "Base/Scriptable.hpp"
 #include "Base/Types.hpp"
 
-#include "Component/Light.hpp"
 #include "Global.hpp"
 
 namespace aEngine {
@@ -46,9 +45,6 @@ struct SceneContext {
   // Other settings
   glm::vec2 currentMousePosition;
 
-  // Scene lights
-  std::vector<std::shared_ptr<Light>> activeLights;
-
   // Time related
   float lastTime;
   float deltaTime;
@@ -70,7 +66,6 @@ struct SceneContext {
     enableDebugDraw = true;
     // Don't change the size and position of scene window
     sceneFilePath = "::defaultScene";
-    activeLights.clear();
 
     lastTime = 0.0f;
     deltaTime = 0.0f;

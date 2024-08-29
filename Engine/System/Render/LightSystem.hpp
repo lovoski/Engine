@@ -4,9 +4,10 @@
 #pragma once
 
 #include "Base/BaseSystem.hpp"
-#include "Component/Light.hpp"
 #include "Scene.hpp"
 
+#include "Component/Light.hpp"
+#include "System/Render/RenderSystem.hpp"
 
 namespace aEngine {
 
@@ -15,14 +16,27 @@ public:
   LightSystem() { AddComponentSignatureRequireAll<Light>(); }
 
   void Update(float dt) override {
-    GWORLD.Context.activeLights.clear();
+    auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
+    // Clear the light array
+    renderSystem->lights.clear();
     for (auto id : entities) {
       if (GWORLD.EntityFromID(id)->Enabled)
-        GWORLD.Context.activeLights.push_back(GWORLD.GetComponent<Light>(id));
+        renderSystem->lights.push_back(GWORLD.GetComponent<Light>(id));
     }
   }
 
-private:
+  // Draw visualizations for light sources
+  void Render() {
+    for (auto id : entities) {
+      auto entity = GWORLD.EntityFromID(id);
+      auto lightComp = entity->GetComponent<Light>();
+      if (lightComp->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
+        
+      } else if (lightComp->type == LIGHT_TYPE::POINT_LIGHT) {
+
+      } else;
+    }
+  }
 };
 
 }; // namespace aEngine

@@ -66,6 +66,7 @@ void Scene::RenderBegin() {
   GetSystemInstance<RenderSystem>()->RenderBegin();
   // enable the scripts to draw something in the scene
   float t1 = GetTime();
+  GetSystemInstance<LightSystem>()->Render();
   GetSystemInstance<AnimationSystem>()->Render();
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
   float t2 = GetTime();

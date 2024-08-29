@@ -49,8 +49,7 @@ void BasePass::SetupLights(vector<std::shared_ptr<Light>> &lights) {
                       GWORLD.EntityFromID(light->GetID())->Position());
       shader->SetVec3(lightColorName, light->lightColor);
       pointLightCounter++;
-    } else if (light->type == LIGHT_TYPE::SPOT_LIGHT) {
-    }
+    } else;
   }
   if (dirLightCounter == 0) {
     LOG_F(ERROR, "At least one directional light needed for the default shader");

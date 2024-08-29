@@ -21,16 +21,24 @@ void RenderSystem::RenderBegin() {
     glm::mat4 projMat = cameraComp->GetProjMatrixPerspective(
         GWORLD.Context.sceneWindowSize.x, GWORLD.Context.sceneWindowSize.y);
     glEnable(GL_DEPTH_TEST);
-    for (auto entID : entities) {
-      auto entity = GWORLD.EntityFromID(entID);
+    // Generate the shadow map
+    for (auto light : lights) {
+      if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
+        for (auto entityID : entities) {
+          auto entity = GWORLD.EntityFromID(entityID);
+        }
+      }
+    }
+    // The main render pass
+    for (auto entityID : entities) {
+      auto entity = GWORLD.EntityFromID(entityID);
       if (entity->HasComponent<MeshRenderer>()) {
         auto &renderer = entity->GetComponent<MeshRenderer>();
         renderer->ForwardRender(projMat, viewMat, camera.get(), entity.get(),
-                                GWORLD.Context.activeLights);
+                                lights);
       } else if (entity->HasComponent<DeformRenderer>()) {
         auto &renderer = entity->GetComponent<DeformRenderer>();
-        renderer->Render(projMat, viewMat, camera.get(), entity.get(),
-                         GWORLD.Context.activeLights);
+        renderer->Render(projMat, viewMat, camera.get(), entity.get(), lights);
       }
     }
 

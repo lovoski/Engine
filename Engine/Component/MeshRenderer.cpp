@@ -49,7 +49,7 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
                                  std::vector<std::shared_ptr<Light>> &lights) {
   for (auto pass : passes) {
     pass->GetShader()->Use();
-    pass->SetupLights(GWORLD.Context.activeLights);
+    pass->SetupLights(lights);
     auto modelMat = glm::mat4(1.0f);
     if (targetVBO == nullptr) {
       modelMat = object->GetModelMatrix();
