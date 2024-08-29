@@ -33,7 +33,6 @@ void AnimationSystem::Update(float dt) {
            GWORLD.Context.AnimSystemEndFrame)
       GWORLD.Context.AnimSystemCurrentFrame -= duration;
   }
-  // Console.Log("currentframe=%.3f\n", systemCurrentFrame);
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
     auto animator = entity->GetComponent<Animator>();
@@ -53,8 +52,7 @@ void AnimationSystem::Update(float dt) {
         std::map<std::string, Entity *> skeletonHierarchy;
         BuildSkeletonHierarchy(animator->skeleton, skeletonHierarchy);
         if (skeletonHierarchy.size() != motionDataJointNum) {
-          Console.Log("[error]: skeleton and motion data miss match for %s\n",
-                      GWORLD.EntityFromID(animator->GetID())->name.c_str());
+          LOG_F(ERROR, "skeleton and motion data miss match for %s", GWORLD.EntityFromID(animator->GetID())->name.c_str());
           continue; // process the next animator data
         }
         // the skeleton hierarchy entities should have
@@ -62,8 +60,7 @@ void AnimationSystem::Update(float dt) {
         auto root =
             skeletonHierarchy.find(animator->motion->skeleton.jointNames[0]);
         if (root == skeletonHierarchy.end()) {
-          Console.Log("[error]: root joint not found for %s\n",
-                      entity->name.c_str());
+          LOG_F(ERROR, "root joint not found for %s", entity->name.c_str());
           continue;
         }
         // setup the root translation first
@@ -73,9 +70,7 @@ void AnimationSystem::Update(float dt) {
               animator->actor->jointNames[boneInd];
           auto boneEntity = skeletonHierarchy.find(boneName);
           if (boneEntity == skeletonHierarchy.end()) {
-            Console.Log(
-                "[error]: boneName %s not found in skeleton entities %s\n",
-                boneName.c_str(), animator->skeleton->name.c_str());
+            LOG_F(ERROR, "boneName %s not found in skeleton entities %s", boneName.c_str(), animator->skeleton->name.c_str());
             break;
           }
           // setup local position and rotation for the bone entity

@@ -68,7 +68,6 @@ private:
   void MainMenuBar();
   void MainSequencer();
   void EntitiesWindow();
-  void ConsoleWindow();
   void AssetsWindow();
   void InspectorWindow();
   void DrawGizmos(float x, float y, float width, float height, bool enable = true);

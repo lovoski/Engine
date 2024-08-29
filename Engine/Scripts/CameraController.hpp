@@ -26,11 +26,10 @@ struct EditorCameraController : public Scriptable {
 
   void Update(float dt) override {
     EntityID camera;
-    auto scene = entity->scene;
-    if (scene->GetActiveCamera(camera)) {
-      auto cameraObject = scene->EntityFromID(camera);
+    if (GWORLD.GetActiveCamera(camera)) {
+      auto cameraObject = GWORLD.EntityFromID(camera);
       auto camPos = cameraObject->Position();
-      auto sceneContext = scene->Context;
+      auto sceneContext = GWORLD.Context;
       // float movementSpeed =
       //     0.01f + 0.01f * abs(glm::dot(glm::vec3(camPos.x, 0.0f, camPos.z),
       //                              cameraObject->LocalForward));
@@ -39,7 +38,7 @@ struct EditorCameraController : public Scriptable {
           initialFactor * dt *
               std::min(std::pow(glm::length(camPos), speedPow), maxSpeed);
       bool inSceneWindow =
-          scene->InSceneWindow(sceneContext.currentMousePosition.x,
+          GWORLD.InSceneWindow(sceneContext.currentMousePosition.x,
                                sceneContext.currentMousePosition.y);
       if (inSceneWindow) {
         // check action queue for mouse scroll event
@@ -55,7 +54,7 @@ struct EditorCameraController : public Scriptable {
       glm::vec2 mouseCurrentPos = sceneContext.currentMousePosition;
       if (sceneContext.engine->GetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) ==
               GLFW_PRESS &&
-          scene->LoopCursorInSceneWindow()) {
+          GWORLD.LoopCursorInSceneWindow()) {
         // loop the camera if the camera is locked
         if (mouseFirstMove) {
           mouseLastPos = mouseCurrentPos;

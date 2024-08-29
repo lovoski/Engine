@@ -10,24 +10,12 @@ class Entity {
 public:
   friend class Scene;
 
-  Entity(EntityID id, Scene *s) : ID(id), scene(s) {
+  Entity(EntityID id) : ID(id) {
     m_scale = glm::vec3(1.0f);
     m_position = glm::vec3(0.0f);
     m_rotation = glm::quat(1.0f, glm::vec3(0.0f));
   }
-  ~Entity() {
-    if (parent != nullptr) {
-      // remove this child from its parent's child list
-      if (parent->children.size() != 0) {
-        auto it =
-            std::find(parent->children.begin(), parent->children.end(), this);
-        if (it != parent->children.end())
-          parent->children.erase(it);
-      }
-      parent = nullptr;
-    }
-    children.clear();
-  }
+  ~Entity();
 
   // global scale
   const glm::vec3 Scale() { return m_scale; };
@@ -91,21 +79,23 @@ public:
   void Serialize(Json &json);
 
   template <typename T, typename... Args> void AddComponent(Args &&...args) {
-    scene->AddComponent<T>(ID, std::forward<Args>(args)...);
+    GWORLD.AddComponent<T>(ID, std::forward<Args>(args)...);
   }
 
   template <typename T> void RemoveComponent() {
-    scene->RemoveComponent<T>(ID);
+    GWORLD.RemoveComponent<T>(ID);
   }
 
   template <typename T> const bool HasComponent() {
-    return scene->HasComponent<T>(ID);
+    return GWORLD.HasComponent<T>(ID);
   }
 
   template <typename T> std::shared_ptr<T> GetComponent() {
-    return scene->GetComponent<T>(ID);
+    return GWORLD.GetComponent<T>(ID);
   }
 
+  // Call this function to clear parent child relations related to this object,
+  // we need to make sure that nothing could refer to this object after its deleted
   void Destroy();
 
   void AssignChild(Entity *c);
@@ -113,7 +103,6 @@ public:
   glm::mat4 GetModelMatrix();
 
   EntityID ID;
-  Scene *scene;
   std::string name = "New Entity ";
   Entity *parent = nullptr;
   std::vector<Entity *> children;

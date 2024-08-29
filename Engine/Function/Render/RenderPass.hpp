@@ -31,7 +31,7 @@ public:
   // force reload, compile and link the shader program
   void SetShader(Shader *s) {
     if (s == nullptr) {
-      Console.Log("[error]: can't set shader to nullptr");
+      LOG_F(ERROR, "can\'t set shader to nullptr");
     } else {
       shader = s;
     }

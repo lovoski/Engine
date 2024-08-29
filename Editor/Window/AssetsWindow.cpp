@@ -32,13 +32,13 @@ void DirectoryRightClickMenu(fs::directory_entry entry) {
         string path = entry.path().string() + "/" + sceneName + ".scene";
         std::ofstream sceneFileOutput(path);
         if (!sceneFileOutput.is_open()) {
-          Console.Log("[error]: failed to create scene file at %s\n", path.c_str());
+          LOG_F(ERROR, "failed to create scene file at %s", path.c_str());
         } else {
           Json json;
           // set up a null scene
           json["scene"]["activeCamera"] = -1;
           sceneFileOutput << json;
-          Console.Log("[info]: create scene file at %s\n", path.c_str());
+          LOG_F(ERROR, "create scene file at %s", path.c_str());
         }
         sceneFileOutput.close();
         std::strcpy(sceneName, "");
@@ -54,7 +54,6 @@ void DirectoryRightClickMenu(fs::directory_entry entry) {
                        sizeof(folderName));
       ImGui::PopItemWidth();
       if (ImGui::Button("Create", {-1, 30})) {
-        // Console.Log("Create folder %s\n", folderName);
         fs::create_directory(entry.path().string() + "/" + folderName);
         std::strcpy(folderName, "");
         ImGui::CloseCurrentPopup();
@@ -71,7 +70,6 @@ void DirectoryRightClickMenu(fs::directory_entry entry) {
                          sizeof(matName));
         ImGui::PopItemWidth();
         if (ImGui::Button("Create", {-1, 30})) {
-          // Console.Log("Create folder %s\n", folderName);
           std::ofstream output(entry.path().string() + "/" +
                                string(matName) + ".material");
           // TODO: 
@@ -90,7 +88,6 @@ void DirectoryRightClickMenu(fs::directory_entry entry) {
                          sizeof(shaderName));
         ImGui::PopItemWidth();
         if (ImGui::Button("Create", {-1, 30})) {
-          // Console.Log("Create folder %s\n", folderName);
           std::ofstream outputVert(entry.path().string() + "/" +
                                    string(shaderName) + ".vert");
           std::ofstream outputFrag(entry.path().string() + "/" +
@@ -130,7 +127,6 @@ void FileRightClickMenu(fs::directory_entry entry) {
   ImGui::MenuItem("File Options", nullptr, nullptr, false);
   if (ImGui::MenuItem("Remove")) {
     fs::remove_all(entry.path());
-    // Console.Log("Remove file : %s\n", entry.path().string().c_str());
   }
 }
 
@@ -189,9 +185,7 @@ void Editor::AssetsWindow() {
   treeNodeInd = 0;
   const string rootDir = context.activeBaseFolder;
   if (!fs::exists(rootDir) || !fs::is_directory(rootDir)) {
-    std::cout << "project root dir don't exists or isn't a directory (From "
-            "AssetsWindow)"
-         << std::endl;
+    LOG_F(ERROR, "project root dir don't exists or isn't a directory");
     return;
   }
   ImGui::SeparatorText("File Hierarchy");

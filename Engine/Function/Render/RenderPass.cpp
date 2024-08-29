@@ -29,8 +29,7 @@ bool ActivateTexture2D(Texture &texture, Shader *shader, string name,
 
 void BasePass::SetupLights(vector<std::shared_ptr<Light>> &lights) {
   if (shader == nullptr)
-    Console.Log("[error]: shader not setup for material %s\n",
-                identifier.c_str());
+    LOG_F(ERROR, "shader not setup for render pass %s", identifier.c_str());
   unsigned int dirLightCounter = 0;
   unsigned int pointLightCounter = 0;
   unsigned int spotLightCounter = 0;
@@ -54,8 +53,7 @@ void BasePass::SetupLights(vector<std::shared_ptr<Light>> &lights) {
     }
   }
   if (dirLightCounter == 0) {
-    Console.Log("[error]: At least one directional light needed for the "
-                "default shader\n");
+    LOG_F(ERROR, "At least one directional light needed for the default shader");
   }
 }
 

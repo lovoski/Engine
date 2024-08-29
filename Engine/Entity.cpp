@@ -7,7 +7,22 @@ glm::vec3 Entity::WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 Entity::WorldLeft = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 Entity::WorldForward = glm::vec3(0.0f, 0.0f, 1.0f);
 
-void Entity::Destroy() { scene->DestroyEntity(ID); }
+Entity::~Entity() { LOG_F(1, "deconstruct entity %s", name.c_str()); }
+
+void Entity::Destroy() {
+  LOG_F(1, "destroy parent child relation for %s", name.c_str());
+  if (parent != nullptr) {
+    // remove this child from its parent's child list
+    if (parent->children.size() != 0) {
+      auto it =
+          std::find(parent->children.begin(), parent->children.end(), this);
+      if (it != parent->children.end())
+        parent->children.erase(it);
+    }
+    parent = nullptr;
+  }
+  children.clear();
+}
 
 void Entity::AssignChild(Entity *c) {
   if (c == nullptr)
@@ -17,15 +32,15 @@ void Entity::AssignChild(Entity *c) {
     auto current = parent;
     while (current != nullptr) {
       if (current == c) {
-        printf("can't set directly revert ancestor child relation\n");
+        LOG_F(WARNING, "can't set directly revert ancestor child relation");
         return;
       }
       current = current->parent;
     }
   }
   if (std::find(children.begin(), children.end(), c) != children.end()) {
-    printf("entity %d is already the child of entity %d\n", (unsigned int)c->ID,
-           (unsigned int)ID);
+    LOG_F(WARNING, "entity %d is already the child of entity %d",
+          (unsigned int)c->ID, (unsigned int)ID);
     return;
   }
   if (c->parent != nullptr) {

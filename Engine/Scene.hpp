@@ -251,8 +251,8 @@ public:
 
   float GetTime() { return glfwGetTime(); }
 
-  Entity *AddNewEntity();
-  Entity *EntityFromID(const EntityID entity);
+  std::shared_ptr<Entity> AddNewEntity();
+  std::shared_ptr<Entity> EntityFromID(const EntityID entity);
 
   // if one entity with children is destroyed, all its children entities will
   // also be destroyed
@@ -350,15 +350,14 @@ private:
   // the first
   void recomputeLocalAxis();
 
-  // the second
+  // The HierarchyRoot variable will get clear and updated by this function
   void rebuildHierarchyStructure();
 
   // how many entities have been created
   EntityID entityCount;
-  Entity *nullEntity;
   std::queue<EntityID> availableEntities;
   // every time a entity is created, a signature for it will also be created
-  std::map<EntityID, Entity *> entities;
+  std::map<EntityID, std::shared_ptr<Entity>> entities;
   std::map<EntityID, std::shared_ptr<EntitySignature>> entitiesSignatures;
   std::map<SystemTypeID, std::shared_ptr<BaseSystem>> registeredSystems;
   std::map<ComponentTypeID, std::shared_ptr<IComponentList>> componentsArrays;

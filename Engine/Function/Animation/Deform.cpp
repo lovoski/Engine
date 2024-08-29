@@ -10,7 +10,7 @@ void BuildSkeletonHierarchy(Entity *root,
   q.push(root->ID);
   while (!q.empty()) {
     EntityID cur = q.front();
-    Entity *curEnt = GWORLD.EntityFromID(cur);
+    auto curEnt = GWORLD.EntityFromID(cur).get();
     hierarchyMap.insert(std::make_pair(curEnt->name, curEnt));
     q.pop();
     for (auto c : curEnt->children)

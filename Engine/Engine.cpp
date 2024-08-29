@@ -16,13 +16,13 @@ Engine::Engine(int width, int height)
 
   window = glfwCreateWindow(width, height, "Engine", NULL, NULL);
   if (!window) {
-    std::cout << "Failed to create GLFW window" << std::endl;
+    LOG_F(ERROR, "Failed to create GLFW window");
     return;
   }
   glfwMakeContextCurrent(window);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "Failed to load GLAD" << std::endl;
+    LOG_F(ERROR, "Failed to load GLAD");
     return;
   }
 
@@ -43,6 +43,9 @@ Engine::Engine(int width, int height)
     engine->_mouseScrollOffsets = glm::vec2(x, y);
     engine->ActionQueue.push_back({ACTION_TYPE::MOUSE_SCROLL, (void*)&engine->_mouseScrollOffsets});
   });
+
+  // set the verbosity message written to stderr
+  loguru::g_stderr_verbosity = 4;
 
   // setup the callbacks
   glfwSetCursorPosCallback(window, [](GLFWwindow *wnd, double x, double y) {

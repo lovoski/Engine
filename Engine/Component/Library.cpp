@@ -79,7 +79,7 @@ void Animator::DrawInspectorGUI() {
           motion = Loader.GetMotion(filepath.string());
           motionName = filepath.string();
         } else {
-          Console.Log("[error]: only .bvh and .fbx motion are supported\n");
+          LOG_F(ERROR, "only .bvh and .fbx motion are supported");
         }
       }
       ImGui::EndDragDropTarget();

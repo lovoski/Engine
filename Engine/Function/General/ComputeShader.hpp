@@ -55,15 +55,13 @@ private:
       glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
       if (!success) {
         glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-        Console.Log("[error]::SHADER_COMPILATION_ERROR of type: %s\n%s\n",
-                    type.c_str(), infoLog);
+        LOG_F(ERROR, "SHADER_COMPILATION_ERROR of type: %s, %s", type.c_str(), infoLog);
       }
     } else {
       glGetProgramiv(shader, GL_LINK_STATUS, &success);
       if (!success) {
         glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-        Console.Log("[error]::PROGRAM_LINKING_ERROR of type: %s\n%s\n",
-                    type.c_str(), infoLog);
+        LOG_F(ERROR, "PROGRAM_LINKING_ERROR of type: %s, %s", type.c_str(), infoLog);
       }
     }
   }

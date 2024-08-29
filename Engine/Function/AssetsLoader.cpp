@@ -4,9 +4,10 @@
 #include "Component/NativeScript.hpp"
 
 #include "Function/AssetsLoader.hpp"
-#include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Mesh.hpp"
+#include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
+
 
 #include <fbxsdk.h>
 
@@ -113,7 +114,7 @@ void main() {
 }
 )";
 
-};
+}; // namespace Render
 
 using std::string;
 using std::vector;
@@ -222,7 +223,8 @@ void AssetsLoader::LoadDefaultAssets() {
 
   Render::Shader *outlineShader = new Render::Shader();
   outlineShader->identifier = "::outline";
-  outlineShader->LoadAndRecompileShaderSource(Render::outlineVS, Render::outlineFS);
+  outlineShader->LoadAndRecompileShaderSource(Render::outlineVS,
+                                              Render::outlineFS);
   allShaders.insert(std::make_pair("::outline", outlineShader));
 }
 
@@ -243,11 +245,10 @@ std::vector<std::string> AssetsLoader::GetIdentifiersForAllCachedShaders() {
 Render::Shader *AssetsLoader::GetShader(std::string identifier) {
   auto s = allShaders.find(identifier);
   if (s == allShaders.end()) {
-    Console.Log("[error]: shader with identifier %s not found\n",
-                identifier.c_str());
+    LOG_F(ERROR, "shader with identifier %s not found", identifier.c_str());
     return GetShader("::error");
   } else {
-    Console.Log("[info]: get shader with identifier %s\n", identifier.c_str());
+    LOG_F(INFO, "get shader with identifier %s", identifier.c_str());
     return (*s).second;
   }
 }
@@ -260,10 +261,9 @@ Render::Shader *AssetsLoader::GetShader(std::string vsp, std::string fsp,
                             fs::path(fsp).stem().string() + ":" +
                             fs::path(gsp).stem().string();
     allShaders.insert(std::make_pair(newShader->identifier, newShader));
-    Console.Log("[info]: load shader from path, identifier as %s vsp=%s, "
-                "fsp=%s, gsp=%s\n",
-                newShader->identifier.c_str(), vsp.c_str(), fsp.c_str(),
-                gsp.c_str());
+    LOG_F(INFO,
+          "load shader from path, identifier as %s vsp=%s, fsp=%s, gsp=%s",
+          newShader->identifier.c_str(), vsp.c_str(), fsp.c_str(), gsp.c_str());
     return newShader;
   } else
     return GetShader(":error");
@@ -275,16 +275,16 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
     Animation::Motion *motion = new Animation::Motion();
     std::string extension = fs::path(motionPath).extension().string();
     if (extension == ".bvh") {
-      Console.Log("[info]: load motion data from %s\n", motionPath.c_str());
+      LOG_F(INFO, "load motion data from %s", motionPath.c_str());
       motion->LoadFromBVH(motionPath);
       allMotions.insert(std::make_pair(motionPath, motion));
       return motion;
     } else {
-      Console.Log("[error]: GetMotion only loads bvh motion\n");
+      LOG_F(ERROR, "GetMotion only loads bvh motion");
       return nullptr;
     }
   } else {
-    Console.Log("[info]: get cached motion %s\n", motionPath.c_str());
+    LOG_F(INFO, "get cached motion %s", motionPath.c_str());
     return allMotions[motionPath];
   }
 }
@@ -308,18 +308,18 @@ std::vector<Render::Mesh *> AssetsLoader::GetModel(std::string modelPath) {
     // load new model
     auto modelMeshes = loadAndCreateMeshFromFile(modelPath);
     if (modelMeshes.size() == 0) {
-      Console.Log("[error]: the file %s has no mesh\n", modelPath.c_str());
+      LOG_F(ERROR, "the file %s has no mesh", modelPath.c_str());
       return result;
     }
-    Console.Log("[info]: load model at %s\n", modelPath.c_str());
+    LOG_F(INFO, "load model at %s", modelPath.c_str());
     allMeshes[modelPath] = modelMeshes;
     return modelMeshes;
   } else {
     auto meshes = allMeshes[modelPath];
     if (modelPath[0] == ':') {
-      Console.Log("[info]: load primitive %s\n", modelPath.c_str());
+      LOG_F(INFO, "load primitive %s", modelPath.c_str());
     } else
-      Console.Log("[info]: get cached model %s\n", modelPath.c_str());
+      LOG_F(INFO, "get cached model %s", modelPath.c_str());
     return meshes;
   }
 }
@@ -329,35 +329,30 @@ Render::Mesh *AssetsLoader::GetMesh(string modelPath, string identifier) {
     // load new model
     auto modelMeshes = loadAndCreateMeshFromFile(modelPath);
     if (modelMeshes.size() == 0) {
-      Console.Log("[error]: the file %s has no mesh\n", modelPath.c_str());
+      LOG_F(ERROR, "the file %s has no mesh", modelPath.c_str());
       return nullptr;
     }
     for (auto mesh : modelMeshes) {
       if (mesh->identifier == identifier) {
-        Console.Log("[info]: load model at %s, get mesh named %s\n",
-                    modelPath.c_str(), identifier.c_str());
+        LOG_F(INFO, "load model at %s, get mesh named %s", modelPath.c_str(), identifier.c_str());
         return mesh;
       }
     }
-    Console.Log("[error]: load model at %s, but no mesh named %s was found\n",
-                modelPath.c_str(), identifier.c_str());
+    LOG_F(ERROR, "load model at %s, but no mesh named %s was found", modelPath.c_str(), identifier.c_str());
     return nullptr;
   } else {
     auto meshes = allMeshes[modelPath];
     if (modelPath[0] == ':') {
-      Console.Log("[info]: load primitive %s\n", modelPath.c_str());
+      LOG_F(INFO, "load primitive %s", modelPath.c_str());
       return meshes[0];
     }
     for (auto mesh : meshes) {
       if (mesh->identifier == identifier) {
-        Console.Log("[info]: get cached mesh named %s from model %s\n",
-                    identifier.c_str(), modelPath.c_str());
+        LOG_F(INFO, "get cached mesh named %s from model %s", identifier.c_str(), modelPath.c_str());
         return mesh;
       }
     }
-    Console.Log(
-        "[error]: model %s has been loaded, but no mesh named %s found\n",
-        modelPath.c_str(), identifier.c_str());
+    LOG_F(ERROR, "model %s has been loaded, but no mesh named %s found", modelPath.c_str(), identifier.c_str());
     return nullptr;
   }
 }
@@ -391,15 +386,15 @@ unsigned int loadAndCreateTextureFromFile(string texturePath) {
 
     stbi_image_free(data);
   } else {
-    Console.Log("[error]: Texture failed to load at path: %s\n",
-                texturePath.c_str());
+    LOG_F(ERROR, "Texture failed to load at path: %s", texturePath.c_str());
     stbi_image_free(data);
   }
 
   return textureID;
 }
 
-Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
+std::shared_ptr<Entity>
+AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   auto globalParent = GWORLD.AddNewEntity();
   globalParent->name = fs::path(modelPath).filename().stem().string();
 
@@ -435,9 +430,9 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
       c->SetLocalPosition(skel->jointOffset[i]);
       c->SetLocalRotation(skel->jointRotation[i]);
       c->SetLocalScale(skel->jointScale[i]);
-      joints.push_back(c);
+      joints.push_back(c.get());
       if (i == 0)
-        joints[i]->parent = globalParent;
+        joints[i]->parent = globalParent.get();
       else
         joints[i]->parent = joints[skel->jointParent[i]];
       joints[i]->parent->children.push_back(joints[i]);
@@ -450,7 +445,7 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   }
 
   auto meshParent = GWORLD.AddNewEntity();
-  globalParent->AssignChild(meshParent);
+  globalParent->AssignChild(meshParent.get());
   meshParent->name = "mesh";
   auto globalMaterial =
       Loader.InstantiateMaterial<Render::Diffuse>(globalParent->name);
@@ -463,12 +458,12 @@ Entity *AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
           mesh, globalParent->GetComponent<Animator>().get());
       c->GetComponent<DeformRenderer>()->AddPass(globalMaterial,
                                                  globalMaterial->identifier);
-      meshParent->AssignChild(c);
+      meshParent->AssignChild(c.get());
     } else {
       c->AddComponent<MeshRenderer>(mesh);
       c->GetComponent<MeshRenderer>()->AddPass(globalMaterial,
                                                globalMaterial->identifier);
-      meshParent->AssignChild(c);
+      meshParent->AssignChild(c.get());
     }
   }
 
@@ -934,8 +929,7 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
         }
       }
     } else {
-      Console.Log("[error]: skeleton in file %s has no root joint\n",
-                  modelPath.c_str());
+      LOG_F(ERROR, "skeleton in file %s has no root joint", modelPath.c_str());
     }
   }
 

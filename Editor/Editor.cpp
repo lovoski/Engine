@@ -129,7 +129,7 @@ void Editor::Run(bool release) {
           GWORLD.Context.sceneWindowSize.y != size.y) {
         context.frameBuffer->RescaleFrameBuffer(size.x, size.y);
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-          Console.Log("[error]: Rescaled framebuffer is not complete\n");
+          LOG_F(INFO, "Rescaled framebuffer is not complete");
         GWORLD.Context.sceneWindowSize = {size.x, size.y};
         glViewport(0, 0, size.x, size.y);
         // render additional frame to avoid flashing
@@ -146,7 +146,6 @@ void Editor::Run(bool release) {
       MainSequencer();
       MainMenuBar();
       EntitiesWindow();
-      ConsoleWindow();
       InspectorWindow();
       AssetsWindow();
       ImGui::EndFrame();
@@ -208,11 +207,10 @@ void Editor::MainMenuBar() {
         std::string sceneFilePath = GWORLD.Context.sceneFilePath;
         std::ofstream sceneFileOutput(sceneFilePath);
         if (!sceneFileOutput.is_open()) {
-          Console.Log("[error]: can't save scene to %s\n",
-                      sceneFilePath.c_str());
+          LOG_F(ERROR, "can't save scene to %s", sceneFilePath.c_str());
         } else {
           sceneFileOutput << GWORLD.Serialize();
-          Console.Log("[info]: save scene to %s\n", sceneFilePath.c_str());
+          LOG_F(INFO, "save scene to %s", sceneFilePath.c_str());
         }
         sceneFileOutput.close();
       }
@@ -262,7 +260,6 @@ void Editor::MainMenuBar() {
     if (ImGuiFileDialog::Instance()->IsOk()) {
       // string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
       std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-      // Console.Log("filepathname:%s\nfilepath%s\n", filePathName.c_str(),
       // filePath.c_str());
       context.activeBaseFolder = filePath;
     }
@@ -299,8 +296,6 @@ void Editor::MainMenuBar() {
   }
 }
 
-void Editor::ConsoleWindow() { Console.Draw("Console"); }
-
 void Editor::DrawGizmos(float x, float y, float width, float height,
                         bool enable) {
 
@@ -321,10 +316,10 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
     ImGuizmo::AllowAxisFlip(false);
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(x, y, width, height);
-    Entity *cameraEnt = GWORLD.EntityFromID(camera);
+    Entity *cameraEnt = GWORLD.EntityFromID(camera).get();
     auto cameraComp = cameraEnt->GetComponent<Camera>();
     if (context.selectedEntity != (EntityID)(-1)) {
-      Entity *selected = GWORLD.EntityFromID(context.selectedEntity);
+      Entity *selected = GWORLD.EntityFromID(context.selectedEntity).get();
       glm::mat4 modelTransform = selected->GetModelMatrix();
       if (ImGuizmo::Manipulate(
               glm::value_ptr(cameraComp->GetViewMatrix(*cameraEnt)),

@@ -49,10 +49,9 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
     ImGui::MenuItem("Entity Options", nullptr, nullptr, false);
     if (ImGui::MenuItem("Remove")) {
       if (entity->children.size() > 0)
-        Console.Log("[info]: Destroy entity %s and all its children\n",
-                    entity->name.c_str());
+        LOG_F(INFO, "Destroy entity %s and all its children", entity->name.c_str());
       else
-        Console.Log("[info]: Destroy entity %s\n", entity->name.c_str());
+        LOG_F(INFO, "Destroy entity %s", entity->name.c_str());
       GWORLD.DestroyEntity(entity->ID);
       // reset selected entity every time remove an entity
       selectedEntity = (EntityID)(-1);
@@ -86,8 +85,8 @@ void CreateBVHSkeletonHierarchy(Animation::Skeleton *skel, int currentJoint,
     auto ce = GWORLD.AddNewEntity();
     ce->name = skel->jointNames[c];
     ce->SetGlobalPosition(parentPos + skel->jointOffset[c]);
-    parent->AssignChild(ce);
-    CreateBVHSkeletonHierarchy(skel, c, ce->Position(), ce);
+    parent->AssignChild(ce.get());
+    CreateBVHSkeletonHierarchy(skel, c, ce->Position(), ce.get());
   }
 }
 
@@ -207,12 +206,12 @@ void Editor::EntitiesWindow() {
         auto root = GWORLD.AddNewEntity();
         root->name = motion->skeleton.jointNames[0];
         // build motion hierarchy
-        CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), root);
+        CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), root.get());
         // set up variables for animator component
-        parent->GetComponent<Animator>()->skeleton = root;
+        parent->GetComponent<Animator>()->skeleton = root.get();
         parent->GetComponent<Animator>()->ShowSkeleton = true;
         // make skeleton hierarchy a child of proxy entity
-        parent->AssignChild(root);
+        parent->AssignChild(root.get());
       } else if (extension == ".obj" || extension == ".off") {
         // handle plane model import
         auto modelMeshes = Loader.GetModel(filename.string());
@@ -227,7 +226,7 @@ void Editor::EntitiesWindow() {
           childEntity->AddComponent<MeshRenderer>(cmesh);
           childEntity->GetComponent<MeshRenderer>()->AddPass(unifyMat, unifyMat->identifier);
           // setup parent child relation
-          parentEntity->AssignChild(childEntity);
+          parentEntity->AssignChild(childEntity.get());
         }
       } else if (extension == ".fbx") {
         // fbx model possibly contains animation data

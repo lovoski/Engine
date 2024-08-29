@@ -16,7 +16,6 @@ namespace aEngine {
 Scene::Scene() {
   // create the entities
   entityCount = 0;
-  nullEntity = new Entity((EntityID)(-1), this);
   for (EntityID entity = 0u; entity < MAX_ENTITY_COUNT; ++entity) {
     availableEntities.push(entity);
   }
@@ -26,7 +25,7 @@ Scene::Scene() {
   Context.Reset();
 }
 
-Scene::~Scene() { delete nullEntity; }
+Scene::~Scene() {}
 
 void Scene::Start() {
   // register all the systems
@@ -145,11 +144,11 @@ bool Scene::SetActiveCamera(EntityID camera) {
     return false;
 }
 
-Entity *Scene::AddNewEntity() {
+std::shared_ptr<Entity> Scene::AddNewEntity() {
   const EntityID id = addNewEntity();
-  entities.insert(std::make_pair(id, new Entity(id, this)));
+  entities.insert(std::make_pair(id, std::make_shared<Entity>(id)));
   entities[id]->name += std::to_string(id);
-  return &(*(entities[id]));
+  return entities[id];
 }
 
 bool Scene::EntityValid(EntityID &id) {
@@ -158,35 +157,37 @@ bool Scene::EntityValid(EntityID &id) {
     // this entity is not valid
     id = (EntityID)(-1);
     return false;
-  } else return true;
+  } else
+    return true;
 }
 
-Entity *Scene::EntityFromID(const EntityID entity) {
+std::shared_ptr<Entity> Scene::EntityFromID(const EntityID entity) {
   if (entity == (EntityID)(-1)) {
-    Console.Log("[error]: can't get entity index -1\n");
-    return nullEntity;
+    LOG_F(ERROR, "can't get entity index -1");
+    return nullptr;
   }
   if (entity >= MAX_ENTITY_COUNT)
     throw std::runtime_error(
         "EntityID out of range (MAX_ENTITY_COUNT) during EntityFromID");
   if (entities.count(entity) == 0) {
-    Console.Log("[error]: No entity match this id: %ld\n", entity);
-    return nullEntity;
+    LOG_F(ERROR, "No entity match this id: %ld", entity);
+    return nullptr;
   } else {
-    return &(*(entities.at(entity)));
+    return entities.at(entity);
   }
 }
 
 void Scene::DestroyEntity(const EntityID entity) {
   if (entity == Context.activeCamera) {
-    Console.Log("[info]: can't remove active camera\n");
+    LOG_F(INFO, "can't remove active camera");
     return;
   }
   if (entity >= MAX_ENTITY_COUNT)
     throw std::runtime_error("Destroying entity out of range");
   if (entitiesSignatures.find(entity) == entitiesSignatures.end())
     throw std::runtime_error("Destroying entity do not exists");
-  auto ptr = entities[entity];
+  // use pointers temporary
+  auto ptr = entities[entity].get();
   std::stack<Entity *> s1, s2;
   s1.push(ptr);
 
@@ -213,8 +214,9 @@ void Scene::DestroyEntity(const EntityID entity) {
   }
   while (!s2.empty()) {
     auto cur = s2.top();
+    // destroy parent child relation before the entity is deconstructed
+    cur->Destroy();
     handleDestroy(cur->ID);
-    delete cur;
     s2.pop();
   }
 }
@@ -226,12 +228,14 @@ void Scene::recomputeLocalAxis() {
 }
 
 void Scene::rebuildHierarchyStructure() {
+  // clear HierarchyRoots at the start
   HierarchyRoots.clear();
   std::queue<std::pair<Entity *, bool>> q;
   for (auto entity : entities) {
     if (entity.second->parent == nullptr) {
-      q.push(std::make_pair(entity.second, entity.second->transformDirty));
-      HierarchyRoots.push_back(entity.second);
+      q.push(
+          std::make_pair(entity.second.get(), entity.second->transformDirty));
+      HierarchyRoots.push_back(entity.second.get());
     }
   }
   // traverse the entities in a parent first fashion
@@ -252,7 +256,8 @@ void Scene::rebuildHierarchyStructure() {
     }
   }
   // if (counter > 1)
-  //   std::cout << globalCounter++ << ": update " << counter << " times one frame" << std::endl;
+  //   std::cout << globalCounter++ << ": update " << counter << " times one
+  //   frame" << std::endl;
 }
 
 // Serialize current scene to a json file
@@ -326,18 +331,18 @@ void Scene::DeserializeReset(Json &json) {
 
   // update the parent first, make sure the hierarchy positions are correct
   for (auto currentUpdateIndex : traversalOrder) {
-    auto entJson = json["entities"][std::to_string((int)currentUpdateIndex)];
-    EntityID old = currentUpdateIndex;
-    EntityID newID = old2new[old];
-    auto newEntity = EntityFromID(newID);
-    newEntity->SetGlobalPosition(entJson["p"].get<glm::vec3>());
-    newEntity->SetGlobalScale(entJson["s"].get<glm::vec3>());
-    newEntity->SetGlobalRotation(entJson["r"].get<glm::quat>());
-    if (entJson.value("parent", "none") != "none") {
-      auto oldParentID = (EntityID)std::stoi(entJson.value("parent", "none"));
-      auto parent = EntityFromID(old2new[oldParentID]);
-      parent->AssignChild(newEntity);
-    }
+    // auto entJson = json["entities"][std::to_string((int)currentUpdateIndex)];
+    // EntityID old = currentUpdateIndex;
+    // EntityID newID = old2new[old];
+    // auto newEntity = EntityFromID(newID);
+    // newEntity->SetGlobalPosition(entJson["p"].get<glm::vec3>());
+    // newEntity->SetGlobalScale(entJson["s"].get<glm::vec3>());
+    // newEntity->SetGlobalRotation(entJson["r"].get<glm::quat>());
+    // if (entJson.value("parent", "none") != "none") {
+    //   auto oldParentID = (EntityID)std::stoi(entJson.value("parent",
+    //   "none")); auto parent = EntityFromID(old2new[oldParentID]);
+    //   parent->AssignChild(newEntity);
+    // }
     // // reload the components
     // for (auto compJson : json["components"]["camera"].items()) {
     //   EntityID belongs = (EntityID)std::stoi(compJson.key());

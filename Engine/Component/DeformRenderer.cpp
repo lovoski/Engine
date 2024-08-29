@@ -12,7 +12,7 @@ DeformRenderer::DeformRenderer(Render::Mesh *mesh, Animator *ar)
 }
 
 DeformRenderer::~DeformRenderer() {
-  std::cout << "deconstruct deform renderer" << std::endl;
+  LOG_F(1, "deconstruct deform renderer");
   targetVBO.Delete();
   skeletonMatrices.Delete();
 }
