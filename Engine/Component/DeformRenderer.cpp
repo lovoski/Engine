@@ -13,18 +13,12 @@ DeformRenderer::DeformRenderer(Render::Mesh *mesh, Animator *ar)
 
 DeformRenderer::~DeformRenderer() {
   LOG_F(1, "deconstruct deform renderer");
-  targetVBO.Delete();
-  skeletonMatrices.Delete();
 }
 
-void DeformRenderer::Render(glm::mat4 projMat, glm::mat4 viewMat,
-                            Entity *camera, Entity *object,
-                            std::vector<std::shared_ptr<Light>> &lights) {
+void DeformRenderer::DeformMesh() {
   // setup targetVBO of the renderer
   DeformSkinnedMesh(renderer->meshData, animator, targetVBO, skeletonMatrices);
   renderer->targetVBO = &targetVBO;
-  // render as if it were a normal mesh
-  renderer->ForwardRender(projMat, viewMat, camera, object, lights);
 }
 
 void DeformRenderer::DrawInspectorGUI() {

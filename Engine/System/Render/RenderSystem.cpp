@@ -10,6 +10,10 @@ namespace aEngine {
 
 void RenderSystem::bakeShadowMap() {
   for (auto light : Lights) {
+    light->StartShadow();
+    shadowMapDirLight->Use();
+    shadowMapDirLight->SetMat4("LightSpaceMatrix",
+                               light->GetShadowSpaceOrthoMatrix());
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       std::shared_ptr<MeshRenderer> renderer;
@@ -18,7 +22,10 @@ void RenderSystem::bakeShadowMap() {
       } else if (entity->HasComponent<DeformRenderer>()) {
         renderer = entity->GetComponent<DeformRenderer>()->renderer;
       }
+      shadowMapDirLight->SetMat4("Model", entity->GetModelMatrix());
+      renderer->DrawMesh(*shadowMapDirLight);
     }
+    light->EndShadow();
   }
 }
 
@@ -40,14 +47,15 @@ void RenderSystem::Render() {
     // The main render pass
     for (auto entityID : entities) {
       auto entity = GWORLD.EntityFromID(entityID);
+      std::shared_ptr<MeshRenderer> renderer;
       if (entity->HasComponent<MeshRenderer>()) {
-        auto renderer = entity->GetComponent<MeshRenderer>();
-        renderer->ForwardRender(projMat, viewMat, camera.get(), entity.get(),
-                                Lights);
+        renderer = entity->GetComponent<MeshRenderer>();
       } else if (entity->HasComponent<DeformRenderer>()) {
-        auto renderer = entity->GetComponent<DeformRenderer>();
-        renderer->Render(projMat, viewMat, camera.get(), entity.get(), Lights);
+        renderer = entity->GetComponent<DeformRenderer>()->renderer;
+        entity->GetComponent<DeformRenderer>()->DeformMesh();
       }
+      renderer->ForwardRender(projMat, viewMat, camera.get(), entity.get(),
+                              Lights);
     }
 
     // draw the grid in 3d space

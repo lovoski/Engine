@@ -28,10 +28,7 @@ public:
     this->indices = indices;
     setupMesh();
   }
-  ~Mesh() {
-    vbo.Delete();
-    ebo.Delete();
-  }
+  ~Mesh() {}
 
 private:
   // initializes all the buffer objects/arrays

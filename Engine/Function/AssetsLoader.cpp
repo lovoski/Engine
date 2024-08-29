@@ -115,6 +115,22 @@ void main() {
 }
 )";
 
+const std::string shadowMapDirLightVS = R"(
+#version 430 core
+layout (location = 0) in vec4 aPos;
+
+uniform mat4 LightSpaceMatrix;
+uniform mat4 Model;
+
+void main() {
+  gl_Position = LightSpaceMatrix * Model * aPos;
+}
+)";
+const std::string shadowMapDirLightFS = R"(
+#version 430 core
+void main() {}
+)";
+
 }; // namespace Render
 
 using std::string;
@@ -227,6 +243,12 @@ void AssetsLoader::LoadDefaultAssets() {
   outlineShader->LoadAndRecompileShaderSource(Render::outlineVS,
                                               Render::outlineFS);
   allShaders.insert(std::make_pair("::outline", outlineShader));
+
+  Render::Shader *shadowMapDirLight = new Render::Shader();
+  shadowMapDirLight->identifier = "::shadowMapDirLight";
+  shadowMapDirLight->LoadAndRecompileShaderSource(Render::shadowMapDirLightVS,
+                                                  Render::shadowMapDirLightFS);
+  allShaders.insert(std::make_pair("::shadowMapDirLight", shadowMapDirLight));
 }
 
 std::vector<std::string> AssetsLoader::GetIndetifiersForAllCachedMaterials() {
@@ -335,11 +357,13 @@ Render::Mesh *AssetsLoader::GetMesh(string modelPath, string identifier) {
     }
     for (auto mesh : modelMeshes) {
       if (mesh->identifier == identifier) {
-        LOG_F(INFO, "load model at %s, get mesh named %s", modelPath.c_str(), identifier.c_str());
+        LOG_F(INFO, "load model at %s, get mesh named %s", modelPath.c_str(),
+              identifier.c_str());
         return mesh;
       }
     }
-    LOG_F(ERROR, "load model at %s, but no mesh named %s was found", modelPath.c_str(), identifier.c_str());
+    LOG_F(ERROR, "load model at %s, but no mesh named %s was found",
+          modelPath.c_str(), identifier.c_str());
     return nullptr;
   } else {
     auto meshes = allMeshes[modelPath];
@@ -349,11 +373,13 @@ Render::Mesh *AssetsLoader::GetMesh(string modelPath, string identifier) {
     }
     for (auto mesh : meshes) {
       if (mesh->identifier == identifier) {
-        LOG_F(INFO, "get cached mesh named %s from model %s", identifier.c_str(), modelPath.c_str());
+        LOG_F(INFO, "get cached mesh named %s from model %s",
+              identifier.c_str(), modelPath.c_str());
         return mesh;
       }
     }
-    LOG_F(ERROR, "model %s has been loaded, but no mesh named %s found", modelPath.c_str(), identifier.c_str());
+    LOG_F(ERROR, "model %s has been loaded, but no mesh named %s found",
+          modelPath.c_str(), identifier.c_str());
     return nullptr;
   }
 }

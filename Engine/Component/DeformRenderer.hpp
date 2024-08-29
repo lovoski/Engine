@@ -23,8 +23,8 @@ struct DeformRenderer : public aEngine::BaseComponent {
     renderer->AddPass<T>(pass, identifier);
   }
 
-  void Render(glm::mat4 projMat, glm::mat4 viewMat, Entity *camera,
-              Entity *object, std::vector<std::shared_ptr<Light>> &lights);
+  // Deform the mesh with skeleton or shape keys, change the targetVBO of renderer
+  void DeformMesh();
 
   void DrawInspectorGUI() override;
 };

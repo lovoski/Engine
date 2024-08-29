@@ -7,13 +7,12 @@ namespace aEngine {
 
 struct Camera : public aEngine::BaseComponent {
 
-  // The camera looks at -LocalForward direction
-  glm::mat4 GetViewMatrix(Entity &transform) {
-    return glm::lookAt(transform.Position(), transform.Position() - transform.LocalForward, transform.LocalUp);
-  }
-
-  glm::mat4 GetProjMatrixPerspective(float width, float height) {
-    return glm::perspective(glm::radians(fovY), width/height, zNear, zFar);
+  // The camera look at -LocalForward direction
+  void GetCameraViewPerpProjMatrix(glm::mat4 &view, glm::mat4 &proj) {
+    auto size = GWORLD.Context.sceneWindowSize;
+    auto entity = GWORLD.EntityFromID(entityID);
+    proj = glm::perspective(glm::radians(fovY), size.x / size.y, zNear, zFar);
+    view = glm::lookAt(entity->Position(), entity->Position() - entity->LocalForward, entity->LocalUp);
   }
 
   void DrawInspectorGUI() override {
@@ -27,8 +26,6 @@ struct Camera : public aEngine::BaseComponent {
 
   float fovY = 45.0f, zNear = 0.1f, zFar = 100.0f;
 
-  // This variable is maintained by CameraSystem and gets updated
-  // in CameraSystem's Update function
   glm::mat4 ViewMat, ProjMat, VP;
 
 };

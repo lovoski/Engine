@@ -2,9 +2,10 @@
 
 #include "Base/BaseSystem.hpp"
 
+#include "Component/DeformRenderer.hpp"
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
-#include "Component/DeformRenderer.hpp"
+
 
 namespace aEngine {
 
@@ -27,6 +28,7 @@ public:
     GridColor = glm::vec3(0.5f);
     Lights.clear();
     EnableShadowMaps = true;
+    shadowMapDirLight = Loader.GetShader("::shadowMapDirLight");
   }
 
   // Grid options
@@ -38,10 +40,11 @@ public:
   std::vector<std::shared_ptr<Light>> Lights;
   // Shadows
   bool EnableShadowMaps = true;
-private:
 
+private:
   void bakeShadowMap();
 
+  Render::Shader *shadowMapDirLight;
 };
 
 }; // namespace aEngine

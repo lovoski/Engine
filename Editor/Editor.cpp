@@ -335,9 +335,9 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
       Entity *selected = GWORLD.EntityFromID(context.selectedEntity).get();
       glm::mat4 modelTransform = selected->GetModelMatrix();
       if (ImGuizmo::Manipulate(
-              glm::value_ptr(cameraComp->GetViewMatrix(*cameraEnt)),
+              glm::value_ptr(cameraComp->ViewMat),
               glm::value_ptr(
-                  cameraComp->GetProjMatrixPerspective(width, height)),
+                  cameraComp->ProjMat),
               context.mCurrentGizmoOperation, context.mCurrentGizmoMode,
               glm::value_ptr(modelTransform), NULL, NULL)) {
         // update object transform with modified changes

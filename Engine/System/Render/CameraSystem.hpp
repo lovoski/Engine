@@ -18,9 +18,7 @@ public:
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto cameraComp = entity->GetComponent<Camera>();
-      cameraComp->ViewMat = cameraComp->GetViewMatrix(*entity);
-      cameraComp->ProjMat = cameraComp->GetProjMatrixPerspective(
-          GWORLD.Context.sceneWindowSize.x, GWORLD.Context.sceneWindowSize.y);
+      cameraComp->GetCameraViewPerpProjMatrix(cameraComp->ViewMat, cameraComp->ProjMat);
       cameraComp->VP = cameraComp->ProjMat * cameraComp->ViewMat;
     }
   }
