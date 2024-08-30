@@ -407,6 +407,33 @@ void DrawPointLight(glm::vec3 pos, glm::mat4 vp, float size) {
   DrawLineStrip3D(strip3, vp, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
+void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
+              glm::vec3 up, glm::mat4 vp, float fd, float ld,
+              float ud, glm::vec3 color) {
+  std::vector<glm::vec3> strip1{
+    position,
+    position + left * ld,
+    position + left * ld + forward * fd,
+    position + forward * fd,
+    position,
+    position + up * ud,
+    position + forward * fd + up * ud,
+    position + forward * fd
+  };
+  std::vector<glm::vec3> strip2 {
+    position + left * ld + up * ud,
+    position + up * ud,
+    position + forward * fd + up * ud,
+    position + left * ld + forward * fd + up * ud,
+    position + left * ld + up * ud,
+    position + left * ld,
+    position + left * ld + forward * fd,
+    position + left * ld + forward * fd + up * ud
+  };
+  DrawLineStrip3D(strip1, vp, color);
+  DrawLineStrip3D(strip2, vp, color);
+}
+
 }; // namespace VisUtils
 
 }; // namespace aEngine

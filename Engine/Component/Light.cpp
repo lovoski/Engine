@@ -82,6 +82,12 @@ void Light::DrawInspectorGUI() {
     ModifyLightColor(lightColor);
     if (type == LIGHT_TYPE::POINT_LIGHT) {
       ImGui::DragFloat("Radius", &lightRadius, 0.06f, 0.0f, 100.0f);
+    } else if (type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
+      ImGui::MenuItem("Shadow Frustom", nullptr, nullptr, false);
+      ImGui::SliderFloat("Width", &ShadowOrthoW, 0.0f, 100.0f);
+      ImGui::SliderFloat("Height", &ShadowOrthoH, 0.0f, 100.0f);
+      ImGui::DragFloat("Near", &ShadowZNear, 0.01f, 0.0f, 10.0f);
+      ImGui::DragFloat("Far", &ShadowZFar, 1, 10.0f, 200.0f);
     }
 
     ImGui::TreePop();
