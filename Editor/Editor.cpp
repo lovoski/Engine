@@ -266,6 +266,18 @@ void Editor::MainMenuBar() {
         auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
         ImGui::MenuItem("Shadows", nullptr, nullptr, false);
         ImGui::Checkbox("Enable ShadowMaps", &renderSystem->EnableShadowMaps);
+        std::vector<const char *> shadowMapSizeSlectable{
+            "64", "128", "256", "512", "1024", "2048", "4096"};
+        static int currentShadowMapSizeSlectableIndex = 4;
+        ImGui::PushItemWidth(120);
+        if (ImGui::Combo("Shadow Map Size", &currentShadowMapSizeSlectableIndex,
+                         shadowMapSizeSlectable.data(),
+                         shadowMapSizeSlectable.size())) {
+          renderSystem->GlobalShadowMapSize = std::stoi(
+              shadowMapSizeSlectable[currentShadowMapSizeSlectableIndex]);
+          renderSystem->ResizeAllShadowMaps();
+        }
+        ImGui::PopItemWidth();
         ImGui::EndMenu();
       }
       // if (ImGui::BeginMenu("Animation")) {

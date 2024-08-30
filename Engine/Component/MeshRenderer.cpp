@@ -67,7 +67,6 @@ void MeshRenderer::DrawInspectorGUI() {
   if (ImGui::TreeNode("MeshRenderer")) {
     ImGui::MenuItem("Options", nullptr, nullptr, false);
     ImGui::Checkbox("Cast Shadow", &castShadow);
-    ImGui::Checkbox("Receive Shadow", &receiveShadow);
     ImGui::MenuItem("Render Passes", nullptr, nullptr, false);
     for (auto pass : passes) {
       ImGui::Separator();

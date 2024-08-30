@@ -30,13 +30,11 @@ struct EditorCameraController : public Scriptable {
       auto cameraObject = GWORLD.EntityFromID(camera);
       auto camPos = cameraObject->Position();
       auto sceneContext = GWORLD.Context;
-      // float movementSpeed =
-      //     0.01f + 0.01f * abs(glm::dot(glm::vec3(camPos.x, 0.0f, camPos.z),
-      //                              cameraObject->LocalForward));
       float movementSpeed =
           initialOffset +
           initialFactor * dt *
-              std::min(std::pow(glm::length(camPos), speedPow), maxSpeed);
+              std::min(std::pow(glm::length(camPos - cameraPivot), speedPow),
+                       maxSpeed);
       bool inSceneWindow =
           GWORLD.InSceneWindow(sceneContext.currentMousePosition.x,
                                sceneContext.currentMousePosition.y);
@@ -72,14 +70,12 @@ struct EditorCameraController : public Scriptable {
         } else {
           // repose the camera
           glm::vec3 posVector = cameraObject->Position();
-          glm::quat rotY =
-              glm::angleAxis(glm::radians(-mouseOffset.x), glm::vec3(0.0f, 1.0f, 0.0f));
-          float dotProduct =
-              glm::dot(glm::normalize(cameraObject->Position() - cameraPivot),
-                       Entity::WorldUp);
+          glm::quat rotY = glm::angleAxis(glm::radians(-mouseOffset.x),
+                                          glm::vec3(0.0f, 1.0f, 0.0f));
           glm::quat rotX = glm::angleAxis(glm::radians(-mouseOffset.y),
                                           cameraObject->LocalLeft);
-          glm::vec3 newPos = rotY * rotX * posVector;
+          glm::vec3 newPos =
+              rotY * rotX * (posVector - cameraPivot) + cameraPivot;
           cameraObject->SetGlobalPosition(newPos);
         }
         mouseLastPos = mouseCurrentPos;
@@ -90,12 +86,23 @@ struct EditorCameraController : public Scriptable {
       glm::vec3 up = Entity::WorldUp;
       glm::vec3 left = normalize(cross(up, forward));
       // flip left if non-consistent
-      if (glm::dot(lastLeft, left) < 0.0f) left *= -1;
+      if (glm::dot(lastLeft, left) < 0.0f)
+        left *= -1;
       up = normalize(cross(forward, left));
       glm::mat3 rot(left, up, forward);
       cameraObject->SetGlobalRotation(glm::quat_cast(rot));
     }
   }
+
+  // void DrawToScene() override {
+  //   EntityID camera;
+  //   if (GWORLD.GetActiveCamera(camera)) {
+  //     auto cameraComp = GWORLD.GetComponent<Camera>(camera);
+  //     VisUtils::DrawSquare(cameraPivot, 1.0f, cameraComp->VP,
+  //                          GWORLD.Context.sceneWindowSize,
+  //                          glm::vec3(1.0f, 0.0f, 0.0f));
+  //   }
+  // }
 
   void DrawInspectorGUI() override {
     DrawInspectorGUIDefault();

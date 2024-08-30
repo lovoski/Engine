@@ -44,7 +44,9 @@ void RenderSystem::bakeShadowMap() {
       // set up shadowMapHandle
       LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, shadowMapHandle,
                                 offset);
-    } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {}
+    } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {
+      // render shadow map for point lights
+    }
     light->EndShadow();
   }
   LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
@@ -68,6 +70,12 @@ void RenderSystem::fillLightsBuffer() {
   }
   LightsBuffer.SetDataAs(GL_SHADER_STORAGE_BUFFER, lightDataArray);
   LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
+}
+
+void RenderSystem::ResizeAllShadowMaps() {
+  for (auto light : Lights) {
+    light->ResizeShadowMap(GlobalShadowMapSize, GlobalShadowMapSize);
+  }
 }
 
 void RenderSystem::Render() {

@@ -72,23 +72,23 @@ in vec3 normal;
 in vec3 worldPos;
 out vec4 FragColor;
 
-// attenuation for point light
-float constant = 1.0;
-float linear = 0.09;
-float quadratic = 0.032;
 
 vec3 LightAttenuate(vec3 color, float distance) {
+  // attenuation for point light
+  float constant = 1.0;
+  float linear = 0.09;
+  float quadratic = 0.032;
   float atten = 1.0 / (constant + linear * distance + quadratic * distance * distance);
   return color * atten;
 }
 
-float ShadowAtten(int lightIndex) {
+float ShadowAtten(int lightIndex, float bias) {
   vec3 projCoords = (lights[lightIndex].lightMatrix * vec4(worldPos, 1.0)).xyz;
   projCoords = projCoords * 0.5 + 0.5;
   sampler2D shadowMap = sampler2D(lights[lightIndex].shadowMap.xy);
   float closestDepth = texture(shadowMap, projCoords.xy).r;
   float currentDepth = projCoords.z;
-  return currentDepth > closestDepth ? 0.0 : 1.0;
+  return currentDepth - bias > closestDepth ? 0.0 : 1.0;
 }
 
 vec3 LitSurface() {
@@ -107,7 +107,8 @@ vec3 LitSurface() {
     float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
     vec3 LightEffect = lambert * LightColor;
     if (lights[i].meta[1] == 1) {
-      LightEffect *= ShadowAtten(i);
+      float bias = max(0.05 * (1.0 - dot(Normal, LightDir)), 0.005);
+      LightEffect *= ShadowAtten(i, bias);
     }
     Diffuse = Diffuse + LightEffect;
   }

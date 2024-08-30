@@ -40,7 +40,6 @@ struct MeshRenderer : public aEngine::BaseComponent {
 
   Render::VAO vao;
   bool castShadow = true;
-  bool receiveShadow = true;
   std::vector<glm::mat4> lightSpaceMatrices;
   Render::Mesh *meshData = nullptr;
   Render::Buffer *targetVBO = nullptr;

@@ -15,8 +15,8 @@ struct LightData {
   // [1]: 0 for not receive shadow, 1 for receive shadow
   int meta[4];
   glm::vec4 color;
-  glm::vec4 position; // for point light
-  glm::vec4 direction; // for directional light
+  glm::vec4 position;    // for point light
+  glm::vec4 direction;   // for directional light
   glm::mat4 lightMatrix; // light space transform matrix
   // bindless handle for shadow map,
   // requires `ARB_bindless_texture` extension
@@ -56,6 +56,10 @@ public:
   Render::Buffer LightsBuffer;
   // Shadows
   bool EnableShadowMaps = true;
+  int GlobalShadowMapSize = 1024;
+
+  // Resize shadow maps of all lights with the variable `GlobalShadowMapSize`
+  void ResizeAllShadowMaps();
 
 private:
   void bakeShadowMap();

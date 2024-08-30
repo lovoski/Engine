@@ -30,6 +30,8 @@ struct Light : public aEngine::BaseComponent {
   void StartShadow();
   void EndShadow();
 
+  void ResizeShadowMap(unsigned int width, unsigned int height);
+
 private:
   int currentFBO;
   int viewport[4];
