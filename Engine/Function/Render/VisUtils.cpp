@@ -253,12 +253,11 @@ void main() {
     up = cross(right, direction);
 
     // Define the four offset vectors for the octahedral shape
-    vec3 offsets[4] = {
-        right * radius + dirOffset * dir,
-        up * radius + dirOffset * dir,
-        -right * radius + dirOffset * dir,
-        -up * radius + dirOffset * dir
-    };
+    vec3 offsets[4];
+    offsets[0] = right * radius + dirOffset * dir;
+    offsets[1] = up * radius + dirOffset * dir;
+    offsets[2] = -right * radius + dirOffset * dir;
+    offsets[3] = -up * radius + dirOffset * dir;
 
     // Generate the edges of the octahedron
     for (int i = 0; i < 4; ++i) {
