@@ -8,11 +8,7 @@ namespace aEngine {
 
 namespace VisUtils {
 
-// Draw a GL_LINE primitive
-void DrawLine3D(glm::vec3 p0, glm::vec3 p1, glm::mat4 vp = glm::mat4(1.0f),
-                glm::vec3 color = glm::vec3(1.0f), float thickness = 1.0f);
-// Draw GL_LINE_STRIP primitive, this is more performant when we need to draw
-// multiple connected lines
+// Draw GL_LINE_STRIP primitive
 void DrawLineStrip3D(std::vector<glm::vec3> &lineStrip,
                      glm::mat4 vp = glm::mat4(1.0f),
                      glm::vec3 color = glm::vec3(1.0f), float thickness = 1.0f);

@@ -23,45 +23,6 @@ void main() {
 }
 )";
 
-// TODO: the width property don't work on my device, use geometry shader
-void DrawLine3D(glm::vec3 p0, glm::vec3 p1, glm::mat4 vp, glm::vec3 color,
-                float thickness) {
-  static unsigned int vao, vbo;
-  static bool openglObjectCreated = false;
-  static Render::Shader *lineShader = new Render::Shader();
-  static bool lineShaderLoaded = false;
-  if (!lineShaderLoaded) {
-    lineShader->LoadAndRecompileShaderSource(lineVS, lineFS);
-    lineShaderLoaded = true;
-  }
-  if (!openglObjectCreated) {
-    float point[] = {1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f};
-    glGenBuffers(1, &vbo);
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void *)0);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    openglObjectCreated = true;
-  }
-  lineShader->Use();
-  lineShader->SetVec3("color", color);
-  glm::vec3 trans = (p0 + p1) * 0.5f;
-  float scale = glm::length(p0 - p1) * 0.5f;
-  glm::quat rot = Math::FromToRotation(glm::vec3(1.0f, 0.0f, 0.0f), p0 - p1);
-  lineShader->SetMat4("mvp", vp * glm::translate(glm::mat4(1.0f), trans) *
-                                 glm::mat4_cast(rot) *
-                                 glm::scale(glm::mat4(1.0f), glm::vec3(scale)));
-  glBindVertexArray(vao);
-  glLineWidth(thickness);
-  glDrawArrays(GL_LINES, 0, 2);
-  glBindVertexArray(0);
-}
-
 void DrawLineStrip3D(std::vector<glm::vec3> &lineStrip, glm::mat4 vp,
                      glm::vec3 color, float thickness) {
   static Render::VAO vao;
@@ -96,20 +57,15 @@ using PlainVertexf = PlainVertex<float>;
 // TODO: some shadow-ish issue with the code
 void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp,
               glm::vec3 color) {
-  static unsigned int vao, vbo;
+  static Render::VAO vao;
+  static Render::Buffer vbo;
   static int savedGridSize = -1, savedGridSpacing = -1;
-  static bool openglObjectCreated = false;
   static std::vector<PlainVertexf> points;
-  static Render::Shader *lineShader = new Render::Shader();
+  static Render::Shader lineShader;
   static bool lineShaderLoaded = false;
   if (!lineShaderLoaded) {
-    lineShader->LoadAndRecompileShaderSource(lineVS, lineFS);
+    lineShader.LoadAndRecompileShaderSource(lineVS, lineFS);
     lineShaderLoaded = true;
-  }
-  if (!openglObjectCreated) {
-    glGenBuffers(1, &vbo);
-    glGenVertexArrays(1, &vao);
-    openglObjectCreated = true;
   }
   if (savedGridSize != gridSize || savedGridSpacing != gridSpacing) {
     // reallocate the data if grid size changes
@@ -133,27 +89,23 @@ void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp,
     points.push_back({-sizef, 0, 0});
     points.push_back({0, 0, sizef});
     points.push_back({0, 0, -sizef});
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    // allocate the buffer if grid size changed
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(PlainVertexf),
-                 &points[0], GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    vao.Bind();
+    vbo.SetDataAs(GL_ARRAY_BUFFER, points);
+    vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, 3 * sizeof(float), (void *)0);
+    vao.Unbind();
+    vbo.UnbindAs(GL_ARRAY_BUFFER);
     savedGridSize = gridSize;
     savedGridSpacing = gridSpacing;
   }
-  lineShader->Use();
-  lineShader->SetVec3("color", color);
-  lineShader->SetMat4("mvp", mvp);
-  glBindVertexArray(vao);
+  lineShader.Use();
+  lineShader.SetVec3("color", color);
+  lineShader.SetMat4("mvp", mvp);
+  vao.Bind();
   // draw the normal grid lines
   glDrawArrays(GL_LINES, 0, points.size() - 4);
   // draw the axis lines
   glDrawArrays(GL_LINES, points.size() - 4, 4);
-  glBindVertexArray(0);
+  vao.Unbind();
 }
 
 std::string squareVS = R"(
@@ -194,34 +146,33 @@ void main() {
 )";
 void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp,
                 glm::vec2 viewportSize, glm::vec3 color) {
-  static unsigned int vao, vbo;
-  static Render::Shader *squareShader = new Render::Shader();
+  static Render::VAO vao;
+  static Render::Buffer vbo;
+  static Render::Shader squareShader;
   static bool shaderLoaded = false;
   static glm::vec3 savedPos(-std::numeric_limits<float>::max(), 0, 0);
   if (!shaderLoaded) {
-    squareShader->LoadAndRecompileShaderSource(squareVS, squareFS, squareGS);
+    squareShader.LoadAndRecompileShaderSource(squareVS, squareFS, squareGS);
     shaderLoaded = true;
-    glGenBuffers(1, &vbo);
-    glGenVertexArrays(1, &vao);
   }
   if (savedPos != position) {
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    vao.Bind();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo.GetID());
     float positions[] = {position.x, position.y, position.z};
     glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-    glBindVertexArray(0);
+    vao.Unbind();
     glBindBuffer(GL_ARRAY_BUFFER, 0);
   }
-  squareShader->Use();
-  squareShader->SetVec3("color", color);
-  squareShader->SetVec2("viewportSize", viewportSize);
-  squareShader->SetMat4("mvp", mvp);
-  squareShader->SetFloat("size", size);
-  glBindVertexArray(vao);
+  squareShader.Use();
+  squareShader.SetVec3("color", color);
+  squareShader.SetVec2("viewportSize", viewportSize);
+  squareShader.SetMat4("mvp", mvp);
+  squareShader.SetFloat("size", size);
+  vao.Bind();
   glDrawArrays(GL_POINTS, 0, 1);
-  glBindVertexArray(0);
+  vao.Unbind();
 }
 
 std::string boneVS = R"(
@@ -249,7 +200,7 @@ void main() {
     vec3 direction = normalize(dir);
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 right = normalize(cross(direction, up));
-    float dirOffset = 0.12;
+    float dirOffset = 0.17;
     up = cross(right, direction);
 
     // Define the four offset vectors for the octahedral shape
@@ -295,32 +246,31 @@ void main() {
 )";
 void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
               glm::vec3 color) {
-  static unsigned int vao, vbo;
+  static Render::VAO vao;
+  static Render::Buffer vbo;
   static bool openglObjectCreated = false;
-  static Render::Shader *boneShader = new Render::Shader();
+  static Render::Shader boneShader;
   static bool lineShaderLoaded = false;
   if (!lineShaderLoaded) {
-    boneShader->LoadAndRecompileShaderSource(boneVS, boneFS, boneGS);
+    boneShader.LoadAndRecompileShaderSource(boneVS, boneFS, boneGS);
     lineShaderLoaded = true;
   }
   if (!openglObjectCreated) {
     float point[] = {1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f};
-    glGenBuffers(1, &vbo);
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    vao.Bind();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo.GetID());
     glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
                           (void *)0);
-    glBindVertexArray(0);
+    vao.Unbind();
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     openglObjectCreated = true;
   }
-  boneShader->Use();
-  boneShader->SetFloat("radius", 0.15f); // Adjust the radius as necessary
-  boneShader->SetVec3("color", color);
-  boneShader->SetVec2("viewportSize", viewport);
+  boneShader.Use();
+  boneShader.SetFloat("radius", 0.2f); // Adjust the radius as necessary
+  boneShader.SetVec3("color", color);
+  boneShader.SetVec2("viewportSize", viewport);
   glm::vec3 trans = (start + end) * 0.5f;
   float scale = glm::length(start - end) * 0.5f;
   glm::quat rot =
@@ -328,10 +278,10 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
   glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), trans) *
                        glm::mat4_cast(rot) *
                        glm::scale(glm::mat4(1.0f), glm::vec3(scale));
-  boneShader->SetMat4("mvp", vp * modelMat);
-  glBindVertexArray(vao);
+  boneShader.SetMat4("mvp", vp * modelMat);
+  vao.Bind();
   glDrawArrays(GL_LINES, 0, 2);
-  glBindVertexArray(0);
+  vao.Unbind();
 }
 
 void DrawArrow(glm::vec3 start, glm::vec3 end, glm::mat4 vp, glm::vec3 color,
