@@ -4,6 +4,7 @@
 #include "Component/NativeScript.hpp"
 
 #include "Function/AssetsLoader.hpp"
+#include "Function/HardCodeAssets.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
@@ -15,123 +16,6 @@
 #include "Scene.hpp"
 
 namespace aEngine {
-
-namespace Render {
-
-const std::string errorVS = R"(
-#version 460 core
-layout (location = 0) in vec4 aPos;
-layout (location = 1) in vec4 aNormal;
-layout (location = 2) in vec4 aTexCoord;
-uniform mat4 ModelToWorldPoint;
-uniform mat4 View;
-uniform mat4 Projection;
-void main() {
-  gl_Position = Projection * View * ModelToWorldPoint * aPos;
-}
-)";
-const std::string errorFS = R"(
-#version 460 core
-out vec4 FragColor;
-void main() {
-  FragColor = vec4(0.702, 0.2314, 0.7725, 1.0);
-}
-)";
-
-// the default diffuse shader
-const std::string diffuseVS = R"(
-#version 460 core
-layout (location = 0) in vec4 aPos;
-layout (location = 1) in vec4 aNormal;
-layout (location = 2) in vec4 aTexCoord;
-out vec3 normal;
-// transform point from model space to world space
-uniform mat4 ModelToWorldPoint;
-// transform vector from model space to world space
-uniform mat3 ModelToWorldDir;
-// transform world space to camera space
-uniform mat4 View;
-// transform camera space to screen
-uniform mat4 Projection;
-void main() {
-  normal = ModelToWorldDir * vec3(aNormal);
-  gl_Position = Projection * View * ModelToWorldPoint * aPos;
-}
-)";
-
-const std::string diffuseFS = R"(
-#version 430 core
-uniform vec3 Albedo;
-uniform vec3 dLightDir0;
-uniform vec3 dLightColor0;
-uniform float Ambient;
-in vec3 normal;
-out vec4 FragColor;
-void main() {
-  // ambient
-  vec3 ambient = Ambient * dLightColor0;
-  // diffuse
-  vec3 Normal = normalize(normal);
-  vec3 LightDir = -dLightDir0;
-  float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
-  vec3 diffuse = lambert * dLightColor0 * Albedo;
-  vec3 result = ambient + diffuse;
-  FragColor = vec4(result, 1.0);
-}
-)";
-
-const std::string outlineVS = R"(
-#version 460 core
-layout (location = 0) in vec4 aPos;
-layout (location = 1) in vec4 aNormal;
-layout (location = 2) in vec4 aTexCoord;
-
-uniform mat4 ModelToWorldPoint;
-uniform mat3 ModelToWorldDir;
-uniform mat4 View;
-uniform mat4 Projection;
-
-uniform vec3 ViewDir;
-
-uniform float OutlineWidth;
-
-void main() {
-  vec3 worldNormal = normalize(ModelToWorldDir * aNormal.xyz);
-  vec4 worldPos = ModelToWorldPoint * aPos;
-  worldPos = worldPos + vec4(worldNormal, 0.0) * OutlineWidth;
-  gl_Position = Projection * View * worldPos;
-}
-)";
-
-const std::string outlineFS = R"(
-#version 430 core
-
-uniform vec3 OutlineColor;
-
-out vec4 FragColor;
-
-void main() {
-  FragColor = vec4(OutlineColor, 1.0);
-}
-)";
-
-const std::string shadowMapDirLightVS = R"(
-#version 430 core
-layout (location = 0) in vec4 aPos;
-
-uniform mat4 LightSpaceMatrix;
-uniform mat4 Model;
-
-void main() {
-  gl_Position = LightSpaceMatrix * Model * aPos;
-}
-)";
-const std::string shadowMapDirLightFS = R"(
-#version 430 core
-void main() {}
-)";
-
-}; // namespace Render
 
 using std::string;
 using std::vector;
@@ -201,8 +85,7 @@ void AssetsLoader::LoadDefaultAssets() {
   vertices.push_back({{-0.5f, 0.0f, 0.5f, 1.0f},
                       {0.0, 1.0, 0.0, 0.0f},
                       {0.0f, 1.0f, 1.0f, 1.0f}});
-  // counter-clock wise
-  indices = {3, 1, 0, 3, 2, 1};
+  indices = {0, 1, 3, 1, 2, 3};
   auto planePrimitive = new Render::Mesh(vertices, indices);
   planePrimitive->identifier = "plane";
   planePrimitive->modelPath = "::planePrimitive";
@@ -217,9 +100,6 @@ void AssetsLoader::LoadDefaultAssets() {
   // cylinder
   auto cylinderMesh = loadAndCreateMeshFromFile("./Assets/meshes/cylinder.fbx");
   allMeshes.insert(std::make_pair("::cylinderPrimitive", cylinderMesh));
-  // cone
-  auto coneMesh = loadAndCreateMeshFromFile("./Assets/meshes/cone.fbx");
-  allMeshes.insert(std::make_pair("::conePrimitive", coneMesh));
 
   // load icons
   Texture *nullIcon = new Texture();
@@ -230,25 +110,23 @@ void AssetsLoader::LoadDefaultAssets() {
   // load shaders
   Render::Shader *diffuseShader = new Render::Shader();
   diffuseShader->identifier = "::diffuse";
-  diffuseShader->LoadAndRecompileShaderSource(Render::diffuseVS,
-                                              Render::diffuseFS);
+  diffuseShader->LoadAndRecompileShaderSource(diffuseVS, diffuseFS);
   allShaders.insert(std::make_pair("::diffuse", diffuseShader));
 
   Render::Shader *errorShader = new Render::Shader();
   errorShader->identifier = "::error";
-  errorShader->LoadAndRecompileShaderSource(Render::errorVS, Render::errorFS);
+  errorShader->LoadAndRecompileShaderSource(errorVS, errorFS);
   allShaders.insert(std::make_pair("::error", errorShader));
 
   Render::Shader *outlineShader = new Render::Shader();
   outlineShader->identifier = "::outline";
-  outlineShader->LoadAndRecompileShaderSource(Render::outlineVS,
-                                              Render::outlineFS);
+  outlineShader->LoadAndRecompileShaderSource(outlineVS, outlineFS);
   allShaders.insert(std::make_pair("::outline", outlineShader));
 
   Render::Shader *shadowMapDirLight = new Render::Shader();
   shadowMapDirLight->identifier = "::shadowMapDirLight";
-  shadowMapDirLight->LoadAndRecompileShaderSource(Render::shadowMapDirLightVS,
-                                                  Render::shadowMapDirLightFS);
+  shadowMapDirLight->LoadAndRecompileShaderSource(shadowMapDirLightVS,
+                                                  shadowMapDirLightFS);
   allShaders.insert(std::make_pair("::shadowMapDirLight", shadowMapDirLight));
 }
 

@@ -45,10 +45,10 @@ void MeshRenderer::DrawMesh(Render::Shader &shader) {
 
 void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
                                  Entity *camera, Entity *object,
-                                 std::vector<std::shared_ptr<Light>> &lights) {
+                                 Render::Buffer &lightsBuffer) {
   for (auto pass : passes) {
     pass->GetShader()->Use();
-    pass->SetupLights(lights);
+    pass->SetupLights(lightsBuffer);
     auto modelMat = glm::mat4(1.0f);
     if (targetVBO == nullptr) {
       modelMat = object->GetModelMatrix();
@@ -59,6 +59,8 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
     // reset target vbo in case deformerrenderer discard it
     targetVBO = nullptr;
   }
+  // reset lightSpaceMatrices after all passes
+  lightSpaceMatrices.clear();
 }
 
 void MeshRenderer::DrawInspectorGUI() {

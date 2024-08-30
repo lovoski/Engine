@@ -4,6 +4,7 @@
 #include "Component/Light.hpp"
 #include "Function/AssetsType.hpp"
 #include "Function/Render/Shader.hpp"
+#include "Function/Render/Buffers.hpp"
 #include "Global.hpp"
 
 namespace aEngine {
@@ -44,7 +45,7 @@ public:
 
   // Setup lights in the environment automatically,
   // create variables with predefined names
-  void SetupLights(std::vector<std::shared_ptr<Light>> &lights);
+  void SetupLights(Buffer &lightsBuffer, int bindingPoint = 0);
 
   // To create custom material, override this function,
   // pass custom variables to the shader

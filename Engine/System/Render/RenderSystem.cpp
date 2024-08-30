@@ -32,6 +32,26 @@ void RenderSystem::bakeShadowMap() {
   }
 }
 
+void RenderSystem::fillLightsBuffer() {
+  std::vector<LightData> lightDataArray;
+  for (auto light : Lights) {
+    auto entity = GWORLD.EntityFromID(light->GetID());
+    LightData ld;
+    if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT)
+      ld.meta[0] = 0;
+    else if (light->type == LIGHT_TYPE::POINT_LIGHT)
+      ld.meta[0] = 1;
+    ld.meta[1] = 0;
+    ld.color = glm::vec4(light->lightColor, 1.0f);
+    ld.position = glm::vec4(entity->Position(), 1.0f);
+    ld.direction = glm::vec4(entity->LocalForward, 1.0f);
+    ld.lightMatrix = glm::mat4(1.0f);
+    lightDataArray.push_back(ld);
+  }
+  LightsBuffer.SetDataAs(GL_SHADER_STORAGE_BUFFER, lightDataArray);
+  LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
+}
+
 void RenderSystem::Render() {
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -44,6 +64,8 @@ void RenderSystem::Render() {
     glm::mat4 viewMat = cameraComp->ViewMat;
     glm::mat4 projMat = cameraComp->ProjMat;
     glEnable(GL_DEPTH_TEST);
+    // Fill the LightsBuffer
+    fillLightsBuffer();
     // Generate the shadow map
     if (EnableShadowMaps)
       bakeShadowMap();
@@ -58,7 +80,7 @@ void RenderSystem::Render() {
         entity->GetComponent<DeformRenderer>()->DeformMesh();
       }
       renderer->ForwardRender(projMat, viewMat, camera.get(), entity.get(),
-                              Lights);
+                              LightsBuffer);
     }
 
     // draw the grid in 3d space

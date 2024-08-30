@@ -37,14 +37,14 @@ void Light::StartShadow() {
   glViewport(0, 0, ShadowMapWidth, ShadowMapHeight);
   glBindFramebuffer(GL_FRAMEBUFFER, ShadowFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_FRONT);
+  // glEnable(GL_CULL_FACE);
+  // glCullFace(GL_FRONT);
 }
 
 void Light::EndShadow() {
   glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
   glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-  glDisable(GL_CULL_FACE);
+  // glDisable(GL_CULL_FACE);
 }
 
 glm::mat4 Light::GetShadowSpaceOrthoMatrix() {
@@ -67,13 +67,16 @@ void ModifyLightColor(glm::vec3 &lightColor) {
 }
 
 void Light::DrawInspectorGUI() {
-  if (ImGui::TreeNode("Base Light")) {
+  if (ImGui::TreeNode("Light")) {
     std::vector<const char *> comboItems = {"Directional light", "Point light"};
-    static int baseLightGUIComboItemIndex = 0;
+    static int baseLightGUIComboItemIndex = type == LIGHT_TYPE::DIRECTIONAL_LIGHT ? 0 : 1;
     ImGui::Combo("Light Type", &baseLightGUIComboItemIndex, comboItems.data(),
                  comboItems.size());
 
     ModifyLightColor(lightColor);
+    if (type == LIGHT_TYPE::POINT_LIGHT) {
+      ImGui::DragFloat("Radius", &lightRadius, 0.06f, 0.0f, 100.0f);
+    }
 
     ImGui::TreePop();
   }

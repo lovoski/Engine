@@ -44,6 +44,7 @@ public:
                                          entity->LocalUp, entity->LocalLeft,
                                          entity->Position(), projMat * viewMat);
         } else if (lightComp->type == LIGHT_TYPE::POINT_LIGHT) {
+          VisUtils::DrawPointLight(entity->Position(), projMat * viewMat, lightComp->lightRadius);
         }
       }
     }

@@ -375,7 +375,36 @@ void DrawDirectionalLight(glm::vec3 forward, glm::vec3 up, glm::vec3 left,
   };
   DrawLineStrip3D(strip1, vp, glm::vec3(0.0f, 1.0f, 0.0f));
   DrawLineStrip3D(strip2, vp, glm::vec3(0.0f, 1.0f, 0.0f));
-  DrawArrow(pos, pos + forward * size, vp, glm::vec3(0.0f, 1.0f, 0.0f), size * 0.12f);
+  DrawArrow(pos, pos + forward * size, vp, glm::vec3(0.0f, 1.0f, 0.0f),
+            size * 0.12f);
+}
+
+void DrawPointLight(glm::vec3 pos, glm::mat4 vp, float size) {
+  static int segs = 32;
+  glm::vec3 walkDir1 = glm::vec3(1.0f, 0.0f, 0.0f);
+  glm::vec3 walkDir2 = glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 walkDir3 = glm::vec3(0.0f, 0.0f, 1.0f);
+  std::vector<glm::vec3> strip1{pos + walkDir1 * size};
+  std::vector<glm::vec3> strip2{pos + walkDir2 * size};
+  std::vector<glm::vec3> strip3{pos + walkDir3 * size};
+  float rotDegree = glm::radians(360.0f / segs);
+  for (int i = 0; i < segs; ++i) {
+    walkDir1 =
+        glm::angleAxis(rotDegree * (i + 1), glm::vec3(0.0f, 1.0f, 0.0f)) *
+        glm::vec3(1.0f, 0.0f, 0.0f);
+    walkDir2 =
+        glm::angleAxis(rotDegree * (i + 1), glm::vec3(0.0f, 0.0f, 1.0f)) *
+        glm::vec3(0.0f, 1.0f, 0.0f);
+    walkDir3 =
+        glm::angleAxis(rotDegree * (i + 1), glm::vec3(1.0f, 0.0f, 0.0f)) *
+        glm::vec3(0.0f, 0.0f, 1.0f);
+    strip1.push_back(pos + walkDir1 * size);
+    strip2.push_back(pos + walkDir2 * size);
+    strip3.push_back(pos + walkDir3 * size);
+  }
+  DrawLineStrip3D(strip1, vp, glm::vec3(0.0f, 1.0f, 0.0f));
+  DrawLineStrip3D(strip2, vp, glm::vec3(0.0f, 1.0f, 0.0f));
+  DrawLineStrip3D(strip3, vp, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
 }; // namespace VisUtils

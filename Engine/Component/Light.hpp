@@ -15,6 +15,8 @@ struct Light : public aEngine::BaseComponent {
 
   glm::vec3 lightColor = glm::vec3(0.5f);
 
+  float lightRadius = 0.5f;
+
   void DrawInspectorGUI() override;
 
   unsigned int ShadowFBO, ShadowMap;

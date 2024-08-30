@@ -18,7 +18,7 @@ struct MeshRenderer : public aEngine::BaseComponent {
   ~MeshRenderer();
 
   void ForwardRender(glm::mat4 projMat, glm::mat4 viewMat, Entity *camera,
-                     Entity *object, std::vector<std::shared_ptr<Light>> &lights);
+                     Entity *object, Render::Buffer &lightsBuffer);
 
   void DrawMesh(Render::Shader &shader);
 
@@ -41,6 +41,7 @@ struct MeshRenderer : public aEngine::BaseComponent {
   Render::VAO vao;
   bool castShadow = true;
   bool receiveShadow = true;
+  std::vector<glm::mat4> lightSpaceMatrices;
   Render::Mesh *meshData = nullptr;
   Render::Buffer *targetVBO = nullptr;
   std::vector<Render::BasePass *> passes;

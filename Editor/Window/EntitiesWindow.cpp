@@ -142,13 +142,6 @@ void Editor::EntitiesWindow() {
         cylinder->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Cylinder Mat");
       }
-      if (ImGui::MenuItem("Cone")) {
-        auto cone = GWORLD.AddNewEntity();
-        cone->name = "Cone";
-        cone->AddComponent<MeshRenderer>(Loader.GetMesh("::conePrimitive", ""));
-        cone->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
-            nullptr, "Cone Mat");
-      }
       ImGui::Separator();
       if (ImGui::MenuItem("Camera")) {
         auto camera = GWORLD.AddNewEntity();

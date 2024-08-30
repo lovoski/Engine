@@ -39,6 +39,9 @@ void DrawDirectionalLight(glm::vec3 forward, glm::vec3 up, glm::vec3 left,
                           glm::vec3 pos, glm::mat4 vp = glm::mat4(1.0f),
                           float size = 0.5f);
 
+void DrawPointLight(glm::vec3 pos, glm::mat4 vp = glm::mat4(1.0f),
+                    float size = 0.5f);
+
 }; // namespace VisUtils
 
 }; // namespace aEngine

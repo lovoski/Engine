@@ -27,33 +27,36 @@ bool ActivateTexture2D(Texture &texture, Shader *shader, string name,
   return true;
 }
 
-void BasePass::SetupLights(vector<std::shared_ptr<Light>> &lights) {
+void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
   if (shader == nullptr)
     LOG_F(ERROR, "shader not setup for render pass %s", identifier.c_str());
-  unsigned int dirLightCounter = 0;
-  unsigned int pointLightCounter = 0;
-  unsigned int spotLightCounter = 0;
+  // unsigned int dirLightCounter = 0;
+  // unsigned int pointLightCounter = 0;
+  // unsigned int spotLightCounter = 0;
   // set the properties of different lights
-  for (auto light : lights) {
-    if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
-      string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
-      string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
-      shader->SetVec3(lightDirName,
-                      GWORLD.EntityFromID(light->GetID())->LocalForward);
-      shader->SetVec3(lightColorName, light->lightColor);
-      dirLightCounter++;
-    } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {
-      string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
-      string lightColorName = "pLightColor" + std::to_string(pointLightCounter);
-      shader->SetVec3(lightPosName,
-                      GWORLD.EntityFromID(light->GetID())->Position());
-      shader->SetVec3(lightColorName, light->lightColor);
-      pointLightCounter++;
-    } else;
-  }
-  if (dirLightCounter == 0) {
-    LOG_F(ERROR, "At least one directional light needed for the default shader");
-  }
+  // for (auto light : lights) {
+  //   if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
+  //     string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
+  //     string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
+  //     shader->SetVec3(lightDirName,
+  //                     GWORLD.EntityFromID(light->GetID())->LocalForward);
+  //     shader->SetVec3(lightColorName, light->lightColor);
+  //     dirLightCounter++;
+  //   } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {
+  //     string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
+  //     string lightColorName = "pLightColor" + std::to_string(pointLightCounter);
+  //     shader->SetVec3(lightPosName,
+  //                     GWORLD.EntityFromID(light->GetID())->Position());
+  //     shader->SetVec3(lightColorName, light->lightColor);
+  //     pointLightCounter++;
+  //   }
+  // }
+  // if (dirLightCounter == 0) {
+  //   LOG_F(ERROR,
+  //         "At least one directional light needed for the default shader");
+  // }
+  shader->Use();
+  lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
 }
 
 std::string BasePass::getMaterialTypeName() { return typeid(*this).name(); }
@@ -138,9 +141,7 @@ void OutlinePass::additionalSetup() {
   glCullFace(GL_FRONT);
 }
 
-void OutlinePass::FinishPass() {
-  glDisable(GL_CULL_FACE);
-}
+void OutlinePass::FinishPass() { glDisable(GL_CULL_FACE); }
 
 std::string OutlinePass::getMaterialTypeName() { return "Outline"; }
 
