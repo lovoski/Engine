@@ -40,8 +40,10 @@ void Light::ResizeShadowMap(unsigned int width, unsigned int height) {
                ShadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
   // config the framebuffer
   glBindFramebuffer(GL_FRAMEBUFFER, ShadowFBO);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
@@ -53,8 +55,8 @@ void Light::ResizeShadowMap(unsigned int width, unsigned int height) {
 }
 
 glm::mat4 Light::GetShadowSpaceOrthoMatrix() {
-  auto projMat = glm::ortho(-ShadowOrthoW, ShadowOrthoW, -ShadowOrthoH,
-                            ShadowOrthoH, ShadowZNear, ShadowZFar);
+  auto projMat = glm::ortho(-ShadowOrthoW * 0.5f, ShadowOrthoW * 0.5f, -ShadowOrthoH * 0.5f,
+                            ShadowOrthoH * 0.5f, ShadowZNear, ShadowZFar);
   auto entity = GWORLD.EntityFromID(entityID);
   auto viewMat =
       glm::lookAt(entity->Position(), entity->Position() + entity->LocalForward,
