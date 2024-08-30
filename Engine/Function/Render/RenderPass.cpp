@@ -30,31 +30,6 @@ bool ActivateTexture2D(Texture &texture, Shader *shader, string name,
 void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
   if (shader == nullptr)
     LOG_F(ERROR, "shader not setup for render pass %s", identifier.c_str());
-  // unsigned int dirLightCounter = 0;
-  // unsigned int pointLightCounter = 0;
-  // unsigned int spotLightCounter = 0;
-  // set the properties of different lights
-  // for (auto light : lights) {
-  //   if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
-  //     string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
-  //     string lightColorName = "dLightColor" +
-  //     std::to_string(dirLightCounter); shader->SetVec3(lightDirName,
-  //                     GWORLD.EntityFromID(light->GetID())->LocalForward);
-  //     shader->SetVec3(lightColorName, light->lightColor);
-  //     dirLightCounter++;
-  //   } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {
-  //     string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
-  //     string lightColorName = "pLightColor" +
-  //     std::to_string(pointLightCounter); shader->SetVec3(lightPosName,
-  //                     GWORLD.EntityFromID(light->GetID())->Position());
-  //     shader->SetVec3(lightColorName, light->lightColor);
-  //     pointLightCounter++;
-  //   }
-  // }
-  // if (dirLightCounter == 0) {
-  //   LOG_F(ERROR,
-  //         "At least one directional light needed for the default shader");
-  // }
   shader->Use();
   lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
 }
@@ -73,7 +48,7 @@ void BasePass::drawInspectorGUIDefault() {
 }
 
 void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
-                         glm::mat4 &projection, glm::vec3 &viewDir) {
+                         glm::mat4 &projection, glm::vec3 &viewDir, bool receiveShadow) {
   if (shader != nullptr) {
     shader->Use();
     glm::mat4 ModelToWorldPoint = model;
@@ -83,6 +58,7 @@ void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
     shader->SetMat4("ModelToWorldPoint", ModelToWorldPoint);
     shader->SetMat3("ModelToWorldDir", ModelToWorldDir);
     shader->SetVec3("ViewDir", viewDir);
+    shader->SetInt("ReceiveShadow", receiveShadow);
     additionalSetup();
   }
 };

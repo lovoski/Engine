@@ -55,7 +55,7 @@ public:
 
   // This function will get called before the rendering
   void SetupPass(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
-                 glm::vec3 &viewDir);
+                 glm::vec3 &viewDir, bool receiveShadow);
   // This function will get called after the rendering
   virtual void FinishPass() {}
 

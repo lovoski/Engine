@@ -20,6 +20,9 @@ struct MeshRenderer : public aEngine::BaseComponent {
   void ForwardRender(glm::mat4 projMat, glm::mat4 viewMat, Entity *camera,
                      Entity *object, Render::Buffer &lightsBuffer);
 
+  // Setup `Model` shader variable for the shader, draw the mesh
+  void DrawMeshShadowPass(Render::Shader &shader, glm::mat4 modelMat);
+
   void DrawMesh(Render::Shader &shader);
 
   Json Serialize() override;
@@ -40,6 +43,7 @@ struct MeshRenderer : public aEngine::BaseComponent {
 
   Render::VAO vao;
   bool castShadow = true;
+  bool receiveShadow = true;
   std::vector<glm::mat4> lightSpaceMatrices;
   Render::Mesh *meshData = nullptr;
   Render::Buffer *targetVBO = nullptr;

@@ -34,8 +34,8 @@ void RenderSystem::bakeShadowMap() {
           entity->GetComponent<DeformRenderer>()->DeformMesh();
         }
         if (renderer->castShadow) {
-          shadowMapDirLight->SetMat4("Model", entity->GetModelMatrix());
-          renderer->DrawMesh(*shadowMapDirLight);
+          renderer->DrawMeshShadowPass(*shadowMapDirLight,
+                                       entity->GetModelMatrix());
         }
       }
       offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);

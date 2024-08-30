@@ -65,6 +65,7 @@ layout(std430, binding = 0) buffer Lights {
   LightData lights[];
 };
 
+uniform int ReceiveShadow;
 uniform vec3 Albedo;
 uniform float Ambient;
 
@@ -106,7 +107,7 @@ vec3 LitSurface() {
     }
     float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
     vec3 LightEffect = lambert * LightColor;
-    if (lights[i].meta[1] == 1) {
+    if (lights[i].meta[1] == 1 && ReceiveShadow != 0) {
       float bias = max(0.05 * (1.0 - dot(Normal, LightDir)), 0.005);
       LightEffect *= ShadowAtten(i, bias);
     }
