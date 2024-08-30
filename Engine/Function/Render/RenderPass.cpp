@@ -37,15 +37,15 @@ void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
   // for (auto light : lights) {
   //   if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
   //     string lightDirName = "dLightDir" + std::to_string(dirLightCounter);
-  //     string lightColorName = "dLightColor" + std::to_string(dirLightCounter);
-  //     shader->SetVec3(lightDirName,
+  //     string lightColorName = "dLightColor" +
+  //     std::to_string(dirLightCounter); shader->SetVec3(lightDirName,
   //                     GWORLD.EntityFromID(light->GetID())->LocalForward);
   //     shader->SetVec3(lightColorName, light->lightColor);
   //     dirLightCounter++;
   //   } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {
   //     string lightPosName = "pLightPos" + std::to_string(pointLightCounter);
-  //     string lightColorName = "pLightColor" + std::to_string(pointLightCounter);
-  //     shader->SetVec3(lightPosName,
+  //     string lightColorName = "pLightColor" +
+  //     std::to_string(pointLightCounter); shader->SetVec3(lightPosName,
   //                     GWORLD.EntityFromID(light->GetID())->Position());
   //     shader->SetVec3(lightColorName, light->lightColor);
   //     pointLightCounter++;
@@ -66,6 +66,9 @@ void BasePass::drawInspectorGUIDefault() {
   ImGui::TextWrapped("%s", identifier.c_str());
   ImGui::MenuItem("Type:", nullptr, nullptr, false);
   ImGui::TextWrapped("%s", getMaterialTypeName().c_str());
+  ImGui::MenuItem("Options:", nullptr, nullptr, false);
+  ImGui::Checkbox(("Enabled##" + getMaterialTypeName() + identifier).c_str(),
+                  &Enabled);
   ImGui::MenuItem("Properties:", nullptr, nullptr, false);
 }
 

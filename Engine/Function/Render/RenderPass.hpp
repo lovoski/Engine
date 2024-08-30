@@ -28,6 +28,7 @@ public:
 
   std::string identifier;
   std::string path;
+  bool Enabled = true;
 
   // force reload, compile and link the shader program
   void SetShader(Shader *s) {

@@ -16,9 +16,7 @@ MeshRenderer::MeshRenderer(aEngine::Render::Mesh *mesh) : meshData(mesh) {
   meshData->ebo.UnbindAs(GL_ARRAY_BUFFER);
 }
 
-MeshRenderer::~MeshRenderer() {
-  LOG_F(1, "deconstruct mesh renderer");
-}
+MeshRenderer::~MeshRenderer() { LOG_F(1, "deconstruct mesh renderer"); }
 
 void MeshRenderer::DrawMesh(Render::Shader &shader) {
   // draw mesh
@@ -47,15 +45,17 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
                                  Entity *camera, Entity *object,
                                  Render::Buffer &lightsBuffer) {
   for (auto pass : passes) {
-    pass->GetShader()->Use();
-    pass->SetupLights(lightsBuffer);
-    auto modelMat = glm::mat4(1.0f);
-    if (targetVBO == nullptr) {
-      modelMat = object->GetModelMatrix();
+    if (pass->Enabled) {
+      pass->GetShader()->Use();
+      pass->SetupLights(lightsBuffer);
+      auto modelMat = glm::mat4(1.0f);
+      if (targetVBO == nullptr) {
+        modelMat = object->GetModelMatrix();
+      }
+      pass->SetupPass(modelMat, viewMat, projMat, -camera->LocalForward);
+      DrawMesh(*pass->GetShader());
+      pass->FinishPass();
     }
-    pass->SetupPass(modelMat, viewMat, projMat, -camera->LocalForward);
-    DrawMesh(*pass->GetShader());
-    pass->FinishPass();
     // reset target vbo in case deformerrenderer discard it
     targetVBO = nullptr;
   }
