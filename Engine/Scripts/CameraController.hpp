@@ -19,7 +19,6 @@ struct EditorCameraController : public Scriptable {
   glm::vec3 cameraPivot = glm::vec3(0.0f);
 
   // Some parameter related to camera control
-  float initialOffset = 0.01f;
   float initialFactor = 0.6f;
   float speedPow = 1.5f;
   float maxSpeed = 8e2f;
@@ -31,10 +30,9 @@ struct EditorCameraController : public Scriptable {
       auto camPos = cameraObject->Position();
       auto sceneContext = GWORLD.Context;
       float movementSpeed =
-          initialOffset +
           initialFactor * dt *
-              std::min(std::pow(glm::length(camPos - cameraPivot), speedPow),
-                       maxSpeed);
+          std::min(std::pow(glm::length(camPos - cameraPivot), speedPow),
+                   maxSpeed);
       bool inSceneWindow =
           GWORLD.InSceneWindow(sceneContext.currentMousePosition.x,
                                sceneContext.currentMousePosition.y);
@@ -94,19 +92,8 @@ struct EditorCameraController : public Scriptable {
     }
   }
 
-  // void DrawToScene() override {
-  //   EntityID camera;
-  //   if (GWORLD.GetActiveCamera(camera)) {
-  //     auto cameraComp = GWORLD.GetComponent<Camera>(camera);
-  //     VisUtils::DrawSquare(cameraPivot, 1.0f, cameraComp->VP,
-  //                          GWORLD.Context.sceneWindowSize,
-  //                          glm::vec3(1.0f, 0.0f, 0.0f));
-  //   }
-  // }
-
   void DrawInspectorGUI() override {
     DrawInspectorGUIDefault();
-    ImGui::SliderFloat("offset", &initialOffset, 0.0f, 1.0f);
     ImGui::SliderFloat("sensitiviy", &initialFactor, 0.0f, 2.0f);
     ImGui::SliderFloat("pow", &speedPow, 1.0f, 3.0f);
     ImGui::SliderFloat("upper bound", &maxSpeed, 100, 1e3);

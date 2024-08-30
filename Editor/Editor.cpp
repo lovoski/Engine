@@ -265,7 +265,7 @@ void Editor::MainMenuBar() {
       if (ImGui::BeginMenu("Render")) {
         auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
         ImGui::MenuItem("Shadows", nullptr, nullptr, false);
-        ImGui::Checkbox("Enable ShadowMaps", &renderSystem->EnableShadowMaps);
+        ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMaps);
         std::vector<const char *> shadowMapSizeSlectable{
             "64", "128", "256", "512", "1024", "2048", "4096"};
         static int currentShadowMapSizeSlectableIndex = 4;
