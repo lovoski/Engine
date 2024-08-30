@@ -48,7 +48,8 @@ void main() {
 )";
 
 const std::string diffuseFS = R"(
-#version 430 core
+#version 460
+#extension GL_ARB_bindless_texture : require
 
 struct LightData {
   // [0]: 0 for directional light, 1 for point light
@@ -58,6 +59,7 @@ struct LightData {
   vec4 position; // for point light
   vec4 direction; // for directional light
   mat4 lightMatrix; // light space transform matrix
+  uvec4 shadowMap; // xy -> shadow map
 };
 layout(std430, binding = 0) buffer Lights {
   LightData lights[];
@@ -70,10 +72,6 @@ in vec3 normal;
 in vec3 worldPos;
 out vec4 FragColor;
 
-float ShadowAtten() {
-  return 1.0;
-}
-
 // attenuation for point light
 float constant = 1.0;
 float linear = 0.09;
@@ -82,6 +80,15 @@ float quadratic = 0.032;
 vec3 LightAttenuate(vec3 color, float distance) {
   float atten = 1.0 / (constant + linear * distance + quadratic * distance * distance);
   return color * atten;
+}
+
+float ShadowAtten(int lightIndex) {
+  vec3 projCoords = (lights[lightIndex].lightMatrix * vec4(worldPos, 1.0)).xyz;
+  projCoords = projCoords * 0.5 + 0.5;
+  sampler2D shadowMap = sampler2D(lights[lightIndex].shadowMap.xy);
+  float closestDepth = texture(shadowMap, projCoords.xy).r;
+  float currentDepth = projCoords.z;
+  return currentDepth > closestDepth ? 0.0 : 1.0;
 }
 
 vec3 LitSurface() {
@@ -98,15 +105,17 @@ vec3 LitSurface() {
       LightColor = LightAttenuate(LightColor, distance);
     }
     float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
-    Diffuse = Diffuse + lambert * LightColor;
+    vec3 LightEffect = lambert * LightColor;
+    if (lights[i].meta[1] == 1) {
+      LightEffect *= ShadowAtten(i);
+    }
+    Diffuse = Diffuse + LightEffect;
   }
   return Diffuse;
 }
 
 void main() {
-  // diffuse
   vec3 diffuse = LitSurface() * Albedo;
-  // vec3 result = ambient + diffuse;
   vec3 result = diffuse;
   FragColor = vec4(result, 1.0);
 }

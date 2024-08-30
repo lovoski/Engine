@@ -26,6 +26,12 @@ Engine::Engine(int width, int height)
     return;
   }
 
+  // activate opengl extensions
+  if (!GLAD_GL_ARB_bindless_texture)
+    LOG_F(ERROR, "Platform don't support GL_ARB_bindless_texture extension");
+  // if (!GLAD_GL_ARB_shading_language_include)
+  //   LOG_F(ERROR, "Platform don't support GL_ARB_shading_language_include extension");
+
   // pass the pointer of current windows to context
   GWORLD.Context.sceneWindowSize = glm::vec2(width, height);
   GWORLD.Context.sceneWindowPos = glm::vec2(0.0f);

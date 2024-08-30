@@ -18,6 +18,9 @@ struct LightData {
   glm::vec4 position; // for point light
   glm::vec4 direction; // for directional light
   glm::mat4 lightMatrix; // light space transform matrix
+  // bindless handle for shadow map,
+  // requires `ARB_bindless_texture` extension
+  int64_t shadowMapHandle[2];
 };
 
 class RenderSystem : public aEngine::BaseSystem {

@@ -9,27 +9,45 @@
 namespace aEngine {
 
 void RenderSystem::bakeShadowMap() {
-  for (auto light : Lights) {
+  for (int i = 0; i < Lights.size(); ++i) {
+    auto light = Lights[i];
     light->StartShadow();
     shadowMapDirLight->Use();
-    shadowMapDirLight->SetMat4("LightSpaceMatrix",
-                               light->GetShadowSpaceOrthoMatrix());
-    for (auto id : entities) {
-      auto entity = GWORLD.EntityFromID(id);
-      std::shared_ptr<MeshRenderer> renderer;
-      if (entity->HasComponent<MeshRenderer>()) {
-        renderer = entity->GetComponent<MeshRenderer>();
-      } else if (entity->HasComponent<DeformRenderer>()) {
-        renderer = entity->GetComponent<DeformRenderer>()->renderer;
-        entity->GetComponent<DeformRenderer>()->DeformMesh();
+    auto lightMatrix = light->GetShadowSpaceOrthoMatrix();
+    shadowMapDirLight->SetMat4("LightSpaceMatrix", lightMatrix);
+    if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
+      // render shadow map for directional light
+      auto offset =
+          i * sizeof(LightData) + offsetof(LightData, meta) + 1 * sizeof(int);
+      // set meta[1] to 1
+      LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, 1, offset);
+      offset = i * sizeof(LightData) + offsetof(LightData, lightMatrix);
+      // set up lightMatrix
+      LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, lightMatrix, offset);
+      for (auto id : entities) {
+        auto entity = GWORLD.EntityFromID(id);
+        std::shared_ptr<MeshRenderer> renderer;
+        if (entity->HasComponent<MeshRenderer>()) {
+          renderer = entity->GetComponent<MeshRenderer>();
+        } else if (entity->HasComponent<DeformRenderer>()) {
+          renderer = entity->GetComponent<DeformRenderer>()->renderer;
+          entity->GetComponent<DeformRenderer>()->DeformMesh();
+        }
+        if (renderer->castShadow) {
+          shadowMapDirLight->SetMat4("Model", entity->GetModelMatrix());
+          renderer->DrawMesh(*shadowMapDirLight);
+        }
       }
-      if (renderer->castShadow) {
-        shadowMapDirLight->SetMat4("Model", entity->GetModelMatrix());
-        renderer->DrawMesh(*shadowMapDirLight);
-      }
-    }
+      offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
+      auto shadowMapHandle = glGetTextureHandleARB(light->ShadowMap);
+      glMakeTextureHandleResidentARB(shadowMapHandle);
+      // set up shadowMapHandle
+      LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, shadowMapHandle,
+                                offset);
+    } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {}
     light->EndShadow();
   }
+  LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
 }
 
 void RenderSystem::fillLightsBuffer() {

@@ -28,6 +28,12 @@ public:
     glBufferSubData(TARGET_BUFFER_NAME, offset, data.size() * sizeof(T),
                     data.data());
   }
+  template<typename T>
+  void UpdateDataAs(GLenum TARGET_BUFFER_NAME, const T data,
+                    size_t offset) {
+    glBindBuffer(TARGET_BUFFER_NAME, ID);
+    glBufferSubData(TARGET_BUFFER_NAME, offset, sizeof(T), &data);
+  }
   void BindAs(GLenum TARGET_BUFFER_NAME) {
     glBindBuffer(TARGET_BUFFER_NAME, ID);
   }
