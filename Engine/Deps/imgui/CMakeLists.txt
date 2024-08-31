@@ -13,9 +13,7 @@ add_library(imgui
   GraphEditor.cpp
   ImCurveEdit.cpp
   ImGradient.cpp
-  ImGuiFileDialog.cpp
   ImGuizmo.cpp
-  ImSequencer.cpp
 )
 target_include_directories(imgui PUBLIC 
   "${PROJECT_SOURCE_DIR}/"

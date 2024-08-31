@@ -39,8 +39,6 @@ namespace fs = std::filesystem;
 
 #include <ImGuizmo.h>
 
-#include <ImGuiFileDialog.h>
-
 #include <NlohmannJson.hpp>
 
 using Json = nlohmann::json;

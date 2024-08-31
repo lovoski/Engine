@@ -12,6 +12,7 @@ add_subdirectory("Deps/glm")
 add_subdirectory("Deps/imgui")
 add_subdirectory("Deps/stb")
 add_subdirectory("Deps/loguru")
+add_subdirectory("Deps/filedialog")
 
 # onnx runtime
 include("cmake/FindONNXRuntime.cmake")
@@ -27,7 +28,7 @@ include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb glm imgui loguru ${GLSLANGLIBS})
+set(aEngine_DEPS glad glfw stb glm imgui loguru filedialog ${GLSLANGLIBS})
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System

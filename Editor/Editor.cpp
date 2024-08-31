@@ -7,6 +7,9 @@
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 
+// put this header at the bottom of other headers
+#include <filedialog.hpp>
+
 void BuildTestScene(Engine *engine) {
   auto ent = GWORLD.AddNewEntity();
   ent->name = "Script Base";
@@ -204,22 +207,61 @@ void Editor::MainMenuBar() {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
       if (ImGui::MenuItem("Open Folder")) {
         // switch activeBaseFolder
-        IGFD::FileDialogConfig config;
-        config.path = ".";
-        ImGuiFileDialog::Instance()->OpenDialog(
-            "chooseprojectrootdir", "Choose Project Root", nullptr, config);
+        static std::string title = "Select Base Folder";
+        auto result = pfd::select_folder::select_folder(
+                          title, context.activeBaseFolder, pfd::opt::force_path)
+                          .result();
+        if (!result.empty()) {
+          context.activeBaseFolder = result;
+        }
       }
       if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
         std::string sceneFilePath = GWORLD.Context.sceneFilePath;
-        std::ofstream sceneFileOutput(sceneFilePath);
-        if (!sceneFileOutput.is_open()) {
-          LOG_F(ERROR, "can't save scene to %s", sceneFilePath.c_str());
+        if (sceneFilePath == "::defaultScene") {
+          auto result =
+              pfd::save_file::save_file("Save Scene", context.activeBaseFolder,
+                                        {"Scene File (*.scene)", "*.scene"})
+                  .result();
+          if (!result.empty()) {
+            if (fs::path(result).extension().string() != ".scene")
+              result = result + ".scene";
+            LOG_F(INFO, "save default scene to %s", result.c_str());
+          }
         } else {
-          sceneFileOutput << GWORLD.Serialize();
-          LOG_F(INFO, "save scene to %s", sceneFilePath.c_str());
+          std::ofstream sceneFileOutput(sceneFilePath);
+          if (!sceneFileOutput.is_open()) {
+            LOG_F(ERROR, "can't save scene to %s", sceneFilePath.c_str());
+          } else {
+            sceneFileOutput << GWORLD.Serialize();
+            LOG_F(INFO, "save scene to %s", sceneFilePath.c_str());
+          }
+          sceneFileOutput.close();
         }
-        sceneFileOutput.close();
       }
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Systems")) {
+      if (ImGui::BeginMenu("Render")) {
+        auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
+        ImGui::MenuItem("Shadows", nullptr, nullptr, false);
+        ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMaps);
+        std::vector<const char *> shadowMapSizeSlectable{
+            "64", "128", "256", "512", "1024", "2048", "4096"};
+        static int currentShadowMapSizeSlectableIndex = 4;
+        ImGui::PushItemWidth(120);
+        if (ImGui::Combo("Shadow Map Size", &currentShadowMapSizeSlectableIndex,
+                         shadowMapSizeSlectable.data(),
+                         shadowMapSizeSlectable.size())) {
+          renderSystem->GlobalShadowMapSize = std::stoi(
+              shadowMapSizeSlectable[currentShadowMapSizeSlectableIndex]);
+          renderSystem->ResizeAllShadowMaps();
+        }
+        ImGui::PopItemWidth();
+        ImGui::EndMenu();
+      }
+      // if (ImGui::BeginMenu("Animation")) {
+      //   ImGui::EndMenu();
+      // }
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Window")) {
@@ -261,40 +303,7 @@ void Editor::MainMenuBar() {
       // }
       ImGui::EndMenu();
     }
-    if (ImGui::BeginMenu("Systems")) {
-      if (ImGui::BeginMenu("Render")) {
-        auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
-        ImGui::MenuItem("Shadows", nullptr, nullptr, false);
-        ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMaps);
-        std::vector<const char *> shadowMapSizeSlectable{
-            "64", "128", "256", "512", "1024", "2048", "4096"};
-        static int currentShadowMapSizeSlectableIndex = 4;
-        ImGui::PushItemWidth(120);
-        if (ImGui::Combo("Shadow Map Size", &currentShadowMapSizeSlectableIndex,
-                         shadowMapSizeSlectable.data(),
-                         shadowMapSizeSlectable.size())) {
-          renderSystem->GlobalShadowMapSize = std::stoi(
-              shadowMapSizeSlectable[currentShadowMapSizeSlectableIndex]);
-          renderSystem->ResizeAllShadowMaps();
-        }
-        ImGui::PopItemWidth();
-        ImGui::EndMenu();
-      }
-      // if (ImGui::BeginMenu("Animation")) {
-      //   ImGui::EndMenu();
-      // }
-      ImGui::EndMenu();
-    }
     ImGui::EndMainMenuBar();
-  }
-  if (ImGuiFileDialog::Instance()->Display("chooseprojectrootdir")) {
-    if (ImGuiFileDialog::Instance()->IsOk()) {
-      // string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-      std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-      // filePath.c_str());
-      context.activeBaseFolder = filePath;
-    }
-    ImGuiFileDialog::Instance()->Close();
   }
   if (showProfiler) {
     static float lastTime = 0.0f;
