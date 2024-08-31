@@ -243,12 +243,14 @@ void Editor::MainMenuBar() {
     if (ImGui::BeginMenu("Systems")) {
       if (ImGui::BeginMenu("Render")) {
         auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
+        ImGui::MenuItem("System Settings", nullptr, nullptr, false);
+        ImGui::Separator();
+        ImGui::PushItemWidth(120);
         ImGui::MenuItem("Shadows", nullptr, nullptr, false);
         ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMaps);
         std::vector<const char *> shadowMapSizeSlectable{
             "64", "128", "256", "512", "1024", "2048", "4096"};
         static int currentShadowMapSizeSlectableIndex = 4;
-        ImGui::PushItemWidth(120);
         if (ImGui::Combo("Shadow Map Size", &currentShadowMapSizeSlectableIndex,
                          shadowMapSizeSlectable.data(),
                          shadowMapSizeSlectable.size())) {
@@ -259,9 +261,16 @@ void Editor::MainMenuBar() {
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }
-      // if (ImGui::BeginMenu("Animation")) {
-      //   ImGui::EndMenu();
-      // }
+      if (ImGui::BeginMenu("Animation")) {
+        auto animationSystem = GWORLD.GetSystemInstance<AnimationSystem>();
+        ImGui::MenuItem("System Settings", nullptr, nullptr, false);
+        ImGui::Separator();
+        ImGui::PushItemWidth(120);
+        ImGui::InputInt("System FPS", &animationSystem->SystemFPS);
+        ImGui::Checkbox("Auto Play", &animationSystem->EnableAutoPlay);
+        ImGui::PopItemWidth();
+        ImGui::EndMenu();
+      }
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Window")) {
@@ -308,20 +317,23 @@ void Editor::MainMenuBar() {
   if (showProfiler) {
     static float lastTime = 0.0f;
     static float displayDeltaTime = GWORLD.Context.deltaTime, hut = 0.0f,
-                 ut = 0.0f, rt = 0.05, ddt = 0.0f, tt = 0.0f;
+                 ut = 0.0f, rt = 0.05, ddt = 0.0f;
     lastTime += GWORLD.Context.deltaTime;
-    if (lastTime >= 0.2f) {
+    static int frameCounter = 0, displayFPS = 0;
+    frameCounter++;
+    if (lastTime >= 0.5f) {
+      displayFPS = frameCounter * 2;
+      frameCounter = 0;
       displayDeltaTime = GWORLD.Context.deltaTime;
       hut = GWORLD.Context.hierarchyUpdateTime;
       ut = GWORLD.Context.updateTime;
       rt = GWORLD.Context.renderTime;
       ddt = GWORLD.Context.debugDrawTime;
-      tt = GWORLD.Context.deltaTime;
       lastTime = 0.0f;
     }
     ImGui::Begin("Profiler", &showProfiler);
     ImGui::MenuItem("Frames Per Second:", nullptr, nullptr, false);
-    ImGui::Text("%d", (int)(1.0 / displayDeltaTime));
+    ImGui::Text("%d", displayFPS);
     ImGui::MenuItem("Hierarchy Update:", nullptr, nullptr, false);
     ImGui::Text("%.4f ms", hut * 1000);
     ImGui::MenuItem("Main Update:", nullptr, nullptr, false);
@@ -331,7 +343,7 @@ void Editor::MainMenuBar() {
     ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
     ImGui::Text("%.4f ms", ddt * 1000);
     ImGui::MenuItem("Delta Time:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", tt * 1000);
+    ImGui::Text("%.4f ms", 1000.0f / displayFPS);
     ImGui::End();
   }
 }
