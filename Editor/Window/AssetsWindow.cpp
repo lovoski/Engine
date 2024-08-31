@@ -201,7 +201,7 @@ void Editor::AssetsWindow() {
   }
   // the right click file context menu
   if (ImGui::BeginPopup("AssetsWindowContextMenu")) {
-    DirectoryRightClickMenu(fs::directory_entry(context.activeBaseFolder));
+    // DirectoryRightClickMenu(fs::directory_entry(context.activeBaseFolder));
     ImGui::EndPopup();
   }
   ImGui::BeginChild("File Hierarchy List",

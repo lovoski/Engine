@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Entity.hpp"
 #include "Base/BaseComponent.hpp"
+#include "Entity.hpp"
 
-#include "Function/Render/Mesh.hpp"
-#include "Function/Render/Buffers.hpp"
 #include "Function/Animation/Motion.hpp"
+#include "Function/Render/Buffers.hpp"
+#include "Function/Render/Mesh.hpp"
 
 namespace aEngine {
 
@@ -13,9 +13,12 @@ class BaseDeformer;
 
 // Each animator must bind to one actor (Skeleton)
 struct Animator : public BaseComponent {
-  Animator(Animation::Skeleton *act) : actor(act) {}
+  Animator(Animation::Skeleton *act) : actor(act) {
+    jointActive.resize(actor->GetNumJoints(), 1);
+  }
   Animator(Animation::Motion *m) : motion(m) {
     actor = &motion->skeleton;
+    jointActive.resize(actor->GetNumJoints(), 1);
   }
   ~Animator() {}
 
@@ -36,10 +39,14 @@ struct Animator : public BaseComponent {
   std::string skeletonName = "", motionName = "";
 
   // Each animator must specify one actor
+  std::vector<int> jointActive;
   Animation::Skeleton *actor;
 
   // Stores the motion data
   Animation::Motion *motion = nullptr;
+
+private:
+  void DrawSkeletonHierarchy();
 };
 
 }; // namespace aEngine
