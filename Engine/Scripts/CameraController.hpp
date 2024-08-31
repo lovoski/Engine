@@ -29,7 +29,7 @@ struct EditorCameraController : public Scriptable {
       auto cameraObject = GWORLD.EntityFromID(camera);
       auto camPos = cameraObject->Position();
       auto sceneContext = GWORLD.Context;
-      float movementSpeed =
+      float movementDelta =
           initialFactor * dt *
           std::min(std::pow(glm::length(camPos - cameraPivot), speedPow),
                    maxSpeed);
@@ -43,7 +43,7 @@ struct EditorCameraController : public Scriptable {
             glm::vec2 scrollOffset = (*(glm::vec2 *)action.payload);
             cameraObject->SetGlobalPosition(cameraObject->Position() -
                                             cameraObject->LocalForward *
-                                                scrollOffset.y * movementSpeed);
+                                                scrollOffset.y * movementDelta);
           }
         }
       }
@@ -60,8 +60,8 @@ struct EditorCameraController : public Scriptable {
         if (sceneContext.engine->GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
           // move the view position
           glm::vec3 positionDelta =
-              -movementSpeed * mouseOffset.x * cameraObject->LocalLeft +
-              movementSpeed * mouseOffset.y * cameraObject->LocalUp;
+              -movementDelta * mouseOffset.x * cameraObject->LocalLeft +
+              movementDelta * mouseOffset.y * cameraObject->LocalUp;
           cameraPivot += positionDelta;
           cameraObject->SetGlobalPosition(cameraObject->Position() +
                                           positionDelta);

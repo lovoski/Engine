@@ -18,10 +18,10 @@ void Animator::BuildSkeletonMap() {
     LOG_F(ERROR, "can't build SkeletonMap when root entity is nullptr");
     return;
   }
-  std::queue<EntityID> q;
-  q.push(skeleton->ID);
-  while (!q.empty()) {
-    EntityID cur = q.front();
+  std::stack<EntityID> s;
+  s.push(skeleton->ID);
+  while (!s.empty()) {
+    EntityID cur = s.top();
     auto curEnt = GWORLD.EntityFromID(cur).get();
     SkeletonMapData smd;
     smd.joint = curEnt;
@@ -31,9 +31,9 @@ void Animator::BuildSkeletonMap() {
     else
       smd.active = jointActive[smd.actorInd] == 1;
     SkeletonMap.insert(std::make_pair(curEnt->name, smd));
-    q.pop();
+    s.pop();
     for (auto c : curEnt->children)
-      q.push(c->ID);
+      s.push(c->ID);
   }
 }
 
