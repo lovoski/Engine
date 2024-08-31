@@ -45,40 +45,7 @@ void AnimationSystem::Update(float dt) {
         // sample animation from motion data of each animator
         Animation::Pose CurrentPose =
             animator->motion->At(SystemCurrentFrame);
-        // Animation::Pose CurrentPose = animator.motion->GetRestPose();
-        int motionDataJointNum = animator->actor->GetNumJoints();
-        // update the local positions of skeleton hierarchy
-        // with animator's currentPose
-        std::map<std::string, Entity *> skeletonHierarchy;
-        BuildSkeletonHierarchy(animator->skeleton, skeletonHierarchy);
-        if (skeletonHierarchy.size() != motionDataJointNum) {
-          LOG_F(ERROR, "skeleton and motion data miss match for %s",
-                GWORLD.EntityFromID(animator->GetID())->name.c_str());
-          continue; // process the next animator data
-        }
-        // the skeleton hierarchy entities should have
-        // the same name as in the motion data
-        auto root =
-            skeletonHierarchy.find(animator->motion->skeleton.jointNames[0]);
-        if (root == skeletonHierarchy.end()) {
-          LOG_F(ERROR, "root joint not found for %s", entity->name.c_str());
-          continue;
-        }
-        // setup the root translation first
-        root->second->SetLocalPosition(CurrentPose.rootLocalPosition);
-        for (int boneInd = 0; boneInd < motionDataJointNum; ++boneInd) {
-          std::string boneName = animator->actor->jointNames[boneInd];
-          auto boneEntity = skeletonHierarchy.find(boneName);
-          if (boneEntity == skeletonHierarchy.end()) {
-            LOG_F(ERROR, "boneName %s not found in skeleton entities %s",
-                  boneName.c_str(), animator->skeleton->name.c_str());
-            break;
-          }
-          // setup local position and rotation for the bone entity
-          // let hierarchy update system finish the rest
-          boneEntity->second->SetLocalRotation(
-              CurrentPose.jointRotations[boneInd]);
-        }
+        animator->ApplyMotionToSkeleton(CurrentPose);
       }
     }
   }

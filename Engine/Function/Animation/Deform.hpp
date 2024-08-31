@@ -15,7 +15,4 @@ namespace aEngine {
 void DeformSkinnedMesh(Render::Mesh *mesh, Animator *animator,
                        Render::Buffer &targetVBO, Render::Buffer &matrices);
 
-void BuildSkeletonHierarchy(Entity *root,
-                            std::map<std::string, Entity *> &hierarchyMap);
-
 }; // namespace aEngine

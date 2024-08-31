@@ -4,20 +4,6 @@
 
 namespace aEngine {
 
-void BuildSkeletonHierarchy(Entity *root,
-                            std::map<std::string, Entity *> &hierarchyMap) {
-  std::queue<EntityID> q;
-  q.push(root->ID);
-  while (!q.empty()) {
-    EntityID cur = q.front();
-    auto curEnt = GWORLD.EntityFromID(cur).get();
-    hierarchyMap.insert(std::make_pair(curEnt->name, curEnt));
-    q.pop();
-    for (auto c : curEnt->children)
-      q.push(c->ID);
-  }
-}
-
 static std::string skinnedMeshDeform = R"(
 #version 430 core
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
