@@ -12,10 +12,10 @@
 
 namespace aEngine {
 
-void Animator::BuildSkeletonMap(std::map<std::string, Entity *> &skeletonMap,
-                                bool onlyActiveJoints) {
+void Animator::BuildSkeletonMap() {
+  SkeletonMap.clear();
   if (skeleton == nullptr) {
-    LOG_F(WARNING, "can't build hierarchy for null root entity");
+    LOG_F(ERROR, "can't build SkeletonMap when root entity is nullptr");
     return;
   }
   std::queue<EntityID> q;
@@ -23,19 +23,17 @@ void Animator::BuildSkeletonMap(std::map<std::string, Entity *> &skeletonMap,
   while (!q.empty()) {
     EntityID cur = q.front();
     auto curEnt = GWORLD.EntityFromID(cur).get();
-    skeletonMap.insert(std::make_pair(curEnt->name, curEnt));
+    SkeletonMapData smd;
+    smd.joint = curEnt;
+    smd.actorInd = findActorJointIndWithName(curEnt->name);
+    if (smd.actorInd == -1)
+      smd.active = false;
+    else
+      smd.active = jointActive[smd.actorInd] == 1;
+    SkeletonMap.insert(std::make_pair(curEnt->name, smd));
     q.pop();
     for (auto c : curEnt->children)
       q.push(c->ID);
-  }
-  if (onlyActiveJoints) {
-    // remove joints that's inactive
-    for (int i = 0; i < jointActive.size(); ++i) {
-      if (jointActive[i] == 0) {
-        auto jointName = actor->jointNames[i];
-        skeletonMap.erase(jointName);
-      }
-    }
   }
 }
 
@@ -46,29 +44,27 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
           "actor has no skeleton entity root, can't apply motion to it");
     return;
   }
-  std::map<std::string, Entity *> skeletonMap;
-  BuildSkeletonMap(skeletonMap);
-  if (skeletonMap.size() != motionJointNum) {
+  if (SkeletonMap.size() != motionJointNum) {
     LOG_F(ERROR, "skeleton entity joint num and motion joint num mismatch, "
                  "can't apply motion");
     return;
   }
-  auto root = skeletonMap.find(pose.skeleton->jointNames[0]);
-  if (root == skeletonMap.end()) {
+  auto root = SkeletonMap.find(pose.skeleton->jointNames[0]);
+  if (root == SkeletonMap.end()) {
     LOG_F(ERROR, "root joint %s not found in skeleton, can't apply motion",
-          root->second->name.c_str());
+          pose.skeleton->jointNames[0].c_str());
     return;
   }
-  root->second->SetLocalPosition(pose.rootLocalPosition);
+  root->second.joint->SetLocalPosition(pose.rootLocalPosition);
   for (int boneInd = 0; boneInd < motionJointNum; ++boneInd) {
     auto boneName = pose.skeleton->jointNames[boneInd];
-    auto bone = skeletonMap.find(boneName);
-    if (bone == skeletonMap.end()) {
+    auto bone = SkeletonMap.find(boneName);
+    if (bone == SkeletonMap.end()) {
       LOG_F(ERROR, "joint %s not found in skeleton, can't apply motion",
             boneName.c_str());
       return;
     }
-    bone->second->SetLocalRotation(pose.jointRotations[boneInd]);
+    bone->second.joint->SetLocalRotation(pose.jointRotations[boneInd]);
   }
 }
 
@@ -213,16 +209,24 @@ std::vector<glm::mat4> Animator::GetSkeletonTransforms() {
   // convert these information into matrices
   std::vector<glm::mat4> result(actor->GetNumJoints(), glm::mat4(1.0f));
   if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
-    std::map<std::string, Entity *> hierarchyMap;
-    BuildSkeletonMap(hierarchyMap);
-    for (int jointInd = 0; jointInd < hierarchyMap.size(); ++jointInd) {
+    for (int jointInd = 0; jointInd < SkeletonMap.size(); ++jointInd) {
       auto jointName = actor->jointNames[jointInd];
-      auto jointEntity = hierarchyMap[actor->jointNames[jointInd]];
+      auto skelData = SkeletonMap[actor->jointNames[jointInd]];
       result[jointInd] =
-          jointEntity->GetModelMatrix() * actor->offsetMatrices[jointInd];
+          skelData.joint->GetModelMatrix() * actor->offsetMatrices[jointInd];
     }
   }
   return result;
+}
+
+int Animator::findActorJointIndWithName(std::string name) {
+  int jointNum = actor->GetNumJoints();
+  for (int i = 0; i < jointNum; ++i) {
+    auto jointName = actor->jointNames[i];
+    if (jointName == name)
+      return i;
+  }
+  return -1;
 }
 
 }; // namespace aEngine

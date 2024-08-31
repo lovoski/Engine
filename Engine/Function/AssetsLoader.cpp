@@ -183,7 +183,9 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
       return motion;
     } else if (extension == ".fbx") {
       LOG_F(INFO, "load motion data from %s", motionPath.c_str());
-      loadAndCreateMeshFromFile(motionPath);
+      auto meshes = loadAndCreateMeshFromFile(motionPath);
+      // keep record of the loaded mesh
+      allMeshes.insert(std::make_pair(motionPath, meshes));
       auto it = allMotions.find(motionPath);
       if (it == allMotions.end())
         return nullptr;

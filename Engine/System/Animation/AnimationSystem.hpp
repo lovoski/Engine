@@ -14,6 +14,7 @@ public:
   }
   ~AnimationSystem() {}
 
+  void PreUpdate(float dt) override;
   void Update(float dt) override;
 
   // If the animator's ShowSkeleton is true,

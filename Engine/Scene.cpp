@@ -52,7 +52,10 @@ void Scene::Update() {
   rebuildHierarchyStructure();
   float t1 = GetTime();
 
-  // call update
+  // pre-update the readonly variables for Update
+  for (auto &system : registeredSystems)
+    system.second->PreUpdate(Context.deltaTime);
+  // the main update for all systems
   for (auto &system : registeredSystems)
     system.second->Update(Context.deltaTime);
 
@@ -62,6 +65,7 @@ void Scene::Update() {
   Context.hierarchyUpdateTime = t1 - t0;
   Context.updateTime = t2 - t1;
 
+  // do the rendering
   ForceRender();
 }
 

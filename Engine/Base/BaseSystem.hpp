@@ -33,6 +33,9 @@ public:
 
   // Initialize system related resources
   virtual void Start() {}
+  // This function should only be overloaded to update some readonly 
+  // variables before update function to avoid over compute
+  virtual void PreUpdate(float dt) {}
   virtual void Update(float dt) {}
   // Destroy system related resources
   virtual void Destroy() {}

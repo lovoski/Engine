@@ -18,7 +18,8 @@ class LightSystem : public aEngine::BaseSystem {
 public:
   LightSystem() { AddComponentSignatureRequireAll<Light>(); }
 
-  void Update(float dt) override {
+  // Maintain the Lights array in RenderSystem
+  void PreUpdate(float dt) override {
     auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
     // Clear the light array
     renderSystem->Lights.clear();

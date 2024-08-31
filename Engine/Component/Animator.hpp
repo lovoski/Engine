@@ -18,6 +18,12 @@
 
 namespace aEngine {
 
+struct SkeletonMapData {
+  bool active;
+  int actorInd;
+  Entity *joint;
+};
+
 // Each animator must bind to one actor (Skeleton),
 // the entity structure will be created when one animator gets created
 struct Animator : public BaseComponent {
@@ -39,13 +45,10 @@ struct Animator : public BaseComponent {
 
   // Apply the motion to skeleton entities
   void ApplyMotionToSkeleton(Animation::Pose &pose);
-  // Build a map for skeleton entities, the key for this map is the name
-  // of the entity. 
-  // Parent entity will always appear before child entities in this map.
-  // The parameter `onlyActiveJoints` will remove joint entity appears
-  // inactive in member variable `jointActive`
-  void BuildSkeletonMap(std::map<std::string, Entity *> &skeletonMap,
-                        bool onlyActiveJoints = false);
+  // Maintain member variable `SkeletonMap`, the key for this map is the name
+  // of the entity.
+  // The function is rather costly, don't call it multiple times in one render loop.
+  void BuildSkeletonMap();
 
   // Skeleton visualization related
   // This entity should be the root joint
@@ -63,6 +66,8 @@ struct Animator : public BaseComponent {
   // The actor is a read only reference, motion is 
   // applied to the skeleton entities created from this actor
   Animation::Skeleton *actor;
+  // This map should have the same size as the actor's joints
+  std::map<std::string, SkeletonMapData> SkeletonMap;
 
   // Stores the motion data
   Animation::Motion *motion = nullptr;
@@ -70,6 +75,8 @@ struct Animator : public BaseComponent {
 private:
   void drawSkeletonHierarchy();
   void createSkeletonEntities();
+  // find the index of actor joint matching this name, -1 for not found
+  int findActorJointIndWithName(std::string name);
 };
 
 }; // namespace aEngine

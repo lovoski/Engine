@@ -14,7 +14,8 @@ class CameraSystem : public BaseSystem {
 public:
   CameraSystem() { AddComponentSignatureRequireAll<Camera>(); }
 
-  void Update(float dt) override {
+  // Maintain the transform matrices for all cameras
+  void PreUpdate(float dt) override {
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto cameraComp = entity->GetComponent<Camera>();

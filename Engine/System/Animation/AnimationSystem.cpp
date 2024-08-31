@@ -10,6 +10,14 @@
 
 namespace aEngine {
 
+void AnimationSystem::PreUpdate(float dt) {
+  for (auto id : entities) {
+    auto entity = GWORLD.EntityFromID(id);
+    auto animator = entity->GetComponent<Animator>();
+    animator->BuildSkeletonMap();
+  }
+}
+
 void AnimationSystem::Update(float dt) {
   if (EnableAutoPlay) {
     // update the global system frame index
