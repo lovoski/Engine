@@ -181,8 +181,16 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
       motion->LoadFromBVH(motionPath);
       allMotions.insert(std::make_pair(motionPath, motion));
       return motion;
+    } else if (extension == ".fbx") {
+      LOG_F(INFO, "load motion data from %s", motionPath.c_str());
+      loadAndCreateMeshFromFile(motionPath);
+      auto it = allMotions.find(motionPath);
+      if (it == allMotions.end())
+        return nullptr;
+      else
+        return it->second;
     } else {
-      LOG_F(ERROR, "GetMotion only loads bvh motion");
+      LOG_F(ERROR, "GetMotion only loads bvh and fbx motion");
       return nullptr;
     }
   } else {
@@ -325,29 +333,13 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   }
 
   if (skel != nullptr) {
-    // create entities from children to parent
-    // traverse the joints in reversed order
-    int jointNum = skel->GetNumJoints();
-    vector<Entity *> joints;
-    // parent joint always has a smaller index than its children
-    for (int i = 0; i < jointNum; ++i) {
-      auto c = GWORLD.AddNewEntity();
-      c->name = skel->jointNames[i];
-      c->SetLocalPosition(skel->jointOffset[i]);
-      c->SetLocalRotation(skel->jointRotation[i]);
-      c->SetLocalScale(skel->jointScale[i]);
-      joints.push_back(c.get());
-      if (i == 0)
-        joints[i]->parent = globalParent.get();
-      else
-        joints[i]->parent = joints[skel->jointParent[i]];
-      joints[i]->parent->children.push_back(joints[i]);
-    }
     globalParent->AddComponent<Animator>(skel);
-    globalParent->GetComponent<Animator>()->skeleton = joints[0];
-    // if (motion != nullptr) {
-    //   globalParent->GetComponent<Animator>().motion = motion;
-    // }
+    auto skelEntity = globalParent->GetComponent<Animator>()->skeleton;
+    // make the skeleton entity a children of this globalParent
+    // the global transform of skelEntiy only gets updated next loop,
+    // so we can't use AssignChild here
+    globalParent->children.push_back(skelEntity);
+    skelEntity->parent = globalParent.get();
   }
 
   auto meshParent = GWORLD.AddNewEntity();

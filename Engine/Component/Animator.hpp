@@ -11,14 +11,17 @@ namespace aEngine {
 
 class BaseDeformer;
 
-// Each animator must bind to one actor (Skeleton)
+// Each animator must bind to one actor (Skeleton),
+// the entity structure will be created when one animator gets created
 struct Animator : public BaseComponent {
   Animator(Animation::Skeleton *act) : actor(act) {
     jointActive.resize(actor->GetNumJoints(), 1);
+    createSkeletonEntities();
   }
   Animator(Animation::Motion *m) : motion(m) {
     actor = &motion->skeleton;
     jointActive.resize(actor->GetNumJoints(), 1);
+    createSkeletonEntities();
   }
   ~Animator() {}
 
@@ -54,7 +57,8 @@ struct Animator : public BaseComponent {
   Animation::Motion *motion = nullptr;
 
 private:
-  void DrawSkeletonHierarchy();
+  void drawSkeletonHierarchy();
+  void createSkeletonEntities();
 };
 
 }; // namespace aEngine

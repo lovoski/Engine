@@ -63,7 +63,29 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
   }
 }
 
-void Animator::DrawSkeletonHierarchy() {
+void Animator::createSkeletonEntities() {
+  std::vector<Entity *> joints;
+  for (int i = 0; i < actor->GetNumJoints(); ++i) {
+    auto c = GWORLD.AddNewEntity();
+    c->name = actor->jointNames[i];
+    c->SetLocalPosition(actor->jointOffset[i]);
+    c->SetLocalRotation(actor->jointRotation[i]);
+    c->SetLocalScale(actor->jointScale[i]);
+    joints.push_back(c.get());
+    if (i == 0)
+      joints[i]->parent = nullptr;
+    else {
+      joints[i]->parent = joints[actor->jointParent[i]];
+      joints[i]->parent->children.push_back(joints[i]);
+    }
+  }
+  if (joints.size() >= 1)
+    skeleton = joints[0];
+  else
+    LOG_F(WARNING, "actor has no joints, don't create skeleton hierarchy");
+}
+
+void Animator::drawSkeletonHierarchy() {
   int numActiveJoints = 0;
   for (int i = 0; i < actor->GetNumJoints(); ++i)
     numActiveJoints += jointActive[i];
@@ -170,7 +192,7 @@ void Animator::DrawInspectorGUI() {
           glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
     }
     if (ImGui::CollapsingHeader("Hierarchy")) {
-      DrawSkeletonHierarchy();
+      drawSkeletonHierarchy();
     }
 
     ImGui::TreePop();

@@ -79,17 +79,6 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
   }
 }
 
-void CreateBVHSkeletonHierarchy(Animation::Skeleton *skel, int currentJoint,
-                                glm::vec3 parentPos, Entity *parent) {
-  for (auto c : skel->jointChildren[currentJoint]) {
-    auto ce = GWORLD.AddNewEntity();
-    ce->name = skel->jointNames[c];
-    ce->SetGlobalPosition(parentPos + skel->jointOffset[c]);
-    parent->AssignChild(ce.get());
-    CreateBVHSkeletonHierarchy(skel, c, ce->Position(), ce.get());
-  }
-}
-
 void Editor::EntitiesWindow() {
   ImGui::Begin("Entities");
   ImGui::SeparatorText("Scene");
@@ -190,15 +179,12 @@ void Editor::EntitiesWindow() {
         // attach animator component to a proxy entity
         parent->AddComponent<Animator>(motion);
         parent->name = filename.stem().string();
-        auto root = GWORLD.AddNewEntity();
-        root->name = motion->skeleton.jointNames[0];
-        // build motion hierarchy
-        CreateBVHSkeletonHierarchy(&motion->skeleton, 0, glm::vec3(0.0f), root.get());
         // set up variables for animator component
-        parent->GetComponent<Animator>()->skeleton = root.get();
         parent->GetComponent<Animator>()->ShowSkeleton = true;
         // make skeleton hierarchy a child of proxy entity
-        parent->AssignChild(root.get());
+        auto skelEntity = parent->GetComponent<Animator>()->skeleton;
+        parent->children.push_back(skelEntity);
+        skelEntity->parent = parent.get();
       } else if (extension == ".obj" || extension == ".off") {
         // handle plane model import
         auto modelMeshes = Loader.GetModel(filename.string());
