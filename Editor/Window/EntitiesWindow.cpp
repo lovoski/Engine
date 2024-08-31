@@ -181,6 +181,7 @@ void Editor::EntitiesWindow() {
         parent->name = filename.stem().string();
         // set up variables for animator component
         parent->GetComponent<Animator>()->ShowSkeleton = true;
+        parent->GetComponent<Animator>()->motionName = filename.string();
         // make skeleton hierarchy a child of proxy entity
         auto skelEntity = parent->GetComponent<Animator>()->skeleton;
         parent->children.push_back(skelEntity);

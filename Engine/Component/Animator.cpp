@@ -12,8 +12,8 @@
 
 namespace aEngine {
 
-void Animator::BuildSkeletonMap(
-    std::map<std::string, Entity *> &skeletonMap) {
+void Animator::BuildSkeletonMap(std::map<std::string, Entity *> &skeletonMap,
+                                bool onlyActiveJoints) {
   if (skeleton == nullptr) {
     LOG_F(WARNING, "can't build hierarchy for null root entity");
     return;
@@ -28,9 +28,17 @@ void Animator::BuildSkeletonMap(
     for (auto c : curEnt->children)
       q.push(c->ID);
   }
+  if (onlyActiveJoints) {
+    // remove joints that's inactive
+    for (int i = 0; i < jointActive.size(); ++i) {
+      if (jointActive[i] == 0) {
+        auto jointName = actor->jointNames[i];
+        skeletonMap.erase(jointName);
+      }
+    }
+  }
 }
 
-// Apply the motion to skeleton entities
 void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
   int motionJointNum = pose.skeleton->GetNumJoints();
   if (skeleton == nullptr) {
@@ -56,7 +64,8 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
     auto boneName = pose.skeleton->jointNames[boneInd];
     auto bone = skeletonMap.find(boneName);
     if (bone == skeletonMap.end()) {
-      LOG_F(ERROR, "joint %s not found in skeleton, can't apply motion", boneName.c_str());
+      LOG_F(ERROR, "joint %s not found in skeleton, can't apply motion",
+            boneName.c_str());
       return;
     }
     bone->second->SetLocalRotation(pose.jointRotations[boneInd]);
@@ -137,10 +146,9 @@ void Animator::DrawInspectorGUI() {
                              ImGuiInputTextFlags_ReadOnly);
     ImGui::SameLine();
     if (ImGui::Button("Clear", {-1, -1})) {
-      if (skeleton && motion) {
-        // reset skeleton to rest pose
-        ApplyMotionToSkeleton(motion->GetRestPose());
-      }
+      // reset skeleton to rest pose
+      ApplyMotionToSkeleton(actor->GetRestPose());
+      // clear variables
       motion = nullptr;
       motionName = "";
     }
@@ -175,6 +183,7 @@ void Animator::DrawInspectorGUI() {
                              ImGuiInputTextFlags_ReadOnly);
     ImGui::SameLine();
     if (ImGui::Button("Rest Pose", {-1, -1})) {
+      ApplyMotionToSkeleton(actor->GetRestPose());
     }
     ImGui::EndChild();
     if (ImGui::BeginDragDropTarget()) {

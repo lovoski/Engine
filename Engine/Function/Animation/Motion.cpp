@@ -374,14 +374,14 @@ Pose Motion::At(float frame) {
   return result;
 }
 
-Pose Motion::GetRestPose() {
+Pose Skeleton::GetRestPose() {
   Pose p;
-  p.skeleton = &skeleton;
-  p.rootLocalPosition = skeleton.jointOffset[0];
-  int jointNum = skeleton.GetNumJoints();
+  p.skeleton = this;
+  p.rootLocalPosition = jointOffset[0];
+  int jointNum = GetNumJoints();
   p.jointRotations.resize(jointNum, quat(1.0f, vec3(0.0f)));
   for (int jointInd = 0; jointInd < jointNum; ++jointInd) {
-    p.jointRotations[jointInd] = skeleton.jointRotation[jointInd];
+    p.jointRotations[jointInd] = jointRotation[jointInd];
   }
   return p;
 }

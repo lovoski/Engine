@@ -1,3 +1,12 @@
+/**
+ * Each animator must bind to one actor containing the description info
+ * to the original skeleton, the animator will create a hierarchy of entities
+ * matching the names of this actor.
+ * Mismatching between the actor and the skeleton entities is only allowed when
+ * the skeleton entities joints is a subset of this actor (so we can set Rest Pose).
+ * Motion will be applied to the skeleton entities when the skeleton entities is a 
+ * subset of the motion actor.
+ */
 #pragma once
 
 #include "Base/BaseComponent.hpp"
@@ -8,8 +17,6 @@
 #include "Function/Render/Mesh.hpp"
 
 namespace aEngine {
-
-class BaseDeformer;
 
 // Each animator must bind to one actor (Skeleton),
 // the entity structure will be created when one animator gets created
@@ -32,11 +39,13 @@ struct Animator : public BaseComponent {
 
   // Apply the motion to skeleton entities
   void ApplyMotionToSkeleton(Animation::Pose &pose);
-  // Build a map for skeleton entities, disabled bones of the
-  // actor won't appear in this map, the key for this map is the name
-  // of the entity, make sure the skeleton entites have the same name
-  // as the skeleton in motion files.
-  void BuildSkeletonMap(std::map<std::string, Entity *> &skeletonMap);
+  // Build a map for skeleton entities, the key for this map is the name
+  // of the entity. 
+  // Parent entity will always appear before child entities in this map.
+  // The parameter `onlyActiveJoints` will remove joint entity appears
+  // inactive in member variable `jointActive`
+  void BuildSkeletonMap(std::map<std::string, Entity *> &skeletonMap,
+                        bool onlyActiveJoints = false);
 
   // Skeleton visualization related
   // This entity should be the root joint
@@ -49,8 +58,10 @@ struct Animator : public BaseComponent {
   // name info
   std::string skeletonName = "", motionName = "";
 
-  // Each animator must specify one actor
+  // 0 for inactive, 1 for active
   std::vector<int> jointActive;
+  // The actor is a read only reference, motion is 
+  // applied to the skeleton entities created from this actor
   Animation::Skeleton *actor;
 
   // Stores the motion data

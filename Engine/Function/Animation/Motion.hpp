@@ -15,6 +15,10 @@ namespace aEngine {
 
 namespace Animation {
 
+struct Skeleton;
+struct Pose;
+struct Motion;
+
 // The parent joint has a lower index than all its children
 struct Skeleton {
   std::string skeletonName;
@@ -29,6 +33,9 @@ struct Skeleton {
   std::vector<glm::mat4> offsetMatrices;
   std::vector<int> jointParent;
   std::vector<std::vector<int>> jointChildren;
+
+  // Get the default pose with identity transform on all joints.
+  Pose GetRestPose();
 
   const int GetNumJoints() { return jointNames.size(); }
 };
@@ -79,9 +86,6 @@ struct Motion {
   // can only follow behind the position channels.
   // Only the root joint has 6 dofs, the rest joints only have 3 dofs.
   bool SaveToBVH(std::string filename);
-
-  // Get the default pose with identity transform on all joints.
-  Pose GetRestPose();
 
   // Takes a float value as paramter, returns the slerp interpolated value.
   // If the frame is not valid (<0 or >nframes), returns the first frame or last
