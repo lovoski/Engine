@@ -73,7 +73,7 @@ void Editor::InspectorWindow() {
   EntityID entity =
       pannelLocked ? context.lockedSelectedEntity : context.selectedEntity;
   // the entity must be valid
-  if (entity != (EntityID)(-1)) {
+  if (GWORLD.EntityValid(entity)) {
     string entityName =
         "Active Entity : " + GWORLD.EntityFromID(entity)->name;
     ImGui::SeparatorText(entityName.c_str());

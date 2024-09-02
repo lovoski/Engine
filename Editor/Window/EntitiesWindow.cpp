@@ -38,7 +38,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload("ENTITYID_DATA")) {
       Entity *newChild = *(Entity **)payload->Data;
-      GWORLD.EntityFromID(entity->ID)->AssignChild(newChild);
+      entity->AssignChild(newChild);
     }
     ImGui::EndDragDropTarget();
   }
@@ -63,7 +63,9 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
       static char entityNewName[50] = {0};
       ImGui::InputText("##renameentity", entityNewName, sizeof(entityNewName));
       if (ImGui::Button("Confirm")) {
-        GWORLD.EntityFromID(selectedEntity)->name = entityNewName;
+        if (GWORLD.EntityValid(selectedEntity)) {
+          GWORLD.EntityFromID(selectedEntity)->name = entityNewName;
+        }
         std::strcpy(entityNewName, "");
         ImGui::CloseCurrentPopup();
       }

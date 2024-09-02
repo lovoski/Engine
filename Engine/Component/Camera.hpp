@@ -10,9 +10,11 @@ struct Camera : public aEngine::BaseComponent {
   // The camera look at -LocalForward direction
   void GetCameraViewPerpProjMatrix(glm::mat4 &view, glm::mat4 &proj) {
     auto size = GWORLD.Context.sceneWindowSize;
-    auto entity = GWORLD.EntityFromID(entityID);
-    proj = glm::perspective(glm::radians(fovY), size.x / size.y, zNear, zFar);
-    view = glm::lookAt(entity->Position(), entity->Position() - entity->LocalForward, entity->LocalUp);
+    if (GWORLD.EntityValid(entityID)) {
+      auto entity = GWORLD.EntityFromID(entityID);
+      proj = glm::perspective(glm::radians(fovY), size.x / size.y, zNear, zFar);
+      view = glm::lookAt(entity->Position(), entity->Position() - entity->LocalForward, entity->LocalUp);
+    } else LOG_F(ERROR, "Entity of camera component not valid");
   }
 
   void DrawInspectorGUI() override {

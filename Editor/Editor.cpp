@@ -336,7 +336,7 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
     ImGuizmo::SetRect(x, y, width, height);
     Entity *cameraEnt = GWORLD.EntityFromID(camera).get();
     auto cameraComp = cameraEnt->GetComponent<Camera>();
-    if (context.selectedEntity != (EntityID)(-1)) {
+    if (GWORLD.EntityValid(context.selectedEntity)) {
       Entity *selected = GWORLD.EntityFromID(context.selectedEntity).get();
       glm::mat4 modelTransform = selected->GetModelMatrix();
       if (ImGuizmo::Manipulate(glm::value_ptr(cameraComp->ViewMat),

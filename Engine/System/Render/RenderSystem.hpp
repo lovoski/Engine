@@ -41,7 +41,7 @@ public:
     GridSpacing = 1;
     GridColor = glm::vec3(0.5f);
     Lights.clear();
-    EnableShadowMaps = true;
+    EnableShadowMaps = false;
     shadowMapDirLight = Loader.GetShader("::shadowMapDirLight");
   }
 
@@ -55,7 +55,7 @@ public:
   // Buffer for lights, hold an array of LightData
   Render::Buffer LightsBuffer;
   // Shadows
-  bool EnableShadowMaps = true;
+  bool EnableShadowMaps;
   int GlobalShadowMapSize = 1024;
 
   // Resize shadow maps of all lights with the variable `GlobalShadowMapSize`

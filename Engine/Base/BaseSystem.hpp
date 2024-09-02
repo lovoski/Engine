@@ -42,6 +42,8 @@ public:
   // Reset local variables of the system.
   virtual void Reset() {}
 
+  const int GetNumEntities() const { return entities.size(); }
+
 protected:
   EntitySignature signature;
   EntitySignature signatureOne;

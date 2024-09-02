@@ -183,7 +183,18 @@ void Scene::PlotSceneProfile() {
                   ? "None"
                   : EntityFromID(Context.activeCamera)->name.c_str());
 
+  ImGui::MenuItem("Entities", nullptr, nullptr, false);
   ImGui::Text("Entity Counter: %d", entityCount);
+  ImGui::Text("Animation Entities: %d",
+              GetSystemInstance<AnimationSystem>()->GetNumEntities());
+  ImGui::Text("Render Entities: %d",
+              GetSystemInstance<RenderSystem>()->GetNumEntities());
+  ImGui::Text("Camera Entities: %d",
+              GetSystemInstance<CameraSystem>()->GetNumEntities());
+  ImGui::Text("Lights Entities: %d",
+              GetSystemInstance<LightSystem>()->GetNumEntities());
+  ImGui::Text("Script Entities: %d",
+              GetSystemInstance<NativeScriptSystem>()->GetNumEntities());
 }
 
 void Scene::Destroy() {
