@@ -134,6 +134,7 @@ void Animator::DrawInspectorGUI() {
   if (ImGui::TreeNode("Animator")) {
     ImGui::MenuItem("Motion", nullptr, nullptr, false);
     ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
+    ImGui::TextWrapped("Duration: %d", motion == nullptr ? -1 : motion->poses.size());
     ImGui::BeginChild("choosemotionsource", {-1, 30});
     static char motionSequencePath[100] = {0};
     sprintf(motionSequencePath, motionName.c_str());

@@ -48,13 +48,14 @@ void main() {
 }
 )";
 
-void DeformSkinnedMesh(Render::Mesh *mesh, Animator *animator,
-                       Render::Buffer &targetVBO, Render::Buffer &matrices) {
+void DeformSkinnedMesh(Animator *animator, Render::Buffer &inputVBO,
+                       unsigned int elementNum, Render::Buffer &targetVBO,
+                       Render::Buffer &matrices) {
   static ComputeShader cs(skinnedMeshDeform);
   cs.Use();
   // configure the inputs
-  mesh->vbo.BindAs(GL_SHADER_STORAGE_BUFFER);
-  mesh->vbo.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 0);
+  inputVBO.BindAs(GL_SHADER_STORAGE_BUFFER);
+  inputVBO.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 0);
   matrices.BindAs(GL_SHADER_STORAGE_BUFFER);
   matrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
                      animator->GetSkeletonTransforms());
@@ -63,9 +64,9 @@ void DeformSkinnedMesh(Render::Mesh *mesh, Animator *animator,
   // configure the outputs
   targetVBO.BindAs(GL_SHADER_STORAGE_BUFFER);
   targetVBO.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 2);
-  int numVertices = mesh->vertices.size();
+  int numVertices = elementNum;
   int numWorkGroups = (numVertices + 63) / 64;
-  if (glIsBuffer(mesh->vbo.GetID()) && glIsBuffer(targetVBO.GetID()) &&
+  if (glIsBuffer(inputVBO.GetID()) && glIsBuffer(targetVBO.GetID()) &&
       glIsBuffer(matrices.GetID()))
     cs.Dispatch(numWorkGroups, 1, 1);
   glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);

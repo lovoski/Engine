@@ -11,13 +11,13 @@ DeformRenderer::DeformRenderer(Render::Mesh *mesh, Animator *ar)
                              ar->GetSkeletonTransforms());
 }
 
-DeformRenderer::~DeformRenderer() {
-  LOG_F(1, "deconstruct deform renderer");
-}
+DeformRenderer::~DeformRenderer() { LOG_F(1, "deconstruct deform renderer"); }
 
 void DeformRenderer::DeformMesh() {
   // setup targetVBO of the renderer
-  DeformSkinnedMesh(renderer->meshData, animator, targetVBO, skeletonMatrices);
+  DeformSkinnedMesh(animator, renderer->meshData->vbo,
+                    renderer->meshData->vertices.size(), targetVBO,
+                    skeletonMatrices);
   renderer->targetVBO = &targetVBO;
 }
 

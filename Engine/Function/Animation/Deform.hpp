@@ -12,7 +12,8 @@
 
 namespace aEngine {
 
-void DeformSkinnedMesh(Render::Mesh *mesh, Animator *animator,
-                       Render::Buffer &targetVBO, Render::Buffer &matrices);
+void DeformSkinnedMesh(Animator *animator, Render::Buffer &inputVBO,
+                       unsigned int elementNum, Render::Buffer &targetVBO,
+                       Render::Buffer &matrices);
 
 }; // namespace aEngine
