@@ -8,9 +8,9 @@
 
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
+#include "System/Render/CameraSystem.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
-#include "System/Render/CameraSystem.hpp"
 
 #include "Scripts/CameraController.hpp"
 
@@ -110,7 +110,6 @@ void Scene::SetupDefaultScene() {
       glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
   dLight->AddComponent<Light>();
   dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
-
 }
 
 void Scene::Reset() {
@@ -133,6 +132,58 @@ void Scene::Reset() {
   for (auto system : registeredSystems) {
     system.second->Reset();
   }
+}
+
+void Scene::PlotSceneProfile() {
+  static float timeCounter = 0.0f;
+  static float mainRenderTime = 0.0f, displayMainRenderTime = 0.0f;
+  static float mainUpdateTime = 0.0f, displayMainUpdateTime = 0.0f;
+  static float debugRenderTime = 0.0f, displayDebugRenderTime = 0.0f;
+  static float hierarchyUpdateTime = 0.0f, displayHierarchyUpdateTime = 0.0f;
+  static int frameCounter = 0, displayFPS = 0;
+  timeCounter += Context.deltaTime;
+  mainUpdateTime += Context.updateTime;
+  mainRenderTime += Context.renderTime;
+  debugRenderTime += Context.debugDrawTime;
+  hierarchyUpdateTime += Context.hierarchyUpdateTime;
+  frameCounter++;
+  if (timeCounter >= 0.5f) {
+    displayFPS = frameCounter * 2;
+    displayMainRenderTime = mainRenderTime / frameCounter;
+    displayMainUpdateTime = mainUpdateTime / frameCounter;
+    displayDebugRenderTime = debugRenderTime / frameCounter;
+    displayHierarchyUpdateTime = hierarchyUpdateTime / frameCounter;
+    mainRenderTime = 0.0f;
+    mainUpdateTime = 0.0f;
+    debugRenderTime = 0.0f;
+    hierarchyUpdateTime = 0.0f;
+    frameCounter = 0;
+    timeCounter = 0.0f;
+  }
+  ImGui::SeparatorText("Time");
+  ImGui::MenuItem("Frames Per Second:", nullptr, nullptr, false);
+  ImGui::Text("%d", displayFPS);
+  ImGui::MenuItem("Hierarchy Update:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayHierarchyUpdateTime * 1000);
+  ImGui::MenuItem("Main Update:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayMainUpdateTime * 1000);
+  ImGui::MenuItem("Main Render:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayMainRenderTime * 1000);
+  ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayDebugRenderTime * 1000);
+  ImGui::MenuItem("Delta Time:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", 1000.0f / displayFPS);
+
+  ImGui::SeparatorText("Objects");
+  ImGui::MenuItem("Active Camera:", nullptr, nullptr, false);
+  ImGui::Text("Entity ID: %d",
+              Context.hasActiveCamera ? Context.activeCamera : -1);
+  ImGui::Text("Entity Name: %s",
+              !Context.hasActiveCamera
+                  ? "None"
+                  : EntityFromID(Context.activeCamera)->name.c_str());
+
+  ImGui::Text("Entity Counter: %d", entityCount);
 }
 
 void Scene::Destroy() {

@@ -15,6 +15,7 @@ public:
   void Unbind() const;
 private:
   unsigned int FBO, RBO, texture;
+  int currentFBO;
 };
 
 };

@@ -228,6 +228,8 @@ public:
   // Configure the default scene with a default camera
   void SetupDefaultScene();
 
+  void PlotSceneProfile();
+
   float GetTime() { return glfwGetTime(); }
 
   std::shared_ptr<Entity> AddNewEntity();

@@ -5,6 +5,7 @@ namespace aEngine {
 
 FrameBuffer::FrameBuffer(float width, float height) {
   glGenFramebuffers(1, &FBO);
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
   glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
   glGenTextures(1, &texture);
@@ -26,7 +27,7 @@ FrameBuffer::FrameBuffer(float width, float height) {
     LOG_F(ERROR, "Framebuffer is not complete");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
-  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  glBindRenderbuffer(GL_RENDERBUFFER, currentFBO);
 }
 
 FrameBuffer::~FrameBuffer() {
@@ -38,6 +39,9 @@ FrameBuffer::~FrameBuffer() {
 unsigned int FrameBuffer::GetFrameTexture() { return texture; }
 
 void FrameBuffer::RescaleFrameBuffer(float width, float height) {
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
   glBindTexture(GL_TEXTURE_2D, texture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
                GL_UNSIGNED_BYTE, NULL);
@@ -50,6 +54,8 @@ void FrameBuffer::RescaleFrameBuffer(float width, float height) {
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
                             GL_RENDERBUFFER, RBO);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
 }
 
 void FrameBuffer::Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, FBO); }

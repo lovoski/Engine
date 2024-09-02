@@ -25,6 +25,15 @@ public:
   }
 
   void Render() {}
+
+  std::vector<std::shared_ptr<Entity>> GetAvailableCamera() {
+    std::vector<std::shared_ptr<Entity>> result;
+    for (auto id : entities) {
+      auto entity = GWORLD.EntityFromID(id);
+      result.push_back(entity);
+    }
+    return result;
+  }
 };
 
 }; // namespace aEngine

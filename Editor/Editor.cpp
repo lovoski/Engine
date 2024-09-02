@@ -6,6 +6,7 @@
 #include "Scripts/TestDebugDraw.hpp"
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
+#include "System/Render/CameraSystem.hpp"
 
 // put this header at the bottom of other headers
 #include <filedialog.hpp>
@@ -258,6 +259,12 @@ void Editor::MainMenuBar() {
       }
       ImGui::EndMenu();
     }
+    // if (ImGui::BeginMenu("Context")) {
+    //   auto cameraSystem = GWORLD.GetSystemInstance<CameraSystem>();
+    //   auto cameras = cameraSystem->GetAvailableCamera();
+    //   std::vector<char *> names;
+    //   ImGui::EndMenu();
+    // }
     if (ImGui::BeginMenu("Window")) {
       if (ImGui::BeginMenu("Gizmos")) {
         auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
@@ -300,35 +307,9 @@ void Editor::MainMenuBar() {
     ImGui::EndMainMenuBar();
   }
   if (showProfiler) {
-    static float lastTime = 0.0f;
-    static float displayDeltaTime = GWORLD.Context.deltaTime, hut = 0.0f,
-                 ut = 0.0f, rt = 0.05, ddt = 0.0f;
-    lastTime += GWORLD.Context.deltaTime;
-    static int frameCounter = 0, displayFPS = 0;
-    frameCounter++;
-    if (lastTime >= 0.5f) {
-      displayFPS = frameCounter * 2;
-      frameCounter = 0;
-      displayDeltaTime = GWORLD.Context.deltaTime;
-      hut = GWORLD.Context.hierarchyUpdateTime;
-      ut = GWORLD.Context.updateTime;
-      rt = GWORLD.Context.renderTime;
-      ddt = GWORLD.Context.debugDrawTime;
-      lastTime = 0.0f;
-    }
     ImGui::Begin("Profiler", &showProfiler);
-    ImGui::MenuItem("Frames Per Second:", nullptr, nullptr, false);
-    ImGui::Text("%d", displayFPS);
-    ImGui::MenuItem("Hierarchy Update:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", hut * 1000);
-    ImGui::MenuItem("Main Update:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", ut * 1000);
-    ImGui::MenuItem("Main Render:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", rt * 1000);
-    ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", ddt * 1000);
-    ImGui::MenuItem("Delta Time:", nullptr, nullptr, false);
-    ImGui::Text("%.4f ms", 1000.0f / displayFPS);
+    ImGui::MenuItem("Scene Profile", nullptr, nullptr, false);
+    GWORLD.PlotSceneProfile();
     ImGui::End();
   }
 }
