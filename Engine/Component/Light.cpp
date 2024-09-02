@@ -86,6 +86,7 @@ void Light::DrawInspectorGUI() {
       ImGui::DragFloat("Radius", &lightRadius, 0.06f, 0.0f, 100.0f);
     } else if (type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
       ImGui::MenuItem("Shadow Frustom", nullptr, nullptr, false);
+      ImGui::Checkbox("Show Frustom", &ShowShadowFrustom);
       ImGui::SliderFloat("Width", &ShadowOrthoW, 0.0f, 100.0f);
       ImGui::SliderFloat("Height", &ShadowOrthoH, 0.0f, 100.0f);
       ImGui::DragFloat("Near", &ShadowZNear, 0.01f, 0.0f, 10.0f);

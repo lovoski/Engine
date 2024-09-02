@@ -225,6 +225,9 @@ public:
   // Reset the scene context
   void Reset();
 
+  // Configure the default scene with a default camera
+  void SetupDefaultScene();
+
   float GetTime() { return glfwGetTime(); }
 
   std::shared_ptr<Entity> AddNewEntity();

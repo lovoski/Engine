@@ -44,14 +44,17 @@ public:
           VisUtils::DrawDirectionalLight(entity->LocalForward, entity->LocalUp,
                                          entity->LocalLeft, entity->Position(),
                                          projMat * viewMat);
-          VisUtils::DrawCube(
-              entity->Position() -
-                  (lightComp->ShadowOrthoW * 0.5f * entity->LocalLeft +
-                   lightComp->ShadowOrthoH * 0.5f * entity->LocalUp -
-                   lightComp->ShadowZNear * entity->LocalForward),
-              entity->LocalForward, entity->LocalLeft, entity->LocalUp,
-              projMat * viewMat, lightComp->ShadowZFar - lightComp->ShadowZNear,
-              lightComp->ShadowOrthoW, lightComp->ShadowOrthoH);
+          if (lightComp->ShowShadowFrustom) {
+            VisUtils::DrawCube(
+                entity->Position() -
+                    (lightComp->ShadowOrthoW * 0.5f * entity->LocalLeft +
+                     lightComp->ShadowOrthoH * 0.5f * entity->LocalUp -
+                     lightComp->ShadowZNear * entity->LocalForward),
+                entity->LocalForward, entity->LocalLeft, entity->LocalUp,
+                projMat * viewMat,
+                lightComp->ShadowZFar - lightComp->ShadowZNear,
+                lightComp->ShadowOrthoW, lightComp->ShadowOrthoH);
+          }
         } else if (lightComp->type == LIGHT_TYPE::POINT_LIGHT) {
           VisUtils::DrawPointLight(entity->Position(), projMat * viewMat,
                                    lightComp->lightRadius);

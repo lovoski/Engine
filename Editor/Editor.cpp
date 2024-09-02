@@ -11,28 +11,7 @@
 #include <filedialog.hpp>
 
 void BuildTestScene(Engine *engine) {
-  auto ent = GWORLD.AddNewEntity();
-  ent->name = "Script Base";
-  ent->AddComponent<aEngine::NativeScript>();
-  ent->GetComponent<aEngine::NativeScript>()->Bind<EditorCameraController>();
-
-  ent->GetComponent<aEngine::NativeScript>()->Bind<TestDebugDraw>();
-
-  auto cam = GWORLD.AddNewEntity();
-  cam->name = "Editor Cam";
-  cam->AddComponent<Camera>();
-  auto camera = cam->GetComponent<Camera>();
-  camera->zFar = 2000.0f;
-  cam->SetGlobalPosition(glm::vec3(0.0f, 3.0f, 5.0f));
-  GWORLD.SetActiveCamera(cam->ID);
-
-  auto dLight = GWORLD.AddNewEntity();
-  dLight->name = "Light";
-  dLight->SetGlobalPosition({-2, 3, 2});
-  dLight->SetGlobalRotation(
-      glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
-  dLight->AddComponent<Light>();
-  dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+  GWORLD.SetupDefaultScene();
 
   auto sphere = GWORLD.AddNewEntity();
   sphere->name = "Sphere";
@@ -205,6 +184,7 @@ void Editor::MainMenuBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
+      ImGui::Separator();
       if (ImGui::MenuItem("Open Folder")) {
         // switch activeBaseFolder
         static std::string title = "Select Base Folder";
@@ -214,6 +194,12 @@ void Editor::MainMenuBar() {
         if (!result.empty()) {
           context.activeBaseFolder = result;
         }
+      }
+      ImGui::MenuItem("Scene", nullptr, nullptr, false);
+      ImGui::Separator();
+      if (ImGui::MenuItem("Clear Scene")) {
+        GWORLD.Reset();
+        GWORLD.SetupDefaultScene();
       }
       if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
         std::string sceneFilePath = GWORLD.Context.sceneFilePath;
@@ -243,10 +229,9 @@ void Editor::MainMenuBar() {
     if (ImGui::BeginMenu("Systems")) {
       if (ImGui::BeginMenu("Render")) {
         auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
-        ImGui::MenuItem("System Settings", nullptr, nullptr, false);
-        ImGui::Separator();
         ImGui::PushItemWidth(120);
         ImGui::MenuItem("Shadows", nullptr, nullptr, false);
+        ImGui::Separator();
         ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMaps);
         std::vector<const char *> shadowMapSizeSlectable{
             "64", "128", "256", "512", "1024", "2048", "4096"};
@@ -263,7 +248,7 @@ void Editor::MainMenuBar() {
       }
       if (ImGui::BeginMenu("Animation")) {
         auto animationSystem = GWORLD.GetSystemInstance<AnimationSystem>();
-        ImGui::MenuItem("System Settings", nullptr, nullptr, false);
+        ImGui::MenuItem("Default Variables", nullptr, nullptr, false);
         ImGui::Separator();
         ImGui::PushItemWidth(120);
         ImGui::InputInt("System FPS", &animationSystem->SystemFPS);

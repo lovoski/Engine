@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "Engine.hpp"
 
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
@@ -10,6 +11,8 @@
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 #include "System/Render/CameraSystem.hpp"
+
+#include "Scripts/CameraController.hpp"
 
 namespace aEngine {
 
@@ -86,12 +89,38 @@ void Scene::ForceRender() {
 
 void Scene::RenderEnd() { GetSystemInstance<RenderSystem>()->RenderEnd(); }
 
+void Scene::SetupDefaultScene() {
+  auto ent = AddNewEntity();
+  ent->name = "Script Base";
+  ent->AddComponent<aEngine::NativeScript>();
+  ent->GetComponent<aEngine::NativeScript>()->Bind<EditorCameraController>();
+
+  auto cam = AddNewEntity();
+  cam->name = "Editor Cam";
+  cam->AddComponent<Camera>();
+  auto camera = cam->GetComponent<Camera>();
+  camera->zFar = 2000.0f;
+  cam->SetGlobalPosition(glm::vec3(0.0f, 3.0f, 5.0f));
+  SetActiveCamera(cam->ID);
+
+  auto dLight = AddNewEntity();
+  dLight->name = "Light";
+  dLight->SetGlobalPosition({-2, 3, 2});
+  dLight->SetGlobalRotation(
+      glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
+  dLight->AddComponent<Light>();
+  dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+
+}
+
 void Scene::Reset() {
   // reset entities
   for (auto root : HierarchyRoots)
     DestroyEntity(root->ID);
   GetComponentList<aEngine::Camera>()->data.clear();
   GetComponentList<aEngine::Light>()->data.clear();
+  GetComponentList<aEngine::Animator>()->data.clear();
+  GetComponentList<aEngine::DeformRenderer>()->data.clear();
   GetComponentList<aEngine::MeshRenderer>()->data.clear();
   GetComponentList<aEngine::NativeScript>()->data.clear();
   HierarchyRoots.clear();
@@ -194,8 +223,9 @@ std::shared_ptr<Entity> Scene::EntityFromID(const EntityID entity) {
 
 void Scene::DestroyEntity(const EntityID entity) {
   if (entity == Context.activeCamera) {
-    LOG_F(WARNING, "can't remove active camera");
-    return;
+    LOG_F(WARNING, "remove active camera on the scene");
+    Context.activeCamera = (EntityID)(-1);
+    Context.hasActiveCamera = false;
   }
   if (entity >= MAX_ENTITY_COUNT)
     throw std::runtime_error("Destroying entity out of range");

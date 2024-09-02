@@ -134,9 +134,10 @@ void Animator::DrawInspectorGUI() {
   if (ImGui::TreeNode("Animator")) {
     ImGui::MenuItem("Motion", nullptr, nullptr, false);
     ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
-    ImGui::TextWrapped("Duration: %d", motion == nullptr ? -1 : motion->poses.size());
+    ImGui::TextWrapped("Duration: %d",
+                       motion == nullptr ? -1 : motion->poses.size());
     ImGui::BeginChild("choosemotionsource", {-1, 30});
-    static char motionSequencePath[100] = {0};
+    static char motionSequencePath[200] = {0};
     sprintf(motionSequencePath, motionName.c_str());
     ImGui::InputTextWithHint("##motionsource", "Motion Sequence Path",
                              motionSequencePath, sizeof(motionSequencePath),
@@ -148,6 +149,8 @@ void Animator::DrawInspectorGUI() {
       // clear variables
       motion = nullptr;
       motionName = "";
+      for (int i = 0; i < sizeof(motionSequencePath); ++i)
+        motionSequencePath[i] = 0;
     }
     ImGui::EndChild();
     if (ImGui::BeginDragDropTarget()) {
