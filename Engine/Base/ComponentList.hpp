@@ -32,8 +32,10 @@ public:
   std::shared_ptr<T> Get(const EntityID entity) {
     auto comp = std::find_if(data.begin(), data.end(),
                              [&](const std::shared_ptr<T> c) { return c->GetID() == entity; });
-    // if (comp == data.end())
-    //   throw std::runtime_error("Trying to get non-existing component");
+    if (comp == data.end()) {
+      LOG_F(WARNING, "Get non-existing component from entity %d", entity);
+      return nullptr;
+    }
     return (*comp);
   }
 

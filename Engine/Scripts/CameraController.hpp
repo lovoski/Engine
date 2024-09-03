@@ -3,12 +3,7 @@
  */
 #pragma once
 
-#include "Base/Scriptable.hpp"
-#include "Component/Camera.hpp"
-#include "Scene.hpp"
-
-#include "Function/Math/Math.hpp"
-#include "Function/Render/VisUtils.hpp"
+#include "API.hpp"
 
 namespace aEngine {
 
@@ -92,8 +87,10 @@ struct EditorCameraController : public Scriptable {
     }
   }
 
+  std::string getTypeName() override { return "Editor Controller"; }
+
   void DrawInspectorGUI() override {
-    DrawInspectorGUIDefault();
+    drawInspectorGUIDefault();
     ImGui::SliderFloat("sensitiviy", &initialFactor, 0.0f, 2.0f);
     ImGui::SliderFloat("pow", &speedPow, 1.0f, 3.0f);
     ImGui::SliderFloat("upper bound", &maxSpeed, 100, 1e3);

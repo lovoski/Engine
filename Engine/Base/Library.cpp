@@ -7,20 +7,20 @@
 
 namespace aEngine {
 
-std::string Scriptable::GetTypeName() {
+std::string Scriptable::getTypeName() {
   return std::string(typeid(*this).name());
 }
 
-void Scriptable::DrawInspectorGUIDefault() {
+void Scriptable::drawInspectorGUIDefault() {
   // Simply display the name of this native script
   ImGui::Separator();
   ImGui::MenuItem("Script Name: ", nullptr, nullptr, false);
-  ImGui::TextWrapped(GetTypeName().c_str());
+  ImGui::TextWrapped(getTypeName().c_str());
   ImGui::Separator();
 }
 
 void Scriptable::DrawInspectorGUI() {
-  DrawInspectorGUIDefault();
+  drawInspectorGUIDefault();
 }
 
 };

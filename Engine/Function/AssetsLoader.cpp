@@ -9,6 +9,8 @@
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
 
+#include "Scripts/Animation/SAMERetarget.hpp"
+
 #include "System/Animation/AnimationSystem.hpp"
 
 #include <fbxsdk.h>
@@ -342,6 +344,8 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     // so we can't use AssignChild here
     globalParent->children.push_back(skelEntity);
     skelEntity->parent = globalParent.get();
+    globalParent->AddComponent<NativeScript>();
+    globalParent->GetComponent<NativeScript>()->Bind<SAMERetarget>();
   }
 
   auto meshParent = GWORLD.AddNewEntity();

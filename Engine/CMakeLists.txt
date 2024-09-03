@@ -34,6 +34,7 @@ set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/System
   ${PROJECT_SOURCE_DIR}/Function
   ${PROJECT_SOURCE_DIR}/Component
+  ${PROJECT_SOURCE_DIR}/Scripts
 )
 
 if (${NN_MODULE})

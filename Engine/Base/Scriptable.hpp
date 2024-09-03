@@ -20,8 +20,6 @@ public:
   // with the Bind function
   virtual void Start() {}
 
-  virtual std::string GetTypeName();
-
   virtual void Update(float dt) {}
   // LateUpdate will be called after all
   // Update functions are called
@@ -37,7 +35,8 @@ public:
   // This function would get called in DrawInspectorGUI by default
   // If you override the function DrawInspectorGUI but also want 
   // the default GUI, call this function before your override code
-  virtual void DrawInspectorGUIDefault();
+  virtual void drawInspectorGUIDefault();
+  virtual std::string getTypeName();
 
   // The following content will be drawn at the editor menu
   virtual void DrawInspectorGUI();
