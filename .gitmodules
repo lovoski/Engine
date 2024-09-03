@@ -4,6 +4,3 @@
 [submodule "submodule/glm"]
 	path = Engine/Deps/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "Engine/Deps/glslang"]
-	path = Engine/Deps/glslang
-	url = https://github.com/KhronosGroup/glslang.git

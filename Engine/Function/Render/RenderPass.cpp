@@ -85,16 +85,6 @@ void Diffuse::additionalSetup() {
   shader->SetFloat("Ambient", Ambient);
 }
 
-void Diffuse::Serialize(Json &json) {
-  json["matType"] = "diffuse";
-  json["Albedo"] = Albedo;
-  json["Ambient"] = Ambient;
-}
-void Diffuse::Deserialize(Json &json) {
-  Ambient = json.value("Ambient", 0.1f);
-  Albedo = json.value("Albedo", glm::vec3(1.0f));
-}
-
 std::string Diffuse::getMaterialTypeName() { return "Diffuse"; }
 
 // ----------------------- Outline -----------------------
@@ -123,9 +113,6 @@ void OutlinePass::additionalSetup() {
 void OutlinePass::FinishPass() { glDisable(GL_CULL_FACE); }
 
 std::string OutlinePass::getMaterialTypeName() { return "Outline"; }
-
-void OutlinePass::Serialize(Json &json) {}
-void OutlinePass::Deserialize(Json &json) {}
 
 }; // namespace Render
 

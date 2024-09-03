@@ -8,6 +8,5 @@ int main() {
   editor.Run(false);
 
   editor.Shutdown();
-
   return 0;
 }

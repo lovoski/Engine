@@ -25,9 +25,6 @@ struct MeshRenderer : public aEngine::BaseComponent {
 
   void DrawMesh(Render::Shader &shader);
 
-  Json Serialize() override;
-  void Deserialize(Json &json) override;
-
   void DrawInspectorGUI() override;
 
   // Add a render pass for this renderer, pass in the nullptr

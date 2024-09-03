@@ -34,10 +34,10 @@ void DirectoryRightClickMenu(fs::directory_entry entry) {
         if (!sceneFileOutput.is_open()) {
           LOG_F(ERROR, "failed to create scene file at %s", path.c_str());
         } else {
-          Json json;
-          // set up a null scene
-          json["scene"]["activeCamera"] = -1;
-          sceneFileOutput << json;
+          // Json json;
+          // // set up a null scene
+          // json["scene"]["activeCamera"] = -1;
+          // sceneFileOutput << json;
           LOG_F(ERROR, "create scene file at %s", path.c_str());
         }
         sceneFileOutput.close();

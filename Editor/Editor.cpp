@@ -219,7 +219,7 @@ void Editor::MainMenuBar() {
           if (!sceneFileOutput.is_open()) {
             LOG_F(ERROR, "can't save scene to %s", sceneFilePath.c_str());
           } else {
-            sceneFileOutput << GWORLD.Serialize();
+            // sceneFileOutput << GWORLD.Serialize();
             LOG_F(INFO, "save scene to %s", sceneFilePath.c_str());
           }
           sceneFileOutput.close();

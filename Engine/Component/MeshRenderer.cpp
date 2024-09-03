@@ -88,17 +88,4 @@ void MeshRenderer::DrawInspectorGUI() {
   }
 }
 
-Json MeshRenderer::Serialize() {
-  Json json;
-  json["mesh"]["modelpath"] = meshData->modelPath;
-  json["mesh"]["identifier"] = meshData->identifier;
-  return json;
-}
-
-void MeshRenderer::Deserialize(Json &json) {
-  std::string modelPath = json["mesh"]["modelpath"];
-  std::string identifier = json["mesh"]["identifier"];
-  meshData = Loader.GetMesh(modelPath, identifier);
-}
-
 }; // namespace aEngine

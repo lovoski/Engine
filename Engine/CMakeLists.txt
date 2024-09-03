@@ -13,6 +13,7 @@ add_subdirectory("Deps/imgui")
 add_subdirectory("Deps/stb")
 add_subdirectory("Deps/loguru")
 add_subdirectory("Deps/filedialog")
+add_subdirectory("Deps/cereal")
 
 # asio
 include("cmake/FetchASIO.cmake")
@@ -23,15 +24,11 @@ include("cmake/FindONNXRuntime.cmake")
 # fbx sdk
 include("cmake/FindFBX.cmake")
 
-# glslang
-include("cmake/GLSLangConfig.cmake")
-add_subdirectory("Deps/glslang")
-
 include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb glm imgui loguru filedialog asio::asio ${GLSLANGLIBS})
+set(aEngine_DEPS glad glfw stb glm imgui loguru filedialog asio::asio cereal)
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System

@@ -195,12 +195,6 @@ public:
            y <= Context.sceneWindowPos.y + Context.sceneWindowSize.y;
   }
 
-  // Serialize current scene to a json file
-  Json Serialize();
-
-  // Reset current scene from a json file
-  void DeserializeReset(Json &json);
-
   std::vector<Entity *> HierarchyRoots;
 
   SceneContext Context;

@@ -367,122 +367,122 @@ void Scene::rebuildHierarchyStructure() {
   //   frame" << std::endl;
 }
 
-// Serialize current scene to a json file
-Json Scene::Serialize() {
-  Json json;
-  // the entity data
-  for (auto entity : entities) {
-    std::string currentEntityID = std::to_string((unsigned int)entity.first);
-    entity.second->Serialize(json["entities"][currentEntityID]);
-  }
-  // // if more components created, they need to be registered here to be
-  // // serialized
-  // for (auto camera : GetComponentList<Camera>()->data) {
-  //   json["components"]["camera"][std::to_string(camera.GetID())] =
-  //       camera.Serialize();
-  // }
-  // for (auto light : GetComponentList<Light>()->data) {
-  //   json["components"]["light"][std::to_string(light.GetID())] =
-  //       light.Serialize();
-  // }
-  // for (auto renderer : GetComponentList<MeshRenderer>()->data) {
-  //   json["components"]["renderer"][std::to_string(renderer.GetID())] =
-  //       renderer.Serialize();
-  // }
+// // Serialize current scene to a json file
+// Json Scene::Serialize() {
+//   Json json;
+//   // the entity data
+//   for (auto entity : entities) {
+//     std::string currentEntityID = std::to_string((unsigned int)entity.first);
+//     entity.second->Serialize(json["entities"][currentEntityID]);
+//   }
+//   // // if more components created, they need to be registered here to be
+//   // // serialized
+//   // for (auto camera : GetComponentList<Camera>()->data) {
+//   //   json["components"]["camera"][std::to_string(camera.GetID())] =
+//   //       camera.Serialize();
+//   // }
+//   // for (auto light : GetComponentList<Light>()->data) {
+//   //   json["components"]["light"][std::to_string(light.GetID())] =
+//   //       light.Serialize();
+//   // }
+//   // for (auto renderer : GetComponentList<MeshRenderer>()->data) {
+//   //   json["components"]["renderer"][std::to_string(renderer.GetID())] =
+//   //       renderer.Serialize();
+//   // }
 
-  // scene specific settings
-  EntityID camera;
-  if (GetActiveCamera(camera))
-    json["scene"]["activeCamera"] = (int)camera;
-  else
-    json["scene"]["activeCamera"] = -1;
-  return json;
-}
+//   // scene specific settings
+//   EntityID camera;
+//   if (GetActiveCamera(camera))
+//     json["scene"]["activeCamera"] = (int)camera;
+//   else
+//     json["scene"]["activeCamera"] = -1;
+//   return json;
+// }
 
-// Reset current scene from a json file
-void Scene::DeserializeReset(Json &json) {
-  // reset current scene
-  Reset();
+// // Reset current scene from a json file
+// void Scene::DeserializeReset(Json &json) {
+//   // reset current scene
+//   Reset();
 
-  // reload scene from the file
-  std::map<EntityID, EntityID> old2new;
-  std::map<EntityID, std::vector<EntityID>> childrenMap;
-  std::queue<EntityID> q;
-  for (auto entJson : json["entities"].items()) {
-    EntityID old = (EntityID)std::stoi(entJson.key());
-    auto newEntity = AddNewEntity();
-    newEntity->name = entJson.value()["name"];
-    old2new[old] = newEntity->ID;
-    EntityID oldParentID =
-        entJson.value().value("parent", "none") == "none"
-            ? -1
-            : (EntityID)std::stoi(entJson.value().value("parent", "none"));
-    if (oldParentID != (EntityID)(-1)) {
-      childrenMap[oldParentID].push_back(old);
-    } else {
-      q.push(old); // keep record of potential root nodes
-      childrenMap[old] = std::vector<EntityID>();
-    }
-  }
-  std::vector<EntityID> traversalOrder;
-  while (!q.empty()) {
-    auto cur = q.front();
-    q.pop();
-    traversalOrder.push_back(cur);
-    if (childrenMap.find(cur) != childrenMap.end()) {
-      for (auto c : childrenMap[cur]) {
-        q.push(c);
-      }
-    }
-  }
+//   // reload scene from the file
+//   std::map<EntityID, EntityID> old2new;
+//   std::map<EntityID, std::vector<EntityID>> childrenMap;
+//   std::queue<EntityID> q;
+//   for (auto entJson : json["entities"].items()) {
+//     EntityID old = (EntityID)std::stoi(entJson.key());
+//     auto newEntity = AddNewEntity();
+//     newEntity->name = entJson.value()["name"];
+//     old2new[old] = newEntity->ID;
+//     EntityID oldParentID =
+//         entJson.value().value("parent", "none") == "none"
+//             ? -1
+//             : (EntityID)std::stoi(entJson.value().value("parent", "none"));
+//     if (oldParentID != (EntityID)(-1)) {
+//       childrenMap[oldParentID].push_back(old);
+//     } else {
+//       q.push(old); // keep record of potential root nodes
+//       childrenMap[old] = std::vector<EntityID>();
+//     }
+//   }
+//   std::vector<EntityID> traversalOrder;
+//   while (!q.empty()) {
+//     auto cur = q.front();
+//     q.pop();
+//     traversalOrder.push_back(cur);
+//     if (childrenMap.find(cur) != childrenMap.end()) {
+//       for (auto c : childrenMap[cur]) {
+//         q.push(c);
+//       }
+//     }
+//   }
 
-  // update the parent first, make sure the hierarchy positions are correct
-  for (auto currentUpdateIndex : traversalOrder) {
-    // auto entJson = json["entities"][std::to_string((int)currentUpdateIndex)];
-    // EntityID old = currentUpdateIndex;
-    // EntityID newID = old2new[old];
-    // auto newEntity = EntityFromID(newID);
-    // newEntity->SetGlobalPosition(entJson["p"].get<glm::vec3>());
-    // newEntity->SetGlobalScale(entJson["s"].get<glm::vec3>());
-    // newEntity->SetGlobalRotation(entJson["r"].get<glm::quat>());
-    // if (entJson.value("parent", "none") != "none") {
-    //   auto oldParentID = (EntityID)std::stoi(entJson.value("parent",
-    //   "none")); auto parent = EntityFromID(old2new[oldParentID]);
-    //   parent->AssignChild(newEntity);
-    // }
-    // // reload the components
-    // for (auto compJson : json["components"]["camera"].items()) {
-    //   EntityID belongs = (EntityID)std::stoi(compJson.key());
-    //   if (belongs == old) {
-    //     // this component belongs to the entity
-    //     newEntity->AddComponent<Camera>();
-    //     newEntity->GetComponent<Camera>().Deserialize(
-    //         json["components"]["camera"][std::to_string((int)old)]);
-    //   }
-    // }
-    // for (auto compJson : json["components"]["light"].items()) {
-    //   EntityID belongs = (EntityID)std::stoi(compJson.key());
-    //   if (belongs == old) {
-    //     // this component belongs to the entity
-    //     newEntity->AddComponent<Light>();
-    //     newEntity->GetComponent<Light>().Deserialize(
-    //         json["components"]["light"][std::to_string((int)old)]);
-    //   }
-    // }
-    // for (auto compJson : json["components"]["renderer"].items()) {
-    //   EntityID belongs = (EntityID)std::stoi(compJson.key());
-    //   if (belongs == old) {
-    //     // this component belongs to the entity
-    //     newEntity->AddComponent<MeshRenderer>();
-    //     newEntity->GetComponent<MeshRenderer>().Deserialize(
-    //         json["components"]["renderer"][std::to_string((int)old)]);
-    //   }
-    // }
-  }
+//   // update the parent first, make sure the hierarchy positions are correct
+//   for (auto currentUpdateIndex : traversalOrder) {
+//     // auto entJson = json["entities"][std::to_string((int)currentUpdateIndex)];
+//     // EntityID old = currentUpdateIndex;
+//     // EntityID newID = old2new[old];
+//     // auto newEntity = EntityFromID(newID);
+//     // newEntity->SetGlobalPosition(entJson["p"].get<glm::vec3>());
+//     // newEntity->SetGlobalScale(entJson["s"].get<glm::vec3>());
+//     // newEntity->SetGlobalRotation(entJson["r"].get<glm::quat>());
+//     // if (entJson.value("parent", "none") != "none") {
+//     //   auto oldParentID = (EntityID)std::stoi(entJson.value("parent",
+//     //   "none")); auto parent = EntityFromID(old2new[oldParentID]);
+//     //   parent->AssignChild(newEntity);
+//     // }
+//     // // reload the components
+//     // for (auto compJson : json["components"]["camera"].items()) {
+//     //   EntityID belongs = (EntityID)std::stoi(compJson.key());
+//     //   if (belongs == old) {
+//     //     // this component belongs to the entity
+//     //     newEntity->AddComponent<Camera>();
+//     //     newEntity->GetComponent<Camera>().Deserialize(
+//     //         json["components"]["camera"][std::to_string((int)old)]);
+//     //   }
+//     // }
+//     // for (auto compJson : json["components"]["light"].items()) {
+//     //   EntityID belongs = (EntityID)std::stoi(compJson.key());
+//     //   if (belongs == old) {
+//     //     // this component belongs to the entity
+//     //     newEntity->AddComponent<Light>();
+//     //     newEntity->GetComponent<Light>().Deserialize(
+//     //         json["components"]["light"][std::to_string((int)old)]);
+//     //   }
+//     // }
+//     // for (auto compJson : json["components"]["renderer"].items()) {
+//     //   EntityID belongs = (EntityID)std::stoi(compJson.key());
+//     //   if (belongs == old) {
+//     //     // this component belongs to the entity
+//     //     newEntity->AddComponent<MeshRenderer>();
+//     //     newEntity->GetComponent<MeshRenderer>().Deserialize(
+//     //         json["components"]["renderer"][std::to_string((int)old)]);
+//     //   }
+//     // }
+//   }
 
-  // reset the scene variables
-  if (json["scene"]["activeCamera"].get<int>() != -1)
-    SetActiveCamera(old2new[json["scene"]["activeCamera"]]);
-}
+//   // reset the scene variables
+//   if (json["scene"]["activeCamera"].get<int>() != -1)
+//     SetActiveCamera(old2new[json["scene"]["activeCamera"]]);
+// }
 
 }; // namespace aEngine

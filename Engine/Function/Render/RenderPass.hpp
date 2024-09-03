@@ -39,9 +39,6 @@ public:
 
   Shader *GetShader() { return shader; }
 
-  virtual void Serialize(Json &json) { json["matType"] = "base"; }
-  virtual void Deserialize(Json &json) {}
-
   // Setup lights in the environment automatically,
   // create variables with predefined names
   void SetupLights(Buffer &lightsBuffer, int bindingPoint = 0);
@@ -80,9 +77,6 @@ public:
 
   void DrawInspectorGUI() override;
 
-  void Serialize(Json &json) override;
-  void Deserialize(Json &json) override;
-
 protected:
   void additionalSetup() override;
 
@@ -99,9 +93,6 @@ public:
   void DrawInspectorGUI() override;
 
   void FinishPass() override;
-
-  void Serialize(Json &json) override;
-  void Deserialize(Json &json) override;
 
 protected:
   void additionalSetup() override;

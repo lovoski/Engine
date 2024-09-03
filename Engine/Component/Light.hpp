@@ -22,7 +22,7 @@ struct Light : public aEngine::BaseComponent {
   unsigned int ShadowFBO, ShadowMap;
   unsigned int ShadowMapWidth = 1024, ShadowMapHeight = 1024;
 
-  bool ShowShadowFrustom = true;
+  bool ShowShadowFrustom = false;
 
   float ShadowZNear = 0.1f, ShadowZFar = 10.0f;
   float ShadowOrthoW = 10.0f, ShadowOrthoH = 10.0f;

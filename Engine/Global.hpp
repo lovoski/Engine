@@ -35,68 +35,8 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+#include <asio.hpp>
+
 #include <loguru.hpp>
 
 #include <ImGuizmo.h>
-
-#include <NlohmannJson.hpp>
-
-using Json = nlohmann::json;
-
-// Register some serializable class
-NLOHMANN_JSON_NAMESPACE_BEGIN
-template <> struct adl_serializer<glm::vec2> {
-  static void to_json(json &j, const glm::vec2 &v) {
-    j["serializeType"] = "glm::vec2";
-    j["x"] = v.x;
-    j["y"] = v.y;
-  }
-  static void from_json(const json &j, glm::vec2 &v) {
-    v.x = j["x"];
-    v.y = j["y"];
-  }
-};
-template <> struct adl_serializer<glm::vec3> {
-  static void to_json(json &j, const glm::vec3 &v) {
-    j["serializeType"] = "vec3";
-    j["x"] = v.x;
-    j["y"] = v.y;
-    j["z"] = v.z;
-  }
-  static void from_json(const json &j, glm::vec3 &v) {
-    v.x = j["x"];
-    v.y = j["y"];
-    v.z = j["z"];
-  }
-};
-template <> struct adl_serializer<glm::vec4> {
-  static void to_json(json &j, const glm::vec4 &v) {
-    j["serializeType"] = "vec4";
-    j["x"] = v.x;
-    j["y"] = v.y;
-    j["z"] = v.z;
-    j["w"] = v.w;
-  }
-  static void from_json(const json &j, glm::vec4 &v) {
-    v.x = j["x"];
-    v.y = j["y"];
-    v.z = j["z"];
-    v.w = j["w"];
-  }
-};
-template <> struct adl_serializer<glm::quat> {
-  static void to_json(json &j, const glm::quat &q) {
-    j["serializeType"] = "quat";
-    j["w"] = q.w;
-    j["x"] = q.x;
-    j["y"] = q.y;
-    j["z"] = q.z;
-  }
-  static void from_json(const json &j, glm::quat &q) {
-    q.w = j["w"];
-    q.x = j["x"];
-    q.y = j["y"];
-    q.z = j["z"];
-  }
-};
-NLOHMANN_JSON_NAMESPACE_END

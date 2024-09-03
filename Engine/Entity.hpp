@@ -76,8 +76,6 @@ public:
   void GetParentLocalAxis(glm::vec3 &pLocalForward, glm::vec3 &pLocalLeft,
                           glm::vec3 &pLocalUp);
 
-  void Serialize(Json &json);
-
   template <typename T, typename... Args> void AddComponent(Args &&...args) {
     GWORLD.AddComponent<T>(ID, std::forward<Args>(args)...);
   }

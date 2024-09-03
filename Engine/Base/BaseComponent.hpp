@@ -11,9 +11,6 @@ public:
   virtual ~BaseComponent() = default;
   const EntityID GetID() const { return entityID; }
 
-  virtual Json Serialize() { return Json(); }
-  virtual void Deserialize(Json &json) {}
-
   virtual void DrawInspectorGUI() {}
 
 protected:

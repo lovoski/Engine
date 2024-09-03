@@ -155,12 +155,4 @@ glm::mat4 Entity::GetModelMatrix() {
          glm::mat4_cast(Rotation()) * glm::scale(glm::mat4(1.0f), m_scale);
 }
 
-void Entity::Serialize(Json &json) {
-  json["p"] = m_position;
-  json["r"] = m_rotation;
-  json["s"] = m_scale;
-  json["parent"] = parent == nullptr ? "none" : std::to_string((int)parent->ID);
-  json["name"] = name;
-}
-
 }; // namespace aEngine
