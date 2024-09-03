@@ -1,15 +1,14 @@
 #include "Editor.hpp"
 
+#include <tinyfiledialogs.h>
+
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
 #include "Scripts/TestDebugDraw.hpp"
 #include "System/Animation/AnimationSystem.hpp"
-#include "System/Render/RenderSystem.hpp"
 #include "System/Render/CameraSystem.hpp"
-
-// put this header at the bottom of other headers
-#include <filedialog.hpp>
+#include "System/Render/RenderSystem.hpp"
 
 void BuildTestScene(Engine *engine) {
   GWORLD.SetupDefaultScene();
@@ -187,12 +186,9 @@ void Editor::MainMenuBar() {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
       ImGui::Separator();
       if (ImGui::MenuItem("Open Folder")) {
-        // switch activeBaseFolder
-        static std::string title = "Select Base Folder";
-        auto result = pfd::select_folder::select_folder(
-                          title, context.activeBaseFolder, pfd::opt::force_path)
-                          .result();
-        if (!result.empty()) {
+        auto result = tinyfd_selectFolderDialog(
+            "Select Base Folder", context.activeBaseFolder.c_str());
+        if (result != NULL) {
           context.activeBaseFolder = result;
         }
       }
@@ -205,14 +201,11 @@ void Editor::MainMenuBar() {
       if (ImGui::MenuItem("Save Scene", "CTRL+S")) {
         std::string sceneFilePath = GWORLD.Context.sceneFilePath;
         if (sceneFilePath == "::defaultScene") {
-          auto result =
-              pfd::save_file::save_file("Save Scene", context.activeBaseFolder,
-                                        {"Scene File (*.scene)", "*.scene"})
-                  .result();
-          if (!result.empty()) {
-            if (fs::path(result).extension().string() != ".scene")
-              result = result + ".scene";
-            LOG_F(INFO, "save default scene to %s", result.c_str());
+          const char *filters[] = {"*.scene"};
+          auto result = tinyfd_saveFileDialog("Save Scene", (context.activeBaseFolder + "/").c_str(),
+                                1, filters, "Scene File");
+          if (result != NULL) {
+            LOG_F(INFO, "save default scene to %s", result);
           }
         } else {
           std::ofstream sceneFileOutput(sceneFilePath);
