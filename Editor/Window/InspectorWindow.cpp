@@ -48,7 +48,7 @@ inline void DrawTransformGUI(EntityID selectedEntity) {
 }
 
 void Editor::InspectorWindow() {
-  ImGui::Begin("Components");
+  ImGui::Begin("Components", &showInspectorWindow);
   // // Right-click context menu for the parent window
   // if (!ImGui::IsAnyItemHovered() &&
   //     ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) {
@@ -75,7 +75,7 @@ void Editor::InspectorWindow() {
   // the entity must be valid
   if (GWORLD.EntityValid(entity)) {
     string entityName =
-        "Active Entity : " + GWORLD.EntityFromID(entity)->name;
+        "Active Entity : " + std::to_string(entity);
     ImGui::SeparatorText(entityName.c_str());
     ImGui::BeginChild("Components List",
                       {-1, ImGui::GetContentRegionAvail().y});

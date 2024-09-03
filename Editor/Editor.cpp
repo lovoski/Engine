@@ -132,11 +132,15 @@ void Editor::Run(bool release) {
       ImGui::EndChild();
       ImGui::End();
 
-      MainSequencer();
       MainMenuBar();
-      EntitiesWindow();
-      InspectorWindow();
-      AssetsWindow();
+      if (showMainSequencer)
+        MainSequencer();
+      if (showEntitiesWindow)
+        EntitiesWindow();
+      if (showInspectorWindow)
+        InspectorWindow();
+      if (showAssetsWindow)
+        AssetsWindow();
       ImGui::EndFrame();
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -157,7 +161,7 @@ void Editor::Shutdown() {
 
 void Editor::MainSequencer() {
   auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
-  ImGui::Begin("Timeline");
+  ImGui::Begin("Timeline", &showMainSequencer);
   ImGui::BeginChild("TimelineProperties", {-1, 50});
   ImGui::Checkbox("Auto Play", &animSystem->EnableAutoPlay);
   ImGui::SameLine();
@@ -202,8 +206,9 @@ void Editor::MainMenuBar() {
         std::string sceneFilePath = GWORLD.Context.sceneFilePath;
         if (sceneFilePath == "::defaultScene") {
           const char *filters[] = {"*.scene"};
-          auto result = tinyfd_saveFileDialog("Save Scene", (context.activeBaseFolder + "/").c_str(),
-                                1, filters, "Scene File");
+          auto result = tinyfd_saveFileDialog(
+              "Save Scene", (context.activeBaseFolder + "/").c_str(), 1,
+              filters, "Scene File");
           if (result != NULL) {
             LOG_F(INFO, "save default scene to %s", result);
           }
@@ -223,9 +228,9 @@ void Editor::MainMenuBar() {
     if (ImGui::BeginMenu("Systems")) {
       if (ImGui::BeginMenu("Render")) {
         auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
-        ImGui::PushItemWidth(120);
+        auto cameraSystem = GWORLD.GetSystemInstance<CameraSystem>();
+        ImGui::PushItemWidth(180);
         ImGui::MenuItem("Shadows", nullptr, nullptr, false);
-        ImGui::Separator();
         ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMaps);
         std::vector<const char *> shadowMapSizeSlectable{
             "64", "128", "256", "512", "1024", "2048", "4096"};
@@ -236,6 +241,57 @@ void Editor::MainMenuBar() {
           renderSystem->GlobalShadowMapSize = std::stoi(
               shadowMapSizeSlectable[currentShadowMapSizeSlectableIndex]);
           renderSystem->ResizeAllShadowMaps();
+        }
+        ImGui::Separator();
+        ImGui::MenuItem("Camera", nullptr, nullptr, false);
+        std::vector<std::string> cameraNames;
+        std::map<EntityID, std::size_t> cameraToComboMap;
+        cameraNames.push_back("None:-1");
+        cameraToComboMap.insert(std::make_pair((EntityID)(-1), 0));
+        auto availableCamera = cameraSystem->GetAvailableCamera();
+        for (auto availCam : availableCamera) {
+          auto cameraToComboMapSize = cameraToComboMap.size();
+          cameraToComboMap.insert(
+              std::make_pair(availCam->ID, cameraToComboMapSize));
+          auto cameraName = availCam->name + ":" + std::to_string(availCam->ID);
+          cameraNames.push_back(cameraName);
+        }
+        EntityID camera;
+        static int currentActiveCameraComboIndex = 0;
+        if (GWORLD.GetActiveCamera(camera)) {
+          auto it = cameraToComboMap.find(camera);
+          if (it == cameraToComboMap.end()) {
+            LOG_F(ERROR, "Inconsistent camera combo and active camera");
+          } else {
+            currentActiveCameraComboIndex = it->second;
+          }
+        }
+        if (ImGui::BeginCombo(
+                "Active Camera",
+                cameraNames[currentActiveCameraComboIndex].c_str())) {
+          for (int comboIndex = 0; comboIndex < cameraNames.size();
+               ++comboIndex) {
+            bool isSelected = currentActiveCameraComboIndex == comboIndex;
+            if (ImGui::Selectable(cameraNames[comboIndex].c_str(),
+                                  isSelected)) {
+              currentActiveCameraComboIndex = comboIndex;
+              // switch active camera
+              for (auto cameraComboMapPair : cameraToComboMap) {
+                auto cameraEntityID = cameraComboMapPair.first;
+                if (cameraComboMapPair.second ==
+                    currentActiveCameraComboIndex) {
+                  if (GWORLD.EntityValid(cameraEntityID)) {
+                    GWORLD.SetActiveCamera(cameraEntityID);
+                  } else {
+                    LOG_F(ERROR, "Can't set active camera to a invalid entity");
+                  }
+                }
+              }
+            }
+            if (isSelected)
+              ImGui::SetItemDefaultFocus();
+          }
+          ImGui::EndCombo();
         }
         ImGui::PopItemWidth();
         ImGui::EndMenu();
@@ -289,9 +345,18 @@ void Editor::MainMenuBar() {
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }
-      if (ImGui::MenuItem("Show Profiler")) {
+      ImGui::Separator();
+      if (ImGui::MenuItem("Show Profiler"))
         showProfiler = true;
-      }
+      if (ImGui::MenuItem("Show Sequencer"))
+        showMainSequencer = true;
+      ImGui::Separator();
+      if (ImGui::MenuItem("Show Inspector"))
+        showInspectorWindow = true;
+      if (ImGui::MenuItem("Show Entities"))
+        showEntitiesWindow = true;
+      if (ImGui::MenuItem("Show Assets"))
+        showAssetsWindow = true;
       // if (ImGui::MenuItem("Show Style Editor")) {
       //   ImGui::ShowStyleEditor();
       // }

@@ -65,6 +65,11 @@ public:
 private:
   Engine *engine;
 
+  bool showMainSequencer = true;
+  bool showEntitiesWindow = true;
+  bool showAssetsWindow = true;
+  bool showInspectorWindow = true;
+
   void MainMenuBar();
   void MainSequencer();
   void EntitiesWindow();

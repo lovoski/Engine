@@ -383,6 +383,13 @@ void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
   DrawLineStrip3D(strip2, vp, color);
 }
 
+void DrawCamera(glm::vec3 forward, glm::vec3 up, glm::vec3 left, glm::vec3 pos,
+                glm::mat4 vp, float fovY, float aspect, float size) {
+  // std::vector<glm::vec3> strip {
+
+  // };
+}
+
 }; // namespace VisUtils
 
 }; // namespace aEngine

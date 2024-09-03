@@ -83,26 +83,26 @@ vec3 LightAttenuate(vec3 color, float distance) {
   return color * atten;
 }
 
-// int pcfKernelSize = 2;
-// float ShadowAtten(int lightIndex, float bias) {
-//   vec3 projCoords = (lights[lightIndex].lightMatrix * vec4(worldPos, 1.0)).xyz;
-//   projCoords = projCoords * 0.5 + 0.5;
-//   sampler2D shadowMap = sampler2D(lights[lightIndex].shadowMap.xy);
-//   float closestDepth = texture(shadowMap, projCoords.xy).r;
-//   float currentDepth = projCoords.z;
-//   float shadow = 0.0;
-//   vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-//   for(int x = -pcfKernelSize; x <= pcfKernelSize; ++x) {
-//     for(int y = -pcfKernelSize; y <= pcfKernelSize; ++y) {
-//       float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-//       shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;
-//     }
-//   }
-//   shadow /= pcfKernelSize * pcfKernelSize * 4;
-//   if (currentDepth > 1.0)
-//     shadow = 1.0;
-//   return 1.0 - shadow;
-// }
+int pcfKernelSize = 2;
+float ShadowAtten(int lightIndex, float bias) {
+  vec3 projCoords = (lights[lightIndex].lightMatrix * vec4(worldPos, 1.0)).xyz;
+  projCoords = projCoords * 0.5 + 0.5;
+  sampler2D shadowMap = sampler2D(lights[lightIndex].shadowMap.xy);
+  float closestDepth = texture(shadowMap, projCoords.xy).r;
+  float currentDepth = projCoords.z;
+  float shadow = 0.0;
+  vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+  for(int x = -pcfKernelSize; x <= pcfKernelSize; ++x) {
+    for(int y = -pcfKernelSize; y <= pcfKernelSize; ++y) {
+      float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+      shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;
+    }
+  }
+  shadow /= pcfKernelSize * pcfKernelSize * 4;
+  if (currentDepth > 1.0)
+    shadow = 1.0;
+  return 1.0 - shadow;
+}
 
 vec3 LitSurface() {
   vec3 Normal = normalize(normal);
@@ -121,7 +121,7 @@ vec3 LitSurface() {
     vec3 LightEffect = lambert * LightColor;
     if (lights[i].meta[1] == 1 && ReceiveShadow != 0) {
       float bias = max(0.05 * (1.0 - dot(Normal, LightDir)), 0.005);
-      // LightEffect *= ShadowAtten(i, bias);
+      LightEffect *= ShadowAtten(i, bias);
     }
     Diffuse = Diffuse + LightEffect;
   }

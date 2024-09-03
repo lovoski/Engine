@@ -180,7 +180,7 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
 }
 
 void Editor::AssetsWindow() {
-  ImGui::Begin("Assets");
+  ImGui::Begin("Assets", &showAssetsWindow);
   static int treeNodeInd = 0, selectedFile = 0;
   treeNodeInd = 0;
   const string rootDir = context.activeBaseFolder;

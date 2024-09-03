@@ -10,7 +10,7 @@ struct SAMERetarget : public Scriptable {
 
   // Motion data related
   std::string motionName = "";
-  Animation::Motion *motion = nullptr;
+  Animation::Motion *motion = nullptr, *sourceMotion = nullptr;
 
   // Network related
   asio::io_context context;
@@ -26,6 +26,7 @@ struct SAMERetarget : public Scriptable {
   void Connect();
 
 private:
+  void resetMotionVariables();
   void sendDataToServer();
   void receiveDataFromServer();
   void handleLoadMotion(std::string motionPath);

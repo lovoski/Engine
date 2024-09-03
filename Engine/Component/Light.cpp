@@ -9,8 +9,16 @@ Light::Light() {
   ResizeShadowMap(ShadowMapWidth, ShadowMapHeight);
 }
 Light::~Light() {
-  glDeleteFramebuffers(1, &ShadowFBO);
+  GLint currentlyBoundFBO;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentlyBoundFBO);
+
+  if (currentlyBoundFBO == ShadowFBO) {
+    // If the shadow FBO is currently bound, unbind it before deletion
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+
   glDeleteTextures(1, &ShadowMap);
+  glDeleteFramebuffers(1, &ShadowFBO);
 }
 
 void Light::StartShadow() {
@@ -55,8 +63,9 @@ void Light::ResizeShadowMap(unsigned int width, unsigned int height) {
 }
 
 glm::mat4 Light::GetShadowSpaceOrthoMatrix() {
-  auto projMat = glm::ortho(-ShadowOrthoW * 0.5f, ShadowOrthoW * 0.5f, -ShadowOrthoH * 0.5f,
-                            ShadowOrthoH * 0.5f, ShadowZNear, ShadowZFar);
+  auto projMat = glm::ortho(-ShadowOrthoW * 0.5f, ShadowOrthoW * 0.5f,
+                            -ShadowOrthoH * 0.5f, ShadowOrthoH * 0.5f,
+                            ShadowZNear, ShadowZFar);
   auto entity = GWORLD.EntityFromID(entityID);
   auto viewMat =
       glm::lookAt(entity->Position(), entity->Position() + entity->LocalForward,

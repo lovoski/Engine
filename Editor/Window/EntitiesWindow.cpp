@@ -82,7 +82,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
 }
 
 void Editor::EntitiesWindow() {
-  ImGui::Begin("Entities");
+  ImGui::Begin("Entities", &showEntitiesWindow);
   ImGui::SeparatorText("Scene");
   // Right-click context menu for the parent window
   if (!ImGui::IsAnyItemHovered() &&
@@ -137,8 +137,8 @@ void Editor::EntitiesWindow() {
       if (ImGui::MenuItem("Camera")) {
         auto camera = GWORLD.AddNewEntity();
         camera->name = "Camera";
+        camera->SetGlobalPosition({0, 0, 0});
         camera->AddComponent<Camera>();
-        GWORLD.SetActiveCamera(camera->ID);
       }
       ImGui::Separator();
       if (ImGui::MenuItem("Directional Light")) {

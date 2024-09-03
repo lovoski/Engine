@@ -194,6 +194,14 @@ void Animator::DrawInspectorGUI() {
       }
       ImGui::EndDragDropTarget();
     }
+    if (ImGui::Button("Export Skeleton", {-1, 30})) {
+      auto restPose = actor->GetRestPose();
+      Animation::Motion tmpMotion;
+      tmpMotion.skeleton = *actor;
+      tmpMotion.fps = 30;
+      tmpMotion.poses.push_back(restPose);
+      tmpMotion.SaveToBVH("export_skeleton.bvh");
+    }
     float skeletonColor[3] = {SkeletonColor.x, SkeletonColor.y,
                               SkeletonColor.z};
     if (ImGui::ColorEdit3("Color", skeletonColor)) {

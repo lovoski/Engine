@@ -4,6 +4,12 @@ namespace aEngine {
 
 using asio::ip::tcp;
 
+void SAMERetarget::resetMotionVariables() {
+  motion = nullptr;
+  motionName = "";
+  sourceMotion = nullptr;
+}
+
 void SAMERetarget::Connect() {
   tcp::resolver resolver(context);
   auto endPoints = resolver.resolve(server, port);
@@ -16,6 +22,7 @@ void SAMERetarget::Connect() {
                         } else {
                           LOG_F(ERROR, "Failed to connect to server %s:%s",
                                 server.c_str(), port.c_str());
+                          resetMotionVariables();
                         }
                       });
 }
@@ -29,6 +36,7 @@ void SAMERetarget::sendDataToServer() {
                         receiveDataFromServer();
                       } else {
                         LOG_F(ERROR, "can't send data to server");
+                        resetMotionVariables();
                       }
                     });
 }
@@ -43,18 +51,22 @@ void SAMERetarget::receiveDataFromServer() {
                              responseBuffer = "";
                            } else {
                              LOG_F(ERROR, "can't receive data from server");
+                             resetMotionVariables();
                            }
                          });
 }
 
 void SAMERetarget::handleLoadMotion(std::string motionPath) {
-  Animation::Motion retargetedMotion;
   motionPath.pop_back();
   if (fs::path(motionPath).extension().string() == ".bvh") {
-    retargetedMotion.LoadFromBVH(motionPath);
-    LOG_F(INFO, "retarget motion has %d joints", retargetedMotion.skeleton.GetNumJoints());
+    motion = Loader.GetMotion(motionPath);
+    if (!motion) {
+      LOG_F(ERROR, "can't load retarget motion %s", motionPath.c_str());
+      resetMotionVariables();
+    }
   } else {
-    LOG_F(ERROR, "retarget motion must be a .bvh file");
+    LOG_F(ERROR, "retarget motion must be a .bvh file, gets %s", motionPath.c_str());
+    resetMotionVariables();
   }
 }
 
@@ -65,6 +77,7 @@ void SAMERetarget::LateUpdate(float dt) {
     auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
     auto currentFrame = animSystem->SystemCurrentFrame;
     auto currentPose = motion->At(currentFrame);
+    // apply the retarget motion
     animator->ApplyMotionToSkeleton(currentPose);
   }
 }
@@ -72,10 +85,6 @@ void SAMERetarget::LateUpdate(float dt) {
 void SAMERetarget::DrawInspectorGUI() {
   auto animator = entity->GetComponent<Animator>();
   drawInspectorGUIDefault();
-  ImGui::MenuItem("Network", nullptr, nullptr, false);
-  if (ImGui::Button("Test Connect", {-1, 30})) {
-    Connect();
-  }
   ImGui::MenuItem("Motion", nullptr, nullptr, false);
   ImGui::BeginChild("choosemotionsource", {-1, 30});
   static char motionSequencePath[200] = {0};
@@ -102,8 +111,17 @@ void SAMERetarget::DrawInspectorGUI() {
       fs::path filepath = fs::path(assetFilename);
       std::string extension = filepath.extension().string();
       if (extension == ".bvh" || extension == ".fbx") {
-        motion = Loader.GetMotion(filepath.string());
-        motionName = filepath.string();
+        auto motionToBeRetarget = Loader.GetMotion(filepath.string());
+        // try retarget this motion to current animator's actor
+        if (animator != nullptr) {
+          LOG_F(INFO, "Actor joint number: %d, motion joint number %d",
+                animator->actor->GetNumJoints(),
+                motionToBeRetarget->skeleton.GetNumJoints());
+          Connect();
+          motionName = filepath.string();
+        } else {
+          LOG_F(ERROR, "Can't do motion retarget without an Animator component");
+        }
       } else {
         LOG_F(ERROR, "only .bvh and .fbx motion are supported");
       }

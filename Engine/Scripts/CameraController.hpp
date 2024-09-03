@@ -23,6 +23,10 @@ struct EditorCameraController : public Scriptable {
     if (GWORLD.GetActiveCamera(camera)) {
       auto cameraObject = GWORLD.EntityFromID(camera);
       auto camPos = cameraObject->Position();
+      if (glm::length(camPos - cameraPivot) < 1e-9f) {
+        cameraPivot = camPos - cameraObject->LocalForward;
+        LOG_F(INFO, "push pivot away from camera");
+      }
       auto sceneContext = GWORLD.Context;
       float movementDelta =
           initialFactor * dt *

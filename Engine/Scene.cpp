@@ -68,6 +68,9 @@ void Scene::Update() {
   Context.hierarchyUpdateTime = t1 - t0;
   Context.updateTime = t2 - t1;
 
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    LOG_F(ERROR, "Framebuffer is not complete");
+
   // do the rendering
   ForceRender();
 }
@@ -438,7 +441,8 @@ void Scene::rebuildHierarchyStructure() {
 
 //   // update the parent first, make sure the hierarchy positions are correct
 //   for (auto currentUpdateIndex : traversalOrder) {
-//     // auto entJson = json["entities"][std::to_string((int)currentUpdateIndex)];
+//     // auto entJson =
+//     json["entities"][std::to_string((int)currentUpdateIndex)];
 //     // EntityID old = currentUpdateIndex;
 //     // EntityID newID = old2new[old];
 //     // auto newEntity = EntityFromID(newID);
