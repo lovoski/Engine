@@ -28,15 +28,23 @@ void SAMERetarget::Connect() {
 }
 
 void SAMERetarget::sendDataToServer() {
-  std::string message = "Hello from C++ client";
-  asio::async_write(socket, asio::buffer(message),
+  auto actor = entity->GetComponent<Animator>()->actor;
+  std::string exportSkeletonFilepath = "./tmp_skeleton.bvh";
+  std::string exportMotionFilepath = "./tmp_motion.bvh";
+  actor->ExportAsBVH(exportSkeletonFilepath);
+  sourceMotion->SaveToBVH(exportMotionFilepath);
+  sendBuffer = fs::canonical(exportSkeletonFilepath).string();
+  sendBuffer = sendBuffer + ";" + fs::canonical(exportMotionFilepath).string();
+  asio::async_write(socket, asio::buffer(sendBuffer),
                     [this](std::error_code ec, std::size_t length) {
                       if (!ec) {
                         LOG_F(INFO, "send data to server");
                         receiveDataFromServer();
+                        sendBuffer = "";
                       } else {
                         LOG_F(ERROR, "can't send data to server");
                         resetMotionVariables();
+                        sendBuffer = "";
                       }
                     });
 }
@@ -59,13 +67,19 @@ void SAMERetarget::receiveDataFromServer() {
 void SAMERetarget::handleLoadMotion(std::string motionPath) {
   motionPath.pop_back();
   if (fs::path(motionPath).extension().string() == ".bvh") {
-    motion = Loader.GetMotion(motionPath);
-    if (!motion) {
-      LOG_F(ERROR, "can't load retarget motion %s", motionPath.c_str());
+    auto actor = entity->GetComponent<Animator>()->actor;
+    auto retargetedMotion = Loader.GetMotion(motionPath);
+    if (retargetedMotion &&
+        retargetedMotion->skeleton.GetNumJoints() == actor->GetNumJoints()) {
+      // setup retarget motion
+      motion = retargetedMotion;
+    } else {
+      LOG_F(ERROR, "retarget motion not valid");
       resetMotionVariables();
     }
   } else {
-    LOG_F(ERROR, "retarget motion must be a .bvh file, gets %s", motionPath.c_str());
+    LOG_F(ERROR, "retarget motion must be a .bvh file, gets %s",
+          motionPath.c_str());
     resetMotionVariables();
   }
 }
@@ -111,16 +125,17 @@ void SAMERetarget::DrawInspectorGUI() {
       fs::path filepath = fs::path(assetFilename);
       std::string extension = filepath.extension().string();
       if (extension == ".bvh" || extension == ".fbx") {
-        auto motionToBeRetarget = Loader.GetMotion(filepath.string());
+        sourceMotion = Loader.GetMotion(filepath.string());
         // try retarget this motion to current animator's actor
         if (animator != nullptr) {
           LOG_F(INFO, "Actor joint number: %d, motion joint number %d",
                 animator->actor->GetNumJoints(),
-                motionToBeRetarget->skeleton.GetNumJoints());
+                sourceMotion->skeleton.GetNumJoints());
           Connect();
           motionName = filepath.string();
         } else {
-          LOG_F(ERROR, "Can't do motion retarget without an Animator component");
+          LOG_F(ERROR,
+                "Can't do motion retarget without an Animator component");
         }
       } else {
         LOG_F(ERROR, "only .bvh and .fbx motion are supported");

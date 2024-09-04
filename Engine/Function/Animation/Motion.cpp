@@ -1,4 +1,5 @@
 #include "Function/Animation/Motion.hpp"
+#include "Function/Math/Math.hpp"
 
 #include <exception>
 #include <filesystem>
@@ -22,6 +23,18 @@ namespace Animation {
 
 inline bool IsWhiteSpace(char c) {
   return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
+inline bool EndsWith(string target, string pattern) {
+  int pointer = 0, targetSize = target.size(), patternSize = pattern.size();
+  if (targetSize < patternSize)
+    return false;
+  while (pointer < patternSize) {
+    if (target[targetSize - 1 - pointer] != pattern[patternSize - 1 - pointer])
+      return false;
+    pointer++;
+  }
+  return true;
 }
 
 // split a string by white space
@@ -124,9 +137,14 @@ bool Motion::LoadFromBVH(string filename) {
               } else
                 throw std::runtime_error(
                     "number of channels in bvh must be either 3 or 6");
+            } else if (lineSeg[0] == "}") {
+              jointChannels.push_back(0);
+              jointChannelsOrder.push_back(0);
+              s.pop(); // this is a end effector
             } else
               throw std::runtime_error(
-                  ("this label should be CHANNELS instead of " + lineSeg[0])
+                  ("this label should be CHANNELS or `}` instead of " +
+                   lineSeg[0])
                       .c_str());
           } else if (lineSeg[0] == "JOINT") {
             parentJoint = s.top();
@@ -244,12 +262,15 @@ bool Motion::SaveToBVH(string filename) {
   // apply the initial rotations of skeleton joints
   // the motion data remains unchanged
   auto restPose = skeleton.GetRestPose();
-  auto globalJointPositions = restPose.GetGlobalPositions();
-  auto appliedJointOffset = globalJointPositions;
+  int jointNumber = skeleton.GetNumJoints();
+  vector<quat> globalJointOrien;
+  auto globalJointPositions =
+      restPose.GetGlobalPositionOrientation(globalJointOrien);
+  auto flattenJointOffset = globalJointPositions;
   for (int i = 0; i < skeleton.GetNumJoints(); ++i) {
     int parentInd = skeleton.jointParent[i];
     if (parentInd != -1) {
-      appliedJointOffset[i] -= globalJointPositions[parentInd];
+      flattenJointOffset[i] -= globalJointPositions[parentInd];
     }
   }
   // output the skeleton and motions
@@ -265,13 +286,16 @@ bool Motion::SaveToBVH(string filename) {
     for (int jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
       BVHPadding(fileOutput, depth);
       if (skeleton.jointChildren[jointInd].size() == 0) {
-        fileOutput << "End Site\n";
+        if (EndsWith(skeleton.jointNames[jointInd], "_End"))
+          fileOutput << "End Site\n";
+        else
+          fileOutput << "JOINT " << skeleton.jointNames[jointInd] << "\n";
         BVHPadding(fileOutput, depth++);
         fileOutput << "{\n";
         BVHPadding(fileOutput, depth);
-        fileOutput << "OFFSET " << appliedJointOffset[jointInd].x << " "
-                   << appliedJointOffset[jointInd].y << " "
-                   << appliedJointOffset[jointInd].z << "\n";
+        fileOutput << "OFFSET " << flattenJointOffset[jointInd].x << " "
+                   << flattenJointOffset[jointInd].y << " "
+                   << flattenJointOffset[jointInd].z << "\n";
         BVHPadding(fileOutput, --depth);
         fileOutput << "}\n";
         // find the direct parent of the next joint (if exists)
@@ -298,9 +322,9 @@ bool Motion::SaveToBVH(string filename) {
         BVHPadding(fileOutput, depth++);
         fileOutput << "{\n";
         BVHPadding(fileOutput, depth);
-        fileOutput << "OFFSET " << appliedJointOffset[jointInd].x << " "
-                   << appliedJointOffset[jointInd].y << " "
-                   << appliedJointOffset[jointInd].z << "\n";
+        fileOutput << "OFFSET " << flattenJointOffset[jointInd].x << " "
+                   << flattenJointOffset[jointInd].y << " "
+                   << flattenJointOffset[jointInd].z << "\n";
         BVHPadding(fileOutput, depth);
         if (skeleton.jointParent[jointInd] != -1) {
           fileOutput << "CHANNELS 3 Zrotation Yrotation Xrotation\n";
@@ -316,15 +340,33 @@ bool Motion::SaveToBVH(string filename) {
     fileOutput << "MOTION\nFrames: " << poses.size() << "\n"
                << "Frame Time: " << 1.0f / fps << "\n";
     for (int frameInd = 0; frameInd < poses.size(); ++frameInd) {
-      for (int jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
+      fileOutput << poses[frameInd].rootLocalPosition.x << " "
+                 << poses[frameInd].rootLocalPosition.y << " "
+                 << poses[frameInd].rootLocalPosition.z << " ";
+      vector<quat> frameJointRot(jointNumber, quat(1.0f, vec3(0.0f)));
+      vector<quat> newOrien(jointNumber, quat(1.0f, vec3(0.0f)));
+      vector<quat> oldOrien;
+      // oldOrien is the ground truth rotation we need
+      auto _fjp_ = poses[frameInd].GetGlobalPositionOrientation(oldOrien);
+      for (int jointInd = 0; jointInd < jointNumber; ++jointInd) {
+        int parentInd = skeleton.jointParent[jointInd];
+        // `newOrien` is the delta rotation in each frame
+        // oldOrien = newOrien * globalJointOrien
+        // meaning that we can get the ground truth rotation with the skeleton
+        // initial rotation and a delta rotation stored in each frame,
+        // we will get local rotation of each joint from this delta global rotation
+        newOrien[jointInd] =
+            oldOrien[jointInd] * glm::inverse(globalJointOrien[jointInd]);
+        if (parentInd == -1) {
+          frameJointRot[jointInd] = newOrien[jointInd];
+        } else {
+          frameJointRot[jointInd] =
+              glm::inverse(newOrien[parentInd]) * newOrien[jointInd];
+        }
+      }
+      for (int jointInd = 0; jointInd < jointNumber; ++jointInd) {
         if (skeleton.jointChildren[jointInd].size() != 0) {
-          if (skeleton.jointParent[jointInd] == -1) {
-            fileOutput << poses[frameInd].rootLocalPosition.x << " "
-                       << poses[frameInd].rootLocalPosition.y << " "
-                       << poses[frameInd].rootLocalPosition.z << " ";
-          }
-          vec3 euler =
-              glm::eulerAngles(poses[frameInd].jointRotations[jointInd]);
+          vec3 euler = glm::eulerAngles(frameJointRot[jointInd]);
           vec3 eulerDegree = glm::degrees(euler);
           fileOutput << eulerDegree.z << " " << eulerDegree.y << " "
                      << eulerDegree.x << " ";
@@ -337,15 +379,16 @@ bool Motion::SaveToBVH(string filename) {
   }
 }
 
-vector<vec3> Pose::GetGlobalPositions() {
+vector<vec3> Pose::GetGlobalPositionOrientation(vector<quat> &orientations) {
+  orientations.clear();
   int jointNum = skeleton->GetNumJoints();
+  orientations = vector<quat>(jointNum, quat(1.0f, vec3(0.0f)));
   vector<vec3> positions(jointNum, vec3(0.0f));
   if (jointNum != jointRotations.size()) {
     throw std::runtime_error(
         "inconsistent joint number between skeleton and pose data");
     return positions;
   }
-  vector<quat> orientations(jointNum, quat(1.0f, vec3(0.0f)));
   quat parentOrientation;
   vec3 parentPosition;
   // start traversaling the joints
@@ -366,6 +409,11 @@ vector<vec3> Pose::GetGlobalPositions() {
       positions[curJoint] = rootLocalPosition;
   }
   return positions;
+}
+
+vector<vec3> Pose::GetGlobalPositions() {
+  vector<quat> orientations;
+  return GetGlobalPositionOrientation(orientations);
 }
 
 Pose Motion::At(float frame) {
@@ -400,6 +448,17 @@ Pose Skeleton::GetRestPose() {
     p.jointRotations[jointInd] = jointRotation[jointInd];
   }
   return p;
+}
+
+void Skeleton::ExportAsBVH(std::string filepath) {
+  int jointNum = GetNumJoints();
+  Animation::Pose emptyPose = GetRestPose();
+  emptyPose.skeleton = this;
+  Animation::Motion tmpMotion;
+  tmpMotion.skeleton = *this;
+  tmpMotion.fps = 30;
+  tmpMotion.poses.push_back(emptyPose);
+  tmpMotion.SaveToBVH(filepath);
 }
 
 }; // namespace Animation

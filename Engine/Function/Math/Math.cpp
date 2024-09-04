@@ -13,14 +13,14 @@ namespace aEngine {
 namespace Math {
 
 quat FromToRotation(vec3 from, vec3 to) {
-  float from_norm = from.x * from.x + from.y * from.y + from.z * from.z;
-  float to_norm = to.x * to.x + to.y * to.y + to.z * to.z;
+  float from_norm = glm::length(from);
+  float to_norm = glm::length(to);
   if (from_norm == 0.0f || to_norm == 0.0f)
     return quat(1.0f, vec3(0.0f));
-  from = from / sqrt(from_norm);
-  to = to / sqrt(to_norm);
+  from = normalize(from);
+  to = normalize(to);
   auto cosTheta = dot(from, to);
-  if (abs(cosTheta - 1.0f) < 1e-4f) {
+  if (abs(abs(cosTheta) - 1.0f) < 1e-9f) {
     return quat(1.0f, vec3(0.0f));
   }
   auto normal = normalize(cross(from, to));

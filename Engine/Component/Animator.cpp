@@ -91,6 +91,9 @@ void Animator::createSkeletonEntities() {
 }
 
 void Animator::drawSkeletonHierarchy() {
+  if (ImGui::Button("Export BVH Skeleton", {-1, 30})) {
+    actor->ExportAsBVH("export_skeleton.bvh");
+  }
   int numActiveJoints = 0;
   for (int i = 0; i < actor->GetNumJoints(); ++i)
     numActiveJoints += jointActive[i];
@@ -136,6 +139,10 @@ void Animator::DrawInspectorGUI() {
     ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
     ImGui::TextWrapped("Duration: %d",
                        motion == nullptr ? -1 : motion->poses.size());
+    if (ImGui::Button("Export BVH Motion", {-1, 30})) {
+      if (motion != nullptr)
+        motion->SaveToBVH("./save_motion.bvh");
+    }
     ImGui::BeginChild("choosemotionsource", {-1, 30});
     static char motionSequencePath[200] = {0};
     sprintf(motionSequencePath, motionName.c_str());
@@ -171,7 +178,8 @@ void Animator::DrawInspectorGUI() {
     ImGui::Separator();
     ImGui::MenuItem("Skeleton", nullptr, nullptr, false);
     ImGui::Checkbox("Show Skeleton", &ShowSkeleton);
-    ImGui::Checkbox("Skeleton On Top", &SkeletonOnTop);
+    ImGui::Checkbox("Show Joints", &ShowJoints);
+    ImGui::Checkbox("Helpers On Top", &SkeletonOnTop);
     ImGui::BeginChild("chooseskeletonroot", {-1, 30});
     if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
       skeletonName = skeleton->name;
@@ -193,20 +201,6 @@ void Animator::DrawInspectorGUI() {
         skeleton = skeletonRoot;
       }
       ImGui::EndDragDropTarget();
-    }
-    if (ImGui::Button("Export Skeleton", {-1, 30})) {
-      // fbx skeleton need rotation to fill in the final rest pose, but bvh don't
-      int jointNum = actor->GetNumJoints();
-      Animation::Pose emptyPose;
-      emptyPose.skeleton = actor;
-      emptyPose.jointRotations =
-          std::vector<glm::quat>(jointNum, glm::quat(1.0f, glm::vec3(0.0f)));
-      emptyPose.rootLocalPosition = glm::vec3(0.0f);
-      Animation::Motion tmpMotion;
-      tmpMotion.skeleton = *actor;
-      tmpMotion.fps = 30;
-      tmpMotion.poses.push_back(emptyPose);
-      tmpMotion.SaveToBVH("export_skeleton.bvh");
     }
     float skeletonColor[3] = {SkeletonColor.x, SkeletonColor.y,
                               SkeletonColor.z};

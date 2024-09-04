@@ -53,7 +53,7 @@ struct Animator : public BaseComponent {
   // Skeleton visualization related
   // This entity should be the root joint
   Entity *skeleton = nullptr;
-  bool ShowSkeleton = true;
+  bool ShowSkeleton = true, ShowJoints = true;
   bool SkeletonOnTop = false;
   // Color for the visualized skeleton
   glm::vec3 SkeletonColor = glm::vec3(0.0f, 1.0f, 0.0f);

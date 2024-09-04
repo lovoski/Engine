@@ -16,7 +16,7 @@ struct SAMERetarget : public Scriptable {
   asio::io_context context;
   asio::ip::tcp::socket socket;
   std::string server = "127.0.0.1", port = "9999";
-  std::string responseBuffer;
+  std::string responseBuffer, sendBuffer;
 
   void Update(float dt) override { context.poll(); }
   void LateUpdate(float dt) override;

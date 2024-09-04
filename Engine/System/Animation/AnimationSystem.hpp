@@ -35,6 +35,10 @@ public:
   // automatically increase systemCurrentFrame according to dt and systemFPS
   bool EnableAutoPlay = false;
 
+private:
+  void collectSkeletonDrawQueue(
+      std::shared_ptr<Animator> animator,
+      std::vector<std::pair<glm::vec3, glm::vec3>> &drawQueue);
 };
 
-};
+}; // namespace aEngine
