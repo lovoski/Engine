@@ -195,11 +195,17 @@ void Animator::DrawInspectorGUI() {
       ImGui::EndDragDropTarget();
     }
     if (ImGui::Button("Export Skeleton", {-1, 30})) {
-      auto restPose = actor->GetRestPose();
+      // fbx skeleton need rotation to fill in the final rest pose, but bvh don't
+      int jointNum = actor->GetNumJoints();
+      Animation::Pose emptyPose;
+      emptyPose.skeleton = actor;
+      emptyPose.jointRotations =
+          std::vector<glm::quat>(jointNum, glm::quat(1.0f, glm::vec3(0.0f)));
+      emptyPose.rootLocalPosition = glm::vec3(0.0f);
       Animation::Motion tmpMotion;
       tmpMotion.skeleton = *actor;
       tmpMotion.fps = 30;
-      tmpMotion.poses.push_back(restPose);
+      tmpMotion.poses.push_back(emptyPose);
       tmpMotion.SaveToBVH("export_skeleton.bvh");
     }
     float skeletonColor[3] = {SkeletonColor.x, SkeletonColor.y,

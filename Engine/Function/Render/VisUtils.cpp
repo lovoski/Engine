@@ -329,13 +329,40 @@ void DrawDirectionalLight(glm::vec3 forward, glm::vec3 up, glm::vec3 left,
 }
 
 void DrawPointLight(glm::vec3 pos, glm::mat4 vp, float size) {
+  DrawWireSphere(pos, vp, size);
+}
+
+void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
+              glm::vec3 up, glm::mat4 vp, float fd, float ld, float ud,
+              glm::vec3 color) {
+  std::vector<glm::vec3> strip1{position,
+                                position + left * ld,
+                                position + left * ld + forward * fd,
+                                position + forward * fd,
+                                position,
+                                position + up * ud,
+                                position + forward * fd + up * ud,
+                                position + forward * fd};
+  std::vector<glm::vec3> strip2{position + left * ld + up * ud,
+                                position + up * ud,
+                                position + forward * fd + up * ud,
+                                position + left * ld + forward * fd + up * ud,
+                                position + left * ld + up * ud,
+                                position + left * ld,
+                                position + left * ld + forward * fd,
+                                position + left * ld + forward * fd + up * ud};
+  DrawLineStrip3D(strip1, vp, color);
+  DrawLineStrip3D(strip2, vp, color);
+}
+
+void DrawWireSphere(glm::vec3 position, glm::mat4 vp, float radius, glm::vec3 color) {
   static int segs = 32;
   glm::vec3 walkDir1 = glm::vec3(1.0f, 0.0f, 0.0f);
   glm::vec3 walkDir2 = glm::vec3(0.0f, 1.0f, 0.0f);
   glm::vec3 walkDir3 = glm::vec3(0.0f, 0.0f, 1.0f);
-  std::vector<glm::vec3> strip1{pos + walkDir1 * size};
-  std::vector<glm::vec3> strip2{pos + walkDir2 * size};
-  std::vector<glm::vec3> strip3{pos + walkDir3 * size};
+  std::vector<glm::vec3> strip1{position + walkDir1 * radius};
+  std::vector<glm::vec3> strip2{position + walkDir2 * radius};
+  std::vector<glm::vec3> strip3{position + walkDir3 * radius};
   float rotDegree = glm::radians(360.0f / segs);
   for (int i = 0; i < segs; ++i) {
     walkDir1 =
@@ -347,40 +374,13 @@ void DrawPointLight(glm::vec3 pos, glm::mat4 vp, float size) {
     walkDir3 =
         glm::angleAxis(rotDegree * (i + 1), glm::vec3(1.0f, 0.0f, 0.0f)) *
         glm::vec3(0.0f, 0.0f, 1.0f);
-    strip1.push_back(pos + walkDir1 * size);
-    strip2.push_back(pos + walkDir2 * size);
-    strip3.push_back(pos + walkDir3 * size);
+    strip1.push_back(position + walkDir1 * radius);
+    strip2.push_back(position + walkDir2 * radius);
+    strip3.push_back(position + walkDir3 * radius);
   }
-  DrawLineStrip3D(strip1, vp, glm::vec3(0.0f, 1.0f, 0.0f));
-  DrawLineStrip3D(strip2, vp, glm::vec3(0.0f, 1.0f, 0.0f));
-  DrawLineStrip3D(strip3, vp, glm::vec3(0.0f, 1.0f, 0.0f));
-}
-
-void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
-              glm::vec3 up, glm::mat4 vp, float fd, float ld,
-              float ud, glm::vec3 color) {
-  std::vector<glm::vec3> strip1{
-    position,
-    position + left * ld,
-    position + left * ld + forward * fd,
-    position + forward * fd,
-    position,
-    position + up * ud,
-    position + forward * fd + up * ud,
-    position + forward * fd
-  };
-  std::vector<glm::vec3> strip2 {
-    position + left * ld + up * ud,
-    position + up * ud,
-    position + forward * fd + up * ud,
-    position + left * ld + forward * fd + up * ud,
-    position + left * ld + up * ud,
-    position + left * ld,
-    position + left * ld + forward * fd,
-    position + left * ld + forward * fd + up * ud
-  };
   DrawLineStrip3D(strip1, vp, color);
   DrawLineStrip3D(strip2, vp, color);
+  DrawLineStrip3D(strip3, vp, color);
 }
 
 void DrawCamera(glm::vec3 forward, glm::vec3 up, glm::vec3 left, glm::vec3 pos,

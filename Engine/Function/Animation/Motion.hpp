@@ -1,4 +1,16 @@
-// Data structure related to motion data and joints hierarchy
+/**
+ * Data structure related to motion data and joints hierarchy,
+ * currently, only bvh and fbx motion files are tested.
+ * 
+ * BVH file stores only the offsets of skeleton joints, the initial rotation
+ * of all joints are identity rotations. The motion represents the
+ * local rotations of joints and translation of root joint.
+ * 
+ * FBX file stores the offsets and rotations of skeleton joints, so we need to
+ * apply the initial rotations of a joint to export to bvh, but the motion
+ * still represents the local rotation of joints. So we can use the same 
+ * scheme to construct the skeleton entities and get global positions.
+ */
 
 #pragma once
 
@@ -85,6 +97,7 @@ struct Motion {
   // the rotation channels will be ZYX and
   // can only follow behind the position channels.
   // Only the root joint has 6 dofs, the rest joints only have 3 dofs.
+  // If the skeleton is fbx-style, it will be converted to bvh-style automatically.
   bool SaveToBVH(std::string filename);
 
   // Takes a float value as paramter, returns the slerp interpolated value.

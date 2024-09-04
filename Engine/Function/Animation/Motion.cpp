@@ -241,6 +241,18 @@ inline void BVHPadding(std::ostream &out, int depth) {
 }
 
 bool Motion::SaveToBVH(string filename) {
+  // apply the initial rotations of skeleton joints
+  // the motion data remains unchanged
+  auto restPose = skeleton.GetRestPose();
+  auto globalJointPositions = restPose.GetGlobalPositions();
+  auto appliedJointOffset = globalJointPositions;
+  for (int i = 0; i < skeleton.GetNumJoints(); ++i) {
+    int parentInd = skeleton.jointParent[i];
+    if (parentInd != -1) {
+      appliedJointOffset[i] -= globalJointPositions[parentInd];
+    }
+  }
+  // output the skeleton and motions
   std::ofstream fileOutput(filename);
   if (!fileOutput.is_open()) {
     printf("failed to open file %s\n", filename.c_str());
@@ -257,9 +269,9 @@ bool Motion::SaveToBVH(string filename) {
         BVHPadding(fileOutput, depth++);
         fileOutput << "{\n";
         BVHPadding(fileOutput, depth);
-        fileOutput << "OFFSET " << skeleton.jointOffset[jointInd].x << " "
-                   << skeleton.jointOffset[jointInd].y << " "
-                   << skeleton.jointOffset[jointInd].z << "\n";
+        fileOutput << "OFFSET " << appliedJointOffset[jointInd].x << " "
+                   << appliedJointOffset[jointInd].y << " "
+                   << appliedJointOffset[jointInd].z << "\n";
         BVHPadding(fileOutput, --depth);
         fileOutput << "}\n";
         // find the direct parent of the next joint (if exists)
@@ -286,9 +298,9 @@ bool Motion::SaveToBVH(string filename) {
         BVHPadding(fileOutput, depth++);
         fileOutput << "{\n";
         BVHPadding(fileOutput, depth);
-        fileOutput << "OFFSET " << skeleton.jointOffset[jointInd].x << " "
-                   << skeleton.jointOffset[jointInd].y << " "
-                   << skeleton.jointOffset[jointInd].z << "\n";
+        fileOutput << "OFFSET " << appliedJointOffset[jointInd].x << " "
+                   << appliedJointOffset[jointInd].y << " "
+                   << appliedJointOffset[jointInd].z << "\n";
         BVHPadding(fileOutput, depth);
         if (skeleton.jointParent[jointInd] != -1) {
           fileOutput << "CHANNELS 3 Zrotation Yrotation Xrotation\n";
@@ -328,7 +340,6 @@ bool Motion::SaveToBVH(string filename) {
 vector<vec3> Pose::GetGlobalPositions() {
   int jointNum = skeleton->GetNumJoints();
   vector<vec3> positions(jointNum, vec3(0.0f));
-  positions[0] = rootLocalPosition;
   if (jointNum != jointRotations.size()) {
     throw std::runtime_error(
         "inconsistent joint number between skeleton and pose data");
@@ -341,13 +352,18 @@ vector<vec3> Pose::GetGlobalPositions() {
   for (int curJoint = 0; curJoint < jointNum; ++curJoint) {
     // compute the orientation
     int parentInd = skeleton->jointParent[curJoint];
-    if (parentInd == -1)
-      parentInd = 0;
-    parentOrientation = orientations[parentInd];
-    parentPosition = positions[parentInd];
+    if (parentInd == -1) {
+      parentOrientation = orientations[0];
+      parentPosition = glm::vec3(0.0f);
+    } else {
+      parentOrientation = orientations[parentInd];
+      parentPosition = positions[parentInd];
+    }
     orientations[curJoint] = parentOrientation * jointRotations[curJoint];
-    positions[curJoint] = parentPosition + skeleton->jointOffset[curJoint] *
-                                               orientations[curJoint];
+    positions[curJoint] =
+        parentPosition + parentOrientation * skeleton->jointOffset[curJoint];
+    if (parentInd == -1)
+      positions[curJoint] = rootLocalPosition;
   }
   return positions;
 }

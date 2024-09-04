@@ -93,12 +93,13 @@ void AnimationSystem::Render() {
                 visitsRemains[parent]--;
               } else if (curData.active && !parentData.active) {
                 toBeMatched = cur;
-              } else if (!curData.active && parentData.active && toBeMatched != -1) {
-                  auto childData =
-                      animator->SkeletonMap[actor->jointNames[toBeMatched]];
-                  drawQueue.push_back(std::make_pair(
-                      parentData.joint->Position(), childData.joint->Position()));
-                  visitsRemains[parent]--;
+              } else if (!curData.active && parentData.active &&
+                         toBeMatched != -1) {
+                auto childData =
+                    animator->SkeletonMap[actor->jointNames[toBeMatched]];
+                drawQueue.push_back(std::make_pair(
+                    parentData.joint->Position(), childData.joint->Position()));
+                visitsRemains[parent]--;
               }
             } else
               break;
@@ -112,6 +113,15 @@ void AnimationSystem::Render() {
           glDisable(GL_DEPTH_TEST);
         else
           glEnable(GL_DEPTH_TEST);
+        // Draw the joint positions
+        if (animator->motion) {
+          Animation::Pose CurrentPose =
+              animator->motion->At(SystemCurrentFrame);
+          auto globalPos = CurrentPose.GetGlobalPositions();
+          for (auto gPos : globalPos)
+            VisUtils::DrawWireSphere(gPos, vp, 1.0f,
+                                     glm::vec3(1.0f, 0.0f, 0.0f));
+        }
         for (auto &drawPair : drawQueue) {
           VisUtils::DrawBone(drawPair.first, drawPair.second,
                              GWORLD.Context.sceneWindowSize, vp,

@@ -27,6 +27,9 @@ void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
               float ld = 1.0f, float ud = 1.0f,
               glm::vec3 color = glm::vec3(0.0f, 1.0f, 0.0f));
 
+void DrawWireSphere(glm::vec3 position, glm::mat4 vp, float radius = 1.0f,
+                    glm::vec3 color = glm::vec3(0.0f, 1.0f, 0.0f));
+
 void DrawArrow(glm::vec3 start, glm::vec3 end, glm::mat4 vp = glm::mat4(1.0f),
                glm::vec3 color = glm::vec3(1.0f), float size = 0.2f);
 
