@@ -15,6 +15,7 @@ Light::~Light() {
   if (currentlyBoundFBO == ShadowFBO) {
     // If the shadow FBO is currently bound, unbind it before deletion
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    LOG_F(WARNING, "Shadow framebuffer is in use, unbind before delete");
   }
 
   glDeleteTextures(1, &ShadowMap);
@@ -60,6 +61,7 @@ void Light::ResizeShadowMap(unsigned int width, unsigned int height) {
   glReadBuffer(GL_NONE);
   // restore framebuffer
   glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 glm::mat4 Light::GetShadowSpaceOrthoMatrix() {

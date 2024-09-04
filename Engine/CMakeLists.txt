@@ -4,7 +4,7 @@ project(libEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-option(NN_MODULE "Build engine component that depends on ONNX runtime library" ON)
+option(NN_MODULE "Build engine component that depends on ONNX runtime library" OFF)
 
 add_subdirectory("Deps/glfw")
 add_subdirectory("Deps/glad")

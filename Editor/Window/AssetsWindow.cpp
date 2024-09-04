@@ -60,65 +60,6 @@ void DirectoryRightClickMenu(fs::directory_entry entry) {
       }
       ImGui::EndMenu();
     }
-    if (ImGui::BeginMenu("Render")) {
-      ImGui::MenuItem("Render", nullptr, nullptr, false);
-      if (ImGui::BeginMenu("Base Material")) {
-        static char matName[50] = {0};
-        ImGui::MenuItem("Material Name", nullptr, nullptr, false);
-        ImGui::PushItemWidth(120);
-        ImGui::InputText("##BaeMaterialFileName", matName,
-                         sizeof(matName));
-        ImGui::PopItemWidth();
-        if (ImGui::Button("Create", {-1, 30})) {
-          std::ofstream output(entry.path().string() + "/" +
-                               string(matName) + ".material");
-          // TODO: 
-          // output << Core.RManager.GetDefaultMaterialJson();
-          // output.close();
-          std::strcpy(matName, "");
-          ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndMenu();
-      }
-      if (ImGui::BeginMenu("Vert & Frag Shader")) {
-        static char shaderName[50] = {0};
-        ImGui::MenuItem("Shader Name", nullptr, nullptr, false);
-        ImGui::PushItemWidth(120);
-        ImGui::InputText("##BaseShaderFilename", shaderName,
-                         sizeof(shaderName));
-        ImGui::PopItemWidth();
-        if (ImGui::Button("Create", {-1, 30})) {
-          std::ofstream outputVert(entry.path().string() + "/" +
-                                   string(shaderName) + ".vert");
-          std::ofstream outputFrag(entry.path().string() + "/" +
-                                   string(shaderName) + ".frag");
-          outputVert << "#version 460 core\n"
-                        "layout (location = 0) in vec3 aPos;\n"
-                        "layout (location = 1) in vec3 aNormal;\n"
-                        "layout (location = 2) in vec2 aTexCoord;\n"
-                        "uniform mat4 ModelToWorldPoint;\n"
-                        "uniform mat4 View;\n"
-                        "uniform mat4 Projection;\n"
-                        "void main() {\n"
-                        "  gl_Position = Projection * View * ModelToWorldPoint * "
-                        "vec4(aPos, 1.0);\n"
-                        "}\n";
-          outputFrag << "#version 460 core\n"
-                        "out vec4 FragColor;\n"
-                        "void main(){\n"
-                        "  FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
-                        "}\n";
-          outputVert.close();
-          outputFrag.close();
-          std::strcpy(shaderName, "");
-          ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndMenu();
-      }
-      if (ImGui::MenuItem("Geometry Shader")) {
-      }
-      ImGui::EndMenu();
-    }
     ImGui::EndMenu();
   }
 }

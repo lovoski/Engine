@@ -125,7 +125,6 @@ void Editor::Run(bool release) {
         context.frameBuffer->Bind();
         GWORLD.ForceRender();
         context.frameBuffer->Unbind();
-        engine->RenderEnd();
       }
       GWORLD.Context.sceneWindowPos = {pos.x, pos.y};
       DrawGizmos(pos.x, pos.y, size.x, size.y);
