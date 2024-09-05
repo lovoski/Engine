@@ -4,7 +4,7 @@
 
 namespace aEngine {
 
-Light::Light() {
+Light::Light(EntityID id) : BaseComponent(id) {
   glGenFramebuffers(1, &ShadowFBO);
   ResizeShadowMap(ShadowMapWidth, ShadowMapHeight);
 }

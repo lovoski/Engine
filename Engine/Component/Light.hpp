@@ -8,7 +8,7 @@ enum LIGHT_TYPE { DIRECTIONAL_LIGHT, POINT_LIGHT };
 
 // The direction of DIRECTIONAL_LIGHT is LocalForward
 struct Light : public aEngine::BaseComponent {
-  Light();
+  Light(EntityID id);
   ~Light();
 
   LIGHT_TYPE type = LIGHT_TYPE::DIRECTIONAL_LIGHT;

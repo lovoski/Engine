@@ -7,7 +7,7 @@ namespace aEngine {
 
 class BaseComponent {
 public:
-  BaseComponent() : entityID() {}
+  BaseComponent(EntityID id) : entityID(id) {}
   virtual ~BaseComponent() = default;
   const EntityID GetID() const { return entityID; }
 

@@ -10,8 +10,9 @@
  * apply the initial rotations of a joint to export to bvh, but the motion
  * still represents the local rotation of joints. So we can use the same
  * scheme to construct the skeleton entities and get global positions.
- * 
- * Keep in mind, its an easy practice to get local rotation after global rotation.
+ *
+ * Keep in mind, its an easy practice to get local rotation after global
+ * rotation.
  */
 
 #pragma once
@@ -53,7 +54,10 @@ struct Skeleton {
 
   // fbx skeleton need rotation to make up rest post, but bvh don't,
   // handle fbx-style skeleton and bvh-style skeleton export.
-  void ExportAsBVH(std::string filepath);
+  // The parameter `withEndEffectorName` will preserve the name for the end
+  // effector when set to true, otherwise all joints with no children will be
+  // renamed to `End Site`
+  void ExportAsBVH(std::string filepath, bool withEndEffectorName = true);
 
   const int GetNumJoints() { return jointNames.size(); }
 };
@@ -112,11 +116,14 @@ struct Motion {
   // Only the root joint has 6 dofs, the rest joints only have 3 dofs.
   // The skeleton and motion will be flatten to offset-only manner
   // automatically.
-  bool SaveToBVH(std::string filename);
+  // The parameter `withEndEffectorName` will preserve the name for the end
+  // effector when set to true, otherwise all joints with no children will be
+  // renamed to `End Site`
+  bool SaveToBVH(std::string filename, bool withEndEffectorName = true);
 
   // Takes a float value as paramter, returns the slerp interpolated value.
-  // If the frame is not valid (out of [0, nframe) range), returns the first frame or last
-  // frame respectively.
+  // If the frame is not valid (out of [0, nframe) range), returns the first
+  // frame or last frame respectively.
   Pose At(float frame);
 };
 

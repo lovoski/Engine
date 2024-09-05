@@ -14,7 +14,7 @@
 namespace aEngine {
 
 struct MeshRenderer : public aEngine::BaseComponent {
-  MeshRenderer(aEngine::Render::Mesh *mesh);
+  MeshRenderer(EntityID id, aEngine::Render::Mesh *mesh);
   ~MeshRenderer();
 
   void ForwardRender(glm::mat4 projMat, glm::mat4 viewMat, Entity *camera,

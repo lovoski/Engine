@@ -3,9 +3,9 @@
 
 namespace aEngine {
 
-DeformRenderer::DeformRenderer(Render::Mesh *mesh, Animator *ar)
-    : animator(ar) {
-  renderer = std::make_shared<MeshRenderer>(mesh);
+DeformRenderer::DeformRenderer(EntityID id, Render::Mesh *mesh, Animator *ar)
+    : animator(ar), BaseComponent(id) {
+  renderer = std::make_shared<MeshRenderer>(id, mesh);
   targetVBO.SetDataAs(GL_SHADER_STORAGE_BUFFER, mesh->vertices);
   skeletonMatrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
                              ar->GetSkeletonTransforms());

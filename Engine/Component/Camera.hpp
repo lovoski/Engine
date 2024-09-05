@@ -7,6 +7,8 @@ namespace aEngine {
 
 struct Camera : public aEngine::BaseComponent {
 
+  Camera(EntityID id) : BaseComponent(id) {}
+
   // The camera look at -LocalForward direction
   void GetCameraViewPerpProjMatrix(glm::mat4 &view, glm::mat4 &proj) {
     auto size = GWORLD.Context.sceneWindowSize;

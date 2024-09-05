@@ -184,10 +184,6 @@ void Editor::EntitiesWindow() {
         // set up variables for animator component
         parent->GetComponent<Animator>()->ShowSkeleton = true;
         parent->GetComponent<Animator>()->motionName = filename.string();
-        // make skeleton hierarchy a child of proxy entity
-        auto skelEntity = parent->GetComponent<Animator>()->skeleton;
-        parent->children.push_back(skelEntity);
-        skelEntity->parent = parent.get();
       } else if (extension == ".obj" || extension == ".off") {
         // handle plane model import
         auto modelMeshes = Loader.GetModel(filename.string());

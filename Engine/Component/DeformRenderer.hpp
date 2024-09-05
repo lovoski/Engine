@@ -10,7 +10,7 @@
 namespace aEngine {
 
 struct DeformRenderer : public aEngine::BaseComponent {
-  DeformRenderer(Render::Mesh *mesh, Animator *ar);
+  DeformRenderer(EntityID id, Render::Mesh *mesh, Animator *ar);
   ~DeformRenderer();
 
   Animator *animator;

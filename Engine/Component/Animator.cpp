@@ -88,6 +88,10 @@ void Animator::createSkeletonEntities() {
     skeleton = joints[0];
   else
     LOG_F(WARNING, "actor has no joints, don't create skeleton hierarchy");
+  // set the parent of skeleton to entity holding this animator
+  auto entityInstance = GWORLD.EntityFromID(entityID);
+  entityInstance->children.push_back(skeleton);
+  skeleton->parent = entityInstance.get();
 }
 
 void Animator::drawSkeletonHierarchy() {

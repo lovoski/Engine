@@ -8,6 +8,8 @@ namespace aEngine {
 
 struct NativeScript : public aEngine::BaseComponent {
 
+  NativeScript(EntityID id) : BaseComponent(id) {}
+
   // Bind a scriptable object to current component
   template <typename T> void Bind() {
     // create an instance of the scriptable

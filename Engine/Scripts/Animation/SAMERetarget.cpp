@@ -31,7 +31,7 @@ void SAMERetarget::sendDataToServer() {
   auto actor = entity->GetComponent<Animator>()->actor;
   std::string exportSkeletonFilepath = "./tmp_skeleton.bvh";
   std::string exportMotionFilepath = "./tmp_motion.bvh";
-  actor->ExportAsBVH(exportSkeletonFilepath);
+  actor->ExportAsBVH(exportSkeletonFilepath, false);
   sourceMotion->SaveToBVH(exportMotionFilepath);
   sendBuffer = fs::canonical(exportSkeletonFilepath).string();
   sendBuffer = sendBuffer + ";" + fs::canonical(exportMotionFilepath).string();
@@ -69,10 +69,13 @@ void SAMERetarget::handleLoadMotion(std::string motionPath) {
   if (fs::path(motionPath).extension().string() == ".bvh") {
     auto actor = entity->GetComponent<Animator>()->actor;
     auto retargetedMotion = Loader.GetMotion(motionPath);
-    if (retargetedMotion &&
-        retargetedMotion->skeleton.GetNumJoints() == actor->GetNumJoints()) {
+    if (retargetedMotion) {
       // setup retarget motion
-      motion = retargetedMotion;
+      // motion = retargetedMotion;
+      auto motionViewer = GWORLD.AddNewEntity();
+      motionViewer->name = fs::path(motionPath).filename().string();
+      motionViewer->AddComponent<Animator>(retargetedMotion);
+      motionViewer->GetComponent<Animator>()->motionName = motionPath;
     } else {
       LOG_F(ERROR, "retarget motion not valid");
       resetMotionVariables();
@@ -112,8 +115,7 @@ void SAMERetarget::DrawInspectorGUI() {
     if (animator != nullptr)
       animator->ApplyMotionToSkeleton(animator->actor->GetRestPose());
     // clear variables
-    motionName = "";
-    motion = nullptr;
+    resetMotionVariables();
     for (int i = 0; i < sizeof(motionSequencePath); ++i)
       motionSequencePath[i] = 0;
   }

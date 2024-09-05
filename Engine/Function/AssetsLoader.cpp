@@ -338,12 +338,6 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
 
   if (skel != nullptr) {
     globalParent->AddComponent<Animator>(skel);
-    auto skelEntity = globalParent->GetComponent<Animator>()->skeleton;
-    // make the skeleton entity a children of this globalParent
-    // the global transform of skelEntiy only gets updated next loop,
-    // so we can't use AssignChild here
-    globalParent->children.push_back(skelEntity);
-    skelEntity->parent = globalParent.get();
     globalParent->AddComponent<NativeScript>();
     globalParent->GetComponent<NativeScript>()->Bind<SAMERetarget>();
   }

@@ -258,7 +258,7 @@ inline void BVHPadding(std::ostream &out, int depth) {
     out << "\t";
 }
 
-bool Motion::SaveToBVH(string filename) {
+bool Motion::SaveToBVH(string filename, bool withEndEffectorName) {
   // apply the initial rotations of skeleton joints
   // the motion data remains unchanged
   auto restPose = skeleton.GetRestPose();
@@ -286,7 +286,9 @@ bool Motion::SaveToBVH(string filename) {
     for (int jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
       BVHPadding(fileOutput, depth);
       if (skeleton.jointChildren[jointInd].size() == 0) {
-        if (EndsWith(skeleton.jointNames[jointInd], "_End"))
+        if (EndsWith(skeleton.jointNames[jointInd], "_End") ||
+            !withEndEffectorName)
+          // force rename end effector
           fileOutput << "End Site\n";
         else
           fileOutput << "JOINT " << skeleton.jointNames[jointInd] << "\n";
@@ -354,7 +356,8 @@ bool Motion::SaveToBVH(string filename) {
         // oldOrien = newOrien * globalJointOrien
         // meaning that we can get the ground truth rotation with the skeleton
         // initial rotation and a delta rotation stored in each frame,
-        // we will get local rotation of each joint from this delta global rotation
+        // we will get local rotation of each joint from this delta global
+        // rotation
         newOrien[jointInd] =
             oldOrien[jointInd] * glm::inverse(globalJointOrien[jointInd]);
         if (parentInd == -1) {
@@ -450,7 +453,7 @@ Pose Skeleton::GetRestPose() {
   return p;
 }
 
-void Skeleton::ExportAsBVH(std::string filepath) {
+void Skeleton::ExportAsBVH(std::string filepath, bool withEndEffectorName) {
   int jointNum = GetNumJoints();
   Animation::Pose emptyPose = GetRestPose();
   emptyPose.skeleton = this;
@@ -458,7 +461,7 @@ void Skeleton::ExportAsBVH(std::string filepath) {
   tmpMotion.skeleton = *this;
   tmpMotion.fps = 30;
   tmpMotion.poses.push_back(emptyPose);
-  tmpMotion.SaveToBVH(filepath);
+  tmpMotion.SaveToBVH(filepath, withEndEffectorName);
 }
 
 }; // namespace Animation

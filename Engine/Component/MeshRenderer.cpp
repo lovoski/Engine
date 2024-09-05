@@ -2,7 +2,7 @@
 
 namespace aEngine {
 
-MeshRenderer::MeshRenderer(aEngine::Render::Mesh *mesh) : meshData(mesh) {
+MeshRenderer::MeshRenderer(EntityID id, aEngine::Render::Mesh *mesh) : meshData(mesh), BaseComponent(id) {
   vao.Bind();
   meshData->vbo.BindAs(GL_ARRAY_BUFFER);
   meshData->ebo.BindAs(GL_ELEMENT_ARRAY_BUFFER);

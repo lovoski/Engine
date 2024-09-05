@@ -99,8 +99,7 @@ public:
 
     // create the component with parameters
     std::shared_ptr<T> component =
-        std::make_shared<T>(std::forward<Args>(args)...);
-    component->entityID = entity;
+        std::make_shared<T>(entity, std::forward<Args>(args)...);
     GetComponentList<T>()->Insert(component);
 
     // add the component to the very signature of this entity
