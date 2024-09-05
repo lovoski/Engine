@@ -64,6 +64,58 @@ void SAMERetarget::receiveDataFromServer() {
                          });
 }
 
+void SAMERetarget::fitRetargetMotion(Animation::Motion *source,
+                                     Animation::Skeleton *target) {
+  int sourceJointNum = source->skeleton.GetNumJoints();
+  int targetJointNum = target->GetNumJoints();
+  if (sourceJointNum != targetJointNum) {
+    LOG_F(ERROR,
+          "the joint of source skeleton and target skeleton must be the same");
+    return;
+  }
+  int jointNum = sourceJointNum;
+  auto sourceGlobalPosition =
+      source->skeleton.GetRestPose().GetGlobalPositions();
+  std::vector<glm::quat> targetJointOrien;
+  auto targetGlobalPosition =
+      target->GetRestPose().GetGlobalPositionOrientation(targetJointOrien);
+  // the result of same will match the target skeleton in order but not in names
+  source->skeleton.jointNames = target->jointNames;
+  // fit the motion data to target skeleton format if the target skeleton is
+  // fbx-style
+  bool fbxStyleTarget = false;
+  for (int i = 0; i < jointNum; ++i) {
+    if (target->jointRotation[i] != glm::quat(1.0f, glm::vec3(0.0f))) {
+      fbxStyleTarget = true; // bvh-style skeleton don't have rotation
+      break;
+    }
+  }
+  if (fbxStyleTarget) {
+    // the source motion is bvh-style, apply global rotation at each frame
+    int numFrames = source->poses.size();
+    std::vector<glm::quat> oldOrien,
+        newOrien(jointNum, glm::quat(1.0f, glm::vec3(0.0f)));
+    for (int frameInd = 0; frameInd < numFrames; ++frameInd) {
+      source->poses[frameInd].GetGlobalPositionOrientation(oldOrien);
+      for (int jointInd = 0; jointInd < jointNum; ++jointInd) {
+        // oldOrien = newOrien * inv(initialOrien)
+        newOrien[jointInd] = oldOrien[jointInd] * targetJointOrien[jointInd];
+      }
+      // build local rotations from global orientations
+      glm::quat parentOrien;
+      for (int jointInd = 0; jointInd < jointNum; ++jointInd) {
+        int parentInd = source->skeleton.jointParent[jointInd];
+        if (parentInd == -1)
+          parentOrien = glm::quat(1.0f, glm::vec3(0.0f));
+        else
+          parentOrien = newOrien[parentInd];
+        source->poses[frameInd].jointRotations[jointInd] =
+            glm::inverse(parentOrien) * newOrien[jointInd];
+      }
+    }
+  }
+}
+
 void SAMERetarget::handleLoadMotion(std::string motionPath) {
   motionPath.pop_back();
   if (fs::path(motionPath).extension().string() == ".bvh") {
@@ -71,11 +123,11 @@ void SAMERetarget::handleLoadMotion(std::string motionPath) {
     auto retargetedMotion = Loader.GetMotion(motionPath);
     if (retargetedMotion) {
       // setup retarget motion
-      // motion = retargetedMotion;
-      auto motionViewer = GWORLD.AddNewEntity();
-      motionViewer->name = fs::path(motionPath).filename().string();
-      motionViewer->AddComponent<Animator>(retargetedMotion);
-      motionViewer->GetComponent<Animator>()->motionName = motionPath;
+      // this is a async function called from Update function,
+      // so we need to build skeleton map manually for this new motion
+      fitRetargetMotion(retargetedMotion,
+                        entity->GetComponent<Animator>()->actor);
+      motion = retargetedMotion;
     } else {
       LOG_F(ERROR, "retarget motion not valid");
       resetMotionVariables();
@@ -127,7 +179,8 @@ void SAMERetarget::DrawInspectorGUI() {
       fs::path filepath = fs::path(assetFilename);
       std::string extension = filepath.extension().string();
       if (extension == ".bvh" || extension == ".fbx") {
-        sourceMotion = Loader.GetMotion(filepath.string());
+        sourceMotion = std::make_shared<Animation::Motion>();
+        sourceMotion->LoadFromBVH(filepath.string());
         // try retarget this motion to current animator's actor
         if (animator != nullptr) {
           LOG_F(INFO, "Actor joint number: %d, motion joint number %d",

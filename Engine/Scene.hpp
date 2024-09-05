@@ -181,6 +181,13 @@ public:
   // is a valid camera entity (has camera component), otherwise returns false.
   bool SetActiveCamera(EntityID camera);
 
+  // Get all the entities in this scene, it's recommended to use the
+  // `GetSystemInstance` function to get the instance of system maintaining a
+  // specific type of entity for easier query.
+  const std::map<EntityID, std::shared_ptr<Entity>> GetEntities() const {
+    return entities;
+  }
+
   // Check if one entity is valid,
   // return `false` and set id to -1 if not.
   bool EntityValid(EntityID &id);

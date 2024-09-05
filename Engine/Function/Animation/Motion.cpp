@@ -1,5 +1,4 @@
 #include "Function/Animation/Motion.hpp"
-#include "Function/Math/Math.hpp"
 
 #include <exception>
 #include <filesystem>
@@ -258,7 +257,7 @@ inline void BVHPadding(std::ostream &out, int depth) {
     out << "\t";
 }
 
-bool Motion::SaveToBVH(string filename, bool withEndEffectorName) {
+bool Motion::SaveToBVH(string filename, bool keepJointNames) {
   // apply the initial rotations of skeleton joints
   // the motion data remains unchanged
   auto restPose = skeleton.GetRestPose();
@@ -287,7 +286,7 @@ bool Motion::SaveToBVH(string filename, bool withEndEffectorName) {
       BVHPadding(fileOutput, depth);
       if (skeleton.jointChildren[jointInd].size() == 0) {
         if (EndsWith(skeleton.jointNames[jointInd], "_End") ||
-            !withEndEffectorName)
+            !keepJointNames)
           // force rename end effector
           fileOutput << "End Site\n";
         else
@@ -349,7 +348,7 @@ bool Motion::SaveToBVH(string filename, bool withEndEffectorName) {
       vector<quat> newOrien(jointNumber, quat(1.0f, vec3(0.0f)));
       vector<quat> oldOrien;
       // oldOrien is the ground truth rotation we need
-      auto _fjp_ = poses[frameInd].GetGlobalPositionOrientation(oldOrien);
+      poses[frameInd].GetGlobalPositionOrientation(oldOrien);
       for (int jointInd = 0; jointInd < jointNumber; ++jointInd) {
         int parentInd = skeleton.jointParent[jointInd];
         // `newOrien` is the delta rotation in each frame
@@ -453,7 +452,7 @@ Pose Skeleton::GetRestPose() {
   return p;
 }
 
-void Skeleton::ExportAsBVH(std::string filepath, bool withEndEffectorName) {
+void Skeleton::ExportAsBVH(std::string filepath, bool keepJointNames) {
   int jointNum = GetNumJoints();
   Animation::Pose emptyPose = GetRestPose();
   emptyPose.skeleton = this;
@@ -461,7 +460,7 @@ void Skeleton::ExportAsBVH(std::string filepath, bool withEndEffectorName) {
   tmpMotion.skeleton = *this;
   tmpMotion.fps = 30;
   tmpMotion.poses.push_back(emptyPose);
-  tmpMotion.SaveToBVH(filepath, withEndEffectorName);
+  tmpMotion.SaveToBVH(filepath, keepJointNames);
 }
 
 }; // namespace Animation

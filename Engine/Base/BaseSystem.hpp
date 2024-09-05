@@ -33,7 +33,7 @@ public:
 
   // Initialize system related resources
   virtual void Start() {}
-  // This function should only be overloaded to update some readonly 
+  // This function should only be overloaded to update some readonly
   // variables before update function to avoid over compute
   virtual void PreUpdate(float dt) {}
   virtual void Update(float dt) {}
@@ -43,6 +43,9 @@ public:
   virtual void Reset() {}
 
   const int GetNumEntities() const { return entities.size(); }
+
+  // Get all the ids of entities maintained by this system.
+  const std::set<EntityID> GetEntities() const { return entities; }
 
 protected:
   EntitySignature signature;
