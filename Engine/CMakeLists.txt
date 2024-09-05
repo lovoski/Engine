@@ -14,6 +14,7 @@ add_subdirectory("Deps/stb")
 add_subdirectory("Deps/loguru")
 add_subdirectory("Deps/filedialog")
 add_subdirectory("Deps/cereal")
+add_subdirectory("Deps/ufbx")
 
 # asio
 include("cmake/FetchASIO.cmake")
@@ -28,7 +29,7 @@ include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb glm imgui loguru filedialog asio::asio cereal)
+set(aEngine_DEPS glad glfw stb glm imgui loguru filedialog asio::asio cereal ufbx)
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System
