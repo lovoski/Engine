@@ -155,6 +155,13 @@ void SAMERetarget::DrawInspectorGUI() {
   auto animator = entity->GetComponent<Animator>();
   drawInspectorGUIDefault();
   ImGui::MenuItem("Motion", nullptr, nullptr, false);
+  ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
+  ImGui::TextWrapped("Duration: %d",
+                     motion == nullptr ? -1 : motion->poses.size());
+  if (ImGui::Button("Export BVH Motion", {-1, 30})) {
+    if (motion != nullptr)
+      motion->SaveToBVH("./save_motion.bvh");
+  }
   ImGui::BeginChild("choosemotionsource", {-1, 30});
   static char motionSequencePath[200] = {0};
   sprintf(motionSequencePath, motionName.c_str());
@@ -178,7 +185,8 @@ void SAMERetarget::DrawInspectorGUI() {
       char *assetFilename = (char *)payload->Data;
       fs::path filepath = fs::path(assetFilename);
       std::string extension = filepath.extension().string();
-      if (extension == ".bvh" || extension == ".fbx") {
+      if (extension == ".bvh") {
+        // TODO: currently, only bvh file are supported as source motion
         sourceMotion = std::make_shared<Animation::Motion>();
         sourceMotion->LoadFromBVH(filepath.string());
         // try retarget this motion to current animator's actor

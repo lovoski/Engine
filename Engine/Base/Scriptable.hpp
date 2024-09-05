@@ -12,11 +12,14 @@ class Entity;
 
 class Scriptable {
 public:
+  // Don't do any operations involving reading the entity member variable inside
+  // the constructor, this variable is only set after the constructor being
+  // called. See `NativeScipt` component's `Bind` function for more details.
   Scriptable() {}
   ~Scriptable() {}
 
   // The start function only get called once
-  // when the script is attached to some entity 
+  // when the script is attached to some entity
   // with the Bind function
   virtual void Start() {}
 
@@ -33,7 +36,7 @@ public:
   virtual void DrawToScene() {}
 
   // This function would get called in DrawInspectorGUI by default
-  // If you override the function DrawInspectorGUI but also want 
+  // If you override the function DrawInspectorGUI but also want
   // the default GUI, call this function before your override code
   virtual void drawInspectorGUIDefault();
   virtual std::string getTypeName();
@@ -46,4 +49,4 @@ public:
   Entity *entity = nullptr;
 };
 
-};
+}; // namespace aEngine
