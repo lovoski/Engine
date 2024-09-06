@@ -374,7 +374,8 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   return globalParent;
 }
 
-Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part) {
+Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part,
+                          std::map<string, std::size_t> &boneMapping) {
   vector<Vertex> vertices;
   vector<unsigned int> indices(mesh->max_face_triangles * 3);
   for (auto faceInd : part.face_indices) {
@@ -414,6 +415,7 @@ Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part) {
         v.BoneWeight[boneCounter] = 0.0f;
       }
       // setup skin deformers
+      // if there's skin_deformers, the boneMapping won't be empty
       for (auto skin : mesh->skin_deformers) {
         auto vertex = mesh->vertex_indices[index];
         auto skinVertex = skin->vertices[vertex];
@@ -423,7 +425,16 @@ Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part) {
         float totalWeight = 0.0f;
         for (auto k = 0; k < numWeights; ++k) {
           auto skinWeight = skin->weights[skinVertex.weight_begin + k];
-          v.BoneId[k] = skinWeight.cluster_index;
+          string clusterName =
+              skin->clusters[skinWeight.cluster_index]->bone_node->name.data;
+          auto boneMapIt = boneMapping.find(clusterName);
+          int mappedBoneInd = 0;
+          if (boneMapIt == boneMapping.end()) {
+            LOG_F(ERROR, "cluster named %s not in boneMapping",
+                  clusterName.c_str());
+          } else
+            mappedBoneInd = boneMapIt->second;
+          v.BoneId[k] = mappedBoneInd;
           totalWeight += (float)skinWeight.weight;
           v.BoneWeight[k] = (float)skinWeight.weight;
         }
@@ -431,6 +442,10 @@ Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part) {
         if (totalWeight != 0.0f) {
           for (auto k = 0; k < numWeights; ++k)
             v.BoneWeight[k] /= totalWeight;
+        } else {
+          // parent the vertex to root if its not bind
+          v.BoneId[0] = 0;
+          v.BoneWeight[0] = 1.0f;
         }
       }
 
@@ -468,17 +483,11 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
     return meshes;
   }
 
-  // process the meshes
-  for (auto fbxMesh : scene->meshes) {
-    for (auto fbxMeshPart : fbxMesh->material_parts) {
-      meshes.push_back(ProcessMesh(fbxMesh, fbxMeshPart));
-    }
-  }
-
   // the parent bone will always have lower index in globalBones
   // than all its children
   std::vector<BoneInfo> globalBones;
   std::map<std::string, std::size_t> boneMapping;
+  std::map<int, int> oldBoneInd2NewInd;
   std::stack<ufbx_node *> s;
   s.push(scene->root_node);
   while (!s.empty()) {
@@ -488,7 +497,8 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
       // if this is a bone node
       string boneName = cur->name.data;
       if (boneMapping.find(boneName) == boneMapping.end()) {
-        boneMapping.insert(std::make_pair(boneName, globalBones.size()));
+        int currentBoneInd = globalBones.size();
+        boneMapping.insert(std::make_pair(boneName, currentBoneInd));
         BoneInfo bi;
         bi.boneName = boneName;
         bi.node = cur;
@@ -505,8 +515,7 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
               LOG_F(ERROR, "parent bone don't exist in boneMapping");
             } else {
               bi.parentIndex = parentIt->second;
-              globalBones[parentIt->second].children.push_back(
-                  globalBones.size());
+              globalBones[parentIt->second].children.push_back(currentBoneInd);
               break;
             }
           }
@@ -544,7 +553,6 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
 
     // create skeleton, register it in allSkeletons
     Animation::Skeleton *skel = new Animation::Skeleton();
-    std::map<int, int> old2new;
     // map indices from scene->skin_clusters to globalBones
     for (int clusterInd = 0; clusterInd < scene->skin_clusters.count;
          ++clusterInd) {
@@ -561,8 +569,8 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
                       glm::vec4(ConvertToGLM(offsetMatrix.cols[1]), 0.0f),
                       glm::vec4(ConvertToGLM(offsetMatrix.cols[2]), 0.0f),
                       glm::vec4(ConvertToGLM(offsetMatrix.cols[3]), 1.0f));
-        old2new.insert(std::make_pair(static_cast<int>(clusterInd),
-                                      static_cast<int>(it->second)));
+        oldBoneInd2NewInd.insert(std::make_pair(static_cast<int>(clusterInd),
+                                                static_cast<int>(it->second)));
       }
     }
     // assume one file only contains one skeleton
@@ -578,21 +586,6 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
       skel->jointRotation.push_back(globalBones[jointInd].localRotation);
       skel->jointScale.push_back(globalBones[jointInd].localScale);
       skel->offsetMatrices.push_back(globalBones[jointInd].offsetMatrix);
-    }
-    // map the bone indices in vertices
-    for (auto mesh : meshes) {
-      for (int vid = 0; vid < mesh->vertices.size(); ++vid) {
-        for (int k = 0; k < MAX_BONES; ++k) {
-          if (mesh->vertices[vid].BoneId[k] != 0) {
-            int oldBoneInd = mesh->vertices[vid].BoneId[k];
-            int newBoneInd = old2new[oldBoneInd];
-            mesh->vertices[vid].BoneId[k] = newBoneInd;
-          }
-        }
-      }
-      // update buffers of the mesh
-      mesh->vbo.SetDataAs(GL_ARRAY_BUFFER, mesh->vertices, GL_STATIC_DRAW);
-      mesh->vbo.UnbindAs(GL_ARRAY_BUFFER);
     }
     // create motion for the skeleton
     int numFrames = animationPerJoint[0].size();
@@ -617,6 +610,13 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
         }
         motion->poses.push_back(pose);
       }
+    }
+  }
+
+  // process the meshes after the bone has setup
+  for (auto fbxMesh : scene->meshes) {
+    for (auto fbxMeshPart : fbxMesh->material_parts) {
+      meshes.push_back(ProcessMesh(fbxMesh, fbxMeshPart, boneMapping));
     }
   }
 
