@@ -17,13 +17,14 @@ public:
   // mesh Data
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
+  // buffers
   Buffer vbo, ebo;
 
   std::string identifier;
   std::string modelPath;
 
   // constructor
-  Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
+  Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) {
     this->vertices = vertices;
     this->indices = indices;
     setupMesh();

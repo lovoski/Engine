@@ -22,6 +22,7 @@ struct EditorCameraController : public Scriptable {
     EntityID camera;
     if (GWORLD.GetActiveCamera(camera)) {
       auto cameraObject = GWORLD.EntityFromID(camera);
+      auto cameraComp = cameraObject->GetComponent<Camera>();
       auto camPos = cameraObject->Position();
       if (glm::length(camPos - cameraPivot) < 1e-9f) {
         cameraPivot = camPos - cameraObject->LocalForward;
@@ -55,21 +56,32 @@ struct EditorCameraController : public Scriptable {
           mouseLastPos = mouseCurrentPos;
           mouseFirstMove = false;
         }
-        glm::vec2 mouseOffset = 0.1f * (mouseCurrentPos - mouseLastPos);
+        glm::vec2 mouseOffset = mouseCurrentPos - mouseLastPos;
         if (sceneContext.engine->GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
           // move the view position
-          glm::vec3 positionDelta =
-              -movementDelta * mouseOffset.x * cameraObject->LocalLeft +
-              movementDelta * mouseOffset.y * cameraObject->LocalUp;
-          cameraPivot += positionDelta;
-          cameraObject->SetGlobalPosition(cameraObject->Position() +
-                                          positionDelta);
+          auto screenSize = GWORLD.Context.sceneWindowSize;
+          glm::vec4 nfcPos = {-mouseOffset.x / screenSize.x,
+                              mouseOffset.y / screenSize.y, 1.0f,
+                              1.0f};
+          auto worldRayPos = glm::inverse(cameraComp->ViewMat) *
+                             glm::inverse(cameraComp->ProjMat) * nfcPos;
+          worldRayPos /= worldRayPos.w;
+          glm::vec3 worldRayDir =
+              glm::normalize(glm::vec3(worldRayPos) - camPos);
+          worldRayDir = glm::dot(worldRayDir, cameraPivot-camPos) * worldRayDir;
+          auto deltaPos = glm::dot(worldRayDir, cameraObject->LocalLeft) *
+                              cameraObject->LocalLeft +
+                          glm::dot(worldRayDir, cameraObject->LocalUp) *
+                              cameraObject->LocalUp;
+          cameraPivot += deltaPos;
+          cameraObject->SetGlobalPosition(cameraObject->Position() + deltaPos);
         } else {
           // repose the camera
+          auto rotateOffset = mouseOffset * 0.1f;
           glm::vec3 posVector = cameraObject->Position();
-          glm::quat rotY = glm::angleAxis(glm::radians(-mouseOffset.x),
+          glm::quat rotY = glm::angleAxis(glm::radians(-rotateOffset.x),
                                           glm::vec3(0.0f, 1.0f, 0.0f));
-          glm::quat rotX = glm::angleAxis(glm::radians(-mouseOffset.y),
+          glm::quat rotX = glm::angleAxis(glm::radians(-rotateOffset.y),
                                           cameraObject->LocalLeft);
           glm::vec3 newPos =
               rotY * rotX * (posVector - cameraPivot) + cameraPivot;

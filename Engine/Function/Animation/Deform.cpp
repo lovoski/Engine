@@ -12,6 +12,7 @@ struct Vertex {
   vec4 Position;
   vec4 Normal;
   vec4 TexCoords;
+  vec4 Color;
   int BoneId[MAX_BONES];
   float BoneWeight[MAX_BONES];
 };

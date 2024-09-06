@@ -2,13 +2,11 @@
 
 `aEngine` is an ECS based game engine aimed to provide a sandbox environment for rapid prototyping.
 
-In ECS architecture, each scene consists of some entities (game object) that has potential hierarchy relations with each other.
+In ECS architecture, each scene consists of a number of entities (game object) in hierarchy.
 
-These entities store the neccessary indices to components of different types where the actual data is stored (meshes, materials, motions etc.).
+These entities store the indices to components which holds the actual data (meshes, materials, motions etc.).
 
-During the main loop, all components will get updated by some specific systems. For example, the `NativeScript` component will be maintained by `NativeScriptSystem`.
-
-Another thing worth mentioning is that, all component instances are stored as `shaderd_ptr` in relative `ComponentLists<T>`. The reason is that the copy operation between components is relative common, so there might be some issue with the life cycle of a component. If I put a opengl buffer object in a component and deconstruct it at the components's deconstructor, the copy of this component won't be able to access this buffer (like `skeletonMatrices` in `DeformRenderer`).
+In each main loop, all components are maintained by corresponding systems. For example, the `NativeScript` component will be maintained by `NativeScriptSystem`.
 
 ## Features
 
@@ -19,13 +17,11 @@ Another thing worth mentioning is that, all component instances are stored as `s
 
 ## How To Compile
 
-The project depends on OpenGL 4.6, FBX SDK 2020.3, ONNX runtime 1.9.0. Other dependencies can be directly retreived with `git clone --recursive ...`.
+The project depends on OpenGL 4.6, ONNX runtime 1.9.0. Other dependencies can be directly retreived with `git clone --recursive ...`.
 
-FBX SDK is required for `Engine/Function/AssetsLoader`, so you need to download the installer [here](https://aps.autodesk.com/developer/overview/fbx-sdk) and install it as autodesk described.
+ONNX runtime is optional, you can disable it by setting the cmake variable `NN_MODULE` to `OFF`. If you do need this feature, reference `Engine/cmake/FindONNXRuntime.cmake` for more details.
 
-However, ONNX runtime is optional, you can disable it by setting the cmake variable `NN_MODULE` to `OFF`. If you do need this feature, reference `Engine/cmake/FindONNXRuntime.cmake` for more details.
-
-You need to have `cmake >= 3.20` to properly execute the cmake compile scripts. After all dependencies are setup, execute `mkdir build && cd build && cmake ..` to configure the project. Or use cmake tools in your ide (vscode) to configure, then build a Release or Debug variant as your need.
+You need to have `cmake >= 3.20` to properly execute the cmake scripts.
 
 ## Scripting System
 
@@ -34,8 +30,7 @@ To manipulate the scene with custom function is the core to a game engine. Feel 
 Each native script component can **bind** multiple scriptable derive classes. For example, to write a controller that takes user input and change the property of active camera on the scene:
 
 ```cpp
-#include "Scene.hpp"
-#include "Base/Scriptable.hpp"
+#include "API.hpp"
 class CameraController : public aEngine::Scriptable {
 public:
   void Update(float dt) override {

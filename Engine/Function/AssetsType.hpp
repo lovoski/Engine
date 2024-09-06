@@ -12,6 +12,8 @@ struct Vertex {
   // xy: uv
   // zw: scale_u, scale_v
   glm::vec4 TexCoords;
+  // vertex color
+  glm::vec4 Color;
   // Info related to skeleton animation
   int BoneId[MAX_BONES];
   float BoneWeight[MAX_BONES];

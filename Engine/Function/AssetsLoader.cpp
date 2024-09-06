@@ -14,7 +14,7 @@
 
 #include "System/Animation/AnimationSystem.hpp"
 
-#include <fbxsdk.h>
+#include <ufbx.h>
 
 #include "Scene.hpp"
 
@@ -25,7 +25,7 @@ using std::vector;
 
 struct BoneInfo {
   std::string boneName;
-  fbxsdk::FbxNode *node;
+  ufbx_node *node;
   glm::vec3 localPosition = glm::vec3(0.0f);
   glm::quat localRotation = glm::quat(1.0f, glm::vec3(0.0f));
   glm::vec3 localScale = glm::vec3(1.0f);
@@ -40,6 +40,10 @@ struct KeyFrame {
   glm::quat localRotation;
   glm::vec3 localScale;
 };
+
+glm::vec3 ConvertToGLM(ufbx_vec3 &v) { return {v.x, v.y, v.z}; }
+glm::vec4 ConvertToGLM(ufbx_vec4 &v) { return {v.x, v.y, v.z, v.w}; }
+glm::quat ConvertToGLM(ufbx_quat &q) { return glm::quat(q.w, q.x, q.y, q.z); }
 
 AssetsLoader::AssetsLoader() {
   // stb image library setup
@@ -370,472 +374,254 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   return globalParent;
 }
 
-bool IsSkeletonNode(fbxsdk::FbxNode *node) {
-  if (!node)
-    return false;
-  fbxsdk::FbxNodeAttribute *attr = node->GetNodeAttribute();
-  if (attr && attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eSkeleton) {
-    return true;
-  }
-  return false;
-}
-void ExtractBoneTransforms(fbxsdk::FbxNode *node, glm::vec3 &localPosition,
-                           glm::quat &localRotation, glm::vec3 &localScale,
-                           fbxsdk::FbxTime frameTime = FBXSDK_TIME_INFINITE) {
-  fbxsdk::FbxAMatrix transformMatrix = node->EvaluateLocalTransform(frameTime);
+Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part) {
+  vector<Vertex> vertices;
+  vector<unsigned int> indices(mesh->max_face_triangles * 3);
+  for (auto faceInd : part.face_indices) {
+    ufbx_face face = mesh->faces[faceInd];
+    auto numTriangles =
+        ufbx_triangulate_face(indices.data(), indices.size(), mesh, face);
+    for (auto i = 0; i < numTriangles * 3; ++i) {
+      auto index = indices[i];
+      Vertex v;
+      v.Position.x = mesh->vertex_position[index].x;
+      v.Position.y = mesh->vertex_position[index].y;
+      v.Position.z = mesh->vertex_position[index].z;
+      v.Position.w = 1.0f;
 
-  // Extract local position, rotation, and scale from the evaluated matrix
-  localPosition = glm::vec3(static_cast<float>(transformMatrix.GetT()[0]),
-                            static_cast<float>(transformMatrix.GetT()[1]),
-                            static_cast<float>(transformMatrix.GetT()[2]));
+      v.Normal.x = mesh->vertex_normal[index].x;
+      v.Normal.y = mesh->vertex_normal[index].y;
+      v.Normal.z = mesh->vertex_normal[index].z;
+      v.Normal.w = 0.0f;
 
-  fbxsdk::FbxQuaternion fbxRotation = transformMatrix.GetQ();
-  localRotation = glm::quat(static_cast<float>(fbxRotation[3]), // w
-                            static_cast<float>(fbxRotation[0]), // x
-                            static_cast<float>(fbxRotation[1]), // y
-                            static_cast<float>(fbxRotation[2])  // z
-  );
+      // for multiple sets of uv, refer to mesh->uv_sets
+      // this is by default the first uv set
+      v.TexCoords.x = mesh->vertex_uv[index].x;
+      v.TexCoords.y = mesh->vertex_uv[index].y;
+      v.TexCoords.z = 1.0f;
+      v.TexCoords.w = 1.0f;
 
-  localScale = glm::vec3(static_cast<float>(transformMatrix.GetS()[0]),
-                         static_cast<float>(transformMatrix.GetS()[1]),
-                         static_cast<float>(transformMatrix.GetS()[2]));
-}
-Render::Mesh *ProcessMesh(fbxsdk::FbxMesh *mesh,
-                          std::vector<BoneInfo> &globalBones,
-                          std::unordered_map<std::string, int> &boneMapping) {
-  // Triangulate the model if needed
-  if (!mesh->IsTriangleMesh()) {
-    fbxsdk::FbxGeometryConverter geometryConverter(
-        mesh->GetNode()->GetScene()->GetFbxManager());
-    mesh = static_cast<fbxsdk::FbxMesh *>(
-        geometryConverter.Triangulate(mesh, true));
-  }
-
-  // Get the number of control points (vertices) in the mesh
-  int controlPointCount = mesh->GetControlPointsCount();
-  fbxsdk::FbxVector4 *controlPoints = mesh->GetControlPoints();
-
-  vector<Vertex> meshVertices;
-  vector<unsigned int> meshIndices;
-
-  // Mapping from a control point to the corresponding vertex index
-  std::unordered_map<int, int> controlPointToVertexIndex;
-
-  // Extract vertex positions, normals, and texture coordinates
-  fbxsdk::FbxGeometryElementNormal *normalElement = mesh->GetElementNormal();
-  fbxsdk::FbxGeometryElementUV *uvElement = mesh->GetElementUV();
-
-  for (int i = 0; i < mesh->GetPolygonCount(); i++) {
-    for (int j = 0; j < mesh->GetPolygonSize(i); j++) {
-      int controlPointIndex = mesh->GetPolygonVertex(i, j);
-
-      // If this control point hasn't been mapped to a vertex yet
-      if (controlPointToVertexIndex.find(controlPointIndex) ==
-          controlPointToVertexIndex.end()) {
-        // Create a new vertex
-        Vertex vertex;
-
-        // Set position
-        fbxsdk::FbxVector4 controlPoint = controlPoints[controlPointIndex];
-        vertex.Position.x = controlPoint[0];
-        vertex.Position.y = controlPoint[1];
-        vertex.Position.z = controlPoint[2];
-        vertex.Position.w = 1.0f;
-
-        // Set normal
-        if (normalElement) {
-          fbxsdk::FbxVector4 normal;
-          if (normalElement->GetMappingMode() ==
-              fbxsdk::FbxGeometryElement::eByControlPoint) {
-            if (normalElement->GetReferenceMode() ==
-                fbxsdk::FbxGeometryElement::eDirect) {
-              normal = normalElement->GetDirectArray().GetAt(controlPointIndex);
-            } else if (normalElement->GetReferenceMode() ==
-                       fbxsdk::FbxGeometryElement::eIndexToDirect) {
-              int normalIndex =
-                  normalElement->GetIndexArray().GetAt(controlPointIndex);
-              normal = normalElement->GetDirectArray().GetAt(normalIndex);
-            }
-          } else if (normalElement->GetMappingMode() ==
-                     fbxsdk::FbxGeometryElement::eByPolygonVertex) {
-            int normalIndex = mesh->GetPolygonVertexIndex(i) + j;
-            if (normalElement->GetReferenceMode() ==
-                fbxsdk::FbxGeometryElement::eDirect) {
-              normal = normalElement->GetDirectArray().GetAt(normalIndex);
-            } else if (normalElement->GetReferenceMode() ==
-                       fbxsdk::FbxGeometryElement::eIndexToDirect) {
-              normalIndex = normalElement->GetIndexArray().GetAt(normalIndex);
-              normal = normalElement->GetDirectArray().GetAt(normalIndex);
-            }
-          }
-          vertex.Normal.x = normal[0];
-          vertex.Normal.y = normal[1];
-          vertex.Normal.z = normal[2];
-          vertex.Normal.w = 0.0f;
-        }
-
-        // Set UV coordinates
-        if (uvElement) {
-          fbxsdk::FbxVector2 uv;
-          if (uvElement->GetMappingMode() ==
-              fbxsdk::FbxGeometryElement::eByControlPoint) {
-            if (uvElement->GetReferenceMode() ==
-                fbxsdk::FbxGeometryElement::eDirect) {
-              uv = uvElement->GetDirectArray().GetAt(controlPointIndex);
-            } else if (uvElement->GetReferenceMode() ==
-                       fbxsdk::FbxGeometryElement::eIndexToDirect) {
-              int uvIndex = uvElement->GetIndexArray().GetAt(controlPointIndex);
-              uv = uvElement->GetDirectArray().GetAt(uvIndex);
-            }
-          } else if (uvElement->GetMappingMode() ==
-                     fbxsdk::FbxGeometryElement::eByPolygonVertex) {
-            int uvIndex = mesh->GetTextureUVIndex(i, j);
-            uv = uvElement->GetDirectArray().GetAt(uvIndex);
-          }
-          vertex.TexCoords.x = uv[0];
-          vertex.TexCoords.y = uv[1];
-          vertex.TexCoords.z = 0.0f;
-          vertex.TexCoords.w = 0.0f;
-        }
-
-        // Initialize bone weights and indices
-        for (int b = 0; b < MAX_BONES; ++b) {
-          vertex.BoneId[b] = 0;
-          vertex.BoneWeight[b] = 0.0f;
-        }
-
-        // Add the vertex to the mesh
-        int vertexIndex = meshVertices.size();
-        meshVertices.push_back(vertex);
-
-        // Map the control point index to the vertex index
-        controlPointToVertexIndex[controlPointIndex] = vertexIndex;
+      v.Color = glm::vec4(1.0f);
+      if (mesh->vertex_color.exists) {
+        v.Color.x = mesh->vertex_color[index].x;
+        v.Color.y = mesh->vertex_color[index].y;
+        v.Color.z = mesh->vertex_color[index].z;
+        v.Color.w = mesh->vertex_color[index].w;
       }
 
-      // Get the vertex index
-      int vertexIndex = controlPointToVertexIndex[controlPointIndex];
+      for (int boneCounter = 0; boneCounter < MAX_BONES; ++boneCounter) {
+        v.BoneId[boneCounter] = 0;
+        v.BoneWeight[boneCounter] = 0.0f;
+      }
+      // setup skin deformers
+      for (auto skin : mesh->skin_deformers) {
+        auto vertex = mesh->vertex_indices[index];
+        auto skinVertex = skin->vertices[vertex];
+        auto numWeights = skinVertex.num_weights;
+        if (numWeights > MAX_BONES)
+          numWeights = MAX_BONES;
+        float totalWeight = 0.0f;
+        for (auto k = 0; k < numWeights; ++k) {
+          auto skinWeight = skin->weights[skinVertex.weight_begin + k];
+          v.BoneId[k] = skinWeight.cluster_index;
+          totalWeight += (float)skinWeight.weight;
+          v.BoneWeight[k] = (float)skinWeight.weight;
+        }
+        // normalize the skin weights
+        if (totalWeight != 0.0f) {
+          for (auto k = 0; k < numWeights; ++k)
+            v.BoneWeight[k] /= totalWeight;
+        }
+      }
 
-      // Add the index to the mesh indices
-      meshIndices.push_back(vertexIndex);
+      vertices.push_back(v);
     }
   }
 
-  int skinCount = mesh->GetDeformerCount(fbxsdk::FbxDeformer::eSkin);
-  for (int i = 0; i < skinCount; ++i) {
-    fbxsdk::FbxSkin *skin = static_cast<fbxsdk::FbxSkin *>(
-        mesh->GetDeformer(i, fbxsdk::FbxDeformer::eSkin));
+  if (vertices.size() != part.num_triangles * 3)
+    LOG_F(WARNING, "vertices number inconsistent with part's triangle number");
 
-    for (int j = 0; j < skin->GetClusterCount(); ++j) {
-      fbxsdk::FbxCluster *cluster = skin->GetCluster(j);
-      std::string boneName = cluster->GetLink()->GetName();
+  ufbx_vertex_stream stream[] = {
+      {vertices.data(), vertices.size(), sizeof(Vertex)}};
+  indices.resize(part.num_triangles * 3);
+  auto numVertices = ufbx_generate_indices(stream, 1, indices.data(),
+                                           indices.size(), nullptr, nullptr);
+  vertices.resize(numVertices);
 
-      // Check if the bone is already in the global bone structure
-      if (boneMapping.find(boneName) == boneMapping.end()) {
-        // if not, insert it into the globalBones structure
-        BoneInfo newBone;
-        newBone.boneName = boneName;
-        boneMapping[boneName] = globalBones.size();
-        globalBones.push_back(newBone);
-      }
-
-      // get the reference
-      int boneIndex = boneMapping[boneName];
-
-      fbxsdk::FbxNode *parentNode = cluster->GetLink()->GetParent();
-      if (parentNode && IsSkeletonNode(parentNode)) {
-        // Check if the parent bone is already in the structure
-        std::string parentName = parentNode->GetName();
-        if (boneMapping.find(parentName) == boneMapping.end()) {
-          // insert the parent node if not exists
-          BoneInfo parentBone;
-          parentBone.boneName = parentName;
-          boneMapping[parentName] = globalBones.size();
-          globalBones.push_back(parentBone);
-        }
-        globalBones[boneIndex].parentIndex = boneMapping[parentName];
-        // insert to parent's children if its not a member
-        bool found = false;
-        for (auto child :
-             globalBones[globalBones[boneIndex].parentIndex].children) {
-          if (child == boneIndex) {
-            found = true;
-            break;
-          }
-        }
-        // if there's multiple meshes, the bone could potentially be added more
-        // than once
-        if (!found)
-          globalBones[globalBones[boneIndex].parentIndex].children.push_back(
-              boneIndex);
-      }
-
-      globalBones[boneIndex].node = cluster->GetLink();
-      ExtractBoneTransforms(cluster->GetLink(),
-                            globalBones[boneIndex].localPosition,
-                            globalBones[boneIndex].localRotation,
-                            globalBones[boneIndex].localScale);
-
-      int *controlPointIndices = cluster->GetControlPointIndices();
-      double *weights = cluster->GetControlPointWeights();
-
-      for (int k = 0; k < cluster->GetControlPointIndicesCount(); ++k) {
-        int controlPointIndex = controlPointIndices[k];
-        double weight = weights[k];
-
-        if (controlPointToVertexIndex.find(controlPointIndex) !=
-            controlPointToVertexIndex.end()) {
-          int vertexIndex = controlPointToVertexIndex[controlPointIndex];
-
-          // Find the smallest weight index to replace if necessary
-          for (int b = 0; b < MAX_BONES; ++b) {
-            if (meshVertices[vertexIndex].BoneWeight[b] == 0.0f) {
-              meshVertices[vertexIndex].BoneId[b] = boneIndex;
-              meshVertices[vertexIndex].BoneWeight[b] =
-                  static_cast<float>(weight);
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-  // Normalize the weights
-  for (auto &vertex : meshVertices) {
-    float totalWeight = 0.0f;
-    for (int b = 0; b < MAX_BONES; ++b) {
-      totalWeight += vertex.BoneWeight[b];
-    }
-    if (totalWeight > 0.0f) {
-      for (int b = 0; b < MAX_BONES; ++b) {
-        vertex.BoneWeight[b] /= totalWeight;
-      }
-    } else {
-      // TODO: be careful about this function
-      // If this vertex is not bind to any bone
-      // Bind it to root by default
-      vertex.BoneWeight[0] = 1.0f;
-    }
-  }
-
-  // Create and return the mesh
-  auto result = new Render::Mesh(meshVertices, meshIndices);
-  result->identifier = mesh->GetNode()->GetName();
+  // create the final mesh
+  auto result = new Render::Mesh(vertices, indices);
+  result->identifier = mesh->name.data;
   return result;
-}
-
-void TraverseNode(fbxsdk::FbxNode *node, vector<Render::Mesh *> &meshes,
-                  std::vector<BoneInfo> &globalBones,
-                  std::unordered_map<std::string, int> &boneMapping) {
-  if (node) {
-    fbxsdk::FbxMesh *mesh = node->GetMesh();
-    if (mesh) {
-      meshes.push_back(ProcessMesh(mesh, globalBones, boneMapping));
-    }
-    for (int i = 0; i < node->GetChildCount(); i++) {
-      TraverseNode(node->GetChild(i), meshes, globalBones, boneMapping);
-    }
-  }
-}
-
-// Function to build the offset matrices for all joints
-void BuildOffsetMatrices(std::vector<BoneInfo> &bones) {
-  std::vector<glm::mat4> globalBindPoseMatrices(bones.size());
-
-  // Compute global bind pose matrices for all joints
-  std::queue<int> q;
-  for (int i = 0; i < bones.size(); ++i) {
-    if (bones[i].parentIndex == -1) {
-      q.push(i);
-      break;
-    }
-  }
-  while (!q.empty()) {
-    auto cur = q.front();
-    q.pop();
-    glm::mat4 T = glm::translate(glm::mat4(1.0f), bones[cur].localPosition);
-    glm::mat4 R = glm::mat4_cast(bones[cur].localRotation);
-    glm::mat4 S = glm::scale(glm::mat4(1.0f), bones[cur].localScale);
-    glm::mat4 localTransform = T * R * S;
-    if (bones[cur].parentIndex == -1) {
-      globalBindPoseMatrices[cur] = localTransform;
-    } else {
-      globalBindPoseMatrices[cur] =
-          globalBindPoseMatrices[bones[cur].parentIndex] * localTransform;
-    }
-    for (auto child : bones[cur].children) {
-      q.push(child);
-    }
-  }
-
-  // Compute the offset matrix for each joint
-  for (int i = 0; i < bones.size(); ++i) {
-    bones[i].offsetMatrix = glm::inverse(globalBindPoseMatrices[i]);
-  }
 }
 
 vector<Render::Mesh *>
 AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
   vector<Render::Mesh *> meshes;
 
-  // Initialize the FBX SDK manager
-  fbxsdk::FbxManager *sdkManager = fbxsdk::FbxManager::Create();
-
-  // Create an IOSettings object
-  fbxsdk::FbxIOSettings *ioSettings =
-      fbxsdk::FbxIOSettings::Create(sdkManager, IOSROOT);
-  sdkManager->SetIOSettings(ioSettings);
-
-  // Create an FBX scene
-  fbxsdk::FbxScene *scene = fbxsdk::FbxScene::Create(sdkManager, "MyScene");
-
-  // Create an importer
-  fbxsdk::FbxImporter *importer = FbxImporter::Create(sdkManager, "");
-
-  // Initialize the importer with the path to the OBJ file
-  if (!importer->Initialize(modelPath.c_str(), -1,
-                            sdkManager->GetIOSettings())) {
-    std::cerr << "Failed to initialize importer: "
-              << importer->GetStatus().GetErrorString() << std::endl;
+  ufbx_load_opts opts = {};
+  opts.target_axes = ufbx_axes_right_handed_y_up;
+  opts.target_unit_meters = 1.0f;
+  ufbx_error error;
+  ufbx_scene *scene = ufbx_load_file(modelPath.c_str(), &opts, &error);
+  if (!scene) {
+    LOG_F(ERROR, "failed to load scene: %s", error.description.data);
     return meshes;
   }
 
-  // Import the scene
-  if (!importer->Import(scene)) {
-    std::cerr << "Failed to import scene: "
-              << importer->GetStatus().GetErrorString() << std::endl;
-    return meshes;
+  // process the meshes
+  for (auto fbxMesh : scene->meshes) {
+    for (auto fbxMeshPart : fbxMesh->material_parts) {
+      meshes.push_back(ProcessMesh(fbxMesh, fbxMeshPart));
+    }
   }
 
-  // Destroy the importer since it's no longer needed
-  importer->Destroy();
-
-  // Traverse the scene to process each mesh
-  fbxsdk::FbxNode *rootNode = scene->GetRootNode();
+  // the parent bone will always have lower index in globalBones
+  // than all its children
   std::vector<BoneInfo> globalBones;
-  std::unordered_map<std::string, int> boneMapping;
-  if (rootNode) {
-    TraverseNode(rootNode, meshes, globalBones, boneMapping);
-  }
-  if (globalBones.size() > 1 && boneMapping.size() > 1) {
-    // load animation if there's any
-    // assume that there's only one skeleton in the file
-    vector<vector<KeyFrame>> animationPerJoint(globalBones.size(),
-                                               vector<KeyFrame>());
-    int animStackCount = scene->GetSrcObjectCount<fbxsdk::FbxAnimStack>();
-    auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
-    for (int i = 0; i < animStackCount; ++i) {
-      fbxsdk::FbxAnimStack *animStack =
-          scene->GetSrcObject<fbxsdk::FbxAnimStack>(i);
-      fbxsdk::FbxTimeSpan timeSpan;
-      timeSpan = animStack->GetLocalTimeSpan();
-      fbxsdk::FbxTime start = timeSpan.GetStart();
-      fbxsdk::FbxTime end = timeSpan.GetStop();
-      fbxsdk::FbxTime duration = end - start;
-      int fps = animSystem->SystemFPS;
-      fbxsdk::FbxTime frameTime;
-      frameTime.SetFrame(1, fbxsdk::FbxTime::eFrames30);
-      for (fbxsdk::FbxTime currentTime = start; currentTime < end;
-           currentTime += frameTime) {
-        for (int jointInd = 0; jointInd < globalBones.size(); ++jointInd) {
-          auto node = globalBones[jointInd].node;
-          KeyFrame kf;
-          ExtractBoneTransforms(node, kf.localPosition, kf.localRotation,
-                                kf.localScale, currentTime);
-          animationPerJoint[jointInd].push_back(kf);
+  std::map<std::string, std::size_t> boneMapping;
+  std::stack<ufbx_node *> s;
+  s.push(scene->root_node);
+  while (!s.empty()) {
+    auto cur = s.top();
+    s.pop();
+    if (cur->bone) {
+      // if this is a bone node
+      string boneName = cur->name.data;
+      if (boneMapping.find(boneName) == boneMapping.end()) {
+        boneMapping.insert(std::make_pair(boneName, globalBones.size()));
+        BoneInfo bi;
+        bi.boneName = boneName;
+        bi.node = cur;
+        auto localTransform = cur->local_transform;
+        bi.localScale = ConvertToGLM(localTransform.scale);
+        bi.localPosition = ConvertToGLM(localTransform.translation);
+        bi.localRotation = ConvertToGLM(localTransform.rotation);
+        // find a parent bone
+        auto curParent = cur->parent;
+        while (curParent) {
+          if (curParent->bone) {
+            auto parentIt = boneMapping.find(curParent->name.data);
+            if (parentIt == boneMapping.end()) {
+              LOG_F(ERROR, "parent bone don't exist in boneMapping");
+            } else {
+              bi.parentIndex = parentIt->second;
+              globalBones[parentIt->second].children.push_back(
+                  globalBones.size());
+              break;
+            }
+          }
+          curParent = curParent->parent;
         }
+        globalBones.push_back(bi);
       }
     }
+    for (auto child : cur->children) {
+      s.push(child);
+    }
+  }
 
-    // build offset matrices
-    BuildOffsetMatrices(globalBones);
+  if (globalBones.size() > 1 && boneMapping.size() > 1) {
+    int animStackCount = scene->anim_stacks.count;
+    auto anim = scene->anim; // import the active animation only
+    auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
+    std::vector<std::vector<KeyFrame>> animationPerJoint(globalBones.size(),
+                                                         vector<KeyFrame>());
+    auto startTime = anim->time_begin, endTime = anim->time_end;
+    double sampleDelta = 1.0 / animSystem->SystemFPS;
+    for (auto jointInd = 0; jointInd < globalBones.size(); ++jointInd) {
+      auto jointNode = globalBones[jointInd].node;
+      for (double currentTime = startTime; currentTime < endTime;
+           currentTime += sampleDelta) {
+        auto localTransform =
+            ufbx_evaluate_transform(anim, jointNode, currentTime);
+        KeyFrame kf;
+        kf.localPosition = ConvertToGLM(localTransform.translation);
+        kf.localRotation = ConvertToGLM(localTransform.rotation);
+        kf.localScale = ConvertToGLM(localTransform.scale);
+        animationPerJoint[jointInd].push_back(kf);
+      }
+    }
 
     // create skeleton, register it in allSkeletons
     Animation::Skeleton *skel = new Animation::Skeleton();
     std::map<int, int> old2new;
-    allSkeletons.insert(std::make_pair(modelPath, skel));
-    // find the root joint
-    int rootJointOld = -1;
-    for (int i = 0; i < globalBones.size(); ++i) {
-      if (globalBones[i].parentIndex == -1) {
-        rootJointOld = i;
-        break;
+    // map indices from scene->skin_clusters to globalBones
+    for (int clusterInd = 0; clusterInd < scene->skin_clusters.count;
+         ++clusterInd) {
+      auto cluster = scene->skin_clusters[clusterInd];
+      std::string name = cluster->bone_node->name.data;
+      auto it = boneMapping.find(name);
+      if (it == boneMapping.end()) {
+        LOG_F(ERROR, "cluster %s doesn't appear in globalBones", name.c_str());
+      } else {
+        // update offset matrix of this bone
+        auto offsetMatrix = cluster->geometry_to_bone;
+        globalBones[it->second].offsetMatrix =
+            glm::mat4(glm::vec4(ConvertToGLM(offsetMatrix.cols[0]), 0.0f),
+                      glm::vec4(ConvertToGLM(offsetMatrix.cols[1]), 0.0f),
+                      glm::vec4(ConvertToGLM(offsetMatrix.cols[2]), 0.0f),
+                      glm::vec4(ConvertToGLM(offsetMatrix.cols[3]), 1.0f));
+        old2new.insert(std::make_pair(static_cast<int>(clusterInd),
+                                      static_cast<int>(it->second)));
       }
     }
-    if (rootJointOld != -1) {
-      std::stack<int> oldIds;
-      skel->skeletonName = "armature";
-      oldIds.push(rootJointOld);
-      old2new.insert(std::make_pair(-1, -1));
-      while (!oldIds.empty()) {
-        auto cur = oldIds.top();
-        oldIds.pop();
-        old2new.insert(std::make_pair(cur, (int)skel->jointNames.size()));
-        auto &curRef = globalBones[cur];
-        skel->jointNames.push_back(curRef.boneName);
-        skel->jointOffset.push_back(curRef.localPosition);
-        skel->jointRotation.push_back(curRef.localRotation);
-        skel->jointScale.push_back(curRef.localScale);
-        skel->offsetMatrices.push_back(curRef.offsetMatrix);
-        for (auto child : globalBones[cur].children) {
-          oldIds.push(child);
-        }
-      }
-      skel->jointParent.resize(globalBones.size());
-      skel->jointChildren.resize(globalBones.size(), vector<int>());
-      for (int oldId = 0; oldId < globalBones.size(); ++oldId) {
-        int newId = old2new[oldId];
-        skel->jointParent[newId] = old2new[globalBones[oldId].parentIndex];
-        for (auto child : globalBones[oldId].children)
-          skel->jointChildren[newId].push_back(old2new[child]);
-      }
-      // map the bone indices in vertices
-      for (auto mesh : meshes) {
-        for (int vid = 0; vid < mesh->vertices.size(); ++vid) {
-          for (int k = 0; k < MAX_BONES; ++k) {
-            if (mesh->vertices[vid].BoneId[k] != 0) {
-              int oldBoneInd = mesh->vertices[vid].BoneId[k];
-              int newBoneInd = old2new[oldBoneInd];
-              mesh->vertices[vid].BoneId[k] = newBoneInd;
-            }
+    // assume one file only contains one skeleton
+    allSkeletons.insert(std::make_pair(modelPath, skel));
+
+    // setup variables in the skeleton
+    skel->skeletonName = "armature";
+    for (int jointInd = 0; jointInd < globalBones.size(); ++jointInd) {
+      skel->jointNames.push_back(globalBones[jointInd].boneName);
+      skel->jointParent.push_back(globalBones[jointInd].parentIndex);
+      skel->jointChildren.push_back(globalBones[jointInd].children);
+      skel->jointOffset.push_back(globalBones[jointInd].localPosition);
+      skel->jointRotation.push_back(globalBones[jointInd].localRotation);
+      skel->jointScale.push_back(globalBones[jointInd].localScale);
+      skel->offsetMatrices.push_back(globalBones[jointInd].offsetMatrix);
+    }
+    // map the bone indices in vertices
+    for (auto mesh : meshes) {
+      for (int vid = 0; vid < mesh->vertices.size(); ++vid) {
+        for (int k = 0; k < MAX_BONES; ++k) {
+          if (mesh->vertices[vid].BoneId[k] != 0) {
+            int oldBoneInd = mesh->vertices[vid].BoneId[k];
+            int newBoneInd = old2new[oldBoneInd];
+            mesh->vertices[vid].BoneId[k] = newBoneInd;
           }
         }
-        // update buffers of the mesh
-        mesh->vbo.SetDataAs(GL_ARRAY_BUFFER, mesh->vertices, GL_STATIC_DRAW);
-        mesh->vbo.UnbindAs(GL_ARRAY_BUFFER);
       }
-      // create motion for the skeleton
-      int numFrames = animationPerJoint[0].size();
-      int numJoints = animationPerJoint.size();
-      if (numFrames > 0) {
-        Animation::Motion *motion = new Animation::Motion();
-        motion->fps = 30; // use 30fps by default
-        motion->skeleton = *skel;
-        allMotions.insert(std::make_pair(modelPath, motion));
-        for (int frameInd = 0; frameInd < numFrames; ++frameInd) {
-          Animation::Pose pose;
-          pose.skeleton = skel;
-          pose.jointRotations.resize(numJoints,
-                                     glm::quat(1.0f, glm::vec3(0.0f)));
-          for (int oldJointInd = 0; oldJointInd < numJoints; ++oldJointInd) {
-            int newJointInd = old2new[oldJointInd];
-            if (newJointInd == 0) {
-              // process localPosition only for root joint
-              pose.rootLocalPosition =
-                  animationPerJoint[oldJointInd][frameInd].localPosition;
-            }
-            pose.jointRotations[newJointInd] =
-                animationPerJoint[oldJointInd][frameInd].localRotation;
+      // update buffers of the mesh
+      mesh->vbo.SetDataAs(GL_ARRAY_BUFFER, mesh->vertices, GL_STATIC_DRAW);
+      mesh->vbo.UnbindAs(GL_ARRAY_BUFFER);
+    }
+    // create motion for the skeleton
+    int numFrames = animationPerJoint[0].size();
+    int numJoints = animationPerJoint.size();
+    if (numFrames > 0) {
+      Animation::Motion *motion = new Animation::Motion();
+      motion->fps = 30; // use 30fps by default
+      motion->skeleton = *skel;
+      allMotions.insert(std::make_pair(modelPath, motion));
+      for (int frameInd = 0; frameInd < numFrames; ++frameInd) {
+        Animation::Pose pose;
+        pose.skeleton = skel;
+        pose.jointRotations.resize(numJoints, glm::quat(1.0f, glm::vec3(0.0f)));
+        for (int jointInd = 0; jointInd < numJoints; ++jointInd) {
+          if (jointInd == 0) {
+            // process localPosition only for root joint
+            pose.rootLocalPosition =
+                animationPerJoint[jointInd][frameInd].localPosition;
           }
-          motion->poses.push_back(pose);
+          pose.jointRotations[jointInd] =
+              animationPerJoint[jointInd][frameInd].localRotation;
         }
+        motion->poses.push_back(pose);
       }
-    } else {
-      LOG_F(ERROR, "skeleton in file %s has no root joint", modelPath.c_str());
     }
   }
 
-  // Destroy the SDK manager and all associated objects
-  sdkManager->Destroy();
+  // free the scene object
+  ufbx_free_scene(scene);
 
   return meshes;
 }
