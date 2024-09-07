@@ -68,6 +68,8 @@ private:
   bool showEntitiesWindow = true;
   bool showAssetsWindow = true;
   bool showInspectorWindow = true;
+  bool showImguiDemo = false;
+  bool showImplotDemo = false;
 
   void MainMenuBar();
   void EntitiesWindow();

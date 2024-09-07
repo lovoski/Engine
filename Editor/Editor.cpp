@@ -67,6 +67,8 @@ void Editor::Start() {
   ImGui_ImplGlfw_InitForOpenGL(GWORLD.Context.window, true);
   ImGui_ImplOpenGL3_Init("#version 460");
 
+  ImPlot::CreateContext();
+
   // TODO: remove this in final version
   BuildTestScene(engine);
 }
@@ -129,6 +131,11 @@ void Editor::Run(bool release) {
       ImGui::EndChild();
       ImGui::End();
 
+      if (showImplotDemo)
+        ImPlot::ShowDemoWindow(&showImplotDemo);
+      if (showImguiDemo)
+        ImGui::ShowDemoWindow(&showImguiDemo);
+
       MainMenuBar();
       if (GWORLD.GetSystemInstance<AnimationSystem>()->ShowSequencer)
         GWORLD.GetSystemInstance<AnimationSystem>()->DrawSequencer();
@@ -150,6 +157,7 @@ void Editor::Run(bool release) {
 void Editor::Shutdown() {
   if (context.frameBuffer)
     delete context.frameBuffer;
+  ImPlot::DestroyContext();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
@@ -320,17 +328,25 @@ void Editor::MainMenuBar() {
         ImGui::EndMenu();
       }
       ImGui::Separator();
+      ImGui::MenuItem("Builtin Tools", nullptr, nullptr, false);
       if (ImGui::MenuItem("Show Profiler"))
         showProfiler = true;
       if (ImGui::MenuItem("Show Sequencer"))
         GWORLD.GetSystemInstance<AnimationSystem>()->ShowSequencer = true;
       ImGui::Separator();
+      ImGui::MenuItem("Builtin Windows", nullptr, nullptr, false);
       if (ImGui::MenuItem("Show Inspector"))
         showInspectorWindow = true;
       if (ImGui::MenuItem("Show Entities"))
         showEntitiesWindow = true;
       if (ImGui::MenuItem("Show Assets"))
         showAssetsWindow = true;
+      ImGui::Separator();
+      ImGui::MenuItem("PlotLib Demos", nullptr, nullptr, false);
+      if (ImGui::MenuItem("Show ImGUI Demo"))
+        showImguiDemo = true;
+      if (ImGui::MenuItem("Show ImPlot Demo"))
+        showImplotDemo = true;
       // if (ImGui::MenuItem("Show Style Editor")) {
       //   ImGui::ShowStyleEditor();
       // }

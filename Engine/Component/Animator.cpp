@@ -45,9 +45,8 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
     return;
   }
   if (SkeletonMap.size() != motionJointNum) {
-    LOG_F(ERROR, "skeleton entity joint num and motion joint num mismatch, "
-                 "can't apply motion");
-    return;
+    LOG_F(WARNING, "skeleton entity joint num and motion joint num mismatch, "
+                 "motion maybe incorrect.");
   }
   auto root = SkeletonMap.find(pose.skeleton->jointNames[0]);
   if (root == SkeletonMap.end()) {
@@ -60,11 +59,11 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
     auto boneName = pose.skeleton->jointNames[boneInd];
     auto bone = SkeletonMap.find(boneName);
     if (bone == SkeletonMap.end()) {
-      LOG_F(ERROR, "joint %s not found in skeleton, can't apply motion",
+      LOG_F(WARNING, "joint %s not found in skeleton, can't apply motion",
             boneName.c_str());
-      return;
+    } else {
+      bone->second.joint->SetLocalRotation(pose.jointRotations[boneInd]);
     }
-    bone->second.joint->SetLocalRotation(pose.jointRotations[boneInd]);
   }
 }
 

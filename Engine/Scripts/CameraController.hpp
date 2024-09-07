@@ -58,23 +58,26 @@ struct EditorCameraController : public Scriptable {
         }
         glm::vec2 mouseOffset = mouseCurrentPos - mouseLastPos;
         if (sceneContext.engine->GetKey(GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-          // move the view position
-          auto screenSize = GWORLD.Context.sceneWindowSize;
-          glm::vec4 nfcPos = {-mouseOffset.x / screenSize.x,
-                              mouseOffset.y / screenSize.y, 1.0f,
-                              1.0f};
-          auto worldRayPos = glm::inverse(cameraComp->ViewMat) *
-                             glm::inverse(cameraComp->ProjMat) * nfcPos;
-          worldRayPos /= worldRayPos.w;
-          glm::vec3 worldRayDir =
-              glm::normalize(glm::vec3(worldRayPos) - camPos);
-          worldRayDir = glm::dot(worldRayDir, cameraPivot-camPos) * worldRayDir;
-          auto deltaPos = glm::dot(worldRayDir, cameraObject->LocalLeft) *
-                              cameraObject->LocalLeft +
-                          glm::dot(worldRayDir, cameraObject->LocalUp) *
-                              cameraObject->LocalUp;
-          cameraPivot += deltaPos;
-          cameraObject->SetGlobalPosition(cameraObject->Position() + deltaPos);
+          // move the view position if there's mouseOffset
+          if (glm::length(mouseOffset) > 1e-2f) {
+            auto screenSize = GWORLD.Context.sceneWindowSize;
+            glm::vec4 nfcPos = {-mouseOffset.x / screenSize.x,
+                                mouseOffset.y / screenSize.y, 1.0f, 1.0f};
+            auto worldRayPos = glm::inverse(cameraComp->ViewMat) *
+                               glm::inverse(cameraComp->ProjMat) * nfcPos;
+            worldRayPos /= worldRayPos.w;
+            glm::vec3 worldRayDir =
+                glm::normalize(glm::vec3(worldRayPos) - camPos);
+            worldRayDir =
+                glm::dot(worldRayDir, cameraPivot - camPos) * worldRayDir;
+            auto deltaPos = glm::dot(worldRayDir, cameraObject->LocalLeft) *
+                                cameraObject->LocalLeft +
+                            glm::dot(worldRayDir, cameraObject->LocalUp) *
+                                cameraObject->LocalUp;
+            cameraPivot += deltaPos;
+            cameraObject->SetGlobalPosition(cameraObject->Position() +
+                                            deltaPos);
+          }
         } else {
           // repose the camera
           auto rotateOffset = mouseOffset * 0.1f;

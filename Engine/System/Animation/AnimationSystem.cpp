@@ -128,7 +128,8 @@ void AnimationSystem::Render() {
         // Draw the joint positions
         if (animator->ShowJoints) {
           for (auto ele : animator->SkeletonMap) {
-            VisUtils::DrawWireSphere(ele.second.joint->Position(), vp, animator->JointVisualSize,
+            VisUtils::DrawWireSphere(ele.second.joint->Position(), vp,
+                                     animator->JointVisualSize,
                                      animator->SkeletonColor);
           }
         }
@@ -143,19 +144,39 @@ void AnimationSystem::Render() {
 
 void AnimationSystem::DrawSequencer() {
   ImGui::Begin("Timeline", &ShowSequencer);
-  ImGui::BeginChild("TimelineProperties", {-1, 50});
+  ImGui::BeginChild("TimelineProperties", {-1, -1});
+  ImGui::PushItemWidth(-1);
+
+  // animation take selection menu
+  std::vector<std::string> takeNames {"Default", "Take 001", "Take 002"};
+  static int currentActiveTake = 0;
+  ImGui::Text("Current Take");
+  ImGui::SameLine();
+  if (ImGui::BeginCombo("##currenttakecombo",
+                        takeNames[currentActiveTake].c_str())) {
+    for (int comboIndex = 0; comboIndex < takeNames.size(); ++comboIndex) {
+      bool isSelected = currentActiveTake == comboIndex;
+      if (ImGui::Selectable(takeNames[comboIndex].c_str(), isSelected)) {
+        currentActiveTake = comboIndex;
+        // switch the active take
+      }
+      if (isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
+  ImGui::Separator();
+
+  // play back properties
   ImGui::Checkbox("Auto Play", &EnableAutoPlay);
   ImGui::SameLine();
   int se[2] = {SystemStartFrame, SystemEndFrame};
-  ImGui::PushItemWidth(-1);
   if (ImGui::InputInt2("##Start & End", se)) {
     SystemStartFrame = se[0];
     SystemEndFrame = se[1];
   }
-  ImGui::PopItemWidth();
-  ImGui::EndChild();
-  ImGui::BeginChild("TimelineView", {-1, 60});
-  ImGui::PushItemWidth(-1);
+
+  // current frame slider
   ImGui::SliderFloat("##currenrFrame", &SystemCurrentFrame, SystemStartFrame,
                      SystemEndFrame);
   ImGui::PopItemWidth();

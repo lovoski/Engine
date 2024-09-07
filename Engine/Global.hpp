@@ -39,4 +39,6 @@ namespace fs = std::filesystem;
 
 #include <loguru.hpp>
 
+// imgui based libraries
+#include <implot.h>
 #include <ImGuizmo.h>
