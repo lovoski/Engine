@@ -1,3 +1,6 @@
+#include "Scripts/Animation/SAMERetarget.hpp"
+#include "Scripts/Animation/VisMetrics.hpp"
+
 #include "Component/Animator.hpp"
 #include "Component/DeformRenderer.hpp"
 #include "Component/MeshRenderer.hpp"
@@ -8,9 +11,6 @@
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
-
-#include "Scripts/Animation/SAMERetarget.hpp"
-#include "Scripts/Animation/VisMetrics.hpp"
 
 #include "System/Animation/AnimationSystem.hpp"
 

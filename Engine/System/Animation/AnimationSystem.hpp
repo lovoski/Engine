@@ -24,6 +24,7 @@ public:
   void Reset() override {
     SystemFPS = 30;
     EnableAutoPlay = false;
+    ShowSequencer = true;
     SystemStartFrame = 0;
     SystemEndFrame = 1000;
     SystemCurrentFrame = 0.0f;
@@ -34,6 +35,9 @@ public:
   int SystemStartFrame, SystemEndFrame;
   // automatically increase systemCurrentFrame according to dt and systemFPS
   bool EnableAutoPlay = false;
+  bool ShowSequencer = true;
+
+  void DrawSequencer();
 
 private:
   void collectSkeletonDrawQueue(

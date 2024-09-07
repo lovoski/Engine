@@ -37,8 +37,6 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include <asio.hpp>
-
 #include <loguru.hpp>
 
 #include <ImGuizmo.h>

@@ -130,8 +130,8 @@ void Editor::Run(bool release) {
       ImGui::End();
 
       MainMenuBar();
-      if (showMainSequencer)
-        MainSequencer();
+      if (GWORLD.GetSystemInstance<AnimationSystem>()->ShowSequencer)
+        GWORLD.GetSystemInstance<AnimationSystem>()->DrawSequencer();
       if (showEntitiesWindow)
         EntitiesWindow();
       if (showInspectorWindow)
@@ -154,29 +154,6 @@ void Editor::Shutdown() {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
   engine->Shutdown();
-}
-
-void Editor::MainSequencer() {
-  auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
-  ImGui::Begin("Timeline", &showMainSequencer);
-  ImGui::BeginChild("TimelineProperties", {-1, 50});
-  ImGui::Checkbox("Auto Play", &animSystem->EnableAutoPlay);
-  ImGui::SameLine();
-  int se[2] = {animSystem->SystemStartFrame, animSystem->SystemEndFrame};
-  ImGui::PushItemWidth(-1);
-  if (ImGui::InputInt2("##Start & End", se)) {
-    animSystem->SystemStartFrame = se[0];
-    animSystem->SystemEndFrame = se[1];
-  }
-  ImGui::PopItemWidth();
-  ImGui::EndChild();
-  ImGui::BeginChild("TimelineView", {-1, 60});
-  ImGui::PushItemWidth(-1);
-  ImGui::SliderFloat("##currenrFrame", &animSystem->SystemCurrentFrame,
-                     animSystem->SystemStartFrame, animSystem->SystemEndFrame);
-  ImGui::PopItemWidth();
-  ImGui::EndChild();
-  ImGui::End();
 }
 
 void Editor::MainMenuBar() {
@@ -346,7 +323,7 @@ void Editor::MainMenuBar() {
       if (ImGui::MenuItem("Show Profiler"))
         showProfiler = true;
       if (ImGui::MenuItem("Show Sequencer"))
-        showMainSequencer = true;
+        GWORLD.GetSystemInstance<AnimationSystem>()->ShowSequencer = true;
       ImGui::Separator();
       if (ImGui::MenuItem("Show Inspector"))
         showInspectorWindow = true;

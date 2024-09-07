@@ -107,7 +107,8 @@ void AnimationSystem::Render() {
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto animator = entity->GetComponent<Animator>();
-      if ((animator->ShowSkeleton || animator->ShowJoints) && animator->skeleton != nullptr &&
+      if ((animator->ShowSkeleton || animator->ShowJoints) &&
+          animator->skeleton != nullptr &&
           GWORLD.EntityValid(animator->skeleton->ID)) {
 
         // construct the drawQueue with only active joints
@@ -119,25 +120,17 @@ void AnimationSystem::Render() {
           glDisable(GL_DEPTH_TEST);
         else
           glEnable(GL_DEPTH_TEST);
-        // Draw the joint positions
-        if (animator->ShowJoints) {
-          for (auto ele : animator->SkeletonMap) {
-            VisUtils::DrawWireSphere(ele.second.joint->Position(), vp, 1.0f,
-                                     animator->SkeletonColor);
-          }
-        }
-        // if (animator->motion) {
-        //   Animation::Pose CurrentPose =
-        //       animator->motion->At(SystemCurrentFrame);
-        //   auto globalPos = CurrentPose.GetGlobalPositions();
-        //   for (auto gPos : globalPos)
-        //     VisUtils::DrawWireSphere(gPos, vp, 1.0f,
-        //                              glm::vec3(1.0f, 0.0f, 0.0f));
-        // }
         for (auto &drawPair : drawQueue) {
           VisUtils::DrawBone(drawPair.first, drawPair.second,
                              GWORLD.Context.sceneWindowSize, vp,
                              animator->SkeletonColor);
+        }
+        // Draw the joint positions
+        if (animator->ShowJoints) {
+          for (auto ele : animator->SkeletonMap) {
+            VisUtils::DrawWireSphere(ele.second.joint->Position(), vp, animator->JointVisualSize,
+                                     animator->SkeletonColor);
+          }
         }
         if (animator->SkeletonOnTop)
           glEnable(GL_DEPTH_TEST);
@@ -146,6 +139,28 @@ void AnimationSystem::Render() {
       }
     }
   }
+}
+
+void AnimationSystem::DrawSequencer() {
+  ImGui::Begin("Timeline", &ShowSequencer);
+  ImGui::BeginChild("TimelineProperties", {-1, 50});
+  ImGui::Checkbox("Auto Play", &EnableAutoPlay);
+  ImGui::SameLine();
+  int se[2] = {SystemStartFrame, SystemEndFrame};
+  ImGui::PushItemWidth(-1);
+  if (ImGui::InputInt2("##Start & End", se)) {
+    SystemStartFrame = se[0];
+    SystemEndFrame = se[1];
+  }
+  ImGui::PopItemWidth();
+  ImGui::EndChild();
+  ImGui::BeginChild("TimelineView", {-1, 60});
+  ImGui::PushItemWidth(-1);
+  ImGui::SliderFloat("##currenrFrame", &SystemCurrentFrame, SystemStartFrame,
+                     SystemEndFrame);
+  ImGui::PopItemWidth();
+  ImGui::EndChild();
+  ImGui::End();
 }
 
 }; // namespace aEngine

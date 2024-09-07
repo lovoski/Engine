@@ -183,6 +183,7 @@ void Animator::DrawInspectorGUI() {
     ImGui::MenuItem("Skeleton", nullptr, nullptr, false);
     ImGui::Checkbox("Show Skeleton", &ShowSkeleton);
     ImGui::Checkbox("Show Joints", &ShowJoints);
+    ImGui::SliderFloat("Joint Size", &JointVisualSize, 0.0f, 1.2f);
     ImGui::Checkbox("Helpers On Top", &SkeletonOnTop);
     ImGui::BeginChild("chooseskeletonroot", {-1, 30});
     if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {

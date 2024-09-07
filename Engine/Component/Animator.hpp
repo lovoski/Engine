@@ -56,6 +56,7 @@ struct Animator : public BaseComponent {
   // This entity should be the root joint
   Entity *skeleton = nullptr;
   bool ShowSkeleton = true, ShowJoints = true;
+  float JointVisualSize = 1.0f;
   bool SkeletonOnTop = false;
   // Color for the visualized skeleton
   glm::vec3 SkeletonColor = glm::vec3(0.0f, 1.0f, 0.0f);

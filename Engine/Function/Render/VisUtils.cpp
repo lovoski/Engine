@@ -256,7 +256,7 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
     lineShaderLoaded = true;
   }
   if (!openglObjectCreated) {
-    float point[] = {1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f};
+    float point[] = {1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f};
     vao.Bind();
     glBindBuffer(GL_ARRAY_BUFFER, vbo.GetID());
     glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
@@ -271,13 +271,13 @@ void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
   boneShader.SetFloat("radius", 0.2f); // Adjust the radius as necessary
   boneShader.SetVec3("color", color);
   boneShader.SetVec2("viewportSize", viewport);
-  glm::vec3 trans = (start + end) * 0.5f;
-  float scale = glm::length(start - end) * 0.5f;
+  glm::vec3 trans = end;
+  float scale = glm::length(start - end) / std::sqrt(3.0f);
   glm::quat rot =
-      Math::FromToRotation(glm::vec3(1.0f, 0.0f, 0.0f), start - end);
+      Math::FromToRotation(glm::vec3(1.0f, 1.0f, 1.0f), start - end);
   glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), trans) *
-                       glm::mat4_cast(rot) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+                       glm::scale(glm::mat4(1.0f), glm::vec3(scale)) *
+                       glm::mat4_cast(rot);
   boneShader.SetMat4("mvp", vp * modelMat);
   vao.Bind();
   glDrawArrays(GL_LINES, 0, 2);
@@ -355,7 +355,8 @@ void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
   DrawLineStrip3D(strip2, vp, color);
 }
 
-void DrawWireSphere(glm::vec3 position, glm::mat4 vp, float radius, glm::vec3 color) {
+void DrawWireSphere(glm::vec3 position, glm::mat4 vp, float radius,
+                    glm::vec3 color) {
   static int segs = 32;
   glm::vec3 walkDir1 = glm::vec3(1.0f, 0.0f, 0.0f);
   glm::vec3 walkDir2 = glm::vec3(0.0f, 1.0f, 0.0f);
