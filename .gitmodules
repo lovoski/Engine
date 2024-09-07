@@ -1,6 +1,3 @@
 [submodule "submodule/glfw"]
 	path = Engine/Deps/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "submodule/glm"]
-	path = Engine/Deps/glm
-	url = https://github.com/g-truc/glm.git

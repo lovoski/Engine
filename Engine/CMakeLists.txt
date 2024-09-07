@@ -8,7 +8,6 @@ option(NN_MODULE "Build engine component that depends on ONNX runtime library" O
 
 add_subdirectory("Deps/glfw")
 add_subdirectory("Deps/glad")
-add_subdirectory("Deps/glm")
 add_subdirectory("Deps/imgui")
 add_subdirectory("Deps/stb")
 add_subdirectory("Deps/loguru")
@@ -22,14 +21,11 @@ include("cmake/FetchASIO.cmake")
 # onnx runtime
 include("cmake/FindONNXRuntime.cmake")
 
-# fbx sdk
-include("cmake/FindFBX.cmake")
-
 include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb glm imgui loguru filedialog asio::asio cereal ufbx)
+set(aEngine_DEPS glad glfw stb imgui loguru filedialog asio::asio cereal ufbx)
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System

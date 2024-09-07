@@ -1,7 +1,5 @@
 #include "Editor.hpp"
 
-#include <tinyfiledialogs.h>
-
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
