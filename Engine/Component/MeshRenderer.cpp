@@ -1,5 +1,7 @@
 #include "Component/MeshRenderer.hpp"
 
+#include "Function/Render/RenderPass.hpp"
+
 namespace aEngine {
 
 MeshRenderer::MeshRenderer(EntityID id, aEngine::Render::Mesh *mesh)
@@ -77,14 +79,54 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
   lightSpaceMatrices.clear();
 }
 
+void MeshRenderer::drawAppendPassPopup() {
+  if (ImGui::BeginPopup("appendpasspanelpopup")) {
+    ImGui::MenuItem("Registered Pass", nullptr, nullptr, false);
+    ImGui::Separator();
+    if (ImGui::MenuItem("Outline Pass"))
+      AddPass<Render::OutlinePass>(nullptr, "Outline");
+    if (ImGui::MenuItem("Diffuse Pass"))
+      AddPass<Render::Diffuse>(nullptr, "Diffuse");
+    ImGui::EndPopup();
+  }
+}
+
 void MeshRenderer::DrawInspectorGUI() {
   ImGui::MenuItem("Options", nullptr, nullptr, false);
   ImGui::Checkbox("Cast Shadow", &castShadow);
   ImGui::Checkbox("Receive Shadow", &receiveShadow);
   ImGui::MenuItem("Render Passes", nullptr, nullptr, false);
+  if (ImGui::Button("Append Pass", {-1, 30}))
+    ImGui::OpenPopup("appendpasspanelpopup");
+  drawAppendPassPopup();
+  Render::BasePass *passToRemove = nullptr;
   for (auto pass : passes) {
     ImGui::Separator();
-    pass->DrawInspectorGUI();
+    if (ImGui::TreeNode(pass->GetMaterialTypeName().c_str())) {
+      pass->DrawInspectorGUI();
+      if (ImGui::IsWindowHovered() &&
+          ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        ImGui::OpenPopup("rightclickpass");
+      if (ImGui::BeginPopup("rightclickpass")) {
+        ImGui::MenuItem("Options", nullptr, nullptr, false);
+        if (ImGui::MenuItem("Reset")) {
+        }
+        if (ImGui::MenuItem("Remove")) {
+          passToRemove = pass;
+          LOG_F(INFO, "remove pass %s from entity %d",
+                pass->GetMaterialTypeName().c_str(), entityID);
+        }
+        ImGui::EndPopup();
+      }
+      ImGui::TreePop();
+    }
+  }
+  if (passToRemove) {
+    for (auto it = passes.begin(); it != passes.end(); ++it)
+      if ((*it) == passToRemove) {
+        passes.erase(it);
+        break;
+      }
   }
 }
 

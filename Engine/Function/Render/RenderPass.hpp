@@ -3,8 +3,8 @@
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
 #include "Function/AssetsType.hpp"
-#include "Function/Render/Shader.hpp"
 #include "Function/Render/Buffers.hpp"
+#include "Function/Render/Shader.hpp"
 #include "Global.hpp"
 
 namespace aEngine {
@@ -43,29 +43,30 @@ public:
   // create variables with predefined names
   void SetupLights(Buffer &lightsBuffer, int bindingPoint = 0);
 
-  // To create custom material, override this function,
-  // pass custom variables to the shader
-  // This function is called by default at the end of SetupPass
-  virtual void DrawInspectorGUI() { drawInspectorGUIDefault(); }
+  // don't override this function in custom pass
+  void DrawInspectorGUI();
 
   // This function will get called before the rendering
   void SetupPass(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
                  glm::vec3 &viewDir, bool receiveShadow);
   // This function will get called after the rendering
   virtual void FinishPass() {}
+  virtual std::string GetMaterialTypeName();
 
 protected:
   int idCounter = 0;
 
   Shader *shader = nullptr;
 
-  void drawInspectorGUIDefault();
+  // To create custom material, override this function,
+  // pass custom variables to the shader, this function is called
+  // at the end of the DrawInspectorGUI function
+  virtual void drawCustomInspectorGUI() {}
 
   // Overload this function in custom materials
   // Setup variables to member `shader`
   // Activate textures with the helper function above
   virtual void additionalSetup() {}
-  virtual std::string getMaterialTypeName();
 };
 
 class Diffuse : public BasePass {
@@ -75,12 +76,11 @@ public:
   float Ambient = 0.1f;
   glm::vec3 Albedo = glm::vec3(1.0f);
 
-  void DrawInspectorGUI() override;
-
 protected:
   void additionalSetup() override;
+  void drawCustomInspectorGUI() override;
 
-  std::string getMaterialTypeName() override;
+  std::string GetMaterialTypeName() override;
 };
 
 class OutlinePass : public BasePass {
@@ -90,14 +90,25 @@ public:
   float OutlineWidth = 0.02f, OutlineWeight = 1.0f;
   glm::vec3 OutlineColor = glm::vec3(0.0f);
 
-  void DrawInspectorGUI() override;
-
   void FinishPass() override;
+  std::string GetMaterialTypeName() override;
 
 protected:
   void additionalSetup() override;
+  void drawCustomInspectorGUI() override;
+};
 
-  std::string getMaterialTypeName() override;
+class GBVMainPass : public BasePass {
+public:
+  GBVMainPass();
+
+  Texture base, ILM, SSS, detail;
+
+  std::string GetMaterialTypeName() override;
+
+private:
+  void additionalSetup() override;
+  void drawCustomInspectorGUI() override;
 };
 
 }; // namespace Render

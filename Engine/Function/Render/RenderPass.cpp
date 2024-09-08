@@ -34,21 +34,21 @@ void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
   lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
 }
 
-std::string BasePass::getMaterialTypeName() { return typeid(*this).name(); }
+std::string BasePass::GetMaterialTypeName() { return typeid(*this).name(); }
 
-void BasePass::drawInspectorGUIDefault() {
-  ImGui::MenuItem("Name:", nullptr, nullptr, false);
-  ImGui::TextWrapped("%s", identifier.c_str());
-  ImGui::MenuItem("Type:", nullptr, nullptr, false);
-  ImGui::TextWrapped("%s", getMaterialTypeName().c_str());
-  ImGui::MenuItem("Options:", nullptr, nullptr, false);
-  ImGui::Checkbox(("Enabled##" + getMaterialTypeName() + identifier).c_str(),
-                  &Enabled);
-  ImGui::MenuItem("Properties:", nullptr, nullptr, false);
+void BasePass::DrawInspectorGUI() {
+  ImGui::Checkbox("Enable Pass", &Enabled);
+  ImGui::Separator();
+  if (!Enabled)
+    ImGui::BeginDisabled();
+  drawCustomInspectorGUI();
+  if (!Enabled)
+    ImGui::EndDisabled();
 }
 
 void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
-                         glm::mat4 &projection, glm::vec3 &viewDir, bool receiveShadow) {
+                         glm::mat4 &projection, glm::vec3 &viewDir,
+                         bool receiveShadow) {
   if (shader != nullptr) {
     shader->Use();
     glm::mat4 ModelToWorldPoint = model;
@@ -70,8 +70,7 @@ Diffuse::Diffuse() {
   shader = Loader.GetShader("::diffuse");
 }
 
-void Diffuse::DrawInspectorGUI() {
-  drawInspectorGUIDefault();
+void Diffuse::drawCustomInspectorGUI() {
   ImGui::SliderFloat("Ambient", &Ambient, 0.0f, 1.0f);
   float albedoColor[3] = {Albedo.x, Albedo.y, Albedo.z};
   if (ImGui::ColorEdit3("Albedo", albedoColor)) {
@@ -85,14 +84,13 @@ void Diffuse::additionalSetup() {
   shader->SetFloat("Ambient", Ambient);
 }
 
-std::string Diffuse::getMaterialTypeName() { return "Diffuse"; }
+std::string Diffuse::GetMaterialTypeName() { return "Diffuse"; }
 
 // ----------------------- Outline -----------------------
 
 OutlinePass::OutlinePass() { shader = Loader.GetShader("::outline"); }
 
-void OutlinePass::DrawInspectorGUI() {
-  drawInspectorGUIDefault();
+void OutlinePass::drawCustomInspectorGUI() {
   ImGui::SliderFloat("Width", &OutlineWidth, 0.0f, 1.0f);
   ImGui::SliderFloat("Weight", &OutlineWeight, 0.0f, 1.0f);
   float outlineColor[3] = {OutlineColor.x, OutlineColor.y, OutlineColor.z};
@@ -112,7 +110,17 @@ void OutlinePass::additionalSetup() {
 
 void OutlinePass::FinishPass() { glDisable(GL_CULL_FACE); }
 
-std::string OutlinePass::getMaterialTypeName() { return "Outline"; }
+std::string OutlinePass::GetMaterialTypeName() { return "Outline"; }
+
+// ----------- GBV shader -------------
+
+GBVMainPass::GBVMainPass() {}
+
+std::string GBVMainPass::GetMaterialTypeName() { return "GBV Main"; }
+
+void GBVMainPass::drawCustomInspectorGUI() {}
+
+void GBVMainPass::additionalSetup() {}
 
 }; // namespace Render
 

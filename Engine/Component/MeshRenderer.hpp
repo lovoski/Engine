@@ -8,8 +8,9 @@
 #include "Scene.hpp"
 
 #include "Function/Render/Buffers.hpp"
-#include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Mesh.hpp"
+#include "Function/Render/RenderPass.hpp"
+
 
 namespace aEngine {
 
@@ -45,6 +46,9 @@ struct MeshRenderer : public aEngine::BaseComponent {
   Render::Mesh *meshData = nullptr;
   Render::Buffer *targetVBO = nullptr;
   std::vector<Render::BasePass *> passes;
+
+private:
+  void drawAppendPassPopup();
 };
 
 }; // namespace aEngine
