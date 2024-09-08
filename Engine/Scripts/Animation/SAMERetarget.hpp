@@ -5,8 +5,6 @@
  */
 #pragma once
 
-// asio is a fragile header, include it before any other headers
-#include <asio.hpp>
 #include "API.hpp"
 
 namespace aEngine {

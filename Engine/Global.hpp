@@ -1,4 +1,11 @@
+/**
+ * Don't change the order of include in this file,
+ * always include glad before glfw, include asio before glad
+ * and other platform specific headers.
+ */
 #pragma once
+
+#include <asio.hpp>
 
 #include <tinyfiledialogs.h>
 
