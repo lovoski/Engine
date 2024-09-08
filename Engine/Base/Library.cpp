@@ -16,6 +16,8 @@ void Scriptable::drawInspectorGUIDefault() {
   ImGui::Separator();
   ImGui::MenuItem("Script Name: ", nullptr, nullptr, false);
   ImGui::TextWrapped(getTypeName().c_str());
+  ImGui::SameLine(ImGui::GetContentRegionMax().x - 40);
+  ImGui::Checkbox("##enable", &Enabled);
   ImGui::Separator();
 }
 

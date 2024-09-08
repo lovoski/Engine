@@ -210,8 +210,9 @@ void Animator::DrawInspectorGUI() {
     SkeletonColor =
         glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
   }
-  if (ImGui::CollapsingHeader("Hierarchy")) {
+  if (ImGui::TreeNode("Hierarchy")) {
     drawSkeletonHierarchy();
+    ImGui::TreePop();
   }
 }
 

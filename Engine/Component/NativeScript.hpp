@@ -10,12 +10,7 @@ struct NativeScript : public aEngine::BaseComponent {
 
   NativeScript(EntityID id) : BaseComponent(id) {}
 
-  ~NativeScript() {
-    // free all scriptable instance
-    for (auto ele : instances)
-      ele.second->Destroy();
-    instances.clear();
-  }
+  ~NativeScript();
 
   // Bind a scriptable object to current component
   template <typename T> void Bind() {
@@ -47,17 +42,14 @@ struct NativeScript : public aEngine::BaseComponent {
     }
   }
 
-  void DrawInspectorGUI() override {
-    for (auto instance : instances) {
-      if (instance.second != nullptr) {
-        // if this is a valid scriptable
-        instance.second->DrawInspectorGUI();
-      }
-    }
-  }
+  void DrawInspectorGUI() override;
 
   // A scriptable component can hold multiple scriptable objects
   std::map<ScriptableTypeID, Scriptable *> instances;
+
+private:
+  // New scripts should be manually registered here
+  void drawAddScriptPopup();
 };
 
 }; // namespace aEngine

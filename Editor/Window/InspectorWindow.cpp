@@ -73,26 +73,13 @@ template <typename T> void DrawComponent(EntityID entity, std::string name) {
   }
 }
 
-// manual registeration needed when new scripts are added
 void InspectorRightClickMenu(EntityID entity) {
   if (ImGui::BeginPopup("ComponentWindowContextMenu")) {
     if (ImGui::MenuItem("Add Component", nullptr, nullptr, false))
       ;
-    if (ImGui::BeginMenu("Native Script")) {
-      bool hasNativeScript = GWORLD.HasComponent<NativeScript>(entity);
-      ImGui::MenuItem("Available Scripts", nullptr, nullptr, false);
-      ImGui::Separator();
-      if (ImGui::MenuItem("Visual Metrics")) {
-        if (!hasNativeScript)
-          GWORLD.AddComponent<NativeScript>(entity);
-        GWORLD.GetComponent<NativeScript>(entity)->Bind<VisMetrics>();
-      }
-      if (ImGui::MenuItem("SAME Retarget")) {
-        if (!hasNativeScript)
-          GWORLD.AddComponent<NativeScript>(entity);
-        GWORLD.GetComponent<NativeScript>(entity)->Bind<SAMERetarget>();
-      }
-      ImGui::EndMenu();
+    ImGui::Separator();
+    if (ImGui::MenuItem("Native Script")) {
+      GWORLD.AddComponent<NativeScript>(entity);
     }
     ImGui::EndPopup();
   }
