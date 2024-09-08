@@ -33,7 +33,7 @@ public:
     auto comp = std::find_if(data.begin(), data.end(),
                              [&](const std::shared_ptr<T> c) { return c->GetID() == entity; });
     if (comp == data.end()) {
-      LOG_F(WARNING, "Get non-existing component from entity %d", entity);
+      LOG_F(WARNING, "Get non-existing component %s from entity %d", typeid(T).name(), entity);
       return nullptr;
     }
     return (*comp);

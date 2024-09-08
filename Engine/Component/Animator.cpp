@@ -46,7 +46,7 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
   }
   if (SkeletonMap.size() != motionJointNum) {
     LOG_F(WARNING, "skeleton entity joint num and motion joint num mismatch, "
-                 "motion maybe incorrect.");
+                   "motion maybe incorrect.");
   }
   auto root = SkeletonMap.find(pose.skeleton->jointNames[0]);
   if (root == SkeletonMap.end()) {
@@ -137,86 +137,81 @@ void Animator::drawSkeletonHierarchy() {
 }
 
 void Animator::DrawInspectorGUI() {
-  if (ImGui::TreeNode("Animator")) {
-    ImGui::MenuItem("Motion", nullptr, nullptr, false);
-    ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
-    ImGui::TextWrapped("Duration: %d",
-                       motion == nullptr ? -1 : motion->poses.size());
-    if (ImGui::Button("Export BVH Motion", {-1, 30})) {
-      if (motion != nullptr)
-        motion->SaveToBVH("./save_motion.bvh");
-    }
-    ImGui::BeginChild("choosemotionsource", {-1, 30});
-    static char motionSequencePath[200] = {0};
-    sprintf(motionSequencePath, motionName.c_str());
-    ImGui::InputTextWithHint("##motionsource", "Motion Sequence Path",
-                             motionSequencePath, sizeof(motionSequencePath),
-                             ImGuiInputTextFlags_ReadOnly);
-    ImGui::SameLine();
-    if (ImGui::Button("Clear", {-1, -1})) {
-      // reset skeleton to rest pose
-      ApplyMotionToSkeleton(actor->GetRestPose());
-      // clear variables
-      motion = nullptr;
-      motionName = "";
-      for (int i = 0; i < sizeof(motionSequencePath); ++i)
-        motionSequencePath[i] = 0;
-    }
-    ImGui::EndChild();
-    if (ImGui::BeginDragDropTarget()) {
-      if (const ImGuiPayload *payload =
-              ImGui::AcceptDragDropPayload("ASSET_FILENAME")) {
-        char *assetFilename = (char *)payload->Data;
-        fs::path filepath = fs::path(assetFilename);
-        std::string extension = filepath.extension().string();
-        if (extension == ".bvh" || extension == ".fbx") {
-          motion = Loader.GetMotion(filepath.string());
-          motionName = filepath.string();
-        } else {
-          LOG_F(ERROR, "only .bvh and .fbx motion are supported");
-        }
+  ImGui::MenuItem("Motion", nullptr, nullptr, false);
+  ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
+  ImGui::TextWrapped("Duration: %d",
+                     motion == nullptr ? -1 : motion->poses.size());
+  if (ImGui::Button("Export BVH Motion", {-1, 30})) {
+    if (motion != nullptr)
+      motion->SaveToBVH("./save_motion.bvh");
+  }
+  ImGui::BeginChild("choosemotionsource", {-1, 30});
+  static char motionSequencePath[200] = {0};
+  sprintf(motionSequencePath, motionName.c_str());
+  ImGui::InputTextWithHint("##motionsource", "Motion Sequence Path",
+                           motionSequencePath, sizeof(motionSequencePath),
+                           ImGuiInputTextFlags_ReadOnly);
+  ImGui::SameLine();
+  if (ImGui::Button("Clear", {-1, -1})) {
+    // reset skeleton to rest pose
+    ApplyMotionToSkeleton(actor->GetRestPose());
+    // clear variables
+    motion = nullptr;
+    motionName = "";
+    for (int i = 0; i < sizeof(motionSequencePath); ++i)
+      motionSequencePath[i] = 0;
+  }
+  ImGui::EndChild();
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("ASSET_FILENAME")) {
+      char *assetFilename = (char *)payload->Data;
+      fs::path filepath = fs::path(assetFilename);
+      std::string extension = filepath.extension().string();
+      if (extension == ".bvh" || extension == ".fbx") {
+        motion = Loader.GetMotion(filepath.string());
+        motionName = filepath.string();
+      } else {
+        LOG_F(ERROR, "only .bvh and .fbx motion are supported");
       }
-      ImGui::EndDragDropTarget();
     }
-    ImGui::Separator();
-    ImGui::MenuItem("Skeleton", nullptr, nullptr, false);
-    ImGui::Checkbox("Show Skeleton", &ShowSkeleton);
-    ImGui::Checkbox("Show Joints", &ShowJoints);
-    ImGui::SliderFloat("Joint Size", &JointVisualSize, 0.0f, 1.2f);
-    ImGui::Checkbox("Helpers On Top", &SkeletonOnTop);
-    ImGui::BeginChild("chooseskeletonroot", {-1, 30});
-    if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
-      skeletonName = skeleton->name;
+    ImGui::EndDragDropTarget();
+  }
+  ImGui::Separator();
+  ImGui::MenuItem("Skeleton", nullptr, nullptr, false);
+  ImGui::Checkbox("Show Skeleton", &ShowSkeleton);
+  ImGui::Checkbox("Show Joints", &ShowJoints);
+  ImGui::SliderFloat("Joint Size", &JointVisualSize, 0.0f, 1.2f);
+  ImGui::Checkbox("Helpers On Top", &SkeletonOnTop);
+  ImGui::BeginChild("chooseskeletonroot", {-1, 30});
+  if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
+    skeletonName = skeleton->name;
+  }
+  char skeletonNameBuf[100];
+  sprintf(skeletonNameBuf, skeletonName.c_str());
+  ImGui::InputTextWithHint("##skeletonentity", "Skeleton Root Entity",
+                           skeletonNameBuf, sizeof(skeletonNameBuf),
+                           ImGuiInputTextFlags_ReadOnly);
+  ImGui::SameLine();
+  if (ImGui::Button("Rest Pose", {-1, -1})) {
+    ApplyMotionToSkeleton(actor->GetRestPose());
+  }
+  ImGui::EndChild();
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("ENTITYID_DATA")) {
+      Entity *skeletonRoot = *(Entity **)payload->Data;
+      skeleton = skeletonRoot;
     }
-    char skeletonNameBuf[100];
-    sprintf(skeletonNameBuf, skeletonName.c_str());
-    ImGui::InputTextWithHint("##skeletonentity", "Skeleton Root Entity",
-                             skeletonNameBuf, sizeof(skeletonNameBuf),
-                             ImGuiInputTextFlags_ReadOnly);
-    ImGui::SameLine();
-    if (ImGui::Button("Rest Pose", {-1, -1})) {
-      ApplyMotionToSkeleton(actor->GetRestPose());
-    }
-    ImGui::EndChild();
-    if (ImGui::BeginDragDropTarget()) {
-      if (const ImGuiPayload *payload =
-              ImGui::AcceptDragDropPayload("ENTITYID_DATA")) {
-        Entity *skeletonRoot = *(Entity **)payload->Data;
-        skeleton = skeletonRoot;
-      }
-      ImGui::EndDragDropTarget();
-    }
-    float skeletonColor[3] = {SkeletonColor.x, SkeletonColor.y,
-                              SkeletonColor.z};
-    if (ImGui::ColorEdit3("Color", skeletonColor)) {
-      SkeletonColor =
-          glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
-    }
-    if (ImGui::CollapsingHeader("Hierarchy")) {
-      drawSkeletonHierarchy();
-    }
-
-    ImGui::TreePop();
+    ImGui::EndDragDropTarget();
+  }
+  float skeletonColor[3] = {SkeletonColor.x, SkeletonColor.y, SkeletonColor.z};
+  if (ImGui::ColorEdit3("Color", skeletonColor)) {
+    SkeletonColor =
+        glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
+  }
+  if (ImGui::CollapsingHeader("Hierarchy")) {
+    drawSkeletonHierarchy();
   }
 }
 

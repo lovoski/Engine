@@ -1,12 +1,15 @@
+#include "Scripts/Animation/VisMetrics.hpp"
+#include "Scripts/Animation/SAMERetarget.hpp"
+
 #include "../Editor.hpp"
 #include <limits>
 
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
+#include "Component/DeformRenderer.hpp"
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
-#include "Component/DeformRenderer.hpp"
 
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
@@ -22,7 +25,7 @@ using std::vector;
 
 inline void DrawTransformGUI(EntityID selectedEntity) {
   auto transform = GWORLD.EntityFromID(selectedEntity);
-  if (ImGui::TreeNode("Transform")) {
+  if (ImGui::CollapsingHeader("Transform")) {
     ImGui::MenuItem("Global Properties", nullptr, nullptr, false);
     vec3 position = transform->Position();
     vec3 scale = transform->Scale();
@@ -43,27 +46,67 @@ inline void DrawTransformGUI(EntityID selectedEntity) {
     // }
     if (ImGui::DragFloat3("Scale", scales, 0.01f, 0.0f, MAX_FLOAT))
       transform->SetGlobalScale(vec3(scales[0], scales[1], scales[2]));
-    ImGui::TreePop();
+  }
+}
+
+template <typename T> void DrawComponent(EntityID entity, std::string name) {
+  static bool showComponent = false;
+  bool hasComponent = GWORLD.HasComponent<T>(entity);
+  if (hasComponent) {
+    showComponent = true;
+  } else {
+    showComponent = false;
+  }
+  if (ImGui::CollapsingHeader(name.c_str(), &showComponent)) {
+    GWORLD.GetComponent<T>(entity)->DrawInspectorGUI();
+  }
+  if (hasComponent && !showComponent) {
+    // the component should be removed
+    if constexpr (std::is_same_v<Animator, T>) {
+      // animator is not a removable component
+      // there might be some component from other entities depending on it
+      LOG_F(WARNING, "can't remove animator from entity %d", entity);
+    } else {
+      LOG_F(INFO, "remove component %s from entiy %d", name.c_str(), entity);
+      GWORLD.RemoveComponent<T>(entity);
+    }
+  }
+}
+
+// manual registeration needed when new scripts are added
+void InspectorRightClickMenu(EntityID entity) {
+  if (ImGui::BeginPopup("ComponentWindowContextMenu")) {
+    if (ImGui::MenuItem("Add Component", nullptr, nullptr, false))
+      ;
+    if (ImGui::BeginMenu("Native Script")) {
+      bool hasNativeScript = GWORLD.HasComponent<NativeScript>(entity);
+      ImGui::MenuItem("Available Scripts", nullptr, nullptr, false);
+      ImGui::Separator();
+      if (ImGui::MenuItem("Visual Metrics")) {
+        if (!hasNativeScript)
+          GWORLD.AddComponent<NativeScript>(entity);
+        GWORLD.GetComponent<NativeScript>(entity)->Bind<VisMetrics>();
+      }
+      if (ImGui::MenuItem("SAME Retarget")) {
+        if (!hasNativeScript)
+          GWORLD.AddComponent<NativeScript>(entity);
+        GWORLD.GetComponent<NativeScript>(entity)->Bind<SAMERetarget>();
+      }
+      ImGui::EndMenu();
+    }
+    ImGui::EndPopup();
   }
 }
 
 void Editor::InspectorWindow() {
   ImGui::Begin("Components", &showInspectorWindow);
-  // // Right-click context menu for the parent window
-  // if (!ImGui::IsAnyItemHovered() &&
-  //     ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) {
-  //   // open the window context menu
-  //   if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-  //     ImGui::OpenPopup("ComponentWindowContextMenu");
-  //   // unselect entities
-  //   // if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-  //   //   selectedEntity = (ECS::EntityID)(-1);
-  // }
-  // if (selectedEntity != (ECS::EntityID)(-1) &&
-  // ImGui::BeginPopup("ComponentWindowContextMenu")) {
-  //   ImGui::MenuItem("Window Options", nullptr, nullptr, false);
-  //   ImGui::EndPopup();
-  // }
+  // Right-click context menu for the parent window
+  if (!ImGui::IsAnyItemHovered() &&
+      ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) {
+    // open the window context menu
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+      ImGui::OpenPopup("ComponentWindowContextMenu");
+  }
   static bool pannelLocked = false;
   ImGui::Checkbox("Lock Panel", &pannelLocked);
   if (!pannelLocked) {
@@ -74,25 +117,23 @@ void Editor::InspectorWindow() {
       pannelLocked ? context.lockedSelectedEntity : context.selectedEntity;
   // the entity must be valid
   if (GWORLD.EntityValid(entity)) {
-    string entityName =
-        "Active Entity : " + std::to_string(entity);
+    InspectorRightClickMenu(
+        entity); // only show the menu when the component is valid
+    string entityName = "Active Entity : " + std::to_string(entity);
     ImGui::SeparatorText(entityName.c_str());
     ImGui::BeginChild("Components List",
                       {-1, ImGui::GetContentRegionAvail().y});
     DrawTransformGUI(entity);
-    if (GWORLD.HasComponent<Camera>(entity))
-      GWORLD.GetComponent<Camera>(entity)->DrawInspectorGUI();
-    if (GWORLD.HasComponent<Light>(entity))
-      GWORLD.GetComponent<Light>(entity)->DrawInspectorGUI();
-    if (GWORLD.HasComponent<Animator>(entity))
-      GWORLD.GetComponent<Animator>(entity)->DrawInspectorGUI();
-    if (GWORLD.HasComponent<NativeScript>(entity))
-      GWORLD.GetComponent<NativeScript>(entity)->DrawInspectorGUI();
-    if (GWORLD.HasComponent<MeshRenderer>(entity))
-      GWORLD.GetComponent<MeshRenderer>(entity)->DrawInspectorGUI();
-    if (GWORLD.HasComponent<DeformRenderer>(entity)) {
-      GWORLD.GetComponent<DeformRenderer>(entity)->DrawInspectorGUI();
-    }
+
+    // draw components of this entity if exists
+    // new components need to manually register here
+    // TODO: automatically register component?
+    DrawComponent<Camera>(entity, "Camera");
+    DrawComponent<Light>(entity, "Light");
+    DrawComponent<Animator>(entity, "Animator");
+    DrawComponent<MeshRenderer>(entity, "Mesh Renderer");
+    DrawComponent<DeformRenderer>(entity, "Deform Renderer");
+    DrawComponent<NativeScript>(entity, "Native Script");
     ImGui::EndChild();
   }
   ImGui::End();

@@ -22,8 +22,8 @@ void DeformRenderer::DeformMesh() {
 }
 
 void DeformRenderer::DrawInspectorGUI() {
-  if (ImGui::TreeNode("DeformRenderer")) {
-    // ImGui::MenuItem("", nullptr, nullptr, false);
+  // ImGui::MenuItem("", nullptr, nullptr, false);
+  if (ImGui::TreeNode("Renderer")) {
     renderer->DrawInspectorGUI();
     ImGui::TreePop();
   }

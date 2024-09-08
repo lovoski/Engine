@@ -2,7 +2,8 @@
 
 namespace aEngine {
 
-MeshRenderer::MeshRenderer(EntityID id, aEngine::Render::Mesh *mesh) : meshData(mesh), BaseComponent(id) {
+MeshRenderer::MeshRenderer(EntityID id, aEngine::Render::Mesh *mesh)
+    : meshData(mesh), BaseComponent(id) {
   vao.Bind();
   meshData->vbo.BindAs(GL_ARRAY_BUFFER);
   meshData->ebo.BindAs(GL_ELEMENT_ARRAY_BUFFER);
@@ -41,7 +42,8 @@ void MeshRenderer::DrawMesh(Render::Shader &shader) {
   }
 }
 
-void MeshRenderer::DrawMeshShadowPass(Render::Shader &shader, glm::mat4 modelMat) {
+void MeshRenderer::DrawMeshShadowPass(Render::Shader &shader,
+                                      glm::mat4 modelMat) {
   shader.Use();
   auto model = glm::mat4(1.0f);
   if (targetVBO == nullptr) {
@@ -63,7 +65,8 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
       if (targetVBO == nullptr) {
         modelMat = object->GetModelMatrix();
       }
-      pass->SetupPass(modelMat, viewMat, projMat, -camera->LocalForward, receiveShadow);
+      pass->SetupPass(modelMat, viewMat, projMat, -camera->LocalForward,
+                      receiveShadow);
       DrawMesh(*pass->GetShader());
       pass->FinishPass();
     }
@@ -75,16 +78,13 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
 }
 
 void MeshRenderer::DrawInspectorGUI() {
-  if (ImGui::TreeNode("MeshRenderer")) {
-    ImGui::MenuItem("Options", nullptr, nullptr, false);
-    ImGui::Checkbox("Cast Shadow", &castShadow);
-    ImGui::Checkbox("Receive Shadow", &receiveShadow);
-    ImGui::MenuItem("Render Passes", nullptr, nullptr, false);
-    for (auto pass : passes) {
-      ImGui::Separator();
-      pass->DrawInspectorGUI();
-    }
-    ImGui::TreePop();
+  ImGui::MenuItem("Options", nullptr, nullptr, false);
+  ImGui::Checkbox("Cast Shadow", &castShadow);
+  ImGui::Checkbox("Receive Shadow", &receiveShadow);
+  ImGui::MenuItem("Render Passes", nullptr, nullptr, false);
+  for (auto pass : passes) {
+    ImGui::Separator();
+    pass->DrawInspectorGUI();
   }
 }
 
