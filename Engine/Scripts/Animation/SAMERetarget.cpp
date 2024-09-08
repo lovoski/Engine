@@ -158,18 +158,18 @@ void SAMERetarget::DrawInspectorGUI() {
   ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
   ImGui::TextWrapped("Duration: %d",
                      motion == nullptr ? -1 : motion->poses.size());
-  if (ImGui::Button("Export BVH Motion", {-1, 30})) {
+  if (ImGui::Button("Export BVH Motion##same", {-1, 30})) {
     if (motion != nullptr)
       motion->SaveToBVH("./save_motion.bvh");
   }
-  ImGui::BeginChild("choosemotionsource", {-1, 30});
+  ImGui::BeginChild("choosesamemotionsource", {-1, 30});
   static char motionSequencePath[200] = {0};
   sprintf(motionSequencePath, motionName.c_str());
-  ImGui::InputTextWithHint("##motionsource", "Motion Sequence Path",
+  ImGui::InputTextWithHint("##samemotionsource", "Motion Sequence Path",
                            motionSequencePath, sizeof(motionSequencePath),
                            ImGuiInputTextFlags_ReadOnly);
   ImGui::SameLine();
-  if (ImGui::Button("Clear", {-1, -1})) {
+  if (ImGui::Button("Clear##same", {-1, -1})) {
     // reset skeleton to rest pose
     if (animator != nullptr)
       animator->ApplyMotionToSkeleton(animator->actor->GetRestPose());

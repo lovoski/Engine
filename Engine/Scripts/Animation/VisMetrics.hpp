@@ -57,7 +57,7 @@ public:
                                           : slideMetricsCurrentPose(animator));
 
     // better visualization with implot
-    ImPlot::BeginPlot("Height", {-1, 200});
+    ImPlot::BeginPlot("Height##vismetrics", {-1, 200});
     static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
     static float time = 0;
     static ScrollingBuffer lFootData, rFootData;
@@ -78,8 +78,8 @@ public:
                      2 * sizeof(float));
     ImPlot::EndPlot();
 
-    ImGui::Checkbox("Show Contact", &showContactJoint);
-    ImGui::SliderFloat("Height Threshold", &heightThreshold, 0.0f, 10.0f);
+    ImGui::Checkbox("Show Contact##vismetrics", &showContactJoint);
+    ImGui::SliderFloat("Height Threshold##vismetrics", &heightThreshold, 0.0f, 10.0f);
   }
 
   void DrawToScene() override {
@@ -92,8 +92,8 @@ public:
           VisUtils::DrawWireSphere(contactJoint->Position(), cameraComp->VP,
                                    1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
         }
-        glEnable(GL_DEPTH_TEST);
       }
+      glEnable(GL_DEPTH_TEST);
     }
   }
 

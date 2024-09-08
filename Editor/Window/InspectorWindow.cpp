@@ -1,5 +1,5 @@
-#include "Scripts/Animation/VisMetrics.hpp"
 #include "Scripts/Animation/SAMERetarget.hpp"
+#include "Scripts/Animation/VisMetrics.hpp"
 
 #include "../Editor.hpp"
 #include <limits>
