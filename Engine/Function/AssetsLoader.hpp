@@ -24,6 +24,8 @@ public:
     return reference;
   }
 
+  // load and cache a texture from file, returns "::null_texture" if
+  // failed to load.
   Texture *GetTexture(std::string texturePath);
   Render::Mesh *GetMesh(std::string modelPath, std::string identifier);
   std::vector<Render::Mesh *> GetModel(std::string modelPath);

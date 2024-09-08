@@ -11,6 +11,8 @@ namespace aEngine {
 
 namespace Render {
 
+// Activate the texture at a opengl bind point, if the texture is ::null_texture,
+// pure white texture will be activated instead.
 bool ActivateTexture2D(Texture &texture, Shader *shader, std::string name,
                        int slot);
 
@@ -102,9 +104,29 @@ class GBVMainPass : public BasePass {
 public:
   GBVMainPass();
 
-  Texture base, ILM, SSS, detail;
+  // texture maps
+  Texture base, ILM, SSS;
+
+  // ramp
+  float firstRampStart = 0.2, firstRampStop = 0.22;
+  float rampOffset = 1.0f, rampShadowWeight = 1.0f;
+
+  // rim light
+  glm::vec3 rimLightColor = glm::vec3(0.8f);
+  float rimLightWidth = 0.063f;
+  float rimLightSmooth = 0.01f;
+
+  // specular
+  int specularGloss = 20;
+  float specularWeight = 0.0f;
+
+  // details
+  float detailWeight = 0.3f;
+  float innerLineWeight = 1.0f;
+  Texture detail;
 
   std::string GetMaterialTypeName() override;
+  void FinishPass() override;
 
 private:
   void additionalSetup() override;

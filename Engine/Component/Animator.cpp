@@ -25,7 +25,8 @@ void Animator::BuildSkeletonMap() {
     auto curEnt = GWORLD.EntityFromID(cur).get();
     SkeletonMapData smd;
     smd.joint = curEnt;
-    smd.actorInd = findActorJointIndWithName(curEnt->name);
+    auto it = actorJointMap.find(curEnt->name);
+    smd.actorInd = it == actorJointMap.end() ? -1 : it->second;
     if (smd.actorInd == -1)
       smd.active = false;
     else
@@ -68,6 +69,9 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
 }
 
 void Animator::createSkeletonEntities() {
+  for (int i = 0; i < actor->jointNames.size(); ++i)
+    actorJointMap.insert(std::make_pair(actor->jointNames[i], i));
+
   std::vector<Entity *> joints;
   for (int i = 0; i < actor->GetNumJoints(); ++i) {
     auto c = GWORLD.AddNewEntity();
@@ -229,16 +233,6 @@ std::vector<glm::mat4> Animator::GetSkeletonTransforms() {
     }
   }
   return result;
-}
-
-int Animator::findActorJointIndWithName(std::string name) {
-  int jointNum = actor->GetNumJoints();
-  for (int i = 0; i < jointNum; ++i) {
-    auto jointName = actor->jointNames[i];
-    if (jointName == name)
-      return i;
-  }
-  return -1;
 }
 
 }; // namespace aEngine

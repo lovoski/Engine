@@ -1,4 +1,5 @@
 #include "Function/Render/RenderPass.hpp"
+#include "Function/GUI/Helpers.hpp"
 #include "Entity.hpp"
 #include "Function/AssetsLoader.hpp"
 #include "Scene.hpp"
@@ -15,15 +16,19 @@ using std::vector;
 bool ActivateTexture2D(Texture &texture, Shader *shader, string name,
                        int slot) {
   shader->Use(); // activate the shader
-  if (texture.path != "::NULL_ICON") {
-    // only activate none icon texture
-    glActiveTexture(GL_TEXTURE0 + slot);
-    int location = glGetUniformLocation(shader->ID, name.c_str());
-    if (location == -1)
-      return false;
-    glUniform1i(location, texture.id);
-    glBindTexture(GL_TEXTURE_2D, texture.id);
+  static Texture pureWhite = *Loader.GetTexture("::white_texture");
+  auto activateTexId = texture.id;
+  if (texture.path == "::null_texture") {
+    activateTexId = pureWhite.id;
   }
+  glActiveTexture(GL_TEXTURE0 + slot);
+  int location = glGetUniformLocation(shader->ID, name.c_str());
+  if (location == -1) {
+    // LOG_F(WARNING, "location for %s not valid", name.c_str());
+    return false;
+  }
+  glUniform1i(location, slot);
+  glBindTexture(GL_TEXTURE_2D, activateTexId);
   return true;
 }
 
@@ -114,13 +119,79 @@ std::string OutlinePass::GetMaterialTypeName() { return "Outline"; }
 
 // ----------- GBV shader -------------
 
-GBVMainPass::GBVMainPass() {}
+GBVMainPass::GBVMainPass() {
+  shader = Loader.GetShader("::gbvmain");
+  // set these textures to null for inspector display
+  base = *Loader.GetTexture("::null_texture");
+  ILM = *Loader.GetTexture("::null_texture");
+  SSS = *Loader.GetTexture("::null_texture");
+  detail = *Loader.GetTexture("::null_texture");
+}
 
 std::string GBVMainPass::GetMaterialTypeName() { return "GBV Main"; }
 
-void GBVMainPass::drawCustomInspectorGUI() {}
+void GBVMainPass::drawCustomInspectorGUI() {
+  ImGui::BeginChild("gbvmainpasschild", {-1, -1});
 
-void GBVMainPass::additionalSetup() {}
+  ImGui::MenuItem("Basic Textures", nullptr, nullptr, false);
+  GUIUtils::DragableTextureTarget(base, "Base");
+  GUIUtils::DragableTextureTarget(ILM, "ILM");
+  ImGui::Separator();
+
+  ImGui::MenuItem("Ramp", nullptr, nullptr, false);
+  ImGui::SliderFloat("First Ramp Start", &firstRampStart, 0.0f, 1.0f);
+  ImGui::SliderFloat("First Ramp Stop", &firstRampStop, 0.0f, 1.0f);
+  ImGui::SliderFloat("Ramp Offset", &rampOffset, 0.0f, 1.0f);
+  ImGui::SliderFloat("Ramp Shadow Wegith", &rampShadowWeight, 0.0f, 1.0f);
+  GUIUtils::DragableTextureTarget(SSS, "SSS");
+
+  ImGui::MenuItem("Specular", nullptr, nullptr, false);
+  ImGui::SliderInt("Specular Gloss", &specularGloss, 1, 128);
+  ImGui::SliderFloat("Specular Weight", &specularWeight, 0.0f, 2.0f);
+
+  ImGui::MenuItem("Rim Light", nullptr, nullptr, false);
+  GUIUtils::ColorEdit3(rimLightColor, "Rim Light Color");
+  ImGui::SliderFloat("Rim Light Width", &rimLightWidth, 0.0f, 1.0f);
+  ImGui::SliderFloat("Rim Light Smooth", &rimLightSmooth, 0.0f, 0.1f);
+  ImGui::Separator();
+
+  ImGui::MenuItem("Details", nullptr, nullptr, false);
+  GUIUtils::DragableTextureTarget(detail, "Detail");
+  ImGui::SliderFloat("Detail Weight", &detailWeight, 0.0f, 1.0f);
+  ImGui::SliderFloat("Inner Line Weight", &innerLineWeight, 0.0f, 1.0f);
+
+  ImGui::EndChild();
+}
+
+void GBVMainPass::additionalSetup() {
+  shader->Use();
+  ActivateTexture2D(base, shader, "Base", 0);
+  ActivateTexture2D(ILM, shader, "ILM", 1);
+  ActivateTexture2D(SSS, shader, "SSS", 2);
+  ActivateTexture2D(detail, shader, "Detail", 3);
+
+  shader->SetFloat("firstRampStart", firstRampStart);
+  shader->SetFloat("firstRampStop", firstRampStop);
+  shader->SetFloat("rampOffset", rampOffset);
+  shader->SetFloat("rampShadowWeight", rampShadowWeight);
+
+  shader->SetVec3("rimLightColor", rimLightColor);
+  shader->SetFloat("rimLightWidth", rimLightWidth);
+  shader->SetFloat("rimLightSmooth", rimLightSmooth);
+
+  shader->SetInt("specularGloss", specularGloss);
+  shader->SetFloat("specularWeight", specularWeight);
+
+  shader->SetFloat("detailWeight", detailWeight);
+  shader->SetFloat("innerLineWeight", innerLineWeight);
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+}
+
+void GBVMainPass::FinishPass() {
+  glDisable(GL_CULL_FACE);
+}
 
 }; // namespace Render
 

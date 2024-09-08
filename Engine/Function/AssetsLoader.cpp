@@ -108,11 +108,17 @@ void AssetsLoader::LoadDefaultAssets() {
   auto cylinderMesh = loadAndCreateMeshFromFile("./Assets/meshes/cylinder.fbx");
   allMeshes.insert(std::make_pair("::cylinderPrimitive", cylinderMesh));
 
-  // load icons
-  Texture *nullIcon = new Texture();
-  nullIcon->id = loadAndCreateTextureFromFile("./Assets/icons/NULL.png");
-  nullIcon->path = "::NULL_ICON";
-  allTextures.insert(std::make_pair("::NULL_ICON", nullIcon));
+  // load default textures
+  Texture *nullTexture = new Texture();
+  nullTexture->id = loadAndCreateTextureFromFile("./Assets/textures/null.png");
+  nullTexture->path = "::null_texture";
+  allTextures.insert(std::make_pair("::null_texture", nullTexture));
+
+  Texture *whiteTexture = new Texture();
+  whiteTexture->id =
+      loadAndCreateTextureFromFile("./Assets/textures/white.png");
+  whiteTexture->path = "::white_texture";
+  allTextures.insert(std::make_pair("::white_texture", whiteTexture));
 
   // load shaders
   Render::Shader *diffuseShader = new Render::Shader();
@@ -129,6 +135,11 @@ void AssetsLoader::LoadDefaultAssets() {
   outlineShader->identifier = "::outline";
   outlineShader->LoadAndRecompileShaderSource(outlineVS, outlineFS);
   allShaders.insert(std::make_pair("::outline", outlineShader));
+
+  Render::Shader *gbvMainShader = new Render::Shader();
+  gbvMainShader->identifier = "::gbvmain";
+  gbvMainShader->LoadAndRecompileShaderSource(GBVMainVS, GBVMainFS);
+  allShaders.insert(std::make_pair("::gbvmain", gbvMainShader));
 
   Render::Shader *shadowMapDirLight = new Render::Shader();
   shadowMapDirLight->identifier = "::shadowMapDirLight";
@@ -212,10 +223,16 @@ Texture *AssetsLoader::GetTexture(string texturePath) {
   if (allTextures.find(texturePath) == allTextures.end()) {
     // load new texture
     Texture *newTexture = new Texture();
-    newTexture->id = loadAndCreateTextureFromFile(texturePath);
-    newTexture->path = texturePath;
-    allTextures[texturePath] = newTexture;
-    return newTexture;
+    auto id = loadAndCreateTextureFromFile(texturePath);
+    if (id == (unsigned int)(-1)) {
+      // failed to load texture, return null
+      return allTextures["::null_texture"];
+    } else {
+      newTexture->id = id;
+      newTexture->path = texturePath;
+      allTextures[texturePath] = newTexture;
+      return newTexture;
+    }
   } else {
     return allTextures[texturePath];
   }
@@ -310,6 +327,8 @@ unsigned int loadAndCreateTextureFromFile(string texturePath) {
     stbi_image_free(data);
   } else {
     LOG_F(ERROR, "Texture failed to load at path: %s", texturePath.c_str());
+    // set the id of texture to (unsigned int)(-1) if failed to load
+    textureID = (unsigned int)(-1);
     stbi_image_free(data);
   }
 

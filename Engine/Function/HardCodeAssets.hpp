@@ -185,3 +185,132 @@ const std::string shadowMapDirLightFS = R"(
 #version 430 core
 void main() {}
 )";
+
+const std::string GBVMainVS = R"(
+#version 460 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aNormal;
+layout (location = 2) in vec4 aTexCoord;
+layout (location = 3) in vec4 aColor;
+
+out vec2 texCoord;
+out vec3 worldPos;
+out vec3 worldNormal;
+out vec3 worldViewDir;
+out vec3 worldReflect;
+out vec4 vertColor;
+
+uniform mat4 ModelToWorldPoint;
+uniform mat3 ModelToWorldDir;
+uniform mat4 View;
+uniform mat4 Projection;
+uniform vec3 ViewDir;
+
+void main() {
+  vertColor = aColor;
+  texCoord = aTexCoord.xy;
+  worldNormal = normalize(ModelToWorldDir * vec3(aNormal));
+  worldPos = (ModelToWorldPoint * aPos).xyz;
+  worldViewDir = normalize(ViewDir);
+  worldReflect = reflect(-worldViewDir, worldNormal);
+  gl_Position = Projection * View * vec4(worldPos, 1.0);
+}
+)";
+const std::string GBVMainFS = R"(
+#version 460
+#extension GL_ARB_bindless_texture : require
+struct LightData {
+  int meta[4];
+  vec4 color;
+  vec4 position;
+  vec4 direction;
+  mat4 lightMatrix;
+  uvec4 shadowMap;
+};
+layout(std430, binding = 0) buffer Lights {
+  LightData lights[];
+};
+
+uniform int ReceiveShadow;
+
+uniform sampler2D Base;
+uniform sampler2D ILM;
+uniform sampler2D SSS;
+uniform sampler2D Detail;
+
+uniform float firstRampStart;
+uniform float firstRampStop;
+uniform float rampOffset;
+uniform float rampShadowWeight;
+
+uniform vec3 rimLightColor;
+uniform float rimLightWidth;
+uniform float rimLightSmooth;
+
+uniform int specularGloss;
+uniform float specularWeight;
+
+uniform float detailWeight;
+uniform float innerLineWeight;
+
+in vec4 vertColor;
+
+in vec2 texCoord;
+in vec3 worldPos;
+in vec3 worldNormal;
+in vec3 worldReflect;
+in vec3 worldViewDir;
+
+out vec4 FragColor;
+
+vec3 LightAttenuate(vec3 color, float distance) {
+  // attenuation for point light
+  float constant = 1.0;
+  float linear = 0.09;
+  float quadratic = 0.032;
+  float atten = 1.0 / (constant + linear * distance + quadratic * distance * distance);
+  return color * atten;
+}
+
+void main() {
+  vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
+  for (int i = 0; i < lights.length(); ++i) {
+    vec3 LightColor = lights[i].color.xyz;
+    vec3 LightDir;
+    if (lights[i].meta[0] == 0) {
+      LightDir = -normalize(lights[i].direction.xyz);
+    } else if (lights[i].meta[0] == 1) {
+      LightDir = normalize(lights[i].position.xyz-worldPos);
+      float distance = length(lights[i].position.xyz-worldPos);
+      LightColor = LightAttenuate(LightColor, distance);
+    }
+
+    vec4 baseCol = texture(Base, texCoord);
+    vec4 sssCol = texture(SSS, texCoord);
+    vec4 ilmChannels = texture(ILM, texCoord);
+    float detail = texture(Detail, texCoord).r;
+
+    float halfLambert = dot(worldNormal, LightDir) * 0.5 + 0.5;
+    float lightThresholdTerm = smoothstep(firstRampStart, firstRampStop, halfLambert * ilmChannels.g * rampOffset);
+    lightThresholdTerm *= vertColor.r;
+    vec3 rampShadow = mix(sssCol * rampShadowWeight, baseCol, lightThresholdTerm).rgb;
+
+    vec3 diffuse = LightColor.rgb * rampShadow;
+    diffuse = mix(diffuse, diffuse * ilmChannels.a, innerLineWeight);
+    diffuse = mix(diffuse, diffuse * detail, detailWeight);
+
+    vec3 halfDir = normalize(worldViewDir + LightDir);
+    float specularMaskTerm = ilmChannels.r * ilmChannels.b;
+    vec3 specular = specularMaskTerm * max(0, pow(dot(halfDir, worldNormal), specularGloss)) * baseCol.rgb * LightColor.rgb * specularWeight;
+
+    vec3 rimLightCol = smoothstep(1-rimLightWidth-rimLightSmooth, 1-rimLightWidth+rimLightSmooth, 1-dot(worldNormal, worldViewDir)) * baseCol.a * rimLightColor * baseCol.rgb;
+    rimLightCol *= LightColor.rgb;
+    rimLightCol = mix(vec3(0.0), rimLightCol, lightThresholdTerm);
+    diffuse += rimLightCol;
+
+    result.rgb += specular + diffuse;
+  }
+
+  FragColor = result;
+}
+)";

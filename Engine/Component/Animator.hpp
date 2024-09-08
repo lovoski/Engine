@@ -69,6 +69,9 @@ struct Animator : public BaseComponent {
   // The actor is a read only reference, motion is
   // applied to the skeleton entities created from this actor
   Animation::Skeleton *actor;
+  // map actor's jointName to joint index, this is a static structure
+  // and won't get updated with skeleton entities
+  std::map<std::string, int> actorJointMap;
   // This map should have the same size as the actor's joints
   std::map<std::string, SkeletonMapData> SkeletonMap;
 
@@ -78,8 +81,6 @@ struct Animator : public BaseComponent {
 private:
   void drawSkeletonHierarchy();
   void createSkeletonEntities();
-  // find the index of actor joint matching this name, -1 for not found
-  int findActorJointIndWithName(std::string name);
 };
 
 }; // namespace aEngine

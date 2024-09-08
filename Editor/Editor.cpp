@@ -112,8 +112,9 @@ void Editor::Run(bool release) {
       ImGui::BeginChild("GameRenderer");
       auto size = ImGui::GetContentRegionAvail();
       auto pos = ImGui::GetWindowPos();
-      ImGui::Image((void *)context.frameBuffer->GetFrameTexture(), size,
-                   ImVec2(0, 1), ImVec2(1, 0));
+      ImGui::Image((void *)static_cast<std::uintptr_t>(
+                       context.frameBuffer->GetFrameTexture()),
+                   size, ImVec2(0, 1), ImVec2(1, 0));
       if (GWORLD.Context.sceneWindowSize.x != size.x ||
           GWORLD.Context.sceneWindowSize.y != size.y) {
         context.frameBuffer->RescaleFrameBuffer(size.x, size.y);

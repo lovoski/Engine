@@ -43,6 +43,8 @@ void main() {
       newNormal += boneMatrix * vtx.Normal * weight;
     }
   }
+  // keep the rest property unchanged
+  vOut[index] = vIn[index];
   // Store the transformed position and normal back in the SSBO
   vOut[index].Position = newPosition;
   vOut[index].Normal = normalize(newNormal);

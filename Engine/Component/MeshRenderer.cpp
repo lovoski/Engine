@@ -14,6 +14,8 @@ MeshRenderer::MeshRenderer(EntityID id, aEngine::Render::Mesh *mesh)
                  (void *)(offsetof(Vertex, Normal)));
   vao.LinkAttrib(meshData->vbo, 2, 4, GL_FLOAT, sizeof(Vertex),
                  (void *)(offsetof(Vertex, TexCoords)));
+  vao.LinkAttrib(meshData->vbo, 3, 4, GL_FLOAT, sizeof(Vertex),
+                 (void *)(offsetof(Vertex, Color))); // vertex color
   vao.Unbind();
   meshData->vbo.UnbindAs(GL_ARRAY_BUFFER);
   meshData->ebo.UnbindAs(GL_ARRAY_BUFFER);
@@ -34,6 +36,8 @@ void MeshRenderer::DrawMesh(Render::Shader &shader) {
                    (void *)(offsetof(Vertex, Normal)));
     vao.LinkAttrib(*targetVBO, 2, 4, GL_FLOAT, sizeof(Vertex),
                    (void *)(offsetof(Vertex, TexCoords)));
+    vao.LinkAttrib(*targetVBO, 3, 4, GL_FLOAT, sizeof(Vertex),
+                   (void *)(offsetof(Vertex, Color))); // vertex color
   }
   glDrawElements(GL_TRIANGLES,
                  static_cast<unsigned int>(meshData->indices.size()),
@@ -72,9 +76,9 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
       DrawMesh(*pass->GetShader());
       pass->FinishPass();
     }
-    // reset target vbo in case deformerrenderer discard it
-    targetVBO = nullptr;
   }
+  // reset target vbo in case deformerrenderer discard it
+  targetVBO = nullptr;
   // reset lightSpaceMatrices after all passes
   lightSpaceMatrices.clear();
 }
@@ -87,6 +91,8 @@ void MeshRenderer::drawAppendPassPopup() {
       AddPass<Render::OutlinePass>(nullptr, "Outline");
     if (ImGui::MenuItem("Diffuse Pass"))
       AddPass<Render::Diffuse>(nullptr, "Diffuse");
+    if (ImGui::MenuItem("GBV Toon Pass"))
+      AddPass<Render::GBVMainPass>(nullptr, "GBV Main");
     ImGui::EndPopup();
   }
 }
