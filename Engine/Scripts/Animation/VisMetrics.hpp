@@ -48,8 +48,7 @@ public:
     }
   }
 
-  void DrawInspectorGUI() override {
-    drawInspectorGUIDefault();
+  void drawCustomInspectorGUI() override {
     auto animator = entity->GetComponent<Animator>();
     ImGui::MenuItem("Slide Metrics", nullptr, nullptr, false);
     ImGui::TextWrapped("Value: %.3f", animator == nullptr

@@ -23,6 +23,13 @@ public:
   // with the Bind function
   virtual void Start() {}
 
+  // This function will gets called when switch from `disable` to `enable`
+  // at the inspector gui
+  virtual void OnEnable();
+  // This function will gets called when switch from `enable` to `disable`
+  // at the inspector gui
+  virtual void OnDisable();
+
   virtual void Update(float dt) {}
   // LateUpdate will be called after all
   // Update functions are called
@@ -35,18 +42,22 @@ public:
   // We can draw debug helpers with this function
   virtual void DrawToScene() {}
 
-  // This function would get called in DrawInspectorGUI by default
-  // If you override the function DrawInspectorGUI but also want
-  // the default GUI, call this function before your override code
-  virtual void drawInspectorGUIDefault();
   virtual std::string getTypeName();
 
-  // The following content will be drawn at the editor menu
-  virtual void DrawInspectorGUI();
+  // The following content will be drawn at the editor menu,
+  // this function will setup some basic gui components of a scriptable,
+  // override the function drawCustomInspectorGUI if you need a 
+  // custom InspectorGUI
+  void DrawInspectorGUI();
 
   bool Enabled = true;
 
   Entity *entity = nullptr;
+
+private:
+  // override this function
+  virtual void drawCustomInspectorGUI() {}
+
 };
 
 }; // namespace aEngine

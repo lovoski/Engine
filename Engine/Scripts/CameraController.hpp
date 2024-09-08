@@ -108,8 +108,7 @@ struct EditorCameraController : public Scriptable {
 
   std::string getTypeName() override { return "Editor Controller"; }
 
-  void DrawInspectorGUI() override {
-    drawInspectorGUIDefault();
+  void drawCustomInspectorGUI() override {
     ImGui::SliderFloat("sensitiviy", &initialFactor, 0.0f, 2.0f);
     ImGui::SliderFloat("pow", &speedPow, 1.0f, 3.0f);
     ImGui::SliderFloat("upper bound", &maxSpeed, 100, 1e3);

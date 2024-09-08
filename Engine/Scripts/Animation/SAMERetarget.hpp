@@ -1,7 +1,8 @@
 /**
- * Neural retargeting with "SAME: Skeleton-Agnostic Motion Embedding for Character Animation"
- * Do the main inference in a python server, this is the c++ client component that handles
- * the user interaction and motion post-processing.
+ * Neural retargeting with "SAME: Skeleton-Agnostic Motion Embedding for
+ * Character Animation" Do the main inference in a python server, this is the
+ * c++ client component that handles the user interaction and motion
+ * post-processing.
  */
 #pragma once
 
@@ -26,8 +27,6 @@ struct SAMERetarget : public Scriptable {
   void Update(float dt) override { context.poll(); }
   void LateUpdate(float dt) override;
 
-  void DrawInspectorGUI() override;
-
   void Connect();
 
 private:
@@ -39,6 +38,8 @@ private:
   // convert motion of source to target format
   void fitRetargetMotion(Animation::Motion *source,
                          Animation::Skeleton *target);
+
+  void drawCustomInspectorGUI() override;
 
   std::string getTypeName() override { return "SAME Retarget"; }
 };
