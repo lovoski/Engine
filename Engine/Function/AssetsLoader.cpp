@@ -531,23 +531,37 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
 
   if (globalBones.size() > 1 && boneMapping.size() > 1) {
     int animStackCount = scene->anim_stacks.count;
-    auto anim = scene->anim; // import the active animation only
-    auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
+    // find the longest animation to import
+    double longestDuration = -1.0;
+    int longestAnimInd = -1;
+    for (int animInd = 0; animInd < animStackCount; ++animInd) {
+      auto tmpAnim = scene->anim_stacks[animInd]->anim;
+      auto duration = tmpAnim->time_end - tmpAnim->time_begin;
+      if (duration > longestDuration) {
+        duration = longestDuration;
+        longestAnimInd = animInd;
+      }
+    }
     std::vector<std::vector<KeyFrame>> animationPerJoint(globalBones.size(),
                                                          vector<KeyFrame>());
-    auto startTime = anim->time_begin, endTime = anim->time_end;
-    double sampleDelta = 1.0 / animSystem->SystemFPS;
-    for (auto jointInd = 0; jointInd < globalBones.size(); ++jointInd) {
-      auto jointNode = globalBones[jointInd].node;
-      for (double currentTime = startTime; currentTime < endTime;
-           currentTime += sampleDelta) {
-        auto localTransform =
-            ufbx_evaluate_transform(anim, jointNode, currentTime);
-        KeyFrame kf;
-        kf.localPosition = ConvertToGLM(localTransform.translation);
-        kf.localRotation = ConvertToGLM(localTransform.rotation);
-        kf.localScale = ConvertToGLM(localTransform.scale);
-        animationPerJoint[jointInd].push_back(kf);
+    if (longestAnimInd != -1) {
+      auto anim = scene->anim_stacks[longestAnimInd]
+                      ->anim; // import the active animation only
+      auto animSystem = GWORLD.GetSystemInstance<AnimationSystem>();
+      auto startTime = anim->time_begin, endTime = anim->time_end;
+      double sampleDelta = 1.0 / animSystem->SystemFPS;
+      for (auto jointInd = 0; jointInd < globalBones.size(); ++jointInd) {
+        auto jointNode = globalBones[jointInd].node;
+        for (double currentTime = startTime; currentTime < endTime;
+             currentTime += sampleDelta) {
+          auto localTransform =
+              ufbx_evaluate_transform(anim, jointNode, currentTime);
+          KeyFrame kf;
+          kf.localPosition = ConvertToGLM(localTransform.translation);
+          kf.localRotation = ConvertToGLM(localTransform.rotation);
+          kf.localScale = ConvertToGLM(localTransform.scale);
+          animationPerJoint[jointInd].push_back(kf);
+        }
       }
     }
 
