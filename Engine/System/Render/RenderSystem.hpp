@@ -14,6 +14,8 @@ struct LightData {
   // [0]: 0 for directional light, 1 for point light
   // [1]: 0 for not receive shadow, 1 for receive shadow
   int meta[4];
+  // [0]: intensity of point light source
+  float fmeta[4];
   glm::vec4 color;
   glm::vec4 position;    // for point light
   glm::vec4 direction;   // for directional light

@@ -55,6 +55,7 @@ struct LightData {
   // [0]: 0 for directional light, 1 for point light
   // [1]: 0 for not receive shadow, 1 for receive shadow
   int meta[4];
+  float fmeta[4];
   vec4 color;
   vec4 position; // for point light
   vec4 direction; // for directional light
@@ -74,12 +75,12 @@ in vec3 worldPos;
 out vec4 FragColor;
 
 
-vec3 LightAttenuate(vec3 color, float distance) {
+vec3 LightAttenuate(vec3 color, float distance, float intensity) {
   // attenuation for point light
   float constant = 1.0;
   float linear = 0.09;
   float quadratic = 0.032;
-  float atten = 1.0 / (constant + linear * distance + quadratic * distance * distance);
+  float atten = intensity / (constant + linear * distance + quadratic * distance * distance);
   return color * atten;
 }
 
@@ -115,7 +116,7 @@ vec3 LitSurface() {
     } else if (lights[i].meta[0] == 1) {
       LightDir = normalize(lights[i].position.xyz-worldPos);
       float distance = length(lights[i].position.xyz-worldPos);
-      LightColor = LightAttenuate(LightColor, distance);
+      LightColor = LightAttenuate(LightColor, distance, lights[i].fmeta[0]);
     }
     float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
     vec3 LightEffect = lambert * LightColor;
@@ -230,6 +231,7 @@ const std::string GBVMainFS = R"(
 #extension GL_ARB_bindless_texture : require
 struct LightData {
   int meta[4];
+  float fmeta[4];
   vec4 color;
   vec4 position;
   vec4 direction;
@@ -273,12 +275,12 @@ in vec3 worldViewDir;
 
 out vec4 FragColor;
 
-vec3 LightAttenuate(vec3 color, float distance) {
+vec3 LightAttenuate(vec3 color, float distance, float intensity) {
   // attenuation for point light
   float constant = 1.0;
   float linear = 0.09;
   float quadratic = 0.032;
-  float atten = 1.0 / (constant + linear * distance + quadratic * distance * distance);
+  float atten = intensity / (constant + linear * distance + quadratic * distance * distance);
   return color * atten;
 }
 
@@ -292,7 +294,7 @@ void main() {
     } else if (lights[i].meta[0] == 1) {
       LightDir = normalize(lights[i].position.xyz-worldPos);
       float distance = length(lights[i].position.xyz-worldPos);
-      LightColor = LightAttenuate(LightColor, distance);
+      LightColor = LightAttenuate(LightColor, distance, lights[i].fmeta[0]);
     }
 
     vec4 baseCol = texture(Base, texCoord1);
