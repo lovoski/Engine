@@ -56,6 +56,7 @@ public:
                                           : slideMetricsCurrentPose(animator));
 
     // better visualization with implot
+    static float history = 5.0f;
     if (ImPlot::BeginPlot("Height##vismetrics", {-1, 200})) {
       static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
       static float time = 0;
@@ -66,7 +67,7 @@ public:
       lFootData.AddPoint(time, lFoot == nullptr ? 0.0f : lFoot->Position().y);
       rFootData.AddPoint(time, rFoot == nullptr ? 0.0f : rFoot->Position().y);
       ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
-      ImPlot::SetupAxisLimits(ImAxis_X1, time - 10.0f, time, ImGuiCond_Always);
+      ImPlot::SetupAxisLimits(ImAxis_X1, time - history, time, ImGuiCond_Always);
       ImPlot::SetupAxisLimits(ImAxis_Y1, -0.5f, 25.0f);
       ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL, 0.5f);
       ImPlot::PlotLine("Left Foot", &lFootData.Data[0].x, &lFootData.Data[0].y,
@@ -82,6 +83,7 @@ public:
     ImGui::Checkbox("Show Contact##vismetrics", &showContactJoint);
     ImGui::SliderFloat("Height Threshold##vismetrics", &heightThreshold, 0.0f,
                        10.0f);
+    ImGui::SliderFloat("History##vismetrics", &history, 0.0f, 10.0f);
   }
 
   void DrawToScene() override {
