@@ -31,7 +31,7 @@ Each native script component can **bind** multiple scriptable derive classes. Fo
 
 ```cpp
 #include "API.hpp"
-class CameraController : public aEngine::Scriptable {
+class CameraController : public Scriptable {
 public:
   void Update(float dt) override {
     ...
@@ -46,30 +46,71 @@ After implementing our own controller, we need to **bind** this controller class
 ```cpp
 // GWORLD is a singleton handle for current scene
 auto entity = GWORLD.AddNewEntity();
-entity->AddComponent<aEngine::NativeScript>();
-entity->GetComponent<aEngine::NativeScript>()->Bind<CameraController>();
+entity->AddComponent<NativeScript>();
+entity->GetComponent<NativeScript>()->Bind<CameraController>();
 ```
 
 When you no longer want this script to execute, you can either set it to disabled or remove it with:
 ```cpp
-entity->GetComponent<aEngine::NativeScript>()->Unbind<CameraController>();
+entity->GetComponent<NativeScript>()->Unbind<CameraController>();
 ```
 
 Each `NativeScript` component can bind multiple scriptables, but each type of scriptable is only allowed one instance.
 
 ```cpp
-entity->GetComponent<aEngine::NativeScript>()->Bind<CameraController>();
+entity->GetComponent<NativeScript>()->Bind<CameraController>();
 // This is allowed, both scriptable will get executed
-entity->GetComponent<aEngine::NativeScript>()->Bind<CharacterController>();
+entity->GetComponent<NativeScript>()->Bind<CharacterController>();
 // This will overwrite previous scriptable of the same type
-entity->GetComponent<aEngine::NativeScript>()->Bind<CameraController>();
+entity->GetComponent<NativeScript>()->Bind<CameraController>();
 ```
 
 Check `Engine/Component/NativeScript.hpp` for more details.
 
 ## Render System
 
-...
+Here's a screen shot of the rendering from this engine:
+
+![toon_shading](Doc/render_toon_20240909.png)
+
+The main code for render system lies in `Engine/System/RenderSystem`, however, there are some sub-systems that work tightly with render system (`CameraSystem`, `LightSystem` etc.).
+
+Entities with `MeshRenderer` or `DeformRenderer` component will be maintained by the render system. The `DeformRenderer` holds a pointer to a private `MeshRenderer` instance and performs mesh skinning based on compute shader by modifying the targetVBO of a mesh before actual render code, check more details at `Engine/Component/DeformRenderer`.
+
+Each `MeshRenderer` holds an array of `RenderPass`, each render pass is a derived class of the `BasePass` in `Function/Render/RenderPass`. The `BasePass` class configrues some built-in uniform variables (ModelToWorldPoint, ModelToWorldDir, ViewDir, etc.). You can override functions in `BasePass` to do custom rendering:
+
+```cpp
+class CustomPass : public BasePass {
+public:
+  CustomPass() {
+    // setup shader in the constructor
+    shader = Loader.GetShader(...);
+    // setup other default values
+    ...
+  }
+  // This function will gets called after draw call
+  // (reset states, free resources etc.)
+  void FinishPass() override {}
+private:
+  // This function gets called before the draw call
+  void additionalSetup() override {
+    shader->Use();
+    // setup custom uniform variables, switch states, fill SSBOs, etc.
+  }
+  // This draws the inspector gui, make it easier to tune parameters
+  void drawCustomInspectorGUI() override {
+    ImGui::SliderFloat(...);
+  }
+};
+```
+
+There are more functions you can override to make your own rendering, check `Function/Render/RenderPass` for examples more details.
+
+Once you finish your own render pass, you can add this pass to a `MeshRenderer` to make it works. I provide a function `AddPass` in the component to make it easier. You can also check `drawAppendPassPopup` function in `MeshRenderer` to see how to add the new pass in inspector gui.
+
+### More Details
+
+Currently, the engine only supports forward rendering. As mentioned above, the `BasePass` setup some default uniforms for you, including the lights. Each light in the scene has a `Light` component maintained by `LightSystem`. This system don't keep an active buffer for these light, but maintains a member variable `Lights` in `RenderSystem`. Before the actual rendering, `RenderSystem` will fill in a buffer object with the lights data, and bind this buffer object as a shader storage buffer for shaders to access.
 
 ## Animation System
 
