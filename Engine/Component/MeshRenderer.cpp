@@ -69,7 +69,7 @@ void MeshRenderer::ForwardRender(glm::mat4 projMat, glm::mat4 viewMat,
       pass->SetupLights(lightsBuffer);
       auto modelMat = glm::mat4(1.0f);
       if (targetVBO == nullptr) {
-        modelMat = object->GetModelMatrix();
+        modelMat = object->GlobalTransformMatrix();
       }
       pass->SetupPass(modelMat, viewMat, projMat, -camera->LocalForward,
                       receiveShadow);
@@ -108,20 +108,12 @@ void MeshRenderer::DrawInspectorGUI() {
   if (ImGui::Button("Append Pass", {-1, 30}))
     ImGui::OpenPopup("appendpasspanelpopup");
   drawAppendPassPopup();
-  Render::BasePass *passToRemove = nullptr;
   for (auto pass : passes) {
     ImGui::Separator();
     if (ImGui::TreeNode(pass->GetMaterialTypeName().c_str())) {
       pass->DrawInspectorGUI();
       ImGui::TreePop();
     }
-  }
-  if (passToRemove) {
-    for (auto it = passes.begin(); it != passes.end(); ++it)
-      if ((*it) == passToRemove) {
-        passes.erase(it);
-        break;
-      }
   }
 }
 

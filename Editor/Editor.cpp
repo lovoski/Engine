@@ -59,7 +59,7 @@ void Editor::Start() {
   context.io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   context.io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  context.io->Fonts->AddFontFromFileTTF("./Assets/fonts/DSM/DroidSansMono.ttf",
+  context.io->Fonts->AddFontFromFileTTF(ASSETS_PATH "/fonts/DSM/DroidSansMono.ttf",
                                         20);
 
   context.io->IniFilename = context.layoutFileName;
@@ -387,7 +387,7 @@ void Editor::DrawGizmos(float x, float y, float width, float height,
     auto cameraComp = cameraEnt->GetComponent<Camera>();
     if (GWORLD.EntityValid(context.selectedEntity)) {
       Entity *selected = GWORLD.EntityFromID(context.selectedEntity).get();
-      glm::mat4 modelTransform = selected->GetModelMatrix();
+      glm::mat4 modelTransform = selected->GlobalTransformMatrix();
       if (ImGuizmo::Manipulate(glm::value_ptr(cameraComp->ViewMat),
                                glm::value_ptr(cameraComp->ProjMat),
                                context.mCurrentGizmoOperation,

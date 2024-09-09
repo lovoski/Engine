@@ -99,24 +99,24 @@ void AssetsLoader::LoadDefaultAssets() {
   allMeshes.insert(std::make_pair("::planePrimitive",
                                   vector<Render::Mesh *>({planePrimitive})));
   // sphere
-  auto sphereMesh = loadAndCreateMeshFromFile("./Assets/meshes/sphere.fbx");
+  auto sphereMesh = loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/sphere.fbx");
   allMeshes.insert(std::make_pair("::spherePrimitive", sphereMesh));
   // cube
-  auto cubeMesh = loadAndCreateMeshFromFile("./Assets/meshes/cube.fbx");
+  auto cubeMesh = loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/cube.fbx");
   allMeshes.insert(std::make_pair("::cubePrimitive", cubeMesh));
   // cylinder
-  auto cylinderMesh = loadAndCreateMeshFromFile("./Assets/meshes/cylinder.fbx");
+  auto cylinderMesh = loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/cylinder.fbx");
   allMeshes.insert(std::make_pair("::cylinderPrimitive", cylinderMesh));
 
   // load default textures
   Texture *nullTexture = new Texture();
-  nullTexture->id = loadAndCreateTextureFromFile("./Assets/textures/null.png");
+  nullTexture->id = loadAndCreateTextureFromFile(ASSETS_PATH "/textures/null.png");
   nullTexture->path = "::null_texture";
   allTextures.insert(std::make_pair("::null_texture", nullTexture));
 
   Texture *whiteTexture = new Texture();
   whiteTexture->id =
-      loadAndCreateTextureFromFile("./Assets/textures/white.png");
+      loadAndCreateTextureFromFile(ASSETS_PATH "/textures/white.png");
   whiteTexture->path = "::white_texture";
   allTextures.insert(std::make_pair("::white_texture", whiteTexture));
 

@@ -35,7 +35,7 @@ void RenderSystem::bakeShadowMap() {
         }
         if (renderer->castShadow) {
           renderer->DrawMeshShadowPass(*shadowMapDirLight,
-                                       entity->GetModelMatrix());
+                                       entity->GlobalTransformMatrix());
         }
       }
       offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);

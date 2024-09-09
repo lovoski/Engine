@@ -55,7 +55,7 @@ struct Animator : public BaseComponent {
   // Skeleton visualization related
   // This entity should be the root joint
   Entity *skeleton = nullptr;
-  bool ShowSkeleton = true, ShowJoints = true;
+  bool ShowSkeleton = true, ShowJoints = false;
   float JointVisualSize = 1.0f;
   bool SkeletonOnTop = false;
   // Color for the visualized skeleton

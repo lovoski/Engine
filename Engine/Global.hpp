@@ -49,3 +49,5 @@ namespace fs = std::filesystem;
 // imgui based libraries
 #include <implot.h>
 #include <ImGuizmo.h>
+
+#include <EngineConfig.h>

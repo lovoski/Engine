@@ -229,7 +229,7 @@ std::vector<glm::mat4> Animator::GetSkeletonTransforms() {
       auto jointName = actor->jointNames[jointInd];
       auto skelData = SkeletonMap[actor->jointNames[jointInd]];
       result[jointInd] =
-          skelData.joint->GetModelMatrix() * actor->offsetMatrices[jointInd];
+          skelData.joint->GlobalTransformMatrix() * actor->offsetMatrices[jointInd];
     }
   }
   return result;

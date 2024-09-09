@@ -136,23 +136,16 @@ const glm::vec3 Entity::GetParentPosition() {
 }
 
 const glm::quat Entity::GetParentOrientation() {
-  Entity *current = parent;
-  glm::quat q(1.0f, glm::vec3(0.0f)); // root.parent.orien
-  std::stack<glm::quat> s;
-  while (current != nullptr) {
-    s.push(current->localRotation); // cur.localRot
-    current = current->parent;
-  }
-  while (!s.empty()) {
-    q = q * s.top();
-    s.pop();
-  }
-  return q;
+  if (parent == nullptr)
+    return glm::quat(1.0f, glm::vec3(0.0f));
+  else
+    return parent->Rotation();
 }
 
-glm::mat4 Entity::GetModelMatrix() {
-  return glm::translate(glm::mat4(1.0f), m_position) *
-         glm::mat4_cast(Rotation()) * glm::scale(glm::mat4(1.0f), m_scale);
+void Entity::UpdateGlobalTransform() {
+  globalTransform = glm::translate(glm::mat4(1.0f), m_position) *
+                    glm::mat4_cast(Rotation()) *
+                    glm::scale(glm::mat4(1.0f), m_scale);
 }
 
 }; // namespace aEngine

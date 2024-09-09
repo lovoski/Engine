@@ -15,6 +15,10 @@ add_subdirectory("Deps/filedialog")
 add_subdirectory("Deps/cereal")
 add_subdirectory("Deps/ufbx")
 
+# config file
+set(ASSETS_PATH ${PROJECT_SOURCE_DIR}/Assets)
+configure_file(Config.h.in EngineConfig.h)
+
 # asio
 include("cmake/FetchASIO.cmake")
 
@@ -54,6 +58,7 @@ target_include_directories(
   ${PROJECT_NAME}
   PUBLIC 
   ${PROJECT_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
   ${PROJECT_SOURCE_DIR}/Deps/headers)
 
 if (${NN_MODULE})

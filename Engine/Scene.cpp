@@ -349,8 +349,6 @@ void Scene::rebuildHierarchyStructure() {
     }
   }
   // traverse the entities in a parent first fashion
-  // int counter = 0;
-  // static int globalCounter = 0;
   while (!q.empty()) {
     auto [ent, dirty] = q.front();
     q.pop();
@@ -360,14 +358,14 @@ void Scene::rebuildHierarchyStructure() {
     if (dirty) {
       // counter++;
       ent->m_position = ent->LocalToGlobal(ent->localPosition);
+      // the global rotation is constructed from localRotation
+      // all dirty children will get this updated parent orientation
       ent->m_rotation = ent->GetParentOrientation() * ent->localRotation;
       ent->m_scale = ent->GetParentScale() * ent->localScale;
+      ent->UpdateGlobalTransform();
       ent->transformDirty = false;
     }
   }
-  // if (counter > 1)
-  //   std::cout << globalCounter++ << ": update " << counter << " times one
-  //   frame" << std::endl;
 }
 
 // // Serialize current scene to a json file

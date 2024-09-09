@@ -98,7 +98,9 @@ public:
 
   void AssignChild(Entity *c);
 
-  glm::mat4 GetModelMatrix();
+  void UpdateGlobalTransform();
+
+  const glm::mat4 GlobalTransformMatrix() { return globalTransform; }
 
   EntityID ID;
   std::string name = "New Entity ";
@@ -119,6 +121,8 @@ protected:
   glm::vec3 m_position;
   glm::vec3 m_scale;
   glm::quat m_rotation;
+
+  glm::mat4 globalTransform;
 };
 
 }; // namespace aEngine
