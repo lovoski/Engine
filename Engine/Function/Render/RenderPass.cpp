@@ -93,15 +93,19 @@ std::string Diffuse::GetMaterialTypeName() { return "Diffuse"; }
 
 // ----------------------- Outline -----------------------
 
-OutlinePass::OutlinePass() { shader = Loader.GetShader("::outline"); }
+OutlinePass::OutlinePass() {
+  shader = Loader.GetShader("::outline");
+  OutlineColorMap = *Loader.GetTexture("::null_texture");
+}
 
 void OutlinePass::drawCustomInspectorGUI() {
-  ImGui::SliderFloat("Width", &OutlineWidth, 0.0f, 1.0f);
+  ImGui::DragFloat("Width", &OutlineWidth, 0.001f, 0.0f, 10.0f);
   ImGui::SliderFloat("Weight", &OutlineWeight, 0.0f, 1.0f);
   float outlineColor[3] = {OutlineColor.x, OutlineColor.y, OutlineColor.z};
   if (ImGui::ColorEdit3("Color", outlineColor)) {
     OutlineColor = glm::vec3(outlineColor[0], outlineColor[1], outlineColor[2]);
   }
+  GUIUtils::DragableTextureTarget(OutlineColorMap, "Outline Map");
 }
 
 void OutlinePass::additionalSetup() {
@@ -109,6 +113,7 @@ void OutlinePass::additionalSetup() {
   shader->SetFloat("OutlineWidth", OutlineWidth);
   shader->SetFloat("OutlineWeight", OutlineWeight);
   shader->SetVec3("OutlineColor", OutlineColor);
+  ActivateTexture2D(OutlineColorMap, shader, "OutlineMap", 0);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_FRONT);
 }

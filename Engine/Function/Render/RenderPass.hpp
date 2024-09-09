@@ -89,8 +89,12 @@ class OutlinePass : public BasePass {
 public:
   OutlinePass();
 
-  float OutlineWidth = 0.02f, OutlineWeight = 1.0f;
+  float OutlineWidth = 0.02f;
+  // interpolate between OutlineColor and OutlineColorMap
+  float OutlineWeight = 0.0f;
   glm::vec3 OutlineColor = glm::vec3(0.0f);
+
+  Texture OutlineColorMap;
 
   void FinishPass() override;
   std::string GetMaterialTypeName() override;

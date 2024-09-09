@@ -9,8 +9,8 @@ struct Vertex {
   // Info related to rendering
   glm::vec4 Position;
   glm::vec4 Normal;
-  // xy: uv
-  // zw: scale_u, scale_v
+  // xy: uv1
+  // zw: uv2 (if any)
   glm::vec4 TexCoords;
   // vertex color
   glm::vec4 Color;

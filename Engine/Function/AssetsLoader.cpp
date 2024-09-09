@@ -420,6 +420,11 @@ Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part,
       v.TexCoords.y = mesh->vertex_uv[index].y;
       v.TexCoords.z = 1.0f;
       v.TexCoords.w = 1.0f;
+      if (mesh->uv_sets.count > 1) {
+        // setup the second set of uv
+        v.TexCoords.z = mesh->uv_sets[1].vertex_uv[index].x;
+        v.TexCoords.w = mesh->uv_sets[1].vertex_uv[index].y;
+      }
 
       v.Color = glm::vec4(1.0f);
       if (mesh->vertex_color.exists) {

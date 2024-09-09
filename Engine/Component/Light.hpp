@@ -13,7 +13,7 @@ struct Light : public aEngine::BaseComponent {
 
   LIGHT_TYPE type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
 
-  glm::vec3 lightColor = glm::vec3(0.5f);
+  glm::vec3 lightColor = glm::vec3(1.0f, 0.9f, 0.8f);
 
   float lightRadius = 0.5f;
 

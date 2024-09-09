@@ -150,7 +150,10 @@ uniform vec3 ViewDir;
 
 uniform float OutlineWidth;
 
+out vec2 texCoord;
+
 void main() {
+  texCoord.xy = aTexCoord.xy;
   vec3 worldNormal = normalize(ModelToWorldDir * aNormal.xyz);
   vec4 worldPos = ModelToWorldPoint * aPos;
   worldPos = worldPos + vec4(worldNormal, 0.0) * OutlineWidth;
@@ -162,11 +165,15 @@ const std::string outlineFS = R"(
 #version 430 core
 
 uniform vec3 OutlineColor;
+uniform sampler2D OutlineMap;
+uniform float OutlineWeight;
 
+in vec2 texCoord;
 out vec4 FragColor;
 
 void main() {
-  FragColor = vec4(OutlineColor, 1.0);
+  vec3 result = mix(OutlineColor, texture(OutlineMap, texCoord).xyz, OutlineWeight);
+  FragColor = vec4(result, 1.0);
 }
 )";
 
@@ -193,7 +200,8 @@ layout (location = 1) in vec4 aNormal;
 layout (location = 2) in vec4 aTexCoord;
 layout (location = 3) in vec4 aColor;
 
-out vec2 texCoord;
+out vec2 texCoord1;
+out vec2 texCoord2;
 out vec3 worldPos;
 out vec3 worldNormal;
 out vec3 worldViewDir;
@@ -208,7 +216,8 @@ uniform vec3 ViewDir;
 
 void main() {
   vertColor = aColor;
-  texCoord = aTexCoord.xy;
+  texCoord1 = aTexCoord.xy;
+  texCoord2 = aTexCoord.zw;
   worldNormal = normalize(ModelToWorldDir * vec3(aNormal));
   worldPos = (ModelToWorldPoint * aPos).xyz;
   worldViewDir = normalize(ViewDir);
@@ -255,7 +264,8 @@ uniform float innerLineWeight;
 
 in vec4 vertColor;
 
-in vec2 texCoord;
+in vec2 texCoord1;
+in vec2 texCoord2;
 in vec3 worldPos;
 in vec3 worldNormal;
 in vec3 worldReflect;
@@ -285,10 +295,10 @@ void main() {
       LightColor = LightAttenuate(LightColor, distance);
     }
 
-    vec4 baseCol = texture(Base, texCoord);
-    vec4 sssCol = texture(SSS, texCoord);
-    vec4 ilmChannels = texture(ILM, texCoord);
-    float detail = texture(Detail, texCoord).r;
+    vec4 baseCol = texture(Base, texCoord1);
+    vec4 sssCol = texture(SSS, texCoord1);
+    vec4 ilmChannels = texture(ILM, texCoord1);
+    float detail = texture(Detail, texCoord2).r;
 
     float halfLambert = dot(worldNormal, LightDir) * 0.5 + 0.5;
     float lightThresholdTerm = smoothstep(firstRampStart, firstRampStop, halfLambert * ilmChannels.g * rampOffset);

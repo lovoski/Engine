@@ -88,11 +88,14 @@ void MeshRenderer::drawAppendPassPopup() {
     ImGui::MenuItem("Registered Pass", nullptr, nullptr, false);
     ImGui::Separator();
     if (ImGui::MenuItem("Outline Pass"))
-      AddPass<Render::OutlinePass>(nullptr, "Outline");
+      if (!hasMaterial<Render::OutlinePass>())
+        AddPass<Render::OutlinePass>(nullptr, "Outline");
     if (ImGui::MenuItem("Diffuse Pass"))
-      AddPass<Render::Diffuse>(nullptr, "Diffuse");
+      if (!hasMaterial<Render::Diffuse>())
+        AddPass<Render::Diffuse>(nullptr, "Diffuse");
     if (ImGui::MenuItem("GBV Toon Pass"))
-      AddPass<Render::GBVMainPass>(nullptr, "GBV Main");
+      if (!hasMaterial<Render::GBVMainPass>())
+        AddPass<Render::GBVMainPass>(nullptr, "GBV Main");
     ImGui::EndPopup();
   }
 }
@@ -110,20 +113,6 @@ void MeshRenderer::DrawInspectorGUI() {
     ImGui::Separator();
     if (ImGui::TreeNode(pass->GetMaterialTypeName().c_str())) {
       pass->DrawInspectorGUI();
-      if (ImGui::IsWindowHovered() &&
-          ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        ImGui::OpenPopup("rightclickpass");
-      if (ImGui::BeginPopup("rightclickpass")) {
-        ImGui::MenuItem("Options", nullptr, nullptr, false);
-        if (ImGui::MenuItem("Reset")) {
-        }
-        if (ImGui::MenuItem("Remove")) {
-          passToRemove = pass;
-          LOG_F(INFO, "remove pass %s from entity %d",
-                pass->GetMaterialTypeName().c_str(), entityID);
-        }
-        ImGui::EndPopup();
-      }
       ImGui::TreePop();
     }
   }

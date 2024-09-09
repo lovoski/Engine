@@ -49,6 +49,15 @@ struct MeshRenderer : public aEngine::BaseComponent {
 
 private:
   void drawAppendPassPopup();
+
+  template<typename T>
+  bool hasMaterial() {
+    for (auto pass : passes) {
+      if (typeid(*pass) == typeid(T))
+        return true;
+    }
+    return false;
+  }
 };
 
 }; // namespace aEngine
