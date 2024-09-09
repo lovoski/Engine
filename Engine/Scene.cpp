@@ -5,12 +5,14 @@
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
+#include "Component/Mesh.hpp"
 
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
 #include "System/Render/CameraSystem.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
+#include "System/Spatial/SpatialSystem.hpp"
 
 #include "Scripts/CameraController.hpp"
 
@@ -37,6 +39,7 @@ void Scene::Start() {
   RegisterSystem<LightSystem>();
   RegisterSystem<AnimationSystem>();
   RegisterSystem<NativeScriptSystem>();
+  RegisterSystem<SpatialSystem>();
 
   // start all the systems
   GetSystemInstance<RenderSystem>()->Start();
@@ -44,6 +47,7 @@ void Scene::Start() {
   GetSystemInstance<LightSystem>()->Start();
   GetSystemInstance<AnimationSystem>()->Start();
   GetSystemInstance<NativeScriptSystem>()->Start();
+  GetSystemInstance<SpatialSystem>()->Start();
 }
 
 void Scene::Update() {
@@ -83,6 +87,7 @@ void Scene::ForceRender() {
   GetSystemInstance<CameraSystem>()->Render();
   GetSystemInstance<LightSystem>()->Render();
   GetSystemInstance<AnimationSystem>()->Render();
+  GetSystemInstance<SpatialSystem>()->Render();
   GetSystemInstance<NativeScriptSystem>()->DrawToScene();
   float t5 = GetTime();
 
@@ -119,12 +124,14 @@ void Scene::Reset() {
   // reset entities
   for (auto root : HierarchyRoots)
     DestroyEntity(root->ID);
-  GetComponentList<aEngine::Camera>()->data.clear();
-  GetComponentList<aEngine::Light>()->data.clear();
-  GetComponentList<aEngine::Animator>()->data.clear();
-  GetComponentList<aEngine::DeformRenderer>()->data.clear();
-  GetComponentList<aEngine::MeshRenderer>()->data.clear();
-  GetComponentList<aEngine::NativeScript>()->data.clear();
+  GetComponentList<Camera>()->data.clear();
+  GetComponentList<Light>()->data.clear();
+  GetComponentList<Animator>()->data.clear();
+  GetComponentList<DeformRenderer>()->data.clear();
+  GetComponentList<MeshRenderer>()->data.clear();
+  GetComponentList<NativeScript>()->data.clear();
+  GetComponentList<NativeScript>()->data.clear();
+  GetComponentList<Mesh>()->data.clear();
   HierarchyRoots.clear();
   entitiesSignatures.clear();
   entities.clear();
@@ -213,6 +220,7 @@ void Scene::Destroy() {
   GetSystemInstance<LightSystem>()->Destroy();
   GetSystemInstance<AnimationSystem>()->Destroy();
   GetSystemInstance<NativeScriptSystem>()->Destroy();
+  GetSystemInstance<SpatialSystem>()->Destroy();
 }
 
 bool Scene::LoopCursorInSceneWindow() {

@@ -14,24 +14,18 @@ void BuildTestScene(Engine *engine) {
   auto sphere = GWORLD.AddNewEntity();
   sphere->name = "Sphere";
   sphere->SetGlobalPosition({0.0f, 1.0f, 0.0f});
-  sphere->AddComponent<MeshRenderer>(Loader.GetMesh("::spherePrimitive", ""));
-  sphere->GetComponent<MeshRenderer>()->AddPass<Render::OutlinePass>(
-      nullptr, "Outline Pass");
+  sphere->AddComponent<Mesh>(Loader.GetMesh("::spherePrimitive", ""));
+  sphere->AddComponent<MeshRenderer>();
   sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
       nullptr, "Diffuse Sphere");
 
   auto plane = GWORLD.AddNewEntity();
   plane->name = "Ground";
   plane->SetGlobalScale({10.0f, 1.0f, 10.0f});
-  plane->AddComponent<MeshRenderer>(Loader.GetMesh("::planePrimitive", ""));
+  plane->AddComponent<Mesh>(Loader.GetMesh("::planePrimitive", ""));
+  plane->AddComponent<MeshRenderer>();
   plane->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(nullptr,
                                                                 "Ground Mat");
-
-  // auto cube = GWORLD.AddNewEntity();
-  // cube->name = "Cube";
-  // cube->AddComponent<MeshRenderer>(Loader.GetMesh("::cubePrimitive", ""));
-  // cube->GetComponent<MeshRenderer>().AddPass<Render::Diffuse>(
-  //     nullptr, "Cube Mat");
 }
 
 Editor::Editor(int width, int height) {

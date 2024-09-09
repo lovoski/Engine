@@ -5,9 +5,10 @@
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
 
-#include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Mesh.hpp"
+#include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
+
 
 using glm::vec2;
 using glm::vec3;
@@ -49,7 +50,8 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
     ImGui::MenuItem("Entity Options", nullptr, nullptr, false);
     if (ImGui::MenuItem("Remove")) {
       if (entity->children.size() > 0)
-        LOG_F(INFO, "Destroy entity %s and all its children", entity->name.c_str());
+        LOG_F(INFO, "Destroy entity %s and all its children",
+              entity->name.c_str());
       else
         LOG_F(INFO, "Destroy entity %s", entity->name.c_str());
       GWORLD.DestroyEntity(entity->ID);
@@ -105,31 +107,32 @@ void Editor::EntitiesWindow() {
       if (ImGui::MenuItem("Cube")) {
         auto cube = GWORLD.AddNewEntity();
         cube->name = "Cube";
-        cube->AddComponent<MeshRenderer>(Loader.GetMesh("::cubePrimitive", ""));
+        cube->AddComponent<Mesh>(Loader.GetMesh("::cubePrimitive", ""));
+        cube->AddComponent<MeshRenderer>();
         cube->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Cube Mat");
       }
       if (ImGui::MenuItem("Plane")) {
         auto plane = GWORLD.AddNewEntity();
         plane->name = "Plane";
-        plane->AddComponent<MeshRenderer>(
-            Loader.GetMesh("::planePrimitive", ""));
+        plane->AddComponent<Mesh>(Loader.GetMesh("::planePrimitive", ""));
+        plane->AddComponent<MeshRenderer>();
         plane->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Plane Mat");
       }
       if (ImGui::MenuItem("Sphere")) {
         auto sphere = GWORLD.AddNewEntity();
         sphere->name = "Sphere";
-        sphere->AddComponent<MeshRenderer>(
-            Loader.GetMesh("::spherePrimitive", ""));
+        sphere->AddComponent<Mesh>(Loader.GetMesh("::spherePrimitive", ""));
+        sphere->AddComponent<MeshRenderer>();
         sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Sphere Mat");
       }
       if (ImGui::MenuItem("Cylinder")) {
         auto cylinder = GWORLD.AddNewEntity();
         cylinder->name = "Cylinder";
-        cylinder->AddComponent<MeshRenderer>(
-            Loader.GetMesh("::cylinderPrimitive", ""));
+        cylinder->AddComponent<Mesh>(Loader.GetMesh("::cylinderPrimitive", ""));
+        cylinder->AddComponent<MeshRenderer>();
         cylinder->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
             nullptr, "Cylinder Mat");
       }
@@ -195,14 +198,17 @@ void Editor::EntitiesWindow() {
         for (auto cmesh : modelMeshes) {
           auto childEntity = GWORLD.AddNewEntity();
           childEntity->name = cmesh->identifier;
-          childEntity->AddComponent<MeshRenderer>(cmesh);
-          childEntity->GetComponent<MeshRenderer>()->AddPass(unifyMat, unifyMat->identifier);
+          childEntity->AddComponent<Mesh>(cmesh);
+          childEntity->AddComponent<MeshRenderer>();
+          childEntity->GetComponent<MeshRenderer>()->AddPass(
+              unifyMat, unifyMat->identifier);
           // setup parent child relation
           parentEntity->AssignChild(childEntity.get());
         }
       } else if (extension == ".fbx") {
         // fbx model possibly contains animation data
-        auto modelMeshes = Loader.LoadAndCreateEntityFromFile(filename.string());
+        auto modelMeshes =
+            Loader.LoadAndCreateEntityFromFile(filename.string());
       }
       // TODO:
       // Core.ReloadScene(scenePath);

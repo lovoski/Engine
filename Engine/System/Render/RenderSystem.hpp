@@ -29,6 +29,7 @@ class RenderSystem : public aEngine::BaseSystem {
 public:
   RenderSystem() {
     Reset(); // initialize local variables
+    AddComponentSignatureRequireAll<Mesh>();
     AddComponentSignatureRequireOne<MeshRenderer>();
     AddComponentSignatureRequireOne<DeformRenderer>();
   }

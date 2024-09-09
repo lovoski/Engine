@@ -10,6 +10,7 @@
 #include "Component/Light.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
+#include "Component/Mesh.hpp"
 
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
@@ -81,6 +82,8 @@ void InspectorRightClickMenu(EntityID entity) {
     if (ImGui::MenuItem("Native Script")) {
       GWORLD.AddComponent<NativeScript>(entity);
     }
+    if (ImGui::MenuItem("Geometry Mesh"))
+      GWORLD.AddComponent<Mesh>(entity, nullptr);
     ImGui::EndPopup();
   }
 }
@@ -115,6 +118,7 @@ void Editor::InspectorWindow() {
     // draw components of this entity if exists
     // new components need to manually register here
     // TODO: automatically register component?
+    DrawComponent<Mesh>(entity, "Mesh Data");
     DrawComponent<Camera>(entity, "Camera");
     DrawComponent<Light>(entity, "Light");
     DrawComponent<Animator>(entity, "Animator");

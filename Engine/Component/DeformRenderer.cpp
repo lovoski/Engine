@@ -3,22 +3,21 @@
 
 namespace aEngine {
 
-DeformRenderer::DeformRenderer(EntityID id, Render::Mesh *mesh, Animator *ar)
+DeformRenderer::DeformRenderer(EntityID id, Animator *ar)
     : animator(ar), BaseComponent(id) {
-  renderer = std::make_shared<MeshRenderer>(id, mesh);
-  targetVBO.SetDataAs(GL_SHADER_STORAGE_BUFFER, mesh->vertices);
+  renderer = std::make_shared<MeshRenderer>(id);
   skeletonMatrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
                              ar->GetSkeletonTransforms());
 }
 
 DeformRenderer::~DeformRenderer() { LOG_F(1, "deconstruct deform renderer"); }
 
-void DeformRenderer::DeformMesh() {
+void DeformRenderer::DeformMesh(std::shared_ptr<Mesh> mesh) {
   // setup targetVBO of the renderer
-  DeformSkinnedMesh(animator, renderer->meshData->vbo,
-                    renderer->meshData->vertices.size(), targetVBO,
+  DeformSkinnedMesh(animator, mesh->meshInstance->vbo,
+                    mesh->meshInstance->vertices.size(), mesh->target,
                     skeletonMatrices);
-  renderer->targetVBO = &targetVBO;
+  mesh->Deformed = true; // setup the flag
 }
 
 void DeformRenderer::DrawInspectorGUI() {

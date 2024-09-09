@@ -26,16 +26,20 @@ void RenderSystem::bakeShadowMap() {
       LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, lightMatrix, offset);
       for (auto id : entities) {
         auto entity = GWORLD.EntityFromID(id);
-        std::shared_ptr<MeshRenderer> renderer;
-        if (entity->HasComponent<MeshRenderer>()) {
-          renderer = entity->GetComponent<MeshRenderer>();
-        } else if (entity->HasComponent<DeformRenderer>()) {
-          renderer = entity->GetComponent<DeformRenderer>()->renderer;
-          entity->GetComponent<DeformRenderer>()->DeformMesh();
-        }
-        if (renderer->castShadow) {
-          renderer->DrawMeshShadowPass(*shadowMapDirLight,
-                                       entity->GlobalTransformMatrix());
+        auto mesh = entity->GetComponent<Mesh>();
+        // only perform rendering when the mesh is not null
+        if (mesh->meshInstance) {
+          std::shared_ptr<MeshRenderer> renderer;
+          if (entity->HasComponent<MeshRenderer>()) {
+            renderer = entity->GetComponent<MeshRenderer>();
+          } else if (entity->HasComponent<DeformRenderer>()) {
+            renderer = entity->GetComponent<DeformRenderer>()->renderer;
+            entity->GetComponent<DeformRenderer>()->DeformMesh(mesh);
+          }
+          if (renderer->castShadow) {
+            renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
+                                         entity->GlobalTransformMatrix());
+          }
         }
       }
       offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
@@ -92,23 +96,29 @@ void RenderSystem::Render() {
     glm::mat4 viewMat = cameraComp->ViewMat;
     glm::mat4 projMat = cameraComp->ProjMat;
     glEnable(GL_DEPTH_TEST);
+
     // Fill the LightsBuffer
     fillLightsBuffer();
     // Generate the shadow map
     if (EnableShadowMaps)
       bakeShadowMap();
+
     // The main render pass
     for (auto entityID : entities) {
       auto entity = GWORLD.EntityFromID(entityID);
-      std::shared_ptr<MeshRenderer> renderer;
-      if (entity->HasComponent<MeshRenderer>()) {
-        renderer = entity->GetComponent<MeshRenderer>();
-      } else if (entity->HasComponent<DeformRenderer>()) {
-        renderer = entity->GetComponent<DeformRenderer>()->renderer;
-        entity->GetComponent<DeformRenderer>()->DeformMesh();
+      auto mesh = entity->GetComponent<Mesh>();
+      // only perform rendering when the mesh is not null
+      if (mesh->meshInstance) {
+        std::shared_ptr<MeshRenderer> renderer;
+        if (entity->HasComponent<DeformRenderer>()) {
+          renderer = entity->GetComponent<DeformRenderer>()->renderer;
+          entity->GetComponent<DeformRenderer>()->DeformMesh(mesh);
+        } else if (entity->HasComponent<MeshRenderer>()) {
+          renderer = entity->GetComponent<MeshRenderer>();
+        }
+        renderer->ForwardRender(mesh, projMat, viewMat, camera.get(),
+                                entity.get(), LightsBuffer);
       }
-      renderer->ForwardRender(projMat, viewMat, camera.get(), entity.get(),
-                              LightsBuffer);
     }
 
     // draw the grid in 3d space

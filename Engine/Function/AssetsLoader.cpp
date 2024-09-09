@@ -105,12 +105,14 @@ void AssetsLoader::LoadDefaultAssets() {
   auto cubeMesh = loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/cube.fbx");
   allMeshes.insert(std::make_pair("::cubePrimitive", cubeMesh));
   // cylinder
-  auto cylinderMesh = loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/cylinder.fbx");
+  auto cylinderMesh =
+      loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/cylinder.fbx");
   allMeshes.insert(std::make_pair("::cylinderPrimitive", cylinderMesh));
 
   // load default textures
   Texture *nullTexture = new Texture();
-  nullTexture->id = loadAndCreateTextureFromFile(ASSETS_PATH "/textures/null.png");
+  nullTexture->id =
+      loadAndCreateTextureFromFile(ASSETS_PATH "/textures/null.png");
   nullTexture->path = "::null_texture";
   allTextures.insert(std::make_pair("::null_texture", nullTexture));
 
@@ -377,13 +379,15 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     c->name = mesh->identifier;
     if (skel != nullptr) {
       // add deform renderer
+      c->AddComponent<Mesh>(mesh);
       c->AddComponent<DeformRenderer>(
-          mesh, globalParent->GetComponent<Animator>().get());
-      c->GetComponent<DeformRenderer>()->AddPass(globalMaterial,
-                                                 globalMaterial->identifier);
+          globalParent->GetComponent<Animator>().get());
+      c->GetComponent<DeformRenderer>()->renderer->AddPass(
+          globalMaterial, globalMaterial->identifier);
       meshParent->AssignChild(c.get());
     } else {
-      c->AddComponent<MeshRenderer>(mesh);
+      c->AddComponent<Mesh>(mesh);
+      c->AddComponent<MeshRenderer>();
       c->GetComponent<MeshRenderer>()->AddPass(globalMaterial,
                                                globalMaterial->identifier);
       meshParent->AssignChild(c.get());

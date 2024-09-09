@@ -7,6 +7,8 @@
 #include "Function/AssetsType.hpp"
 #include "Scene.hpp"
 
+#include "Component/Mesh.hpp"
+
 #include "Function/Render/Buffers.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/RenderPass.hpp"
@@ -14,16 +16,19 @@
 namespace aEngine {
 
 struct MeshRenderer : public aEngine::BaseComponent {
-  MeshRenderer(EntityID id, aEngine::Render::Mesh *mesh);
+  MeshRenderer(EntityID id);
   ~MeshRenderer();
 
-  void ForwardRender(glm::mat4 projMat, glm::mat4 viewMat, Entity *camera,
-                     Entity *object, Render::Buffer &lightsBuffer);
+  // Forward render all passes, the meshInstance of `mesh` can't be nullptr
+  void ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
+                     glm::mat4 viewMat, Entity *camera, Entity *object,
+                     Render::Buffer &lightsBuffer);
 
   // Setup `Model` shader variable for the shader, draw the mesh
-  void DrawMeshShadowPass(Render::Shader &shader, glm::mat4 modelMat);
+  void DrawMeshShadowPass(Render::Shader &shader, std::shared_ptr<Mesh> mesh,
+                          glm::mat4 modelMat);
 
-  void DrawMesh(Render::Shader &shader);
+  void DrawMesh(Render::Shader &shader, std::shared_ptr<Mesh> mesh);
 
   void DrawInspectorGUI() override;
 
@@ -38,12 +43,8 @@ struct MeshRenderer : public aEngine::BaseComponent {
     }
   }
 
-  Render::VAO vao;
   bool castShadow = true;
   bool receiveShadow = true;
-  std::vector<glm::mat4> lightSpaceMatrices;
-  Render::Mesh *meshData = nullptr;
-  Render::Buffer *targetVBO = nullptr;
   std::vector<Render::BasePass *> passes;
 
 private:
