@@ -11,7 +11,6 @@
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/RenderPass.hpp"
 
-
 namespace aEngine {
 
 struct MeshRenderer : public aEngine::BaseComponent {
@@ -50,13 +49,19 @@ struct MeshRenderer : public aEngine::BaseComponent {
 private:
   void drawAppendPassPopup();
 
-  template<typename T>
-  bool hasMaterial() {
-    for (auto pass : passes) {
-      if (typeid(*pass) == typeid(T))
-        return true;
+  template <typename T> void handleAppendPass(std::string identifier) {
+    for (auto &pass : passes) {
+      if (typeid(*pass) == typeid(T)) {
+        // there's a pass of the same type
+        // replace the original pass with a new one
+        LOG_F(INFO, "replacing material %s with new %s",
+              pass->identifier.c_str(), identifier.c_str());
+        pass = Loader.InstantiateMaterial<T>(identifier);
+        return;
+      }
     }
-    return false;
+    // no pass with the same type found
+    AddPass<T>(nullptr, identifier);
   }
 };
 

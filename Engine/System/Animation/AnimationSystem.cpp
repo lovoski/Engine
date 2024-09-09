@@ -120,11 +120,9 @@ void AnimationSystem::Render() {
           glDisable(GL_DEPTH_TEST);
         else
           glEnable(GL_DEPTH_TEST);
-        for (auto &drawPair : drawQueue) {
-          VisUtils::DrawBone(drawPair.first, drawPair.second,
-                             GWORLD.Context.sceneWindowSize, vp,
-                             animator->SkeletonColor);
-        }
+        // Draw the bones
+        VisUtils::DrawBones(drawQueue, GWORLD.Context.sceneWindowSize, vp,
+                            animator->SkeletonColor);
         // Draw the joint positions
         if (animator->ShowJoints) {
           for (auto ele : animator->SkeletonMap) {
@@ -148,7 +146,7 @@ void AnimationSystem::DrawSequencer() {
   ImGui::PushItemWidth(-1);
 
   // animation take selection menu
-  std::vector<std::string> takeNames {"Default", "Take 001", "Take 002"};
+  std::vector<std::string> takeNames{"Default", "Take 001", "Take 002"};
   static int currentActiveTake = 0;
   ImGui::Text("Current Take");
   ImGui::SameLine();

@@ -88,14 +88,11 @@ void MeshRenderer::drawAppendPassPopup() {
     ImGui::MenuItem("Registered Pass", nullptr, nullptr, false);
     ImGui::Separator();
     if (ImGui::MenuItem("Outline Pass"))
-      if (!hasMaterial<Render::OutlinePass>())
-        AddPass<Render::OutlinePass>(nullptr, "Outline");
+      handleAppendPass<Render::OutlinePass>("Outline");
     if (ImGui::MenuItem("Diffuse Pass"))
-      if (!hasMaterial<Render::Diffuse>())
-        AddPass<Render::Diffuse>(nullptr, "Diffuse");
+      handleAppendPass<Render::Diffuse>("Diffuse");
     if (ImGui::MenuItem("GBV Toon Pass"))
-      if (!hasMaterial<Render::GBVMainPass>())
-        AddPass<Render::GBVMainPass>(nullptr, "GBV Main");
+      handleAppendPass<Render::GBVMainPass>("GBV Main");
     ImGui::EndPopup();
   }
 }

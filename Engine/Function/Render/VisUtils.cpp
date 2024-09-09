@@ -197,6 +197,8 @@ void main() {
 
     // Compute direction and orthogonal vectors
     vec3 dir = end - start;
+    float boneLength = length(dir);
+    float normalOffset = radius * boneLength;
     vec3 direction = normalize(dir);
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 right = normalize(cross(direction, up));
@@ -205,10 +207,10 @@ void main() {
 
     // Define the four offset vectors for the octahedral shape
     vec3 offsets[4];
-    offsets[0] = right * radius + dirOffset * dir;
-    offsets[1] = up * radius + dirOffset * dir;
-    offsets[2] = -right * radius + dirOffset * dir;
-    offsets[3] = -up * radius + dirOffset * dir;
+    offsets[0] = right * normalOffset + dirOffset * dir;
+    offsets[1] = up * normalOffset + dirOffset * dir;
+    offsets[2] = -right * normalOffset + dirOffset * dir;
+    offsets[3] = -up * normalOffset + dirOffset * dir;
 
     // Generate the edges of the octahedron
     for (int i = 0; i < 4; ++i) {
@@ -244,44 +246,36 @@ void main() {
     FragColor = vec4(color, 1.0);
 }
 )";
-void DrawBone(glm::vec3 start, glm::vec3 end, glm::vec2 viewport, glm::mat4 vp,
-              glm::vec3 color) {
+void DrawBones(std::vector<std::pair<glm::vec3, glm::vec3>> &bones,
+               glm::vec2 viewport, glm::mat4 vp, glm::vec3 color) {
   static Render::VAO vao;
   static Render::Buffer vbo;
-  static bool openglObjectCreated = false;
   static Render::Shader boneShader;
-  static bool lineShaderLoaded = false;
-  if (!lineShaderLoaded) {
+  static bool shaderInitialized = false;
+  if (!shaderInitialized) {
     boneShader.LoadAndRecompileShaderSource(boneVS, boneFS, boneGS);
-    lineShaderLoaded = true;
+    shaderInitialized = true;
   }
-  if (!openglObjectCreated) {
-    float point[] = {1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f};
-    vao.Bind();
-    glBindBuffer(GL_ARRAY_BUFFER, vbo.GetID());
-    glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void *)0);
-    vao.Unbind();
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    openglObjectCreated = true;
+  // initialize vbo with `bones`
+  vao.Bind();
+  std::vector<glm::vec3> buffer;
+  for (auto &pair : bones) {
+    buffer.push_back(pair.first); // bone start
+    buffer.push_back(pair.second); // bond end
   }
+  vbo.SetDataAs(GL_ARRAY_BUFFER, buffer);
+  vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, 3 * sizeof(float), (void *)0);
   boneShader.Use();
-  boneShader.SetFloat("radius", 0.2f); // Adjust the radius as necessary
+
+  boneShader.SetFloat("radius", 0.1f);
   boneShader.SetVec3("color", color);
   boneShader.SetVec2("viewportSize", viewport);
-  glm::vec3 trans = end;
-  float scale = glm::length(start - end) / std::sqrt(3.0f);
-  glm::quat rot =
-      Math::FromToRotation(glm::vec3(1.0f, 1.0f, 1.0f), start - end);
-  glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), trans) *
-                       glm::scale(glm::mat4(1.0f), glm::vec3(scale)) *
-                       glm::mat4_cast(rot);
-  boneShader.SetMat4("mvp", vp * modelMat);
-  vao.Bind();
-  glDrawArrays(GL_LINES, 0, 2);
+  boneShader.SetMat4("mvp", vp);
+
+  glDrawArrays(GL_LINES, 0, buffer.size());
+
   vao.Unbind();
+  vbo.UnbindAs(GL_ARRAY_BUFFER);
 }
 
 void DrawArrow(glm::vec3 start, glm::vec3 end, glm::mat4 vp, glm::vec3 color,

@@ -33,10 +33,10 @@ void DrawWireSphere(glm::vec3 position, glm::mat4 vp, float radius = 1.0f,
 void DrawArrow(glm::vec3 start, glm::vec3 end, glm::mat4 vp = glm::mat4(1.0f),
                glm::vec3 color = glm::vec3(1.0f), float size = 0.2f);
 
-void DrawBone(glm::vec3 start, glm::vec3 end,
-              glm::vec2 viewport = glm::vec2(0.0f),
-              glm::mat4 vp = glm::mat4(1.0f),
-              glm::vec3 color = glm::vec3(0.0f, 1.0f, 0.0f));
+// Visualize a list of bones, with <start, end> pair.
+void DrawBones(std::vector<std::pair<glm::vec3, glm::vec3>> &bones,
+               glm::vec2 viewport, glm::mat4 vp = glm::mat4(1.0f),
+               glm::vec3 color = glm::vec3(0.0f, 1.0f, 0.0f));
 
 // Visualize the directional light component, the direction for
 // DIRECTIONAL_LIGHT is LocalForward
