@@ -104,6 +104,21 @@ protected:
   void drawCustomInspectorGUI() override;
 };
 
+class WireFramePass : public BasePass {
+public:
+  WireFramePass();
+
+  float wireframeOffset = 0.001f;
+  glm::vec3 wireFrameColor = glm::vec3(1.0f);
+
+  void FinishPass() override;
+  std::string GetMaterialTypeName() override;
+
+private:
+  void additionalSetup() override;
+  void drawCustomInspectorGUI() override;
+};
+
 class GBVMainPass : public BasePass {
 public:
   GBVMainPass();

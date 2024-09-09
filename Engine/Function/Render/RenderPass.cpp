@@ -1,8 +1,9 @@
 #include "Function/Render/RenderPass.hpp"
-#include "Function/GUI/Helpers.hpp"
 #include "Entity.hpp"
 #include "Function/AssetsLoader.hpp"
+#include "Function/GUI/Helpers.hpp"
 #include "Scene.hpp"
+
 
 namespace aEngine {
 
@@ -122,6 +123,29 @@ void OutlinePass::FinishPass() { glDisable(GL_CULL_FACE); }
 
 std::string OutlinePass::GetMaterialTypeName() { return "Outline"; }
 
+// ----------- Wireframe Shader -----------
+
+WireFramePass::WireFramePass() { shader = Loader.GetShader("::wireframe"); }
+
+void WireFramePass::FinishPass() {
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+std::string WireFramePass::GetMaterialTypeName() { return "Wireframe"; }
+
+void WireFramePass::additionalSetup() {
+  shader->Use();
+  shader->SetVec3("wireframeColor", wireFrameColor);
+  shader->SetFloat("wireframeOffset", wireframeOffset);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glDisable(GL_CULL_FACE);
+}
+
+void WireFramePass::drawCustomInspectorGUI() {
+  ImGui::DragFloat("Offset", &wireframeOffset, 0.0001, 0.0f, 10.0f);
+  GUIUtils::ColorEdit3(wireFrameColor, "Color");
+}
+
 // ----------- GBV shader -------------
 
 GBVMainPass::GBVMainPass() {
@@ -194,9 +218,7 @@ void GBVMainPass::additionalSetup() {
   glCullFace(GL_BACK);
 }
 
-void GBVMainPass::FinishPass() {
-  glDisable(GL_CULL_FACE);
-}
+void GBVMainPass::FinishPass() { glDisable(GL_CULL_FACE); }
 
 }; // namespace Render
 

@@ -143,6 +143,11 @@ void AssetsLoader::LoadDefaultAssets() {
   gbvMainShader->LoadAndRecompileShaderSource(GBVMainVS, GBVMainFS);
   allShaders.insert(std::make_pair("::gbvmain", gbvMainShader));
 
+  Render::Shader *wireframeShader = new Render::Shader();
+  wireframeShader->identifier = "::wireframe";
+  wireframeShader->LoadAndRecompileShaderSource(wireframeVS, wireframeFS);
+  allShaders.insert(std::make_pair("::wireframe", wireframeShader));
+
   Render::Shader *shadowMapDirLight = new Render::Shader();
   shadowMapDirLight->identifier = "::shadowMapDirLight";
   shadowMapDirLight->LoadAndRecompileShaderSource(shadowMapDirLightVS,

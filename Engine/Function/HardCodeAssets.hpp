@@ -326,3 +326,33 @@ void main() {
   FragColor = result;
 }
 )";
+
+const std::string wireframeVS = R"(
+#version 460 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aNormal;
+layout (location = 2) in vec4 aTexCoord;
+
+uniform mat4 ModelToWorldPoint;
+uniform mat3 ModelToWorldDir;
+uniform mat4 View;
+uniform mat4 Projection;
+
+uniform float wireframeOffset;
+
+void main() {
+  gl_Position = Projection * View * ModelToWorldPoint * (aPos + normalize(aNormal) * wireframeOffset);
+}
+)";
+
+const std::string wireframeFS = R"(
+#version 460 core
+
+uniform vec3 wireframeColor;
+
+out vec4 FragColor;
+
+void main() {
+  FragColor = vec4(wireframeColor, 1.0);
+}
+)";

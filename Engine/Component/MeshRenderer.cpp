@@ -55,6 +55,8 @@ void MeshRenderer::drawAppendPassPopup() {
   if (ImGui::BeginPopup("appendpasspanelpopup")) {
     ImGui::MenuItem("Registered Pass", nullptr, nullptr, false);
     ImGui::Separator();
+    if (ImGui::MenuItem("Wireframe Pass"))
+      handleAppendPass<Render::WireFramePass>("Wireframe");
     if (ImGui::MenuItem("Outline Pass"))
       handleAppendPass<Render::OutlinePass>("Outline");
     if (ImGui::MenuItem("Diffuse Pass"))
