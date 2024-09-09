@@ -293,32 +293,12 @@ private:
   }
 
   // check if an entity belongs to the system by comparing their signatures
-  // mind that an entity can have more components than the system's requirement
+  // the entity should have all the components described with
+  // `AddComponentSignatureRequireAll` and at least one component described with
+  // `AddComponentSignatureRequireOne`.
   bool BelongToSystem(const EntityID entity,
                       const EntitySignature &systemSignature,
-                      const EntitySignature &systemSignatureOne) {
-    // if the entity has at least one of the signatures in the
-    // systemSignatureOne it will get updated by this system
-    auto entitySignature = GetEntitySignature(entity);
-    if (systemSignatureOne.size() > 0) {
-      for (const auto compType : systemSignatureOne) {
-        if (entitySignature->count(compType) == 1) {
-          return true;
-        }
-      }
-      // the entity don't have at least one component registered with
-      // RequireOne, condition not met
-      return false;
-    }
-    // Assume the RequireOne condition is met
-    for (const auto compType : systemSignature) {
-      if (entitySignature->count(compType) == 0) {
-        return false;
-      }
-    }
-    // The entity also has all components registered with RequireAll
-    return true;
-  }
+                      const EntitySignature &systemSignatureOne);
 
   const EntityID addNewEntity() {
     const EntityID id = availableEntities.front();

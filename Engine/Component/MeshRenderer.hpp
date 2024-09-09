@@ -19,7 +19,6 @@ struct MeshRenderer : public aEngine::BaseComponent {
   MeshRenderer(EntityID id);
   ~MeshRenderer();
 
-  // Forward render all passes, the meshInstance of `mesh` can't be nullptr
   void ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
                      glm::mat4 viewMat, Entity *camera, Entity *object,
                      Render::Buffer &lightsBuffer);

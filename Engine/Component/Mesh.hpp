@@ -1,8 +1,9 @@
 /**
  * This component holds buffer object of the renderable data,
  * spatial datastructures constructed from the mesh data.
- * 
- * The meshInstance is nullable, be careful with data processing.
+ *
+ * The meshInstance is never nullptr. If the parameter to constructor
+ * is nullptr, load cube primitive by default.
  */
 #pragma once
 
@@ -10,8 +11,9 @@
 
 #include "Base/BaseComponent.hpp"
 
-#include "Function/Render/Mesh.hpp"
 #include "Function/Render/Buffers.hpp"
+#include "Function/Render/Mesh.hpp"
+
 
 namespace aEngine {
 
@@ -25,10 +27,13 @@ struct Mesh : public BaseComponent {
   // Unbind vao, finish rendering
   void Unbind();
 
-  void SetupMesh(Render::Mesh *mesh);
-
   // build spatial data structure from renderable mesh
   void BuildSpatialDS(Render::Mesh *mesh);
+
+  void SetMeshInstance(Render::Mesh *mesh);
+  // The mesh instance is not allowed to be nullptr,
+  // this function should be safe to use.
+  Render::Mesh *GetMeshInstance() { return meshInstance; }
 
   // VAO for mesh rendering
   Render::VAO vao;
@@ -37,6 +42,7 @@ struct Mesh : public BaseComponent {
   // Mark whether the mesh is deformed
   bool Deformed = false;
 
+private:
   Render::Mesh *meshInstance = nullptr;
 };
 

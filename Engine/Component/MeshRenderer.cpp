@@ -12,9 +12,10 @@ void MeshRenderer::DrawMesh(Render::Shader &shader,
                             std::shared_ptr<Mesh> mesh) {
   shader.Use();
   mesh->Bind();
-  glDrawElements(GL_TRIANGLES,
-                 static_cast<unsigned int>(mesh->meshInstance->indices.size()),
-                 GL_UNSIGNED_INT, 0);
+  glDrawElements(
+      GL_TRIANGLES,
+      static_cast<unsigned int>(mesh->GetMeshInstance()->indices.size()),
+      GL_UNSIGNED_INT, 0);
   mesh->Unbind();
 }
 

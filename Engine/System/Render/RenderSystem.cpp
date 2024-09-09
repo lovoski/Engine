@@ -8,6 +8,13 @@
 
 namespace aEngine {
 
+RenderSystem::RenderSystem() {
+  Reset(); // initialize local variables
+  AddComponentSignatureRequireAll<Mesh>();
+  AddComponentSignatureRequireOne<MeshRenderer>();
+  AddComponentSignatureRequireOne<DeformRenderer>();
+}
+
 void RenderSystem::bakeShadowMap() {
   for (int i = 0; i < Lights.size(); ++i) {
     auto light = Lights[i];
@@ -28,18 +35,16 @@ void RenderSystem::bakeShadowMap() {
         auto entity = GWORLD.EntityFromID(id);
         auto mesh = entity->GetComponent<Mesh>();
         // only perform rendering when the mesh is not null
-        if (mesh->meshInstance) {
-          std::shared_ptr<MeshRenderer> renderer;
-          if (entity->HasComponent<MeshRenderer>()) {
-            renderer = entity->GetComponent<MeshRenderer>();
-          } else if (entity->HasComponent<DeformRenderer>()) {
-            renderer = entity->GetComponent<DeformRenderer>()->renderer;
-            entity->GetComponent<DeformRenderer>()->DeformMesh(mesh);
-          }
-          if (renderer->castShadow) {
-            renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
-                                         entity->GlobalTransformMatrix());
-          }
+        std::shared_ptr<MeshRenderer> renderer;
+        if (entity->HasComponent<MeshRenderer>()) {
+          renderer = entity->GetComponent<MeshRenderer>();
+        } else if (entity->HasComponent<DeformRenderer>()) {
+          renderer = entity->GetComponent<DeformRenderer>()->renderer;
+          entity->GetComponent<DeformRenderer>()->DeformMesh(mesh);
+        }
+        if (renderer->castShadow) {
+          renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
+                                       entity->GlobalTransformMatrix());
         }
       }
       offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
@@ -107,18 +112,16 @@ void RenderSystem::Render() {
     for (auto entityID : entities) {
       auto entity = GWORLD.EntityFromID(entityID);
       auto mesh = entity->GetComponent<Mesh>();
-      // only perform rendering when the mesh is not null
-      if (mesh->meshInstance) {
-        std::shared_ptr<MeshRenderer> renderer;
-        if (entity->HasComponent<DeformRenderer>()) {
-          renderer = entity->GetComponent<DeformRenderer>()->renderer;
-          entity->GetComponent<DeformRenderer>()->DeformMesh(mesh);
-        } else if (entity->HasComponent<MeshRenderer>()) {
-          renderer = entity->GetComponent<MeshRenderer>();
-        }
-        renderer->ForwardRender(mesh, projMat, viewMat, camera.get(),
-                                entity.get(), LightsBuffer);
+
+      std::shared_ptr<MeshRenderer> renderer;
+      if (entity->HasComponent<DeformRenderer>()) {
+        renderer = entity->GetComponent<DeformRenderer>()->renderer;
+        entity->GetComponent<DeformRenderer>()->DeformMesh(mesh);
+      } else if (entity->HasComponent<MeshRenderer>()) {
+        renderer = entity->GetComponent<MeshRenderer>();
       }
+      renderer->ForwardRender(mesh, projMat, viewMat, camera.get(),
+                              entity.get(), LightsBuffer);
     }
 
     // draw the grid in 3d space

@@ -79,11 +79,13 @@ void InspectorRightClickMenu(EntityID entity) {
     if (ImGui::MenuItem("Add Component", nullptr, nullptr, false))
       ;
     ImGui::Separator();
-    if (ImGui::MenuItem("Native Script")) {
+    if (ImGui::MenuItem("Native Script"))
       GWORLD.AddComponent<NativeScript>(entity);
-    }
-    if (ImGui::MenuItem("Geometry Mesh"))
+    ImGui::Separator();
+    if (ImGui::MenuItem("Mesh"))
       GWORLD.AddComponent<Mesh>(entity, nullptr);
+    if (ImGui::MenuItem("Mesh Renderer"))
+      GWORLD.AddComponent<MeshRenderer>(entity);
     ImGui::EndPopup();
   }
 }

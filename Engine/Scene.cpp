@@ -3,9 +3,10 @@
 
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
+#include "Component/Mesh.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
-#include "Component/Mesh.hpp"
+
 
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
@@ -337,6 +338,33 @@ void Scene::DestroyEntity(const EntityID entity) {
     handleDestroy(cur->ID);
     s2.pop();
   }
+}
+
+bool Scene::BelongToSystem(const EntityID entity,
+                           const EntitySignature &systemSignature,
+                           const EntitySignature &systemSignatureOne) {
+  // if the entity has at least one of the signatures in the
+  // systemSignatureOne it will get updated by this system
+  auto entitySignature = GetEntitySignature(entity);
+  bool requireOneSatisfied = false;
+  if (systemSignatureOne.size() > 0) {
+    for (const auto compType : systemSignatureOne) {
+      if (entitySignature->count(compType) == 1) {
+        requireOneSatisfied = true;
+        break;
+      }
+    }
+    if (!requireOneSatisfied)
+      return false;
+  }
+  // Assume the RequireOne condition is met
+  for (const auto compType : systemSignature) {
+    if (entitySignature->count(compType) == 0) {
+      return false;
+    }
+  }
+  // The entity also has all components registered with RequireAll
+  return true;
 }
 
 void Scene::recomputeLocalAxis() {

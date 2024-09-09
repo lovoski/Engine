@@ -7,10 +7,9 @@ glm::vec3 Entity::WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 Entity::WorldLeft = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 Entity::WorldForward = glm::vec3(0.0f, 0.0f, 1.0f);
 
-Entity::~Entity() { LOG_F(1, "deconstruct entity %s", name.c_str()); }
+Entity::~Entity() {}
 
 void Entity::Destroy() {
-  LOG_F(1, "destroy parent child relation for %s", name.c_str());
   if (parent != nullptr) {
     // remove this child from its parent's child list
     if (parent->children.size() != 0) {

@@ -2,11 +2,17 @@
 
 namespace aEngine {
 
-Mesh::Mesh(EntityID id, Render::Mesh *mesh) : BaseComponent(id) {
-  SetupMesh(mesh);
+Mesh::Mesh(EntityID id, Render::Mesh *mesh)
+    : BaseComponent(id), meshInstance(mesh) {
+  if (meshInstance == nullptr) {
+    LOG_F(ERROR, "Mesh component can't process null mesh instance, use cube "
+                 "primitive by default");
+    meshInstance = Loader.GetMesh("::cubePrimitive", "");
+  }
+  SetMeshInstance(meshInstance);
 }
 
-void Mesh::SetupMesh(Render::Mesh *mesh) {
+void Mesh::SetMeshInstance(Render::Mesh *mesh) {
   if (mesh) {
     vao.Bind();
     mesh->vbo.BindAs(GL_ARRAY_BUFFER);
@@ -27,11 +33,12 @@ void Mesh::SetupMesh(Render::Mesh *mesh) {
 
     meshInstance = mesh;
   } else {
-    LOG_F(WARNING, "mesh is null, can't setup vao for Mesh component");
+    LOG_F(ERROR,
+          "trying to set null mesh instance to mesh component, do nothing.");
   }
 }
 
-void BuildSpatialDS(Render::Mesh *mesh) {}
+void Mesh::BuildSpatialDS(Render::Mesh *mesh) {}
 
 void Mesh::Bind() {
   vao.Bind();
@@ -55,27 +62,17 @@ void Mesh::Unbind() {
 }
 
 void Mesh::DrawInspectorGUI() {
-  static char inputBuf[200]{0};
-  if (meshInstance)
-    sprintf(inputBuf, meshInstance->identifier.c_str());
-  else
-    sprintf(inputBuf, "");
-  ImGui::PushItemWidth(-1);
-  ImGui::InputTextWithHint("##identifier", "Mesh Identifier", inputBuf,
-                           sizeof(inputBuf), ImGuiInputTextFlags_ReadOnly);
-  ImGui::PopItemWidth();
-  // if (ImGui::BeginDragDropTarget()) {
-  //   if (const ImGuiPayload *payload =
-  //           ImGui::AcceptDragDropPayload("LOADED_ASSET")) {
-  //     char *asset = (char *)payload->Data;
-  //   }
-  //   ImGui::EndDragDropTarget();
-  // }
   ImGui::Separator();
   if (ImGui::BeginTable("Properties##meshdataproperties", 2)) {
     ImGui::TableSetupColumn("Field");
-    ImGui::TableSetupColumn("Number");
+    ImGui::TableSetupColumn("Value");
     ImGui::TableHeadersRow();
+
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text("Identifier");
+    ImGui::TableSetColumnIndex(1);
+    ImGui::Text(meshInstance->identifier.c_str());
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
@@ -90,6 +87,13 @@ void Mesh::DrawInspectorGUI() {
     ImGui::Text("%d", meshInstance->indices.size() / 3);
 
     ImGui::EndTable();
+  }
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("ASSET_FILENAME")) {
+      char *asset = (char *)payload->Data;
+    }
+    ImGui::EndDragDropTarget();
   }
 }
 
