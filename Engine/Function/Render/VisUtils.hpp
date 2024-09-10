@@ -21,10 +21,10 @@ void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp = glm::mat4(1.0f),
                 glm::vec2 viewport = glm::vec2(0.0f),
                 glm::vec3 color = glm::vec3(0.5f));
 
-// `position` is a corner vertex, fd, ld and ud are length along the directions
+// `position` is a corner vertex
 void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
-              glm::vec3 up, glm::mat4 vp = glm::mat4(1.0f), float fd = 1.0f,
-              float ld = 1.0f, float ud = 1.0f,
+              glm::vec3 up, glm::mat4 vp = glm::mat4(1.0f),
+              glm::vec3 size = glm::vec3(1.0f),
               glm::vec3 color = glm::vec3(0.0f, 1.0f, 0.0f));
 
 void DrawWireSphere(glm::vec3 position, glm::mat4 vp, float radius = 1.0f,

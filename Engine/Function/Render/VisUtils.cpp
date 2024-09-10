@@ -327,8 +327,9 @@ void DrawPointLight(glm::vec3 pos, glm::mat4 vp, float size) {
 }
 
 void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
-              glm::vec3 up, glm::mat4 vp, float fd, float ld, float ud,
+              glm::vec3 up, glm::mat4 vp, glm::vec3 size,
               glm::vec3 color) {
+  float fd = size.z, ld = size.x, ud = size.y;
   std::vector<glm::vec3> strip1{position,
                                 position + left * ld,
                                 position + left * ld + forward * fd,

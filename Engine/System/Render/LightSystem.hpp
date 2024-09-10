@@ -52,8 +52,8 @@ public:
                      lightComp->ShadowZNear * entity->LocalForward),
                 entity->LocalForward, entity->LocalLeft, entity->LocalUp,
                 projMat * viewMat,
-                lightComp->ShadowZFar - lightComp->ShadowZNear,
-                lightComp->ShadowOrthoW, lightComp->ShadowOrthoH);
+                {lightComp->ShadowOrthoW, lightComp->ShadowOrthoH,
+                 lightComp->ShadowZFar - lightComp->ShadowZNear});
           }
         } else if (lightComp->type == LIGHT_TYPE::POINT_LIGHT) {
           VisUtils::DrawPointLight(entity->Position(), projMat * viewMat,

@@ -131,6 +131,7 @@ uniform float Ambient;
 
 uniform bool Wireframe;
 uniform float WireframeWidth;
+uniform float WireframeSmooth;
 uniform vec3 WireframeColor;
 
 uniform bool ViewNormal;
@@ -209,12 +210,12 @@ void main() {
   if (Wireframe) {
     float d = min(edgeDistance.x, min(edgeDistance.y, edgeDistance.z));
     float alpha = 0.0;
-    if (d < WireframeWidth - 0.5) {
+    if (d < WireframeWidth - WireframeSmooth) {
       alpha = 1.0;
-    } else if (d > WireframeWidth + 0.5) {
+    } else if (d > WireframeWidth + WireframeSmooth) {
       alpha = 0.0;
     } else {
-      float x = d - (WireframeWidth - 0.5);
+      float x = d - (WireframeWidth - WireframeSmooth);
       alpha = exp2(-2.0 * x * x);
     }
     result = mix(shade, WireframeColor, alpha);

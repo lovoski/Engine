@@ -32,13 +32,19 @@ void Mesh::SetMeshInstance(Render::Mesh *mesh) {
     target.UnbindAs(GL_SHADER_STORAGE_BUFFER);
 
     meshInstance = mesh;
+
+    // build or update spatial ds
+    BuildInitialSpatialDS(mesh);
   } else {
     LOG_F(ERROR,
           "trying to set null mesh instance to mesh component, do nothing.");
   }
 }
 
-void Mesh::BuildSpatialDS(Render::Mesh *mesh) {}
+void Mesh::BuildInitialSpatialDS(Render::Mesh *mesh) { UpdateSpatialDS(); }
+
+// update the spatial ds from meshInstance
+void Mesh::UpdateSpatialDS() {}
 
 void Mesh::Bind() {
   vao.Bind();

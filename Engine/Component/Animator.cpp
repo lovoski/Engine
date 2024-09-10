@@ -158,7 +158,8 @@ void Animator::DrawInspectorGUI() {
   ImGui::SameLine();
   if (ImGui::Button("Clear##animator", {-1, -1})) {
     // reset skeleton to rest pose
-    ApplyMotionToSkeleton(actor->GetRestPose());
+    auto restPose = actor->GetRestPose();
+    ApplyMotionToSkeleton(restPose);
     // clear variables
     motion = nullptr;
     motionName = "";
@@ -198,7 +199,8 @@ void Animator::DrawInspectorGUI() {
                            ImGuiInputTextFlags_ReadOnly);
   ImGui::SameLine();
   if (ImGui::Button("Rest Pose", {-1, -1})) {
-    ApplyMotionToSkeleton(actor->GetRestPose());
+    auto restPose = actor->GetRestPose();
+    ApplyMotionToSkeleton(restPose);
   }
   ImGui::EndChild();
   if (ImGui::BeginDragDropTarget()) {

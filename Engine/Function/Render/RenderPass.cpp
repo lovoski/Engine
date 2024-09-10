@@ -80,6 +80,7 @@ Basic::Basic() {
 void Basic::drawCustomInspectorGUI() {
   ImGui::Checkbox("Wireframe", &withWireframe);
   ImGui::SliderFloat("Width", &WireframeWidth, 0.5f, 5.0f);
+  ImGui::SliderFloat("Smooth", &WireframeSmooth, 0.0f, 1.0f);
   GUIUtils::ColorEdit3(WireframeColor, "Color");
   ImGui::Separator();
   ImGui::Checkbox("View Normal", &viewNormal);
@@ -93,6 +94,7 @@ void Basic::additionalSetup() {
   shader->SetFloat("Ambient", Ambient);
   shader->SetVec3("WireframeColor", WireframeColor);
   shader->SetFloat("WireframeWidth", WireframeWidth);
+  shader->SetFloat("WireframeSmooth", WireframeSmooth);
   shader->SetBool("Wireframe", withWireframe);
   shader->SetBool("ViewNormal", viewNormal);
 }

@@ -41,7 +41,8 @@ void MeshRenderer::ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
       auto modelMat = glm::mat4(1.0f);
       if (!mesh->Deformed)
         modelMat = object->GlobalTransformMatrix();
-      pass->SetupPass(modelMat, viewMat, projMat, -camera->LocalForward,
+      auto viewDir = -camera->LocalForward;
+      pass->SetupPass(modelMat, viewMat, projMat, viewDir,
                       receiveShadow);
       DrawMesh(*pass->GetShader(), mesh);
       pass->FinishPass();

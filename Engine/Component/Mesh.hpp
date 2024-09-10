@@ -14,7 +14,6 @@
 #include "Function/Render/Buffers.hpp"
 #include "Function/Render/Mesh.hpp"
 
-
 namespace aEngine {
 
 struct Mesh : public BaseComponent {
@@ -27,8 +26,10 @@ struct Mesh : public BaseComponent {
   // Unbind vao, finish rendering
   void Unbind();
 
-  // build spatial data structure from renderable mesh
-  void BuildSpatialDS(Render::Mesh *mesh);
+  // build spatial ds from renderable mesh
+  void BuildInitialSpatialDS(Render::Mesh *mesh);
+  // update the spatial ds from meshInstance
+  void UpdateSpatialDS();
 
   void SetMeshInstance(Render::Mesh *mesh);
   // The mesh instance is not allowed to be nullptr,

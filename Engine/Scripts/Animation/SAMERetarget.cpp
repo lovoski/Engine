@@ -170,8 +170,10 @@ void SAMERetarget::drawCustomInspectorGUI() {
   ImGui::SameLine();
   if (ImGui::Button("Clear##same", {-1, -1})) {
     // reset skeleton to rest pose
-    if (animator != nullptr)
-      animator->ApplyMotionToSkeleton(animator->actor->GetRestPose());
+    if (animator != nullptr) {
+      auto restPose = animator->actor->GetRestPose();
+      animator->ApplyMotionToSkeleton(restPose);
+    }
     // clear variables
     resetMotionVariables();
     for (int i = 0; i < sizeof(motionSequencePath); ++i)

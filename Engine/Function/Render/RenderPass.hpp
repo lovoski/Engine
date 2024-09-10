@@ -81,7 +81,7 @@ public:
   bool viewNormal = false;
 
   bool withWireframe = false;
-  float WireframeWidth = 1.0f;
+  float WireframeWidth = 1.0f, WireframeSmooth = 0.5f;
   glm::vec3 WireframeColor = glm::vec3(1.0f);
 
 protected:
