@@ -29,31 +29,90 @@ layout (location = 0) in vec4 aPos;
 layout (location = 1) in vec4 aNormal;
 layout (location = 2) in vec4 aTexCoord;
 
-out vec3 normal;
-out vec3 worldPos;
+out vec3 vworldPos;
+out vec3 vworldNormal;
+out vec2 vtexCoord;
 
-// transform point from model space to world space
 uniform mat4 ModelToWorldPoint;
-// transform vector from model space to world space
 uniform mat3 ModelToWorldDir;
-// transform world space to camera space
 uniform mat4 View;
-// transform camera space to screen
 uniform mat4 Projection;
 void main() {
-  normal = ModelToWorldDir * vec3(aNormal);
-  worldPos = (ModelToWorldPoint * aPos).xyz;
-  gl_Position = Projection * View * vec4(worldPos, 1.0);
+  vtexCoord = aTexCoord.xy;
+  vworldNormal = ModelToWorldDir * vec3(aNormal);
+  vworldPos = (ModelToWorldPoint * aPos).xyz;
+  gl_Position = Projection * View * vec4(vworldPos, 1.0);
 }
 )";
+const std::string diffuseGS = R"(
+#version 460
+layout (triangles) in;
+layout (triangle_strip) out;
+layout (max_vertices = 3) out;
 
+uniform vec2 ViewportSize;
+
+in vec2 vtexCoord[];
+in vec3 vworldPos[];
+in vec3 vworldNormal[];
+
+out vec3 worldPos;
+out vec3 worldNormal;
+out vec2 texCoord;
+// use linear interpolation instead of perspective interpolation
+noperspective out vec3 edgeDistance;
+
+void main() {
+  vec3 ndc0 = gl_in[0].gl_Position.xyz / gl_in[0].gl_Position.w;
+  vec2 p0;
+  p0.x = (ndc0.x + 1.0) / 2.0 * ViewportSize.x;
+  p0.y = (ndc0.y + 1.0) / 2.0 * ViewportSize.y;
+
+  vec3 ndc1 = gl_in[1].gl_Position.xyz / gl_in[1].gl_Position.w;
+  vec2 p1;
+  p1.x = (ndc1.x + 1.0) / 2.0 * ViewportSize.x;
+  p1.y = (ndc1.y + 1.0) / 2.0 * ViewportSize.y;
+
+  vec3 ndc2 = gl_in[2].gl_Position.xyz / gl_in[2].gl_Position.w;
+  vec2 p2;
+  p2.x = (ndc2.x + 1.0) / 2.0 * ViewportSize.x;
+  p2.y = (ndc2.y + 1.0) / 2.0 * ViewportSize.y;
+
+  // p0, p1 and p2 are screen positions of the three vertices
+  float e01 = length(p0-p1), e12 = length(p1-p2), e20 = length(p2-p0);
+  float a1 = acos((e01*e01+e12*e12-e20*e20)/(2*e01*e12));
+  float a2 = acos((e12*e12+e20*e20-e01*e01)/(2*e12*e20));
+  float h20 = e12*sin(a2), h01 = e12*sin(a1), h12 = e01*sin(a1);
+
+  gl_Position = gl_in[0].gl_Position;
+  texCoord = vtexCoord[0];
+  worldPos = vworldPos[0];
+  worldNormal = vworldNormal[0];
+  edgeDistance = vec3(h12, 0.0, 0.0);
+  EmitVertex();
+
+  gl_Position = gl_in[1].gl_Position;
+  texCoord = vtexCoord[1];
+  worldPos = vworldPos[1];
+  worldNormal = vworldNormal[1];
+  edgeDistance = vec3(0.0, h20, 0.0);
+  EmitVertex();
+
+  gl_Position = gl_in[2].gl_Position;
+  texCoord = vtexCoord[2];
+  worldPos = vworldPos[2];
+  worldNormal = vworldNormal[2];
+  edgeDistance = vec3(0.0, 0.0, h01);
+  EmitVertex();
+
+  EndPrimitive();
+}
+)";
 const std::string diffuseFS = R"(
 #version 460
 #extension GL_ARB_bindless_texture : require
 
 struct LightData {
-  // [0]: 0 for directional light, 1 for point light
-  // [1]: 0 for not receive shadow, 1 for receive shadow
   int meta[4];
   float fmeta[4];
   vec4 color;
@@ -70,8 +129,14 @@ uniform int ReceiveShadow;
 uniform vec3 Albedo;
 uniform float Ambient;
 
-in vec3 normal;
+uniform bool Wireframe;
+uniform float WireframeWidth;
+uniform vec3 WireframeColor;
+
+in vec2 texCoord;
 in vec3 worldPos;
+in vec3 worldNormal;
+in vec3 edgeDistance;
 out vec4 FragColor;
 
 
@@ -106,8 +171,8 @@ float ShadowAtten(int lightIndex, float bias) {
 }
 
 vec3 LitSurface() {
-  vec3 Normal = normalize(normal);
   vec3 Diffuse = vec3(0.0, 0.0, 0.0);
+  vec3 Normal = normalize(worldNormal);
   for (int i = 0; i < lights.length(); ++i) {
     vec3 LightColor = lights[i].color.xyz;
     vec3 LightDir;
@@ -131,7 +196,24 @@ vec3 LitSurface() {
 
 void main() {
   vec3 diffuse = LitSurface() * Albedo;
-  vec3 result = diffuse;
+
+  vec3 result;
+  // wireframe related
+  if (Wireframe) {
+    float d = min(edgeDistance.x, min(edgeDistance.y, edgeDistance.z));
+    float alpha = 0.0;
+    if (d < WireframeWidth - 0.5) {
+      alpha = 1.0;
+    } else if (d > WireframeWidth + 0.5) {
+      alpha = 0.0;
+    } else {
+      float x = d - (WireframeWidth - 0.5);
+      alpha = exp2(-2.0 * x * x);
+    }
+    result = mix(diffuse, WireframeColor, alpha);
+  } else {
+    result = diffuse;
+  }
   FragColor = vec4(result, 1.0);
 }
 )";
@@ -286,6 +368,7 @@ vec3 LightAttenuate(vec3 color, float distance, float intensity) {
 
 void main() {
   vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
+  vec3 Normal = normalize(worldNormal);
   for (int i = 0; i < lights.length(); ++i) {
     vec3 LightColor = lights[i].color.xyz;
     vec3 LightDir;
@@ -302,7 +385,7 @@ void main() {
     vec4 ilmChannels = texture(ILM, texCoord1);
     float detail = texture(Detail, texCoord2).r;
 
-    float halfLambert = dot(worldNormal, LightDir) * 0.5 + 0.5;
+    float halfLambert = dot(Normal, LightDir) * 0.5 + 0.5;
     float lightThresholdTerm = smoothstep(firstRampStart, firstRampStop, halfLambert * ilmChannels.g * rampOffset);
     lightThresholdTerm *= vertColor.r;
     vec3 rampShadow = mix(sssCol * rampShadowWeight, baseCol, lightThresholdTerm).rgb;
@@ -313,9 +396,9 @@ void main() {
 
     vec3 halfDir = normalize(worldViewDir + LightDir);
     float specularMaskTerm = ilmChannels.r * ilmChannels.b;
-    vec3 specular = specularMaskTerm * max(0, pow(dot(halfDir, worldNormal), specularGloss)) * baseCol.rgb * LightColor.rgb * specularWeight;
+    vec3 specular = specularMaskTerm * max(0, pow(dot(halfDir, Normal), specularGloss)) * baseCol.rgb * LightColor.rgb * specularWeight;
 
-    vec3 rimLightCol = smoothstep(1-rimLightWidth-rimLightSmooth, 1-rimLightWidth+rimLightSmooth, 1-dot(worldNormal, worldViewDir)) * baseCol.a * rimLightColor * baseCol.rgb;
+    vec3 rimLightCol = smoothstep(1-rimLightWidth-rimLightSmooth, 1-rimLightWidth+rimLightSmooth, 1-dot(Normal, worldViewDir)) * baseCol.a * rimLightColor * baseCol.rgb;
     rimLightCol *= LightColor.rgb;
     rimLightCol = mix(vec3(0.0), rimLightCol, lightThresholdTerm);
     diffuse += rimLightCol;

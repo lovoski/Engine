@@ -125,7 +125,7 @@ void AssetsLoader::LoadDefaultAssets() {
   // load shaders
   Render::Shader *diffuseShader = new Render::Shader();
   diffuseShader->identifier = "::diffuse";
-  diffuseShader->LoadAndRecompileShaderSource(diffuseVS, diffuseFS);
+  diffuseShader->LoadAndRecompileShaderSource(diffuseVS, diffuseFS, diffuseGS);
   allShaders.insert(std::make_pair("::diffuse", diffuseShader));
 
   Render::Shader *errorShader = new Render::Shader();

@@ -64,6 +64,7 @@ void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
     shader->SetMat4("ModelToWorldPoint", ModelToWorldPoint);
     shader->SetMat3("ModelToWorldDir", ModelToWorldDir);
     shader->SetVec3("ViewDir", viewDir);
+    shader->SetVec2("ViewportSize", GWORLD.Context.sceneWindowSize);
     shader->SetInt("ReceiveShadow", receiveShadow);
     additionalSetup();
   }
@@ -77,17 +78,20 @@ Diffuse::Diffuse() {
 }
 
 void Diffuse::drawCustomInspectorGUI() {
-  ImGui::SliderFloat("Ambient", &Ambient, 0.0f, 1.0f);
-  float albedoColor[3] = {Albedo.x, Albedo.y, Albedo.z};
-  if (ImGui::ColorEdit3("Albedo", albedoColor)) {
-    Albedo = glm::vec3(albedoColor[0], albedoColor[1], albedoColor[2]);
-  }
+  ImGui::Checkbox("Wireframe", &withWireframe);
+  ImGui::SliderFloat("Width", &WireframeWidth, 0.5f, 5.0f);
+  GUIUtils::ColorEdit3(WireframeColor, "Color");
+  ImGui::Separator();
+  GUIUtils::ColorEdit3(Albedo, "Albedo");
 }
 
 void Diffuse::additionalSetup() {
   shader->Use();
   shader->SetVec3("Albedo", Albedo);
   shader->SetFloat("Ambient", Ambient);
+  shader->SetVec3("WireframeColor", WireframeColor);
+  shader->SetFloat("WireframeWidth", WireframeWidth);
+  shader->SetBool("Wireframe", withWireframe);
 }
 
 std::string Diffuse::GetMaterialTypeName() { return "Diffuse"; }

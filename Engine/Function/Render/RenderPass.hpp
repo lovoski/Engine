@@ -78,6 +78,10 @@ public:
   float Ambient = 0.1f;
   glm::vec3 Albedo = glm::vec3(1.0f);
 
+  bool withWireframe = false;
+  float WireframeWidth = 1.0f;
+  glm::vec3 WireframeColor = glm::vec3(1.0f);
+
 protected:
   void additionalSetup() override;
   void drawCustomInspectorGUI() override;
