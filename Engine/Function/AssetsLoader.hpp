@@ -66,7 +66,9 @@ private:
 
   std::vector<Render::BasePass *> allMaterials;
 
-  std::vector<Render::Mesh *> loadAndCreateMeshFromFile(std::string modelPath);
+  void loadFBXModelFile(std::vector<Render::Mesh *> &meshes, std::string modelPath);
+  void loadOBJModelFile(std::vector<Render::Mesh *> &meshes, std::string modelPath);
+  std::vector<Render::Mesh *> loadAndCreateAssetsFromFile(std::string modelPath);
 };
 
 static AssetsLoader &Loader = AssetsLoader::Ref();

@@ -23,7 +23,7 @@ void main() {
 )";
 
 // the default diffuse shader
-const std::string diffuseVS = R"(
+const std::string basicVS = R"(
 #version 460 core
 layout (location = 0) in vec4 aPos;
 layout (location = 1) in vec4 aNormal;
@@ -44,7 +44,7 @@ void main() {
   gl_Position = Projection * View * vec4(vworldPos, 1.0);
 }
 )";
-const std::string diffuseGS = R"(
+const std::string basicGS = R"(
 #version 460
 layout (triangles) in;
 layout (triangle_strip) out;
@@ -108,7 +108,7 @@ void main() {
   EndPrimitive();
 }
 )";
-const std::string diffuseFS = R"(
+const std::string basicFS = R"(
 #version 460
 #extension GL_ARB_bindless_texture : require
 
@@ -132,6 +132,8 @@ uniform float Ambient;
 uniform bool Wireframe;
 uniform float WireframeWidth;
 uniform vec3 WireframeColor;
+
+uniform bool ViewNormal;
 
 in vec2 texCoord;
 in vec3 worldPos;
@@ -195,7 +197,12 @@ vec3 LitSurface() {
 }
 
 void main() {
-  vec3 diffuse = LitSurface() * Albedo;
+  vec3 shade;
+  if (ViewNormal) {
+    shade = worldNormal;
+  } else {
+    shade = LitSurface() * Albedo;
+  }
 
   vec3 result;
   // wireframe related
@@ -210,9 +217,9 @@ void main() {
       float x = d - (WireframeWidth - 0.5);
       alpha = exp2(-2.0 * x * x);
     }
-    result = mix(diffuse, WireframeColor, alpha);
+    result = mix(shade, WireframeColor, alpha);
   } else {
-    result = diffuse;
+    result = shade;
   }
   FragColor = vec4(result, 1.0);
 }

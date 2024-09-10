@@ -7,13 +7,14 @@
 #include "Component/NativeScript.hpp"
 
 #include "Function/AssetsLoader.hpp"
-#include "Function/HardCodeAssets.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
+#include "Function/ShaderCode.hpp"
 
 #include "System/Animation/AnimationSystem.hpp"
 
+#include <tinyobjloader.h>
 #include <ufbx.h>
 
 #include "Scene.hpp"
@@ -99,14 +100,15 @@ void AssetsLoader::LoadDefaultAssets() {
   allMeshes.insert(std::make_pair("::planePrimitive",
                                   vector<Render::Mesh *>({planePrimitive})));
   // sphere
-  auto sphereMesh = loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/sphere.fbx");
+  auto sphereMesh =
+      loadAndCreateAssetsFromFile(ASSETS_PATH "/meshes/sphere.fbx");
   allMeshes.insert(std::make_pair("::spherePrimitive", sphereMesh));
   // cube
-  auto cubeMesh = loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/cube.fbx");
+  auto cubeMesh = loadAndCreateAssetsFromFile(ASSETS_PATH "/meshes/cube.fbx");
   allMeshes.insert(std::make_pair("::cubePrimitive", cubeMesh));
   // cylinder
   auto cylinderMesh =
-      loadAndCreateMeshFromFile(ASSETS_PATH "/meshes/cylinder.fbx");
+      loadAndCreateAssetsFromFile(ASSETS_PATH "/meshes/cylinder.fbx");
   allMeshes.insert(std::make_pair("::cylinderPrimitive", cylinderMesh));
 
   // load default textures
@@ -125,7 +127,7 @@ void AssetsLoader::LoadDefaultAssets() {
   // load shaders
   Render::Shader *diffuseShader = new Render::Shader();
   diffuseShader->identifier = "::diffuse";
-  diffuseShader->LoadAndRecompileShaderSource(diffuseVS, diffuseFS, diffuseGS);
+  diffuseShader->LoadAndRecompileShaderSource(basicVS, basicFS, basicGS);
   allShaders.insert(std::make_pair("::diffuse", diffuseShader));
 
   Render::Shader *errorShader = new Render::Shader();
@@ -208,7 +210,7 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
       return motion;
     } else if (extension == ".fbx") {
       LOG_F(INFO, "load motion data from %s", motionPath.c_str());
-      auto meshes = loadAndCreateMeshFromFile(motionPath);
+      auto meshes = loadAndCreateAssetsFromFile(motionPath);
       // keep record of the loaded mesh
       allMeshes.insert(std::make_pair(motionPath, meshes));
       auto it = allMotions.find(motionPath);
@@ -249,7 +251,7 @@ std::vector<Render::Mesh *> AssetsLoader::GetModel(std::string modelPath) {
   std::vector<Render::Mesh *> result;
   if (allMeshes.find(modelPath) == allMeshes.end()) {
     // load new model
-    auto modelMeshes = loadAndCreateMeshFromFile(modelPath);
+    auto modelMeshes = loadAndCreateAssetsFromFile(modelPath);
     if (modelMeshes.size() == 0) {
       LOG_F(ERROR, "the file %s has no mesh", modelPath.c_str());
       return result;
@@ -270,7 +272,7 @@ std::vector<Render::Mesh *> AssetsLoader::GetModel(std::string modelPath) {
 Render::Mesh *AssetsLoader::GetMesh(string modelPath, string identifier) {
   if (allMeshes.find(modelPath) == allMeshes.end()) {
     // load new model
-    auto modelMeshes = loadAndCreateMeshFromFile(modelPath);
+    auto modelMeshes = loadAndCreateAssetsFromFile(modelPath);
     if (modelMeshes.size() == 0) {
       LOG_F(ERROR, "the file %s has no mesh", modelPath.c_str());
       return nullptr;
@@ -352,7 +354,7 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   vector<Render::Mesh *> meshes;
   if (allMeshes.find(modelPath) == allMeshes.end()) {
     // new asset
-    meshes = loadAndCreateMeshFromFile(modelPath);
+    meshes = loadAndCreateAssetsFromFile(modelPath);
     allMeshes.insert(std::make_pair(modelPath, meshes));
   } else {
     meshes = allMeshes[modelPath];
@@ -378,7 +380,7 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
   globalParent->AssignChild(meshParent.get());
   meshParent->name = "mesh";
   auto globalMaterial =
-      Loader.InstantiateMaterial<Render::Diffuse>(globalParent->name);
+      Loader.InstantiateMaterial<Render::Basic>(globalParent->name);
   for (auto mesh : meshes) {
     auto c = GWORLD.AddNewEntity();
     c->name = mesh->identifier;
@@ -502,10 +504,90 @@ Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part,
   return result;
 }
 
-vector<Render::Mesh *>
-AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
-  vector<Render::Mesh *> meshes;
+glm::vec3 getFaceNormal(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+  auto e01 = v1 - v0;
+  auto e02 = v2 - v0;
+  return glm::normalize(glm::cross(e01, e02));
+}
 
+void AssetsLoader::loadOBJModelFile(std::vector<Render::Mesh *> &meshes,
+                                    std::string modelPath) {
+  tinyobj::attrib_t attrib;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+  std::string err, warn;
+  if (tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err,
+                       modelPath.c_str())) {
+    for (auto &shape : shapes) {
+      std::size_t indexOffset = 0;
+
+      std::vector<Vertex> vertices;
+      std::vector<unsigned int> indices;
+
+      for (auto f = 0; f < shape.mesh.num_face_vertices.size(); ++f) {
+        auto fv = shape.mesh.num_face_vertices[f];
+        if (fv != 3) {
+          LOG_F(WARNING,
+                "only triangle faces are handled, face id=%d has %d vertices",
+                f, fv);
+          indexOffset += fv;
+          continue;
+        }
+        Vertex vert[3];
+
+        bool withoutNormal = false;
+        for (auto v = 0; v < 3; ++v) {
+          auto idx = shape.mesh.indices[indexOffset + v];
+          vert[v].Position =
+              glm::vec4(attrib.vertices[3 * idx.vertex_index + 0],
+                        attrib.vertices[3 * idx.vertex_index + 1],
+                        attrib.vertices[3 * idx.vertex_index + 2], 1.0f);
+          if (idx.normal_index >= 0) {
+            vert[v].Normal =
+                glm::vec4(attrib.normals[3 * idx.normal_index + 0],
+                          attrib.normals[3 * idx.normal_index + 1],
+                          attrib.normals[3 * idx.normal_index + 2], 0.0f);
+          } else {
+            withoutNormal = true;
+            vert[v].Normal = glm::vec4(0.0f);
+          }
+          if (idx.texcoord_index >= 0) {
+            vert[v].TexCoords = glm::vec4(
+                attrib.texcoords[2 * idx.texcoord_index + 0],
+                attrib.texcoords[2 * idx.texcoord_index + 1], 1.0f, 1.0f);
+          } else
+            vert[v].TexCoords = glm::vec4(0.0f);
+        }
+        if (withoutNormal) {
+          // manually compute the normal
+          auto faceNormal = getFaceNormal(vert[0].Position, vert[1].Position,
+                                          vert[2].Position);
+          vert[0].Normal = glm::vec4(faceNormal, 0.0f);
+          vert[1].Normal = glm::vec4(faceNormal, 0.0f);
+          vert[2].Normal = glm::vec4(faceNormal, 0.0f);
+        }
+
+        vertices.push_back(vert[0]);
+        vertices.push_back(vert[1]);
+        vertices.push_back(vert[2]);
+        indices.push_back(indexOffset + 0);
+        indices.push_back(indexOffset + 1);
+        indices.push_back(indexOffset + 2);
+
+        indexOffset += fv;
+      }
+
+      Render::Mesh *mesh = new Render::Mesh(vertices, indices);
+      mesh->identifier = shape.name;
+      meshes.push_back(mesh);
+    }
+  } else {
+    LOG_F(ERROR, "failed to load .obj model from %s", modelPath.c_str());
+  }
+}
+
+void AssetsLoader::loadFBXModelFile(std::vector<Render::Mesh *> &meshes,
+                                    std::string modelPath) {
   ufbx_load_opts opts = {};
   opts.target_axes = ufbx_axes_right_handed_y_up;
   opts.target_unit_meters = 1.0f;
@@ -513,7 +595,7 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
   ufbx_scene *scene = ufbx_load_file(modelPath.c_str(), &opts, &error);
   if (!scene) {
     LOG_F(ERROR, "failed to load scene: %s", error.description.data);
-    return meshes;
+    return;
   }
 
   // the parent bone will always have lower index in globalBones
@@ -669,6 +751,20 @@ AssetsLoader::loadAndCreateMeshFromFile(string modelPath) {
 
   // free the scene object
   ufbx_free_scene(scene);
+}
+
+vector<Render::Mesh *>
+AssetsLoader::loadAndCreateAssetsFromFile(string modelPath) {
+  vector<Render::Mesh *> meshes;
+
+  auto extension = fs::path(modelPath).extension().string();
+  if (extension == ".fbx") {
+    // load fbx model with ufbx
+    loadFBXModelFile(meshes, modelPath);
+  } else if (extension == ".obj") {
+    // load obj model with custom loader
+    loadOBJModelFile(meshes, modelPath);
+  }
 
   return meshes;
 }

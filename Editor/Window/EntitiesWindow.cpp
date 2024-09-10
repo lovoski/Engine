@@ -109,7 +109,7 @@ void Editor::EntitiesWindow() {
         cube->name = "Cube";
         cube->AddComponent<Mesh>(Loader.GetMesh("::cubePrimitive", ""));
         cube->AddComponent<MeshRenderer>();
-        cube->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
+        cube->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(
             nullptr, "Cube Mat");
       }
       if (ImGui::MenuItem("Plane")) {
@@ -117,7 +117,7 @@ void Editor::EntitiesWindow() {
         plane->name = "Plane";
         plane->AddComponent<Mesh>(Loader.GetMesh("::planePrimitive", ""));
         plane->AddComponent<MeshRenderer>();
-        plane->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
+        plane->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(
             nullptr, "Plane Mat");
       }
       if (ImGui::MenuItem("Sphere")) {
@@ -125,7 +125,7 @@ void Editor::EntitiesWindow() {
         sphere->name = "Sphere";
         sphere->AddComponent<Mesh>(Loader.GetMesh("::spherePrimitive", ""));
         sphere->AddComponent<MeshRenderer>();
-        sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
+        sphere->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(
             nullptr, "Sphere Mat");
       }
       if (ImGui::MenuItem("Cylinder")) {
@@ -133,7 +133,7 @@ void Editor::EntitiesWindow() {
         cylinder->name = "Cylinder";
         cylinder->AddComponent<Mesh>(Loader.GetMesh("::cylinderPrimitive", ""));
         cylinder->AddComponent<MeshRenderer>();
-        cylinder->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
+        cylinder->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(
             nullptr, "Cylinder Mat");
       }
       ImGui::Separator();
@@ -193,7 +193,7 @@ void Editor::EntitiesWindow() {
         auto parentEntity = GWORLD.AddNewEntity();
         parentEntity->name = filename.stem().string();
         // create one unified material for the whole object
-        auto unifyMat = Loader.InstantiateMaterial<Render::Diffuse>(
+        auto unifyMat = Loader.InstantiateMaterial<Render::Basic>(
             filename.stem().string());
         for (auto cmesh : modelMeshes) {
           auto childEntity = GWORLD.AddNewEntity();

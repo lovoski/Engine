@@ -70,31 +70,34 @@ void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
   }
 };
 
-// ----------------------Diffuse Material------------------------------
+// ----------------------Basic Material------------------------------
 
-Diffuse::Diffuse() {
+Basic::Basic() {
   // initialize shader to defualt value
   shader = Loader.GetShader("::diffuse");
 }
 
-void Diffuse::drawCustomInspectorGUI() {
+void Basic::drawCustomInspectorGUI() {
   ImGui::Checkbox("Wireframe", &withWireframe);
   ImGui::SliderFloat("Width", &WireframeWidth, 0.5f, 5.0f);
   GUIUtils::ColorEdit3(WireframeColor, "Color");
   ImGui::Separator();
+  ImGui::Checkbox("View Normal", &viewNormal);
+  ImGui::Separator();
   GUIUtils::ColorEdit3(Albedo, "Albedo");
 }
 
-void Diffuse::additionalSetup() {
+void Basic::additionalSetup() {
   shader->Use();
   shader->SetVec3("Albedo", Albedo);
   shader->SetFloat("Ambient", Ambient);
   shader->SetVec3("WireframeColor", WireframeColor);
   shader->SetFloat("WireframeWidth", WireframeWidth);
   shader->SetBool("Wireframe", withWireframe);
+  shader->SetBool("ViewNormal", viewNormal);
 }
 
-std::string Diffuse::GetMaterialTypeName() { return "Diffuse"; }
+std::string Basic::GetMaterialTypeName() { return "Basic"; }
 
 // ----------------------- Outline -----------------------
 

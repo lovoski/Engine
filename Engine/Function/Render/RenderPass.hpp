@@ -71,12 +71,14 @@ protected:
   virtual void additionalSetup() {}
 };
 
-class Diffuse : public BasePass {
+class Basic : public BasePass {
 public:
-  Diffuse();
+  Basic();
 
   float Ambient = 0.1f;
   glm::vec3 Albedo = glm::vec3(1.0f);
+
+  bool viewNormal = false;
 
   bool withWireframe = false;
   float WireframeWidth = 1.0f;

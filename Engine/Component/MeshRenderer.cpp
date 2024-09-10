@@ -59,8 +59,8 @@ void MeshRenderer::drawAppendPassPopup() {
       handleAppendPass<Render::WireFramePass>("Wireframe");
     if (ImGui::MenuItem("Outline Pass"))
       handleAppendPass<Render::OutlinePass>("Outline");
-    if (ImGui::MenuItem("Diffuse Pass"))
-      handleAppendPass<Render::Diffuse>("Diffuse");
+    if (ImGui::MenuItem("Basic Pass"))
+      handleAppendPass<Render::Basic>("Basic");
     if (ImGui::MenuItem("GBV Toon Pass"))
       handleAppendPass<Render::GBVMainPass>("GBV Main");
     ImGui::EndPopup();

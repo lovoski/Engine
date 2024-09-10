@@ -16,7 +16,7 @@ void BuildTestScene(Engine *engine) {
   sphere->SetGlobalPosition({0.0f, 1.0f, 0.0f});
   sphere->AddComponent<Mesh>(Loader.GetMesh("::spherePrimitive", ""));
   sphere->AddComponent<MeshRenderer>();
-  sphere->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(
+  sphere->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(
       nullptr, "Diffuse Sphere");
 
   auto plane = GWORLD.AddNewEntity();
@@ -24,7 +24,7 @@ void BuildTestScene(Engine *engine) {
   plane->SetGlobalScale({10.0f, 1.0f, 10.0f});
   plane->AddComponent<Mesh>(Loader.GetMesh("::planePrimitive", ""));
   plane->AddComponent<MeshRenderer>();
-  plane->GetComponent<MeshRenderer>()->AddPass<Render::Diffuse>(nullptr,
+  plane->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(nullptr,
                                                                 "Ground Mat");
 }
 
