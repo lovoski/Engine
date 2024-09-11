@@ -17,17 +17,22 @@ SpatialSystem::SpatialSystem() {
 SpatialSystem::~SpatialSystem() {}
 
 void SpatialSystem::PreUpdate(float dt) {
+  // update the spatial ds, precompute the collision pair
+  std::vector<std::shared_ptr<Entity>> e;
+  std::vector<std::shared_ptr<Mesh>> m;
   for (auto id : entities) {
-    GWORLD.GetComponent<Mesh>(id)->UpdateSpatialDS();
+    e.push_back(GWORLD.EntityFromID(id));
+    m.push_back(GWORLD.GetComponent<Mesh>(id));
+    m.back()->UpdateSpatialDS();
+  }
+  for (int i = 0; i < e.size(); ++i) {
+    for (int j = i + 1; j < e.size(); ++j) {
+      // check for collision
+    }
   }
 }
 
-void SpatialSystem::Update(float dt) {
-  std::vector<std::shared_ptr<Entity>> e;
-  for (auto i : entities)
-    e.push_back(GWORLD.EntityFromID(i));
-  for (int i = 0; i < entities.size(); ++i) {}
-}
+void SpatialSystem::Update(float dt) {}
 
 void SpatialSystem::Render() {
   EntityID camera;

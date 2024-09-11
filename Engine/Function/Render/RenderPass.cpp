@@ -4,7 +4,6 @@
 #include "Function/GUI/Helpers.hpp"
 #include "Scene.hpp"
 
-
 namespace aEngine {
 
 namespace Render {
@@ -13,25 +12,6 @@ using glm::vec2;
 using glm::vec3;
 using std::string;
 using std::vector;
-
-bool ActivateTexture2D(Texture &texture, Shader *shader, string name,
-                       int slot) {
-  shader->Use(); // activate the shader
-  static Texture pureWhite = *Loader.GetTexture("::white_texture");
-  auto activateTexId = texture.id;
-  if (texture.path == "::null_texture") {
-    activateTexId = pureWhite.id;
-  }
-  glActiveTexture(GL_TEXTURE0 + slot);
-  int location = glGetUniformLocation(shader->ID, name.c_str());
-  if (location == -1) {
-    // LOG_F(WARNING, "location for %s not valid", name.c_str());
-    return false;
-  }
-  glUniform1i(location, slot);
-  glBindTexture(GL_TEXTURE_2D, activateTexId);
-  return true;
-}
 
 void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
   if (shader == nullptr)
@@ -123,7 +103,7 @@ void OutlinePass::additionalSetup() {
   shader->SetFloat("OutlineWidth", OutlineWidth);
   shader->SetFloat("OutlineWeight", OutlineWeight);
   shader->SetVec3("OutlineColor", OutlineColor);
-  ActivateTexture2D(OutlineColorMap, shader, "OutlineMap", 0);
+  shader->SetTexture2D(OutlineColorMap, "OutlineMap", 0);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_FRONT);
 }
@@ -136,9 +116,7 @@ std::string OutlinePass::GetMaterialTypeName() { return "Outline"; }
 
 WireFramePass::WireFramePass() { shader = Loader.GetShader("::wireframe"); }
 
-void WireFramePass::FinishPass() {
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-}
+void WireFramePass::FinishPass() { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
 
 std::string WireFramePass::GetMaterialTypeName() { return "Wireframe"; }
 
@@ -203,10 +181,10 @@ void GBVMainPass::drawCustomInspectorGUI() {
 
 void GBVMainPass::additionalSetup() {
   shader->Use();
-  ActivateTexture2D(base, shader, "Base", 0);
-  ActivateTexture2D(ILM, shader, "ILM", 1);
-  ActivateTexture2D(SSS, shader, "SSS", 2);
-  ActivateTexture2D(detail, shader, "Detail", 3);
+  shader->SetTexture2D(base, "Base", 0);
+  shader->SetTexture2D(ILM, "ILM", 1);
+  shader->SetTexture2D(SSS, "SSS", 2);
+  shader->SetTexture2D(detail, "Detail", 3);
 
   shader->SetFloat("firstRampStart", firstRampStart);
   shader->SetFloat("firstRampStop", firstRampStop);

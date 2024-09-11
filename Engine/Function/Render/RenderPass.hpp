@@ -11,11 +11,6 @@ namespace aEngine {
 
 namespace Render {
 
-// Activate the texture at a opengl bind point, if the texture is ::null_texture,
-// pure white texture will be activated instead.
-bool ActivateTexture2D(Texture &texture, Shader *shader, std::string name,
-                       int slot);
-
 // Each material data should maintain an instance shader
 // If the shader specified failed to load, a default error shader should be
 // applied The material data should be able to represent a complete render pass
