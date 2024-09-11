@@ -3,7 +3,6 @@
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 #include "Scripts/CameraController.hpp"
-#include "Scripts/TestDebugDraw.hpp"
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/Render/CameraSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
