@@ -24,6 +24,11 @@ struct SkeletonMapData {
   Entity *joint;
 };
 
+struct BoneMatrixBlock {
+  glm::mat4 BoneModelMatrix;
+  glm::mat4 BoneOffsetMatrix;
+};
+
 // Each animator must bind to one actor (Skeleton),
 // the entity structure will be created when one animator gets created
 struct Animator : public BaseComponent {
@@ -42,7 +47,7 @@ struct Animator : public BaseComponent {
   void DrawInspectorGUI() override;
 
   // Get transformation matrics needed for skeleton animation
-  std::vector<glm::mat4> GetSkeletonTransforms();
+  std::vector<BoneMatrixBlock> GetSkeletonTransforms();
 
   // Apply the motion to skeleton entities
   void ApplyMotionToSkeleton(Animation::Pose &pose);
@@ -69,11 +74,13 @@ struct Animator : public BaseComponent {
   // The actor is a read only reference, motion is
   // applied to the skeleton entities created from this actor
   Animation::Skeleton *actor;
-  // map actor's jointName to joint index, this is a static structure
-  // and won't get updated with skeleton entities
-  std::map<std::string, int> actorJointMap;
-  // This map should have the same size as the actor's joints
-  std::map<std::string, SkeletonMapData> SkeletonMap;
+  // map actor's jointName hash to joint index, this is a static structure
+  // and won't get updated with skeleton entities.
+  // To get the hash of the string, use `HashString("xxx")`
+  std::map<std::size_t, int> actorJointMap;
+  // This map should have the same size as the actor's joints,
+  // map the hash of jointName to skeleton data
+  std::map<std::size_t, SkeletonMapData> SkeletonMap;
 
   // Stores the motion data
   Animation::Motion *motion = nullptr;

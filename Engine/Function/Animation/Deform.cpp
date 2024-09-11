@@ -16,11 +16,15 @@ struct Vertex {
   int BoneId[MAX_BONES];
   float BoneWeight[MAX_BONES];
 };
+struct MatrixBlock {
+  mat4 BoneModelMatrix;
+  mat4 BoneOffsetMatrix;
+};
 layout(std430, binding = 0) buffer VertexInput {
   Vertex vIn[];
 };
 layout(std430, binding = 1) buffer BoneTransforms {
-  mat4 boneMatrices[];
+  MatrixBlock boneMatrices[];
 };
 layout(std430, binding = 2) buffer VertexOutput {
   Vertex vOut[];
@@ -38,7 +42,7 @@ void main() {
     float weight = vtx.BoneWeight[i];
     // Skip if the weight is zero
     if (weight > 0.0) {
-      mat4 boneMatrix = boneMatrices[boneId];
+      mat4 boneMatrix = boneMatrices[boneId].BoneModelMatrix * boneMatrices[boneId].BoneOffsetMatrix;
       newPosition += boneMatrix * vtx.Position * weight;
       newNormal += boneMatrix * vtx.Normal * weight;
     }
@@ -62,7 +66,6 @@ void DeformSkinnedMesh(Animator *animator, Render::Buffer &inputVBO,
   matrices.BindAs(GL_SHADER_STORAGE_BUFFER);
   matrices.SetDataAs(GL_SHADER_STORAGE_BUFFER,
                      animator->GetSkeletonTransforms());
-  auto mats = animator->GetSkeletonTransforms();
   matrices.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 1);
   // configure the outputs
   targetVBO.BindAs(GL_SHADER_STORAGE_BUFFER);

@@ -13,7 +13,7 @@ using glm::vec4;
 bool operator<(vec3 a, vec3 b) { return a.x < b.x && a.y < b.y && a.z < b.z; }
 bool operator>(vec3 a, vec3 b) { return a.x > b.x && a.y > b.y && a.z > b.z; }
 
-bool AABB::Collides(AABB &box) {
+bool AABB::Test(AABB &box) {
   if (Max.x < box.Min.x || Min.x > box.Max.x)
     return false;
   if (Max.y < box.Min.y || Min.y > box.Max.y)

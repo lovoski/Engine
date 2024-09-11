@@ -151,8 +151,9 @@ private:
       auto left = "left" + candidate;
       auto right = "right" + candidate;
       for (auto ele : animator->SkeletonMap) {
-        auto lMatch = isSubstr(ele.first, left);
-        auto rMatch = isSubstr(ele.first, right);
+        auto jointName = animator->actor->jointNames[ele.second.actorInd];
+        auto lMatch = isSubstr(jointName, left);
+        auto rMatch = isSubstr(jointName, right);
         if (lMatch)
           lFoot = ele.second.joint;
         if (rMatch)

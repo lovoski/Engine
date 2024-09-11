@@ -25,13 +25,14 @@ void Animator::BuildSkeletonMap() {
     auto curEnt = GWORLD.EntityFromID(cur).get();
     SkeletonMapData smd;
     smd.joint = curEnt;
-    auto it = actorJointMap.find(curEnt->name);
+    auto curNameHash = HashString(curEnt->name);
+    auto it = actorJointMap.find(curNameHash);
     smd.actorInd = it == actorJointMap.end() ? -1 : it->second;
     if (smd.actorInd == -1)
       smd.active = false;
     else
       smd.active = jointActive[smd.actorInd] == 1;
-    SkeletonMap.insert(std::make_pair(curEnt->name, smd));
+    SkeletonMap.insert(std::make_pair(curNameHash, smd));
     s.pop();
     for (auto c : curEnt->children)
       s.push(c->ID);
@@ -49,7 +50,8 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
     LOG_F(WARNING, "skeleton entity joint num and motion joint num mismatch, "
                    "motion maybe incorrect.");
   }
-  auto root = SkeletonMap.find(pose.skeleton->jointNames[0]);
+  auto rootNameHash = HashString(pose.skeleton->jointNames[0]);
+  auto root = SkeletonMap.find(rootNameHash);
   if (root == SkeletonMap.end()) {
     LOG_F(ERROR, "root joint %s not found in skeleton, can't apply motion",
           pose.skeleton->jointNames[0].c_str());
@@ -58,7 +60,7 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
   root->second.joint->SetLocalPosition(pose.rootLocalPosition);
   for (int boneInd = 0; boneInd < motionJointNum; ++boneInd) {
     auto boneName = pose.skeleton->jointNames[boneInd];
-    auto bone = SkeletonMap.find(boneName);
+    auto bone = SkeletonMap.find(HashString(boneName));
     if (bone == SkeletonMap.end()) {
       LOG_F(WARNING, "joint %s not found in skeleton, can't apply motion",
             boneName.c_str());
@@ -69,8 +71,10 @@ void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
 }
 
 void Animator::createSkeletonEntities() {
-  for (int i = 0; i < actor->jointNames.size(); ++i)
-    actorJointMap.insert(std::make_pair(actor->jointNames[i], i));
+  for (int i = 0; i < actor->jointNames.size(); ++i) {
+    auto nameHash = HashString(actor->jointNames[i]);
+    actorJointMap.insert(std::make_pair(nameHash, i));
+  }
 
   std::vector<Entity *> joints;
   for (int i = 0; i < actor->GetNumJoints(); ++i) {
@@ -222,16 +226,16 @@ void Animator::DrawInspectorGUI() {
   }
 }
 
-std::vector<glm::mat4> Animator::GetSkeletonTransforms() {
+std::vector<BoneMatrixBlock> Animator::GetSkeletonTransforms() {
   // capture position, rotation of joints,
   // convert these information into matrices
-  std::vector<glm::mat4> result(actor->GetNumJoints(), glm::mat4(1.0f));
+  std::vector<BoneMatrixBlock> result(actor->GetNumJoints());
   if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
-    for (int jointInd = 0; jointInd < SkeletonMap.size(); ++jointInd) {
-      auto jointName = actor->jointNames[jointInd];
-      auto skelData = SkeletonMap[actor->jointNames[jointInd]];
-      result[jointInd] =
-          skelData.joint->GlobalTransformMatrix() * actor->offsetMatrices[jointInd];
+    for (auto &skelData : SkeletonMap) {
+      int jointInd = skelData.second.actorInd;
+      result[jointInd].BoneModelMatrix =
+          skelData.second.joint->GlobalTransformMatrix();
+      result[jointInd].BoneOffsetMatrix = actor->offsetMatrices[jointInd];
     }
   }
   return result;

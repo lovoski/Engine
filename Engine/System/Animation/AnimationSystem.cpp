@@ -68,12 +68,12 @@ void AnimationSystem::collectSkeletonDrawQueue(
     int cur = startPointInd, parent;
     std::string curName = actor->jointNames[cur], parentName;
     SkeletonMapData curData, parentData;
-    curData = animator->SkeletonMap[curName];
+    curData = animator->SkeletonMap[animator->HashString(curName)];
     int toBeMatched = -1;
     while (actor->jointParent[cur] != -1) {
       parent = actor->jointParent[cur];
       parentName = actor->jointNames[parent];
-      parentData = animator->SkeletonMap[parentName];
+      parentData = animator->SkeletonMap[animator->HashString(parentName)];
       if (visitsRemains[parent] > 0) {
         if (curData.active && parentData.active) {
           drawQueue.push_back(std::make_pair(parentData.joint->Position(),
@@ -83,7 +83,7 @@ void AnimationSystem::collectSkeletonDrawQueue(
           toBeMatched = cur;
         } else if (!curData.active && parentData.active && toBeMatched != -1) {
           auto childData =
-              animator->SkeletonMap[actor->jointNames[toBeMatched]];
+              animator->SkeletonMap[animator->HashString(actor->jointNames[toBeMatched])];
           drawQueue.push_back(std::make_pair(parentData.joint->Position(),
                                              childData.joint->Position()));
           visitsRemains[parent]--;

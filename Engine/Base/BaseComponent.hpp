@@ -13,6 +13,8 @@ public:
 
   virtual void DrawInspectorGUI() {}
 
+  static std::size_t HashString(std::string str);
+
 protected:
   friend class Scene;
   EntityID entityID;
