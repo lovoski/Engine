@@ -31,7 +31,7 @@ void SAMERetarget::sendDataToServer() {
   auto actor = entity->GetComponent<Animator>()->actor;
   std::string exportSkeletonFilepath = "./tmp_skeleton.bvh";
   std::string exportMotionFilepath = "./tmp_motion.bvh";
-  actor->ExportAsBVH(exportSkeletonFilepath, false);
+  actor->ExportAsBVH(exportSkeletonFilepath);
   sourceMotion->SaveToBVH(exportMotionFilepath);
   sendBuffer = fs::canonical(exportSkeletonFilepath).string();
   sendBuffer = sendBuffer + ";" + fs::canonical(exportMotionFilepath).string();
@@ -66,6 +66,66 @@ void SAMERetarget::receiveDataFromServer() {
 
 void SAMERetarget::fitRetargetMotion(Animation::Motion *source,
                                      Animation::Skeleton *target) {
+  // remove end effector with no offset from source motion
+  std::set<int> eeToBeRemoved;
+  for (int i = 0; i < source->skeleton.GetNumJoints(); ++i) {
+    if (source->skeleton.jointChildren[i].size() == 0 &&
+        glm::length(source->skeleton.jointOffset[i]) < 1e-5f) {
+      eeToBeRemoved.insert(i);
+    }
+  }
+  if (eeToBeRemoved.size() > 0) {
+    Animation::Skeleton newSkeleton;
+    newSkeleton.skeletonName = source->skeleton.skeletonName;
+    std::map<int, int> oldToNew;
+    oldToNew.insert(std::make_pair(-1, -1));
+    int newSkeletonJoints =
+        source->skeleton.GetNumJoints() - eeToBeRemoved.size();
+    newSkeleton.jointNames.resize(newSkeletonJoints, "");
+    newSkeleton.jointOffset.resize(newSkeletonJoints);
+    newSkeleton.jointRotation.resize(newSkeletonJoints);
+    newSkeleton.jointScale.resize(newSkeletonJoints);
+    newSkeleton.jointChildren.resize(newSkeletonJoints, std::vector<int>());
+    newSkeleton.jointParent.resize(newSkeletonJoints);
+    newSkeleton.offsetMatrices.resize(newSkeletonJoints, glm::mat4(1.0f));
+    int counter = 0;
+    for (int i = 0; i < source->skeleton.GetNumJoints(); ++i) {
+      if (eeToBeRemoved.count(i) == 0)
+        oldToNew.insert(std::make_pair(i, counter++));
+    }
+    for (int i = 0; i < source->skeleton.GetNumJoints(); ++i) {
+      if (eeToBeRemoved.count(i) == 0) {
+        auto oldInd = i, newInd = oldToNew[i];
+        newSkeleton.jointNames[newInd] = source->skeleton.jointNames[oldInd];
+        newSkeleton.jointOffset[newInd] = source->skeleton.jointOffset[oldInd];
+        newSkeleton.jointRotation[newInd] =
+            source->skeleton.jointRotation[oldInd];
+        newSkeleton.jointScale[newInd] = source->skeleton.jointScale[oldInd];
+        if (source->skeleton.offsetMatrices.size() > 0)
+          newSkeleton.offsetMatrices[newInd] =
+              source->skeleton.offsetMatrices[oldInd];
+        for (auto child : source->skeleton.jointChildren[oldInd])
+          if (eeToBeRemoved.count(child) == 0)
+            newSkeleton.jointChildren[newInd].push_back(oldToNew[child]);
+        newSkeleton.jointParent[newInd] =
+            oldToNew[source->skeleton.jointParent[oldInd]];
+      }
+    }
+    int oldSkeletonJointNum = source->skeleton.GetNumJoints();
+    source->skeleton = newSkeleton;
+    std::vector<Animation::Pose> newPoses;
+    for (int i = 0; i < source->poses.size(); ++i) {
+      Animation::Pose pose;
+      pose.skeleton = &source->skeleton;
+      pose.rootLocalPosition = source->poses[i].rootLocalPosition;
+      for (int j = 0; j < oldSkeletonJointNum; ++j) {
+        if (eeToBeRemoved.count(j) == 0)
+          pose.jointRotations.push_back(source->poses[i].jointRotations[j]);
+      }
+      newPoses.push_back(pose);
+    }
+    source->poses = newPoses;
+  }
   int sourceJointNum = source->skeleton.GetNumJoints();
   int targetJointNum = target->GetNumJoints();
   if (sourceJointNum != targetJointNum) {

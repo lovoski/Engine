@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <set>
 #include <stack>
 
 using glm::cross;
@@ -281,22 +282,38 @@ bool Motion::SaveToBVH(string filename, bool keepJointNames) {
   } else {
     fileOutput << "HIERARCHY" << std::endl;
     // write the skeleton hierarchy
+    std::set<int> incorrectNamedEE;
     int depth = 0;
     for (int jointInd = 0; jointInd < skeleton.GetNumJoints(); ++jointInd) {
       BVHPadding(fileOutput, depth);
       if (skeleton.jointChildren[jointInd].size() == 0) {
         if (EndsWith(skeleton.jointNames[jointInd], "_End") ||
-            !keepJointNames)
+            !keepJointNames) {
           // force rename end effector
           fileOutput << "End Site\n";
-        else
+        } else {
+          incorrectNamedEE.insert(jointInd);
           fileOutput << "JOINT " << skeleton.jointNames[jointInd] << "\n";
+        }
         BVHPadding(fileOutput, depth++);
         fileOutput << "{\n";
         BVHPadding(fileOutput, depth);
         fileOutput << "OFFSET " << flattenJointOffset[jointInd].x << " "
                    << flattenJointOffset[jointInd].y << " "
                    << flattenJointOffset[jointInd].z << "\n";
+        if (incorrectNamedEE.count(jointInd) != 0) {
+          // add an end effector with no offset to the end
+          BVHPadding(fileOutput, depth);
+          fileOutput << "CHANNELS 3 Zrotation Yrotation Xrotation\n";
+          BVHPadding(fileOutput, depth);
+          fileOutput << "End Site\n";
+          BVHPadding(fileOutput, depth);
+          fileOutput << "{\n";
+          BVHPadding(fileOutput, depth + 1);
+          fileOutput << "OFFSET 0 0 0\n";
+          BVHPadding(fileOutput, depth);
+          fileOutput << "}\n";
+        }
         BVHPadding(fileOutput, --depth);
         fileOutput << "}\n";
         // find the direct parent of the next joint (if exists)
@@ -372,6 +389,11 @@ bool Motion::SaveToBVH(string filename, bool keepJointNames) {
           vec3 eulerDegree = glm::degrees(euler);
           fileOutput << eulerDegree.z << " " << eulerDegree.y << " "
                      << eulerDegree.x << " ";
+        } else {
+          if (incorrectNamedEE.count(jointInd) != 0) {
+            // if this joint is a incorrectly named ee
+            fileOutput << "0 0 0 ";
+          }
         }
       }
       fileOutput << "\n";

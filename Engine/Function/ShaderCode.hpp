@@ -200,7 +200,7 @@ vec3 LitSurface() {
 void main() {
   vec3 shade;
   if (ViewNormal) {
-    shade = worldNormal;
+    shade = normalize(worldNormal);
   } else {
     shade = LitSurface() * Albedo;
   }
