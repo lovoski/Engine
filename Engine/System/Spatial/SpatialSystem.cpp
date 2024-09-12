@@ -21,9 +21,19 @@ void SpatialSystem::PreUpdate(float dt) {
   std::vector<std::shared_ptr<Entity>> e;
   std::vector<std::shared_ptr<Mesh>> m;
   for (auto id : entities) {
-    e.push_back(GWORLD.EntityFromID(id));
-    m.push_back(GWORLD.GetComponent<Mesh>(id));
-    m.back()->UpdateSpatialDS();
+    auto mi = GWORLD.GetComponent<Mesh>(id);
+    if (mi->AsCollider) {
+      auto ei = GWORLD.EntityFromID(id);
+
+      auto transform = ei->GlobalTransformMatrix();
+      mi->bvh.Clear();
+      mi->SetupBVH(transform);
+
+      e.push_back(ei);
+      m.push_back(mi);
+    } else {
+      mi->bvh.Clear();
+    }
   }
   static int counter = 0;
   for (int i = 0; i < e.size(); ++i) {
@@ -32,25 +42,22 @@ void SpatialSystem::PreUpdate(float dt) {
       auto transformi = e[i]->GlobalTransformMatrix();
       auto transformj = e[j]->GlobalTransformMatrix();
       bool collides = false;
-      for (int fi = 0; fi < m[i]->Faces.size(); ++fi) {
-        if (collides)
-          break;
-        for (int fj = 0; fj < m[j]->Faces.size(); ++fj) {
-          if (collides)
-            break;
+      for (int fi = 0; fi < m[i]->bvh.GetNumPrimitives(); ++fi) {
+        for (int fj = 0; fj < m[j]->bvh.GetNumPrimitives(); ++fj) {
           Spatial::Triangle tri0, tri1;
           for (int faceInd = 0; faceInd < 3; ++faceInd) {
             tri0.V[faceInd] =
                 transformi *
-                glm::vec4(m[i]->Positions[m[i]->Faces[fi][faceInd]], 1.0f);
+                glm::vec4(m[i]->bvh.Primitive(fi).V[faceInd], 1.0f);
             tri1.V[faceInd] =
                 transformj *
-                glm::vec4(m[j]->Positions[m[j]->Faces[fj][faceInd]], 1.0f);
+                glm::vec4(m[j]->bvh.Primitive(fj).V[faceInd], 1.0f);
           }
           if (tri0.Test(tri1)) {
-            LOG_F(INFO, "%d: Collision between face %d of \"%s\" and face %d of \"%s\"",
-                  counter, fi, e[i]->name.c_str(), fj, e[j]->name.c_str());
-            collides = true;
+            LOG_F(
+                INFO,
+                "%d: Collision between face %d of \"%s\" and face %d of \"%s\"",
+                counter, fi, e[i]->name.c_str(), fj, e[j]->name.c_str());
           }
         }
       }
@@ -69,10 +76,25 @@ void SpatialSystem::Render() {
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto mesh = entity->GetComponent<Mesh>();
-      // // draw AABB
-      // VisUtils::DrawCube(mesh->bbox.Min, Entity::WorldForward,
-      //                    Entity::WorldLeft, Entity::WorldUp, vp,
-      //                    mesh->bbox.Max - mesh->bbox.Min);
+      if (mesh->bvh.Nodes().size() > 0) {
+        // draw bvh
+        std::stack<int> s;
+        s.push(0);
+        while (!s.empty()) {
+          auto cur = s.top();
+          s.pop();
+
+          auto &bbox = mesh->bvh.Nodes()[cur].bbox;
+          VisUtils::DrawAABB(bbox.Min, bbox.Max, vp);
+
+          auto lchild = mesh->bvh.Nodes()[cur].lchild;
+          auto rchild = mesh->bvh.Nodes()[cur].rchild;
+          if (lchild != -1)
+            s.push(lchild);
+          if (rchild != -1)
+            s.push(rchild);
+        }
+      }
     }
   }
 }

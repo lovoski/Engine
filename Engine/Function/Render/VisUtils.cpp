@@ -260,7 +260,7 @@ void DrawBones(std::vector<std::pair<glm::vec3, glm::vec3>> &bones,
   vao.Bind();
   std::vector<glm::vec3> buffer;
   for (auto &pair : bones) {
-    buffer.push_back(pair.first); // bone start
+    buffer.push_back(pair.first);  // bone start
     buffer.push_back(pair.second); // bond end
   }
   vbo.SetDataAs(GL_ARRAY_BUFFER, buffer);
@@ -327,8 +327,7 @@ void DrawPointLight(glm::vec3 pos, glm::mat4 vp, float size) {
 }
 
 void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
-              glm::vec3 up, glm::mat4 vp, glm::vec3 size,
-              glm::vec3 color) {
+              glm::vec3 up, glm::mat4 vp, glm::vec3 size, glm::vec3 color) {
   float fd = size.z, ld = size.x, ud = size.y;
   std::vector<glm::vec3> strip1{position,
                                 position + left * ld,
@@ -384,6 +383,11 @@ void DrawCamera(glm::vec3 forward, glm::vec3 up, glm::vec3 left, glm::vec3 pos,
   // std::vector<glm::vec3> strip {
 
   // };
+}
+
+void DrawAABB(glm::vec3 min, glm::vec3 max, glm::mat4 &vp, glm::vec3 color) {
+  DrawCube(min, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f),
+           glm::vec3(0.0f, 1.0f, 0.0f), vp, max - min, color);
 }
 
 }; // namespace VisUtils

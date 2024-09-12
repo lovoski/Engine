@@ -4,6 +4,8 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <iostream>
+#include <algorithm>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,6 +30,8 @@ struct AABB {
   glm::vec3 Max = glm::vec3(0.0f);
 
   bool Test(AABB &box);
+
+  bool Test(Triangle &tri);
 
   glm::vec3 ClosestPointTo(glm::vec3 point);
   float PointDist(glm::vec3 point);
@@ -66,6 +70,8 @@ struct Ray {
 
 struct Triangle {
   std::array<glm::vec3, 3> V;
+
+  glm::vec3 Barycenter();
 
   bool Test(Triangle &tri);
 

@@ -24,6 +24,17 @@ bool AABB::Test(AABB &box) {
   return true;
 }
 
+bool AABB::Test(Triangle &tri) {
+  auto c = (Min + Max) * 0.5f;
+  auto h = (Max - Min) * 0.5f;
+  float center[3] = {c.x, c.y, c.z};
+  float halfSize[3] = {h.x, h.y, h.z};
+  float v[3][3] = {{tri.V[0].x, tri.V[0].y, tri.V[0].z},
+                   {tri.V[1].x, tri.V[1].y, tri.V[1].z},
+                   {tri.V[2].x, tri.V[2].y, tri.V[2].z}};
+  return (bool)triBoxOverlap(center, halfSize, v);
+}
+
 glm::vec3 AABB::ClosestPointTo(glm::vec3 point) {
   glm::vec3 ret;
   for (int i = 0; i < 3; ++i) {
@@ -102,6 +113,8 @@ bool Triangle::Test(Triangle &tri) {
 bool Triangle::Test(Ray &ray, glm::vec3 &point) {
   return ray.Test(*this, point);
 }
+
+glm::vec3 Triangle::Barycenter() { return (V[0] + V[1] + V[2]) / 3.0f; }
 
 }; // namespace Spatial
 

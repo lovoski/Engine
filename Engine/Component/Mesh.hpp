@@ -15,6 +15,7 @@
 #include "Function/Render/Mesh.hpp"
 
 #include "Function/Spatial/Types.hpp"
+#include "Function/Spatial/BVH.hpp"
 
 namespace aEngine {
 
@@ -28,10 +29,8 @@ struct Mesh : public BaseComponent {
   // Unbind vao, finish rendering
   void Unbind();
 
-  // build spatial ds from renderable mesh
-  void BuildInitialSpatialDS(Render::Mesh *mesh);
-  // update the spatial ds from meshInstance
-  void UpdateSpatialDS();
+  // Setup bvh with member variable meshInstance
+  void SetupBVH(glm::mat4 &transform);
 
   void SetMeshInstance(Render::Mesh *mesh);
   // The mesh instance is not allowed to be nullptr,
@@ -44,11 +43,12 @@ struct Mesh : public BaseComponent {
   Render::Buffer target;
   // Mark whether the mesh is deformed
   bool Deformed = false;
+  // When enabled, the mesh geometry will be taken
+  // used by SpatialSystem
+  bool AsCollider = false;
 
-  // optimized positions
-  std::vector<glm::vec3> Positions;
-  // optimized indices
-  std::vector<glm::ivec3> Faces;
+  // bounding volumn hierarchy
+  Spatial::BVH bvh;
 
 private:
   Render::Mesh *meshInstance = nullptr;

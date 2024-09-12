@@ -32,33 +32,26 @@ void Mesh::SetMeshInstance(Render::Mesh *mesh) {
     target.UnbindAs(GL_SHADER_STORAGE_BUFFER);
 
     meshInstance = mesh;
-
-    // initialize positions and faces
-    Positions.clear();
-    Positions.clear();
-    for (int vi = 0; vi < meshInstance->vertices.size(); ++vi) {
-      auto tmp = meshInstance->vertices[vi].Position;
-      auto p = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
-      Positions.push_back(p);
-    }
-    for (int fi = 0; fi < meshInstance->indices.size() / 3; ++fi) {
-      Faces.push_back(glm::ivec3(meshInstance->indices[3 * fi + 0],
-                                 meshInstance->indices[3 * fi + 1],
-                                 meshInstance->indices[3 * fi + 2]));
-    }
-
-    // build or update spatial ds
-    BuildInitialSpatialDS(mesh);
   } else {
     LOG_F(ERROR,
           "trying to set null mesh instance to mesh component, do nothing.");
   }
 }
 
-void Mesh::BuildInitialSpatialDS(Render::Mesh *mesh) { UpdateSpatialDS(); }
-
-// update the spatial ds from meshInstance
-void Mesh::UpdateSpatialDS() {}
+void Mesh::SetupBVH(glm::mat4 &transform) {
+  // initialize bvh
+  auto &indices = meshInstance->indices;
+  auto &vertices = meshInstance->vertices;
+  std::vector<Spatial::Triangle> triangles;
+  for (int fi = 0; fi < meshInstance->indices.size() / 3; ++fi) {
+    Spatial::Triangle tri;
+    tri.V = {transform * vertices[indices[3 * fi + 0]].Position,
+             transform * vertices[indices[3 * fi + 1]].Position,
+             transform * vertices[indices[3 * fi + 2]].Position};
+    triangles.push_back(tri);
+  }
+  bvh.SetAllPrimitives(triangles);
+}
 
 void Mesh::Bind() {
   vao.Bind();
@@ -105,6 +98,12 @@ void Mesh::DrawInspectorGUI() {
     ImGui::Text("Faces");
     ImGui::TableSetColumnIndex(1);
     ImGui::Text("%d", meshInstance->indices.size() / 3);
+
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Text("Collider");
+    ImGui::TableSetColumnIndex(1);
+    ImGui::Checkbox("##asmeshcollider", &AsCollider);
 
     ImGui::EndTable();
   }
