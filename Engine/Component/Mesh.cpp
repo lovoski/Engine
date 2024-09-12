@@ -33,6 +33,20 @@ void Mesh::SetMeshInstance(Render::Mesh *mesh) {
 
     meshInstance = mesh;
 
+    // initialize positions and faces
+    Positions.clear();
+    Positions.clear();
+    for (int vi = 0; vi < meshInstance->vertices.size(); ++vi) {
+      auto tmp = meshInstance->vertices[vi].Position;
+      auto p = glm::vec3(tmp.x, tmp.y, tmp.z) / tmp.w;
+      Positions.push_back(p);
+    }
+    for (int fi = 0; fi < meshInstance->indices.size() / 3; ++fi) {
+      Faces.push_back(glm::ivec3(meshInstance->indices[3 * fi + 0],
+                                 meshInstance->indices[3 * fi + 1],
+                                 meshInstance->indices[3 * fi + 2]));
+    }
+
     // build or update spatial ds
     BuildInitialSpatialDS(mesh);
   } else {

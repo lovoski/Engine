@@ -25,11 +25,14 @@ include("cmake/FetchASIO.cmake")
 # onnx runtime
 include("cmake/FindONNXRuntime.cmake")
 
+# libigl
+include("cmake/FetchLibigl.cmake")
+
 include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb imgui loguru filedialog asio::asio cereal ufbx)
+set(aEngine_DEPS glad glfw stb imgui loguru filedialog asio::asio cereal ufbx igl::core)
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System
@@ -41,9 +44,6 @@ set(aEngine_SOURCE_DIRS
 if (${NN_MODULE})
   list(APPEND aEngine_SOURCE_DIRS ${PROJECT_SOURCE_DIR}/NN)
   list(APPEND aEngine_DEPS onnxruntime)
-endif()
-if (${FBX_FOUND})
-  list(APPEND aEngine_DEPS fbx::sdk)
 endif()
 
 file(GLOB aEngine_SOURCES *.cpp)

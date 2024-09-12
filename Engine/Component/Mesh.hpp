@@ -14,6 +14,8 @@
 #include "Function/Render/Buffers.hpp"
 #include "Function/Render/Mesh.hpp"
 
+#include "Function/Spatial/Types.hpp"
+
 namespace aEngine {
 
 struct Mesh : public BaseComponent {
@@ -42,6 +44,11 @@ struct Mesh : public BaseComponent {
   Render::Buffer target;
   // Mark whether the mesh is deformed
   bool Deformed = false;
+
+  // optimized positions
+  std::vector<glm::vec3> Positions;
+  // optimized indices
+  std::vector<glm::ivec3> Faces;
 
 private:
   Render::Mesh *meshInstance = nullptr;

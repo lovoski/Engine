@@ -25,11 +25,38 @@ void SpatialSystem::PreUpdate(float dt) {
     m.push_back(GWORLD.GetComponent<Mesh>(id));
     m.back()->UpdateSpatialDS();
   }
+  static int counter = 0;
   for (int i = 0; i < e.size(); ++i) {
     for (int j = i + 1; j < e.size(); ++j) {
-      // check for collision
+      // test all pairs of faces
+      auto transformi = e[i]->GlobalTransformMatrix();
+      auto transformj = e[j]->GlobalTransformMatrix();
+      bool collides = false;
+      for (int fi = 0; fi < m[i]->Faces.size(); ++fi) {
+        if (collides)
+          break;
+        for (int fj = 0; fj < m[j]->Faces.size(); ++fj) {
+          if (collides)
+            break;
+          Spatial::Triangle tri0, tri1;
+          for (int faceInd = 0; faceInd < 3; ++faceInd) {
+            tri0.V[faceInd] =
+                transformi *
+                glm::vec4(m[i]->Positions[m[i]->Faces[fi][faceInd]], 1.0f);
+            tri1.V[faceInd] =
+                transformj *
+                glm::vec4(m[j]->Positions[m[j]->Faces[fj][faceInd]], 1.0f);
+          }
+          if (tri0.Test(tri1)) {
+            LOG_F(INFO, "%d: Collision between face %d of \"%s\" and face %d of \"%s\"",
+                  counter, fi, e[i]->name.c_str(), fj, e[j]->name.c_str());
+            collides = true;
+          }
+        }
+      }
     }
   }
+  counter++;
 }
 
 void SpatialSystem::Update(float dt) {}
