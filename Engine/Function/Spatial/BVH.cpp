@@ -13,7 +13,7 @@ void BVH::SetAllPrimitives(std::vector<Triangle> &tris) {
   BuildTopDown();
 }
 
-struct StackEntry {
+struct StackEntry1 {
   int depth;
   std::vector<int> ids;
   int parentNodeId;
@@ -26,13 +26,13 @@ void BVH::BuildTopDown() {
   std::vector<int> ids;
   for (int i = 0; i < Primitives.size(); ++i)
     ids.push_back(i);
-  std::stack<StackEntry> stack;
+  std::stack<StackEntry1> stack;
 
   // root node
   stack.push({0, ids, -1, false});
 
   while (!stack.empty()) {
-    StackEntry entry = stack.top();
+    auto entry = stack.top();
     stack.pop();
 
     Node node;
@@ -129,7 +129,42 @@ void BVH::partitionPrimitives(std::vector<int> &ids,
   }
 }
 
-bool BVH::Intersect(BVH &other) { return false; }
+bool BVH::Intersect(BVH &other, std::vector<std::pair<int, int>> &hit) {
+  hit.clear();
+  // stores the pair of nodes to process
+  std::stack<std::pair<int, int>> s;
+  s.push(std::make_pair(0, 0)); // start from root node
+  while (!s.empty()) {
+    auto entry = s.top();
+    s.pop();
+    if (entry.first == -1 || entry.second == -1)
+      continue;
+    auto &first = nodes[entry.first];
+    auto &second = other.nodes[entry.second];
+    if (first.bbox.Test(second.bbox)) {
+      if (first.leaf && second.leaf) {
+        // both leaf nodes, perform triangle tests
+        for (auto firstId : first.primitives)
+          for (auto secondId : second.primitives)
+            if (Primitives[firstId].Test(other.Primitives[secondId]))
+              hit.push_back(std::make_pair(firstId, secondId));
+      } else if (first.leaf && !second.leaf) {
+        s.push(std::make_pair(entry.first, second.lchild));
+        s.push(std::make_pair(entry.first, second.rchild));
+      } else if (!first.leaf && second.leaf) {
+        s.push(std::make_pair(first.lchild, entry.second));
+        s.push(std::make_pair(first.rchild, entry.second));
+      } else {
+        // both nodes are not leaf node, check all children pairs
+        s.push(std::make_pair(first.lchild, second.lchild));
+        s.push(std::make_pair(first.lchild, second.rchild));
+        s.push(std::make_pair(first.rchild, second.lchild));
+        s.push(std::make_pair(first.rchild, second.rchild));
+      }
+    }
+  }
+  return hit.size() > 0;
+}
 
 bool BVH::Intersect(Ray &ray, glm::vec3 &hit) { return false; }
 

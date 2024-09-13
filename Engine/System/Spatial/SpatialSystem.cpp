@@ -17,44 +17,33 @@ SpatialSystem::SpatialSystem() {
 SpatialSystem::~SpatialSystem() {}
 
 void SpatialSystem::PreUpdate(float dt) {
-  // // update the spatial ds, precompute the collision pair
-  // std::vector<std::shared_ptr<Entity>> e;
-  // std::vector<std::shared_ptr<Mesh>> m;
-  // for (auto id : entities) {
-  //   auto mi = GWORLD.GetComponent<Mesh>(id);
-  //   if (mi->AsCollider) {
-  //     auto ei = GWORLD.EntityFromID(id);
-
-  //     auto transform = ei->GlobalTransformMatrix();
-  //     mi->bvh.Clear();
-  //     mi->SetupBVH(transform);
-
-  //     e.push_back(ei);
-  //     m.push_back(mi);
-  //   } else {
-  //     mi->bvh.Clear();
-  //   }
-  // }
-  // static int counter = 0;
-  // for (int i = 0; i < e.size(); ++i) {
-  //   for (int j = i + 1; j < e.size(); ++j) {
-  //     // test all pairs of faces
-  //     auto transformi = e[i]->GlobalTransformMatrix();
-  //     auto transformj = e[j]->GlobalTransformMatrix();
-  //     bool collides = false;
-  //     for (int fi = 0; fi < m[i]->bvh.GetNumPrimitives(); ++fi) {
-  //       for (int fj = 0; fj < m[j]->bvh.GetNumPrimitives(); ++fj) {
-  //         if (m[i]->bvh.Primitive(fi).Test(m[j]->bvh.Primitive(fj))) {
-  //           LOG_F(
-  //               INFO,
-  //               "%d: Collision between face %d of \"%s\" and face %d of \"%s\"",
-  //               counter, fi, e[i]->name.c_str(), fj, e[j]->name.c_str());
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  // counter++;
+  // update the spatial ds, precompute the collision pair
+  std::vector<std::shared_ptr<Entity>> e;
+  std::vector<std::shared_ptr<Mesh>> m;
+  for (auto id : entities) {
+    auto mi = GWORLD.GetComponent<Mesh>(id);
+    auto ei = GWORLD.EntityFromID(id);
+    if (mi->AsCollider) {
+      if (!mi->StaticCollider) {
+        auto transform = ei->GlobalTransformMatrix();
+        mi->BuildBVH(transform);
+      }
+      if (mi->bvh.Nodes().size() > 0) {
+        // only check for collision when bvh is setup
+        e.push_back(ei);
+        m.push_back(mi);
+      }
+    }
+  }
+  for (int i = 0; i < e.size(); ++i) {
+    for (int j = i + 1; j < e.size(); ++j) {
+      std::vector<std::pair<int, int>> hit;
+      if (m[i]->bvh.Intersect(m[j]->bvh, hit)) {
+        LOG_F(INFO, "%d pairs of colliding triangle between \"%s\" and \"%s\"",
+              hit.size(), e[i]->name.c_str(), e[j]->name.c_str());
+      }
+    }
+  }
 }
 
 void SpatialSystem::Update(float dt) {}
@@ -69,21 +58,15 @@ void SpatialSystem::Render() {
       auto mesh = entity->GetComponent<Mesh>();
       if (mesh->bvh.Nodes().size() > 0) {
         // draw bvh
-        std::stack<int> s;
-        s.push(0);
-        while (!s.empty()) {
-          auto cur = s.top();
-          s.pop();
-
-          auto &bbox = mesh->bvh.Nodes()[cur].bbox;
-          VisUtils::DrawAABB(bbox.Min, bbox.Max, vp);
-
-          auto lchild = mesh->bvh.Nodes()[cur].lchild;
-          auto rchild = mesh->bvh.Nodes()[cur].rchild;
-          if (lchild != -1)
-            s.push(lchild);
-          if (rchild != -1)
-            s.push(rchild);
+        if (mesh->DrawLeafNodeOnly) {
+          for (auto leafId : mesh->bvh.LeafNodes()) {
+            auto &node = mesh->bvh.Nodes()[leafId];
+            VisUtils::DrawAABB(node.bbox.Min, node.bbox.Max, vp);
+          }
+        } else {
+          for (auto &node : mesh->bvh.Nodes()) {
+            VisUtils::DrawAABB(node.bbox.Min, node.bbox.Max, vp);
+          }
         }
       }
     }

@@ -38,7 +38,7 @@ void Mesh::SetMeshInstance(Render::Mesh *mesh) {
   }
 }
 
-void Mesh::SetupBVH(glm::mat4 &transform) {
+void Mesh::BuildBVH(glm::mat4 &transform) {
   // initialize bvh
   auto &indices = meshInstance->indices;
   auto &vertices = meshInstance->vertices;
@@ -99,12 +99,6 @@ void Mesh::DrawInspectorGUI() {
     ImGui::TableSetColumnIndex(1);
     ImGui::Text("%d", meshInstance->indices.size() / 3);
 
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::Text("Collider");
-    ImGui::TableSetColumnIndex(1);
-    ImGui::Checkbox("##asmeshcollider", &AsCollider);
-
     ImGui::EndTable();
   }
   if (ImGui::BeginDragDropTarget()) {
@@ -115,10 +109,22 @@ void Mesh::DrawInspectorGUI() {
     ImGui::EndDragDropTarget();
   }
 
-  if (ImGui::TreeNode("BVH")) {
+  if (ImGui::CollapsingHeader("Mesh Collider")) {
+    if (ImGui::Checkbox("Enable", &AsCollider)) {
+      if (AsCollider) {
+        LOG_F(INFO, "build bvh on enable mesh collider");
+        auto transform = GWORLD.EntityFromID(entityID)->GlobalTransformMatrix();
+        BuildBVH(transform);
+      }
+    }
+    ImGui::Separator();
+    if (!AsCollider)
+      ImGui::BeginDisabled();
+    ImGui::Checkbox("Static Collider", &StaticCollider);
+    ImGui::Checkbox("Draw Leaf Only", &DrawLeafNodeOnly);
     if (ImGui::Button("Build", {-1, 30})) {
       auto transform = GWORLD.EntityFromID(entityID)->GlobalTransformMatrix();
-      SetupBVH(transform);
+      BuildBVH(transform);
     }
     if (ImGui::BeginTable("Properties##meshbvhdata", 2)) {
       ImGui::TableSetupColumn("Field");
@@ -133,14 +139,21 @@ void Mesh::DrawInspectorGUI() {
 
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
+      ImGui::Text("Num Leaf Nodes");
+      ImGui::TableSetColumnIndex(1);
+      ImGui::Text("%d", bvh.LeafNodes().size());
+
+      ImGui::TableNextRow();
+      ImGui::TableSetColumnIndex(0);
       ImGui::Text("Num Primitives");
       ImGui::TableSetColumnIndex(1);
       ImGui::Text("%d", bvh.Primitives.size());
 
       ImGui::EndTable();
     }
-    ImGui::TreePop();
   }
+  if (!AsCollider)
+    ImGui::EndDisabled();
 }
 
 }; // namespace aEngine

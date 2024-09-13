@@ -30,12 +30,14 @@ public:
   // returns the index for created node
   void BuildTopDown();
 
-  // Check for triangle-triangle intersection with another bvh
-  bool Intersect(BVH &other);
+  // Check for triangle-triangle intersection with another bvh,
+  // store the pair of indices to colliding triangles in the parameter.
+  bool Intersect(BVH &other, std::vector<std::pair<int, int>> &hit);
   // Check for ray-triangle intersection, setup the first hit position
   bool Intersect(Ray &ray, glm::vec3 &hit);
 
   const std::vector<Node> &Nodes() { return nodes; }
+  const std::vector<int> &LeafNodes() { return leafNodes; }
 
   int GetNumNodes() { return nodes.size(); }
 

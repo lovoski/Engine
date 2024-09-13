@@ -29,8 +29,9 @@ struct Mesh : public BaseComponent {
   // Unbind vao, finish rendering
   void Unbind();
 
-  // Setup bvh with member variable meshInstance
-  void SetupBVH(glm::mat4 &transform);
+  // Setup bvh with member variable meshInstance, this function
+  // will rebuild instead of updating the bvh.
+  void BuildBVH(glm::mat4 &transform);
 
   void SetMeshInstance(Render::Mesh *mesh);
   // The mesh instance is not allowed to be nullptr,
@@ -43,12 +44,19 @@ struct Mesh : public BaseComponent {
   Render::Buffer target;
   // Mark whether the mesh is deformed
   bool Deformed = false;
-  // When enabled, the mesh geometry will be taken
-  // used by SpatialSystem
+
+  // When set to false, the bvh will be cleared, the object 
+  // won't be considered in collision as well.
   bool AsCollider = false;
+  // When set to false, the bvh will gets updated in each 
+  // PreUpdate of SpatialSystem.
+  bool StaticCollider = true;
 
   // bounding volumn hierarchy
   Spatial::BVH bvh;
+
+  // Visualize only the bvh leaf nodes
+  bool DrawLeafNodeOnly = true;
 
 private:
   Render::Mesh *meshInstance = nullptr;
