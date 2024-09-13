@@ -118,54 +118,14 @@ int computeMeshSelfIntersection(std::shared_ptr<Mesh> mesh,
     mesh->BuildBVH(transform);
 
   // build another bvh with offset mesh
-  Spatial::BVH bvh;
-  std::vector<Vertex> vertices;
-  if (mesh->Deformed) {
-    auto bufferSize = sizeof(Vertex) * mesh->GetMeshInstance()->vertices.size();
-    mesh->target.BindAs(GL_SHADER_STORAGE_BUFFER);
-    Vertex *mappedMemory = (Vertex *)glMapBufferRange(
-        GL_SHADER_STORAGE_BUFFER, 0, bufferSize, GL_MAP_READ_BIT);
-    if (mappedMemory != nullptr) {
-      vertices.reserve(mesh->GetMeshInstance()->vertices.size());
-      for (int i = 0; i < mesh->GetMeshInstance()->vertices.size(); ++i) {
-        vertices.push_back(mappedMemory[i]);
-      }
-      glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-      mesh->target.UnbindAs(GL_SHADER_STORAGE_BUFFER);
-    } else {
-      LOG_F(ERROR, "memory mapped failed");
-    }
-  } else {
-    // transform all vertices
-    auto vertCount = mesh->GetMeshInstance()->vertices.size();
-    vertices.reserve(vertCount);
-    for (int i = 0; i < vertCount; ++i) {
-      vertices.push_back(mesh->GetMeshInstance()->vertices[i]);
-      vertices[i].Position = transform * vertices[i].Position;
-    }
+  Spatial::BVH bvh = mesh->bvh;
+  for (auto &tri : bvh.Primitives) {
+    auto normal = Math::FaceNormal(tri.V[0], tri.V[1], tri.V[2]);
+    tri.V[0] += offset * normal;
+    tri.V[1] += offset * normal;
+    tri.V[2] += offset * normal;
   }
-  if (vertices.size() > 0) {
-    std::vector<Spatial::Triangle> triangles;
-    for (int fi = 0; fi < mesh->GetMeshInstance()->indices.size() / 3; ++fi) {
-      Spatial::Triangle tri;
-      glm::vec3 v0 =
-          vertices[mesh->GetMeshInstance()->indices[3 * fi + 0]].Position;
-      glm::vec3 v1 =
-          vertices[mesh->GetMeshInstance()->indices[3 * fi + 1]].Position;
-      glm::vec3 v2 =
-          vertices[mesh->GetMeshInstance()->indices[3 * fi + 2]].Position;
-      auto normal = Math::FaceNormal(v0, v1, v2);
-      tri.V = {v0 + offset * normal, v1 + offset * normal,
-               v2 + offset * normal};
-      triangles.push_back(tri);
-    }
-    bvh.SetAllPrimitives(triangles);
-
-    mesh->bvh.Intersect(bvh, hit);
-  } else {
-    LOG_F(ERROR,
-          "offset mesh not exist, can't perform self intersection check");
-  }
+  mesh->bvh.Intersect(bvh, hit);
 
   return hit.size();
 }
