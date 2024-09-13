@@ -114,6 +114,33 @@ void Mesh::DrawInspectorGUI() {
     }
     ImGui::EndDragDropTarget();
   }
+
+  if (ImGui::TreeNode("BVH")) {
+    if (ImGui::Button("Build", {-1, 30})) {
+      auto transform = GWORLD.EntityFromID(entityID)->GlobalTransformMatrix();
+      SetupBVH(transform);
+    }
+    if (ImGui::BeginTable("Properties##meshbvhdata", 2)) {
+      ImGui::TableSetupColumn("Field");
+      ImGui::TableSetupColumn("Value");
+      ImGui::TableHeadersRow();
+
+      ImGui::TableNextRow();
+      ImGui::TableSetColumnIndex(0);
+      ImGui::Text("Num Nodes");
+      ImGui::TableSetColumnIndex(1);
+      ImGui::Text("%d", bvh.GetNumNodes());
+
+      ImGui::TableNextRow();
+      ImGui::TableSetColumnIndex(0);
+      ImGui::Text("Num Primitives");
+      ImGui::TableSetColumnIndex(1);
+      ImGui::Text("%d", bvh.Primitives.size());
+
+      ImGui::EndTable();
+    }
+    ImGui::TreePop();
+  }
 }
 
 }; // namespace aEngine

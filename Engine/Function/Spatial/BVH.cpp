@@ -9,35 +9,64 @@ BVH::BVH() {}
 BVH::~BVH() {}
 
 void BVH::SetAllPrimitives(std::vector<Triangle> &tris) {
-  primitives = tris;
-  std::vector<int> ids;
-  for (int i = 0; i < tris.size(); ++i)
-    ids.push_back(i);
-  BuildTopDown(ids);
+  Primitives = tris;
+  BuildTopDown();
 }
 
-int BVH::BuildTopDown(std::vector<int> &ids) {
-  // create the node holding all the primitives
-  Node node;
-  node.id = nodes.size();
-  node.bbox = computeAABB(ids);
-  if (ids.size() <= MaxLeafSize) {
-    // create a leaf node containing the actual primitives
-    node.leaf = true;
-    // copy the indices
-    node.primitives = ids;
-    nodes.emplace_back(node);
-    return node.id;
-  } else {
-    // split the space
-    node.leaf = false;
-    nodes.emplace_back(node);
-    auto &ref = nodes.back();
-    std::vector<int> leftSubset, rightSubset;
-    partitionPrimitives(ids, leftSubset, rightSubset, node.bbox);
-    ref.lchild = BuildTopDown(leftSubset);
-    ref.rchild = BuildTopDown(rightSubset);
-    return ref.id;
+struct StackEntry {
+  int depth;
+  std::vector<int> ids;
+  int parentNodeId;
+  bool isLeftChild;
+};
+void BVH::BuildTopDown() {
+  // prepare data
+  nodes.clear();
+  leafNodes.clear();
+  std::vector<int> ids;
+  for (int i = 0; i < Primitives.size(); ++i)
+    ids.push_back(i);
+  std::stack<StackEntry> stack;
+
+  // root node
+  stack.push({0, ids, -1, false});
+
+  while (!stack.empty()) {
+    StackEntry entry = stack.top();
+    stack.pop();
+
+    Node node;
+    node.id = nodes.size();
+    node.parent = entry.parentNodeId;
+    node.left = entry.isLeftChild;
+    node.bbox = computeAABB(entry.ids);
+
+    // leaf node
+    if (entry.ids.size() <= MaxLeafSize || entry.depth >= MaxTreeDepth) {
+      node.leaf = true;
+      node.primitives = entry.ids;
+      nodes.emplace_back(node);
+      // keep record of the leaf nodes
+      leafNodes.push_back(node.id);
+    } else {
+      // internal node spliting the primitives
+      node.leaf = false;
+      nodes.emplace_back(node);
+
+      std::vector<int> leftSubset, rightSubset;
+      partitionPrimitives(entry.ids, leftSubset, rightSubset, node.bbox);
+      stack.push({entry.depth + 1, rightSubset, node.id, false});
+      stack.push({entry.depth + 1, leftSubset, node.id, true});
+    }
+  }
+  // update parent-child relation after all nodes been created
+  for (auto &node : nodes) {
+    if (node.parent != -1) {
+      if (node.left)
+        nodes[node.parent].lchild = node.id;
+      else
+        nodes[node.parent].rchild = node.id;
+    }
   }
 }
 
@@ -46,7 +75,7 @@ AABB BVH::computeAABB(std::vector<int> &ids) {
        max = glm::vec3(-std::numeric_limits<float>::max());
   // brute force
   for (auto id : ids) {
-    auto &tri = primitives[id];
+    auto &tri = Primitives[id];
     for (int i = 0; i < 3; ++i) {
       // triangle indices
       for (int j = 0; j < 3; ++j) {
@@ -86,13 +115,13 @@ void BVH::partitionPrimitives(std::vector<int> &ids,
   // sort and find the middle value to do partition
   std::vector<float> val;
   for (auto id : ids) {
-    auto &tri = primitives[id];
+    auto &tri = Primitives[id];
     val.push_back(glm::dot(axis, tri.Barycenter()));
   }
   std::sort(val.begin(), val.end());
   float midVal = val[val.size() / 2];
   for (auto id : ids) {
-    auto &tri = primitives[id];
+    auto &tri = Primitives[id];
     if (glm::dot(axis, tri.Barycenter()) < midVal)
       leftSubset.push_back(id);
     else
@@ -100,13 +129,9 @@ void BVH::partitionPrimitives(std::vector<int> &ids,
   }
 }
 
-bool BVH::Intersect(BVH &other) {
-  return false;
-}
+bool BVH::Intersect(BVH &other) { return false; }
 
-bool BVH::Intersect(Ray &ray, glm::vec3 &hit) {
-  return false;
-}
+bool BVH::Intersect(Ray &ray, glm::vec3 &hit) { return false; }
 
 }; // namespace Spatial
 

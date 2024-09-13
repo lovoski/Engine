@@ -17,53 +17,44 @@ SpatialSystem::SpatialSystem() {
 SpatialSystem::~SpatialSystem() {}
 
 void SpatialSystem::PreUpdate(float dt) {
-  // update the spatial ds, precompute the collision pair
-  std::vector<std::shared_ptr<Entity>> e;
-  std::vector<std::shared_ptr<Mesh>> m;
-  for (auto id : entities) {
-    auto mi = GWORLD.GetComponent<Mesh>(id);
-    if (mi->AsCollider) {
-      auto ei = GWORLD.EntityFromID(id);
+  // // update the spatial ds, precompute the collision pair
+  // std::vector<std::shared_ptr<Entity>> e;
+  // std::vector<std::shared_ptr<Mesh>> m;
+  // for (auto id : entities) {
+  //   auto mi = GWORLD.GetComponent<Mesh>(id);
+  //   if (mi->AsCollider) {
+  //     auto ei = GWORLD.EntityFromID(id);
 
-      auto transform = ei->GlobalTransformMatrix();
-      mi->bvh.Clear();
-      mi->SetupBVH(transform);
+  //     auto transform = ei->GlobalTransformMatrix();
+  //     mi->bvh.Clear();
+  //     mi->SetupBVH(transform);
 
-      e.push_back(ei);
-      m.push_back(mi);
-    } else {
-      mi->bvh.Clear();
-    }
-  }
-  static int counter = 0;
-  for (int i = 0; i < e.size(); ++i) {
-    for (int j = i + 1; j < e.size(); ++j) {
-      // test all pairs of faces
-      auto transformi = e[i]->GlobalTransformMatrix();
-      auto transformj = e[j]->GlobalTransformMatrix();
-      bool collides = false;
-      for (int fi = 0; fi < m[i]->bvh.GetNumPrimitives(); ++fi) {
-        for (int fj = 0; fj < m[j]->bvh.GetNumPrimitives(); ++fj) {
-          Spatial::Triangle tri0, tri1;
-          for (int faceInd = 0; faceInd < 3; ++faceInd) {
-            tri0.V[faceInd] =
-                transformi *
-                glm::vec4(m[i]->bvh.Primitive(fi).V[faceInd], 1.0f);
-            tri1.V[faceInd] =
-                transformj *
-                glm::vec4(m[j]->bvh.Primitive(fj).V[faceInd], 1.0f);
-          }
-          if (tri0.Test(tri1)) {
-            LOG_F(
-                INFO,
-                "%d: Collision between face %d of \"%s\" and face %d of \"%s\"",
-                counter, fi, e[i]->name.c_str(), fj, e[j]->name.c_str());
-          }
-        }
-      }
-    }
-  }
-  counter++;
+  //     e.push_back(ei);
+  //     m.push_back(mi);
+  //   } else {
+  //     mi->bvh.Clear();
+  //   }
+  // }
+  // static int counter = 0;
+  // for (int i = 0; i < e.size(); ++i) {
+  //   for (int j = i + 1; j < e.size(); ++j) {
+  //     // test all pairs of faces
+  //     auto transformi = e[i]->GlobalTransformMatrix();
+  //     auto transformj = e[j]->GlobalTransformMatrix();
+  //     bool collides = false;
+  //     for (int fi = 0; fi < m[i]->bvh.GetNumPrimitives(); ++fi) {
+  //       for (int fj = 0; fj < m[j]->bvh.GetNumPrimitives(); ++fj) {
+  //         if (m[i]->bvh.Primitive(fi).Test(m[j]->bvh.Primitive(fj))) {
+  //           LOG_F(
+  //               INFO,
+  //               "%d: Collision between face %d of \"%s\" and face %d of \"%s\"",
+  //               counter, fi, e[i]->name.c_str(), fj, e[j]->name.c_str());
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // counter++;
 }
 
 void SpatialSystem::Update(float dt) {}
