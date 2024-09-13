@@ -60,12 +60,13 @@ public:
     if (ImPlot::BeginPlot("Height##vismetrics", {-1, 200})) {
       static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
       static float time = 0;
-      static ScrollingBuffer lFootData, rFootData;
+      static ScrollingBuffer lFootData, rFootData, thresholdData;
       static std::string lFootName = "", rFootName = "";
       time += ImGui::GetIO().DeltaTime;
       locateHumanoidFoot(animator);
       lFootData.AddPoint(time, lFoot == nullptr ? 0.0f : lFoot->Position().y);
       rFootData.AddPoint(time, rFoot == nullptr ? 0.0f : rFoot->Position().y);
+      thresholdData.AddPoint(time, heightThreshold);
       ImPlot::SetupAxes(nullptr, nullptr, flags, flags);
       ImPlot::SetupAxisLimits(ImAxis_X1, time - history, time, ImGuiCond_Always);
       ImPlot::SetupAxisLimits(ImAxis_Y1, -0.5f, 25.0f);
@@ -76,13 +77,16 @@ public:
       ImPlot::PlotLine("Right Foot", &rFootData.Data[0].x, &rFootData.Data[0].y,
                        rFootData.Data.size(), 0, rFootData.Offset,
                        2 * sizeof(float));
+      ImPlot::PlotLine("Threshold", &thresholdData.Data[0].x, &thresholdData.Data[0].y,
+                       thresholdData.Data.size(), 0, thresholdData.Offset,
+                       2 * sizeof(float));
       // EndPlot should only gets called when BeginPlot is true
       ImPlot::EndPlot();
     }
 
     ImGui::Checkbox("Show Contact##vismetrics", &showContactJoint);
-    ImGui::SliderFloat("Height Threshold##vismetrics", &heightThreshold, 0.0f,
-                       10.0f);
+    ImGui::SliderFloat("Threshold##vismetrics", &heightThreshold, 0.0f,
+                       20.0f);
     ImGui::SliderFloat("History##vismetrics", &history, 0.0f, 10.0f);
   }
 

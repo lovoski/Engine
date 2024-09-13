@@ -60,6 +60,10 @@ struct Mesh : public BaseComponent {
 
 private:
   Render::Mesh *meshInstance = nullptr;
+
+  void buildBVHDeformed();
+  void buildBVHOriginal(glm::mat4 transform);
+
 };
 
 }; // namespace aEngine

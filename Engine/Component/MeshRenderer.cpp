@@ -48,8 +48,8 @@ void MeshRenderer::ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
       pass->FinishPass();
     }
   }
-  // reset mesh deform state
-  mesh->Deformed = false;
+  // // reset mesh deform state
+  // mesh->Deformed = false;
 }
 
 void MeshRenderer::drawAppendPassPopup() {
