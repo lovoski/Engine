@@ -56,7 +56,7 @@ void SpatialSystem::Render() {
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto mesh = entity->GetComponent<Mesh>();
-      if (mesh->bvh.Nodes().size() > 0) {
+      if (mesh->bvh.Nodes().size() > 0 && mesh->AsCollider) {
         // draw bvh
         if (mesh->DrawLeafNodeOnly) {
           for (auto leafId : mesh->bvh.LeafNodes()) {

@@ -504,12 +504,6 @@ Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part,
   return result;
 }
 
-glm::vec3 getFaceNormal(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
-  auto e01 = v1 - v0;
-  auto e02 = v2 - v0;
-  return glm::normalize(glm::cross(e01, e02));
-}
-
 void AssetsLoader::loadOBJModelFile(std::vector<Render::Mesh *> &meshes,
                                     std::string modelPath) {
   tinyobj::attrib_t attrib;
@@ -560,7 +554,7 @@ void AssetsLoader::loadOBJModelFile(std::vector<Render::Mesh *> &meshes,
         }
         if (withoutNormal) {
           // manually compute the normal
-          auto faceNormal = getFaceNormal(vert[0].Position, vert[1].Position,
+          auto faceNormal = Math::FaceNormal(vert[0].Position, vert[1].Position,
                                           vert[2].Position);
           vert[0].Normal = glm::vec4(faceNormal, 0.0f);
           vert[1].Normal = glm::vec4(faceNormal, 0.0f);

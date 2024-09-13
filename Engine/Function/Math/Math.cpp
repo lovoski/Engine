@@ -1,11 +1,11 @@
 #include "Function/Math/Math.hpp"
 #include <cmath>
 
-using glm::quat;
-using glm::vec3;
+using glm::cross;
 using glm::dot;
 using glm::normalize;
-using glm::cross;
+using glm::quat;
+using glm::vec3;
 using std::sqrt;
 
 namespace aEngine {
@@ -37,6 +37,12 @@ quat LookAtRotation(vec3 forward, vec3 up) {
   return glm::quat_cast(rot);
 }
 
+glm::vec3 FaceNormal(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2) {
+  auto e01 = v1 - v0;
+  auto e02 = v2 - v0;
+  return glm::normalize(glm::cross(e01, e02));
+}
+
 void DecomposeTransform(const glm::mat4 &transform, glm::vec3 &outPosition,
                         glm::quat &outRotation, glm::vec3 &outScale) {
   glm::mat4 localMatrix(transform);
@@ -64,7 +70,6 @@ void DecomposeTransform(const glm::mat4 &transform, glm::vec3 &outPosition,
   outScale = scale;
 }
 
+}; // namespace Math
 
-};
-
-};
+}; // namespace aEngine

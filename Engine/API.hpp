@@ -15,6 +15,7 @@
 #include "Component/Animator.hpp"
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
+#include "Component/Mesh.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/DeformRenderer.hpp"
 #include "Component/NativeScript.hpp"
