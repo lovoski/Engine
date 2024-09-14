@@ -11,7 +11,7 @@ class VisMetrics : public Scriptable {
 public:
   void Update(float dt) override;
 
-  void drawCustomInspectorGUI() override;
+  void DrawInspectorGUI() override;
 
   void DrawToScene() override;
 
@@ -22,7 +22,7 @@ private:
   std::vector<Entity *> contactJoints;
   Entity *lFoot = nullptr, *rFoot = nullptr;
 
-  std::string getTypeName() override { return "Visualize Metrics"; }
+  std::string getInspectorWindowName() override { return "Visualize Metrics"; }
 
   void locateHumanoidFoot(std::shared_ptr<Animator> animator);
 

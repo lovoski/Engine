@@ -27,19 +27,19 @@ std::size_t BaseComponent::HashString(std::string str) {
   return hash1 ^ (hash2 << 1); // Combining two hash values
 }
 
-std::string Scriptable::getTypeName() {
+std::string Scriptable::getInspectorWindowName() {
   return std::string(typeid(*this).name());
 }
 
 void Scriptable::OnEnable() {
-  LOG_F(INFO, "call OnEnable for %s", getTypeName().c_str());
+  LOG_F(INFO, "call OnEnable for %s", getInspectorWindowName().c_str());
 }
 
 void Scriptable::OnDisable() {
-  LOG_F(INFO, "call OnDisable for %s", getTypeName().c_str());
+  LOG_F(INFO, "call OnDisable for %s", getInspectorWindowName().c_str());
 }
 
-void Scriptable::DrawInspectorGUI() {
+void Scriptable::DrawInspectorGUIInternal() {
   if (ImGui::Checkbox("Enable Script", &Enabled)) {
     if (Enabled)
       OnEnable();
@@ -49,7 +49,7 @@ void Scriptable::DrawInspectorGUI() {
   ImGui::Separator();
   if (!Enabled)
     ImGui::BeginDisabled();
-  drawCustomInspectorGUI();
+  DrawInspectorGUI();
   if (!Enabled)
     ImGui::EndDisabled();
 }

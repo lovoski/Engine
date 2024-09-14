@@ -36,9 +36,9 @@ void NativeScript::DrawInspectorGUI() {
   for (auto instance : instances) {
     if (instance.second != nullptr) {
       // if this is a valid scriptable
-      bool nodeOpen = ImGui::TreeNodeEx(instance.second->getTypeName().c_str());
+      bool nodeOpen = ImGui::TreeNodeEx(instance.second->getInspectorWindowName().c_str());
       if (nodeOpen) {
-        instance.second->DrawInspectorGUI();
+        instance.second->DrawInspectorGUIInternal();
         ImGui::TreePop();
       }
     }

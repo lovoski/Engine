@@ -6,7 +6,7 @@ namespace aEngine {
 
 class SelfIntersection : public Scriptable {
 public:
-  void drawCustomInspectorGUI() override;
+  void DrawInspectorGUI() override;
 
   void DrawToScene() override;
 
@@ -17,7 +17,7 @@ private:
   float intersectionOffset = 0.01f;
   std::vector<glm::vec3> intersectingTriangles;
 
-  std::string getTypeName() override { return "Self Intersection"; }
+  std::string getInspectorWindowName() override { return "Self Intersection"; }
 
   int computeMeshSelfIntersection(std::shared_ptr<Mesh> mesh,
                                   float offset = 0.01f);

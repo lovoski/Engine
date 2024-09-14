@@ -41,14 +41,14 @@ public:
   void SetupLights(Buffer &lightsBuffer, int bindingPoint = 0);
 
   // don't override this function in custom pass
-  void DrawInspectorGUI();
+  void DrawInspectorGUIInternal();
 
   // This function will get called before the rendering
-  void SetupPass(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
+  void BeforePassInternal(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
                  glm::vec3 &viewDir, bool receiveShadow);
   // This function will get called after the rendering
   virtual void FinishPass() {}
-  virtual std::string GetMaterialTypeName();
+  virtual std::string getInspectorWindowName();
 
 protected:
   int idCounter = 0;
@@ -58,12 +58,12 @@ protected:
   // To create custom material, override this function,
   // pass custom variables to the shader, this function is called
   // at the end of the DrawInspectorGUI function
-  virtual void drawCustomInspectorGUI() {}
+  virtual void DrawInspectorGUI() {}
 
   // Overload this function in custom materials
   // Setup variables to member `shader`
   // Activate textures with the helper function above
-  virtual void additionalSetup() {}
+  virtual void BeforePass() {}
 };
 
 class Basic : public BasePass {
@@ -80,10 +80,10 @@ public:
   glm::vec3 WireframeColor = glm::vec3(0.0f);
 
 protected:
-  void additionalSetup() override;
-  void drawCustomInspectorGUI() override;
+  void BeforePass() override;
+  void DrawInspectorGUI() override;
 
-  std::string GetMaterialTypeName() override;
+  std::string getInspectorWindowName() override;
 };
 
 class OutlinePass : public BasePass {
@@ -98,11 +98,11 @@ public:
   Texture OutlineColorMap;
 
   void FinishPass() override;
-  std::string GetMaterialTypeName() override;
+  std::string getInspectorWindowName() override;
 
 protected:
-  void additionalSetup() override;
-  void drawCustomInspectorGUI() override;
+  void BeforePass() override;
+  void DrawInspectorGUI() override;
 };
 
 class WireFramePass : public BasePass {
@@ -113,11 +113,11 @@ public:
   glm::vec3 wireFrameColor = glm::vec3(1.0f);
 
   void FinishPass() override;
-  std::string GetMaterialTypeName() override;
+  std::string getInspectorWindowName() override;
 
 private:
-  void additionalSetup() override;
-  void drawCustomInspectorGUI() override;
+  void BeforePass() override;
+  void DrawInspectorGUI() override;
 };
 
 class GBVMainPass : public BasePass {
@@ -145,12 +145,12 @@ public:
   float innerLineWeight = 1.0f;
   Texture detail;
 
-  std::string GetMaterialTypeName() override;
+  std::string getInspectorWindowName() override;
   void FinishPass() override;
 
 private:
-  void additionalSetup() override;
-  void drawCustomInspectorGUI() override;
+  void BeforePass() override;
+  void DrawInspectorGUI() override;
 };
 
 }; // namespace Render

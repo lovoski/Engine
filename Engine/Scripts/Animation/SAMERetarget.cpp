@@ -211,7 +211,7 @@ void SAMERetarget::LateUpdate(float dt) {
   }
 }
 
-void SAMERetarget::drawCustomInspectorGUI() {
+void SAMERetarget::DrawInspectorGUI() {
   auto animator = entity->GetComponent<Animator>();
   ImGui::MenuItem("Motion", nullptr, nullptr, false);
   ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);

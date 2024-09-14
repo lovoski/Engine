@@ -20,19 +20,19 @@ void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
   lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
 }
 
-std::string BasePass::GetMaterialTypeName() { return typeid(*this).name(); }
+std::string BasePass::getInspectorWindowName() { return typeid(*this).name(); }
 
-void BasePass::DrawInspectorGUI() {
+void BasePass::DrawInspectorGUIInternal() {
   ImGui::Checkbox("Enable Pass", &Enabled);
   ImGui::Separator();
   if (!Enabled)
     ImGui::BeginDisabled();
-  drawCustomInspectorGUI();
+  DrawInspectorGUI();
   if (!Enabled)
     ImGui::EndDisabled();
 }
 
-void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
+void BasePass::BeforePassInternal(glm::mat4 &model, glm::mat4 &view,
                          glm::mat4 &projection, glm::vec3 &viewDir,
                          bool receiveShadow) {
   if (shader != nullptr) {
@@ -46,7 +46,7 @@ void BasePass::SetupPass(glm::mat4 &model, glm::mat4 &view,
     shader->SetVec3("ViewDir", viewDir);
     shader->SetVec2("ViewportSize", GWORLD.Context.sceneWindowSize);
     shader->SetInt("ReceiveShadow", receiveShadow);
-    additionalSetup();
+    BeforePass();
   }
 };
 
@@ -57,7 +57,7 @@ Basic::Basic() {
   shader = Loader.GetShader("::diffuse");
 }
 
-void Basic::drawCustomInspectorGUI() {
+void Basic::DrawInspectorGUI() {
   ImGui::Checkbox("Wireframe", &withWireframe);
   ImGui::SliderFloat("Width", &WireframeWidth, 0.5f, 5.0f);
   ImGui::SliderFloat("Smooth", &WireframeSmooth, 0.0f, 1.0f);
@@ -68,7 +68,7 @@ void Basic::drawCustomInspectorGUI() {
   GUIUtils::ColorEdit3(Albedo, "Albedo");
 }
 
-void Basic::additionalSetup() {
+void Basic::BeforePass() {
   shader->Use();
   shader->SetVec3("Albedo", Albedo);
   shader->SetFloat("Ambient", Ambient);
@@ -79,7 +79,7 @@ void Basic::additionalSetup() {
   shader->SetBool("ViewNormal", viewNormal);
 }
 
-std::string Basic::GetMaterialTypeName() { return "Basic"; }
+std::string Basic::getInspectorWindowName() { return "Basic"; }
 
 // ----------------------- Outline -----------------------
 
@@ -88,7 +88,7 @@ OutlinePass::OutlinePass() {
   OutlineColorMap = *Loader.GetTexture("::null_texture");
 }
 
-void OutlinePass::drawCustomInspectorGUI() {
+void OutlinePass::DrawInspectorGUI() {
   ImGui::DragFloat("Width", &OutlineWidth, 0.001f, 0.0f, 10.0f);
   ImGui::SliderFloat("Weight", &OutlineWeight, 0.0f, 1.0f);
   float outlineColor[3] = {OutlineColor.x, OutlineColor.y, OutlineColor.z};
@@ -98,7 +98,7 @@ void OutlinePass::drawCustomInspectorGUI() {
   GUIUtils::DragableTextureTarget(OutlineColorMap, "Outline Map");
 }
 
-void OutlinePass::additionalSetup() {
+void OutlinePass::BeforePass() {
   shader->Use();
   shader->SetFloat("OutlineWidth", OutlineWidth);
   shader->SetFloat("OutlineWeight", OutlineWeight);
@@ -110,7 +110,7 @@ void OutlinePass::additionalSetup() {
 
 void OutlinePass::FinishPass() { glDisable(GL_CULL_FACE); }
 
-std::string OutlinePass::GetMaterialTypeName() { return "Outline"; }
+std::string OutlinePass::getInspectorWindowName() { return "Outline"; }
 
 // ----------- Wireframe Shader -----------
 
@@ -118,9 +118,9 @@ WireFramePass::WireFramePass() { shader = Loader.GetShader("::wireframe"); }
 
 void WireFramePass::FinishPass() { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); }
 
-std::string WireFramePass::GetMaterialTypeName() { return "Wireframe"; }
+std::string WireFramePass::getInspectorWindowName() { return "Wireframe"; }
 
-void WireFramePass::additionalSetup() {
+void WireFramePass::BeforePass() {
   shader->Use();
   shader->SetVec3("wireframeColor", wireFrameColor);
   shader->SetFloat("wireframeOffset", wireframeOffset);
@@ -128,7 +128,7 @@ void WireFramePass::additionalSetup() {
   glDisable(GL_CULL_FACE);
 }
 
-void WireFramePass::drawCustomInspectorGUI() {
+void WireFramePass::DrawInspectorGUI() {
   ImGui::DragFloat("Offset", &wireframeOffset, 0.0001, 0.0f, 10.0f);
   GUIUtils::ColorEdit3(wireFrameColor, "Color");
 }
@@ -144,9 +144,9 @@ GBVMainPass::GBVMainPass() {
   detail = *Loader.GetTexture("::null_texture");
 }
 
-std::string GBVMainPass::GetMaterialTypeName() { return "GBV Main"; }
+std::string GBVMainPass::getInspectorWindowName() { return "GBV Main"; }
 
-void GBVMainPass::drawCustomInspectorGUI() {
+void GBVMainPass::DrawInspectorGUI() {
   ImGui::BeginChild("gbvmainpasschild", {-1, -1});
 
   ImGui::MenuItem("Basic Textures", nullptr, nullptr, false);
@@ -179,7 +179,7 @@ void GBVMainPass::drawCustomInspectorGUI() {
   ImGui::EndChild();
 }
 
-void GBVMainPass::additionalSetup() {
+void GBVMainPass::BeforePass() {
   shader->Use();
   shader->SetTexture2D(base, "Base", 0);
   shader->SetTexture2D(ILM, "ILM", 1);

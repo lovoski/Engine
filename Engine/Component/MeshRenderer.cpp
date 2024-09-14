@@ -42,7 +42,7 @@ void MeshRenderer::ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
       if (!mesh->Deformed)
         modelMat = object->GlobalTransformMatrix();
       auto viewDir = -camera->LocalForward;
-      pass->SetupPass(modelMat, viewMat, projMat, viewDir,
+      pass->BeforePassInternal(modelMat, viewMat, projMat, viewDir,
                       receiveShadow);
       DrawMesh(*pass->GetShader(), mesh);
       pass->FinishPass();
@@ -78,8 +78,8 @@ void MeshRenderer::DrawInspectorGUI() {
   drawAppendPassPopup();
   for (auto pass : passes) {
     ImGui::Separator();
-    if (ImGui::TreeNode(pass->GetMaterialTypeName().c_str())) {
-      pass->DrawInspectorGUI();
+    if (ImGui::TreeNode(pass->getInspectorWindowName().c_str())) {
+      pass->DrawInspectorGUIInternal();
       ImGui::TreePop();
     }
   }

@@ -36,6 +36,12 @@ public:
   void Update(float dt) override {
     ...
   }
+
+  // draw helper to scene window
+  void DrawToScene() override {}
+
+  // draw imgui utils in inspector window of editor
+  void DrawInspectorGUI() override {}
 };
 ```
 
@@ -93,12 +99,12 @@ public:
   void FinishPass() override {}
 private:
   // This function gets called before the draw call
-  void additionalSetup() override {
+  void BeforePass() override {
     shader->Use();
     // setup custom uniform variables, switch states, fill SSBOs, etc.
   }
   // This draws the inspector gui, make it easier to tune parameters
-  void drawCustomInspectorGUI() override {
+  void DrawInspectorGUI() override {
     ImGui::SliderFloat(...);
   }
 };
@@ -111,6 +117,18 @@ Once you finish your own render pass, you can add this pass to a `MeshRenderer` 
 ### More Details
 
 Currently, the engine only supports forward rendering. As mentioned above, the `BasePass` setup some default uniforms for you, including the lights. Each light in the scene has a `Light` component maintained by `LightSystem`. This system don't keep an active buffer for these light, but maintains a member variable `Lights` in `RenderSystem`. Before the actual rendering, `RenderSystem` will fill in a buffer object with the lights data, and bind this buffer object as a shader storage buffer for shaders to access.
+
+## Physics System
+
+### Collision Detection
+
+The very basis of a physics system is a robust collision detection system. I wrote a simple collision detection system that deal with mesh-mesh collision, mesh-primitive collision and mesh-ray collision in `System/SpatialSystem`.
+
+For mesh-mesh collision detection, brute force has `O(n^2)` time complexity, which is inpractical for realtime application. I used a simple Bound Volumn Hierarchy data structure to accelerate the collision detection. Feel free to check more details in `Function/Spatial/BVH`. Currently, the bvh build and traverse are purely on cpu, I planned to implement another version on gpu latter.
+
+Here's a screen shot of the bvh data structure:
+
+![bvh_ds](Doc/bvh_ds_20240913.png)
 
 ## Animation System
 

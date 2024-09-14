@@ -39,9 +39,9 @@ private:
   void fitRetargetMotion(Animation::Motion *source,
                          Animation::Skeleton *target);
 
-  void drawCustomInspectorGUI() override;
+  void DrawInspectorGUI() override;
 
-  std::string getTypeName() override { return "SAME Retarget"; }
+  std::string getInspectorWindowName() override { return "SAME Retarget"; }
 };
 
 }; // namespace aEngine

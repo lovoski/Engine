@@ -47,7 +47,7 @@ int SelfIntersection::computeMeshSelfIntersection(std::shared_ptr<Mesh> mesh,
   return hit.size();
 }
 
-void SelfIntersection::drawCustomInspectorGUI() {
+void SelfIntersection::DrawInspectorGUI() {
   // self intersection metrics
   ImGui::MenuItem("Self Intersection", nullptr, nullptr, false);
   ImGui::Checkbox("Show Intersections", &showIntersectingTriangles);

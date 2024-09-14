@@ -42,13 +42,10 @@ public:
   // We can draw debug helpers with this function
   virtual void DrawToScene() {}
 
-  virtual std::string getTypeName();
+  virtual std::string getInspectorWindowName();
 
-  // The following content will be drawn at the editor menu,
-  // this function will setup some basic gui components of a scriptable,
-  // override the function drawCustomInspectorGUI if you need a 
-  // custom InspectorGUI
-  void DrawInspectorGUI();
+  // don't override this function
+  void DrawInspectorGUIInternal();
 
   bool Enabled = true;
 
@@ -56,7 +53,7 @@ public:
 
 private:
   // override this function
-  virtual void drawCustomInspectorGUI() {}
+  virtual void DrawInspectorGUI() {}
 
 };
 

@@ -112,7 +112,7 @@ void VisMetrics::DrawToScene() {
   }
 }
 
-void VisMetrics::drawCustomInspectorGUI() {
+void VisMetrics::DrawInspectorGUI() {
   auto animator = entity->GetComponent<Animator>();
   ImGui::MenuItem("Slide Metrics", nullptr, nullptr, false);
   ImGui::TextWrapped("Value: %.3f", animator == nullptr
