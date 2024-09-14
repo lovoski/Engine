@@ -5,8 +5,6 @@
 
 #include "API.hpp"
 
-#include "Function/Animation/Metrics.hpp"
-
 namespace aEngine {
 
 class VisMetrics : public Scriptable {
@@ -23,7 +21,6 @@ private:
   std::vector<glm::vec3> prevPositions;
   std::vector<Entity *> contactJoints;
   Entity *lFoot = nullptr, *rFoot = nullptr;
-  Entity *meshBaseForIntersection = nullptr;
 
   std::string getTypeName() override { return "Visualize Metrics"; }
 

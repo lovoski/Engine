@@ -2,6 +2,7 @@
 
 #include "Scripts/Animation/SAMERetarget.hpp"
 #include "Scripts/Animation/VisMetrics.hpp"
+#include "Scripts/SelfIntersection.hpp"
 
 namespace aEngine {
 
@@ -22,6 +23,8 @@ void NativeScript::drawAddScriptPopup() {
       Bind<VisMetrics>();
     if (ImGui::MenuItem("SAME Retarget"))
       Bind<SAMERetarget>();
+    if (ImGui::MenuItem("Self Intersection"))
+      Bind<SelfIntersection>();
     ImGui::EndPopup();
   }
 }

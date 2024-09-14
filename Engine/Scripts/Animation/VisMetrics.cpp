@@ -1,5 +1,7 @@
 #include "Scripts/Animation/VisMetrics.hpp"
 
+#include "Function/Animation/Metrics.hpp"
+
 namespace aEngine {
 
 struct ScrollingBuffer {
@@ -98,36 +100,16 @@ void VisMetrics::DrawToScene() {
   if (GWORLD.GetActiveCamera(camera)) {
     glDisable(GL_DEPTH_TEST);
     auto cameraComp = GWORLD.GetComponent<Camera>(camera);
+    auto vp = cameraComp->VP;
+    auto viewport = GWORLD.Context.sceneWindowSize;
     if (showContactJoint) {
       for (auto contactJoint : contactJoints) {
-        VisUtils::DrawWireSphere(contactJoint->Position(), cameraComp->VP, 1.0f,
+        VisUtils::DrawWireSphere(contactJoint->Position(), vp, 1.0f,
                                  glm::vec3(1.0f, 0.0f, 0.0f));
       }
     }
     glEnable(GL_DEPTH_TEST);
   }
-}
-
-// Compute the number of self-intersecting triangles in this mesh
-// with the help of bvh.
-int computeMeshSelfIntersection(std::shared_ptr<Mesh> mesh,
-                                float offset = 0.01f) {
-  std::vector<std::pair<int, int>> hit;
-  auto transform = GWORLD.EntityFromID(mesh->GetID())->GlobalTransformMatrix();
-  if (!mesh->AsCollider)
-    mesh->BuildBVH(transform);
-
-  // build another bvh with offset mesh
-  Spatial::BVH bvh = mesh->bvh;
-  for (auto &tri : bvh.Primitives) {
-    auto normal = Math::FaceNormal(tri.V[0], tri.V[1], tri.V[2]);
-    tri.V[0] += offset * normal;
-    tri.V[1] += offset * normal;
-    tri.V[2] += offset * normal;
-  }
-  mesh->bvh.Intersect(bvh, hit);
-
-  return hit.size();
 }
 
 void VisMetrics::drawCustomInspectorGUI() {
@@ -169,46 +151,6 @@ void VisMetrics::drawCustomInspectorGUI() {
   ImGui::Checkbox("Show Contact##vismetrics", &showContactJoint);
   ImGui::SliderFloat("Threshold##vismetrics", &heightThreshold, 0.0f, 20.0f);
   ImGui::SliderFloat("History##vismetrics", &history, 0.0f, 10.0f);
-
-  // self intersection metrics
-  ImGui::Separator();
-  ImGui::MenuItem("Self Intersection", nullptr, nullptr, false);
-  static int selfIntersectionValue = -1;
-  ImGui::Text("Intersection Count: %d", selfIntersectionValue);
-  ImGui::BeginChild("chooseselfintersectionmeshbase", {-1, 30});
-
-  static char meshBaseEntityName[200] = {0};
-  sprintf(meshBaseEntityName, meshBaseForIntersection == nullptr
-                                  ? ""
-                                  : meshBaseForIntersection->name.c_str());
-  ImGui::InputTextWithHint("##selfintersectionmeshbase",
-                           "Entity Having Mesh Component", meshBaseEntityName,
-                           sizeof(meshBaseEntityName),
-                           ImGuiInputTextFlags_ReadOnly);
-  ImGui::SameLine();
-  if (ImGui::Button("Clear##selfintersection", {-1, -1})) {
-    for (int i = 0; i < sizeof(meshBaseEntityName); ++i)
-      meshBaseEntityName[i] = 0;
-  }
-  ImGui::EndChild();
-  if (ImGui::BeginDragDropTarget()) {
-    if (const ImGuiPayload *payload =
-            ImGui::AcceptDragDropPayload("ENTITYID_DATA")) {
-      Entity *meshBase = *(Entity **)payload->Data;
-      if (meshBase && meshBase->HasComponent<Mesh>()) {
-        meshBaseForIntersection = meshBase;
-        selfIntersectionValue =
-            computeMeshSelfIntersection(meshBase->GetComponent<Mesh>());
-        LOG_F(INFO, "compute self intersection for mesh on entity \"%s\", found %d hits",
-              meshBase->name.c_str(), selfIntersectionValue);
-      } else {
-        LOG_F(ERROR, "the entiy don't have mesh component, can't be used to "
-                     "compute self intersection");
-        meshBaseForIntersection = nullptr;
-      }
-    }
-    ImGui::EndDragDropTarget();
-  }
 }
 
 void VisMetrics::Update(float dt) {
