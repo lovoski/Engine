@@ -144,35 +144,27 @@ void main() {
   FragColor = vec4(color, 1.0);
 }
 )";
-void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp,
-                glm::vec2 viewportSize, glm::vec3 color) {
+void DrawSquares(std::vector<glm::vec3> positions, float size, glm::mat4 vp,
+                 glm::vec2 viewport, glm::vec3 color) {
   static Render::VAO vao;
   static Render::Buffer vbo;
   static Render::Shader squareShader;
   static bool shaderLoaded = false;
-  static glm::vec3 savedPos(-std::numeric_limits<float>::max(), 0, 0);
   if (!shaderLoaded) {
     squareShader.LoadAndRecompileShaderSource(squareVS, squareFS, squareGS);
     shaderLoaded = true;
   }
-  if (savedPos != position) {
-    vao.Bind();
-    glBindBuffer(GL_ARRAY_BUFFER, vbo.GetID());
-    float positions[] = {position.x, position.y, position.z};
-    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-    vao.Unbind();
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-  }
+  vao.Bind();
+  vbo.SetDataAs(GL_ARRAY_BUFFER, positions);
+  vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, 3 * sizeof(float), 0);
   squareShader.Use();
   squareShader.SetVec3("color", color);
-  squareShader.SetVec2("viewportSize", viewportSize);
-  squareShader.SetMat4("mvp", mvp);
+  squareShader.SetVec2("viewportSize", viewport);
+  squareShader.SetMat4("mvp", vp);
   squareShader.SetFloat("size", size);
-  vao.Bind();
-  glDrawArrays(GL_POINTS, 0, 1);
+  glDrawArrays(GL_POINTS, 0, positions.size());
   vao.Unbind();
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 std::string boneVS = R"(

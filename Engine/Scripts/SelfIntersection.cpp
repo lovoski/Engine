@@ -10,10 +10,8 @@ void SelfIntersection::DrawToScene() {
     auto vp = cameraComp->VP;
     auto viewport = GWORLD.Context.sceneWindowSize;
     if (showIntersectingTriangles) {
-      for (auto &pos : intersectingTriangles) {
-        VisUtils::DrawSquare(pos, intersectionVisSize, vp, viewport,
-                             glm::vec3(1.0f, 0.0f, 0.0f));
-      }
+      VisUtils::DrawSquares(intersectingTriangles, intersectionVisSize, vp,
+                            viewport, glm::vec3(1.0f, 0.0f, 0.0f));
     }
     glEnable(GL_DEPTH_TEST);
   }

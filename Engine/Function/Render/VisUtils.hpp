@@ -17,9 +17,9 @@ void DrawGrid(unsigned int gridSize, unsigned int gridSpacing,
               glm::mat4 mvp = glm::mat4(1.0f),
               glm::vec3 color = glm::vec3(1.0f));
 
-void DrawSquare(glm::vec3 position, float size, glm::mat4 mvp = glm::mat4(1.0f),
-                glm::vec2 viewport = glm::vec2(0.0f),
-                glm::vec3 color = glm::vec3(0.5f));
+void DrawSquares(std::vector<glm::vec3> positions, float size, glm::mat4 vp,
+                 glm::vec2 viewport,
+                 glm::vec3 color = glm::vec3(0.5f, 0.0f, 0.0f));
 
 // `position` is a corner vertex
 void DrawCube(glm::vec3 position, glm::vec3 forward, glm::vec3 left,
