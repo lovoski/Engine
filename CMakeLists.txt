@@ -13,6 +13,9 @@ foreach(DIR ${editor_SOURCE_DIRS})
   list(APPEND editor_SOURCES ${CPP_FILES})
 endforeach()
 
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
 add_subdirectory(Engine)
 
 add_executable(${PROJECT_NAME} ${editor_SOURCES})

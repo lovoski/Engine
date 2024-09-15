@@ -1,3 +1,6 @@
 [submodule "submodule/glfw"]
 	path = Engine/Deps/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "Engine/Deps/eigen3"]
+	path = Engine/Deps/eigen3
+	url = https://gitlab.com/libeigen/eigen.git

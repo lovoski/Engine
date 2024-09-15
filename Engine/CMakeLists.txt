@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 option(NN_MODULE "Build engine component that depends on ONNX runtime library" OFF)
 
+add_subdirectory("Deps/eigen3")
 add_subdirectory("Deps/glfw")
 add_subdirectory("Deps/glad")
 add_subdirectory("Deps/imgui")
@@ -25,14 +26,11 @@ include("cmake/FetchASIO.cmake")
 # onnx runtime
 include("cmake/FindONNXRuntime.cmake")
 
-# libigl
-include("cmake/FetchLibigl.cmake")
-
 include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb imgui loguru filedialog asio::asio cereal ufbx igl::core)
+set(aEngine_DEPS glad glfw stb imgui loguru filedialog asio::asio cereal ufbx Eigen3::Eigen)
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System
