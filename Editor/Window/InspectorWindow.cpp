@@ -8,9 +8,9 @@
 #include "Component/Camera.hpp"
 #include "Component/DeformRenderer.hpp"
 #include "Component/Light.hpp"
+#include "Component/Mesh.hpp"
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
-#include "Component/Mesh.hpp"
 
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
@@ -31,22 +31,14 @@ inline void DrawTransformGUI(EntityID selectedEntity) {
     vec3 position = transform->Position();
     vec3 scale = transform->Scale();
     // dirctly decompose to euler angles could result in gimbal lock
-    // glm::mat3 rotation = glm::mat3_cast(transform->Rotation());
-    // vec3 angles = glm::degrees(transform->EulerAngles());
-    // printf("x=%f, y=%f, z=%f\n", angles.x, angles.y, angles.z);
-    float positions[3] = {position.x, position.y, position.z};
-    float scales[3] = {scale.x, scale.y, scale.z};
-    // float rotations[3] = {0.0f};
-    if (ImGui::DragFloat3("Position", positions, 0.01f, -MAX_FLOAT, MAX_FLOAT))
-      transform->SetGlobalPosition(
-          vec3(positions[0], positions[1], positions[2]));
-    // if (ImGui::DragFloat3("Rotation", rotations, 1.0f, 360.0f)) {
-    //   transform->SetGlobalRotation(
-    //       quat(glm::radians(vec3(rotations[0], rotations[1],
-    //       rotations[2]))));
+    if (ImGui::DragFloat3("Position", &position.x, 0.01f, -MAX_FLOAT, MAX_FLOAT))
+      transform->SetGlobalPosition(position);
+    if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.0f, MAX_FLOAT))
+      transform->SetGlobalScale(scale);
+    // glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform->Rotation()));
+    // if (ImGui::InputFloat3("Rotation", &rotation.x)) {
+    //   transform->SetGlobalRotation(glm::quat(glm::radians(rotation)));
     // }
-    if (ImGui::DragFloat3("Scale", scales, 0.01f, 0.0f, MAX_FLOAT))
-      transform->SetGlobalScale(vec3(scales[0], scales[1], scales[2]));
   }
 }
 
