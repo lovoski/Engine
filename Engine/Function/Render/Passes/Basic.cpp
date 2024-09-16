@@ -168,7 +168,7 @@ vec3 LitSurface() {
     } else if (lights[i].meta[0] == 1) {
       LightDir = normalize(lights[i].position.xyz-worldPos);
       float distance = length(lights[i].position.xyz-worldPos);
-      LightColor = LightAttenuate(LightColor, distance, lights[i].fmeta[0]);
+      LightColor *= (lights[i].fmeta[0] * lights[i].fmeta[0]) / (distance * distance);
     }
     float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
     vec3 LightEffect = lambert * LightColor;
@@ -206,6 +206,7 @@ void main() {
   } else {
     result = shade;
   }
+  result += Ambient * Albedo;
   FragColor = vec4(result, 1.0);
 }
 )";
@@ -223,6 +224,7 @@ void Basic::DrawInspectorGUI() {
   ImGui::Separator();
   ImGui::Checkbox("View Normal", &viewNormal);
   ImGui::Separator();
+  ImGui::SliderFloat("Ambient", &Ambient, 0.0f, 1.0f);
   GUIUtils::ColorEdit3("Albedo", Albedo);
 }
 

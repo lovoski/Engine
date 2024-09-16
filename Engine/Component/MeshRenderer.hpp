@@ -42,6 +42,15 @@ struct MeshRenderer : public aEngine::BaseComponent {
     }
   }
 
+  // Get the pass of desired type, returns nullptr if don't exist
+  template <typename T> T *GetPass() {
+    for (auto pass : passes) {
+      if (typeid(*pass) == typeid(T))
+        return (T *)pass;
+    }
+    return nullptr;
+  }
+
   bool castShadow = true;
   bool receiveShadow = true;
   std::vector<Render::BasePass *> passes;

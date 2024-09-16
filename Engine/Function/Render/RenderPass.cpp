@@ -17,8 +17,11 @@ void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
   if (shader != nullptr) {
     shader->Use();
     lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
-  } else
-    LOG_F(ERROR, "shader not setup for render pass %s", identifier.c_str());
+  } else {
+    LOG_F(ERROR, "shader not setup for render pass %s, set to error shader",
+          identifier.c_str());
+    shader = Loader.GetShader("::error");
+  }
 }
 
 std::string BasePass::getInspectorWindowName() { return typeid(*this).name(); }
@@ -48,8 +51,11 @@ void BasePass::BeforePassInternal(glm::mat4 &model, glm::mat4 &view,
     shader->SetVec2("ViewportSize", GWORLD.Context.sceneWindowSize);
     shader->SetInt("ReceiveShadow", receiveShadow);
     BeforePass();
-  } else
-    LOG_F(ERROR, "shader not setup for render pass %s", identifier.c_str());
+  } else {
+    LOG_F(ERROR, "shader not setup for render pass %s, set to error shader",
+          identifier.c_str());
+    shader = Loader.GetShader("::error");
+  }
 };
 
 }; // namespace Render

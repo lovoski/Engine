@@ -63,7 +63,7 @@ class Basic : public BasePass {
 public:
   Basic();
 
-  float Ambient = 0.1f;
+  float Ambient = 0.03f;
   glm::vec3 Albedo = glm::vec3(1.0f);
 
   bool viewNormal = false;
@@ -155,6 +155,13 @@ public:
   PBRPass();
 
   float RoughnessFactor = 1.0f;
+  float MetallicFactor = 1.0f;
+  float AOFactor = 1.0f;
+  float Ambient = 0.03f;
+  glm::vec3 AlbedoFactor = glm::vec3(1.0f);
+  glm::vec3 F0 = glm::vec3(0.04f);
+  bool WithNormalMap = false;
+  Texture Roughness, Metallic, AO, Albedo, Normal;
 
   std::string getInspectorWindowName() override;
   void FinishPass() override;
