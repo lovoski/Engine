@@ -6,7 +6,6 @@
 #include "Function/Render/RenderPass.hpp"
 #include "Global.hpp"
 
-
 namespace aEngine {
 
 class AssetsLoader {
@@ -44,10 +43,10 @@ public:
   std::vector<std::string> GetIndetifiersForAllCachedMaterials();
 
   // Load cached shader with identifiers
-  Render::Shader *GetShader(std::string identifier);
+  std::shared_ptr<Render::Shader> GetShader(std::string identifier);
   // Load new shader from file path
-  Render::Shader *GetShader(std::string vsp, std::string fsp,
-                            std::string gsp = "none");
+  std::shared_ptr<Render::Shader> GetShader(std::string vsp, std::string fsp,
+                                            std::string gsp = "none");
   // Get identifiers for all cached shaders
   std::vector<std::string> GetIdentifiersForAllCachedShaders();
 
@@ -61,7 +60,7 @@ private:
   // from filepath to skeleton (actor)
   std::map<std::string, Animation::Skeleton *> allSkeletons;
   // identifier to shader data
-  std::map<std::string, Render::Shader *> allShaders;
+  std::map<std::string, std::shared_ptr<Render::Shader>> allShaders;
   // path to motion data
   std::map<std::string, Animation::Motion *> allMotions;
 

@@ -63,10 +63,6 @@ AssetsLoader::~AssetsLoader() {
       if (mesh)
         delete mesh;
   }
-  for (auto shader : allShaders) {
-    if (shader.second)
-      delete shader.second;
-  }
   for (auto skeleton : allSkeletons) {
     if (skeleton.second)
       delete skeleton.second;
@@ -125,13 +121,18 @@ void AssetsLoader::LoadDefaultAssets() {
   allTextures.insert(std::make_pair("::white_texture", whiteTexture));
 
   // load shaders
-  prepareDefaultShader(basicVS, basicFS, basicGS, "::basic");
+  prepareDefaultShader(Render::basicVS, Render::basicFS, Render::basicGS,
+                       "::basic");
   prepareDefaultShader(errorVS, errorFS, "none", "::error");
-  prepareDefaultShader(outlineVS, outlineFS, "none", "::outline");
-  prepareDefaultShader(GBVMainVS, GBVMainFS, "none", "::gbvmain");
+  prepareDefaultShader(Render::outlineVS, Render::outlineFS, "none",
+                       "::outline");
+  prepareDefaultShader(Render::GBVMainVS, Render::GBVMainFS, "none",
+                       "::gbvmain");
   prepareDefaultShader(shadowMapDirLightVS, shadowMapDirLightFS, "none",
                        "::shadowMapDirLight");
-  prepareDefaultShader(wireframeVS, wireframeFS, "none", "::wireframe");
+  prepareDefaultShader(Render::wireframeVS, Render::wireframeFS, "none",
+                       "::wireframe");
+  prepareDefaultShader(Render::pbrVS, Render::pbrFS, "none", "::pbr");
 }
 
 void AssetsLoader::prepareDefaultShader(std::string vs, std::string fs,
@@ -157,7 +158,8 @@ std::vector<std::string> AssetsLoader::GetIdentifiersForAllCachedShaders() {
   }
   return result;
 }
-Render::Shader *AssetsLoader::GetShader(std::string identifier) {
+std::shared_ptr<Render::Shader>
+AssetsLoader::GetShader(std::string identifier) {
   auto s = allShaders.find(identifier);
   if (s == allShaders.end()) {
     LOG_F(ERROR, "shader with identifier %s not found", identifier.c_str());
@@ -167,9 +169,9 @@ Render::Shader *AssetsLoader::GetShader(std::string identifier) {
     return (*s).second;
   }
 }
-Render::Shader *AssetsLoader::GetShader(std::string vsp, std::string fsp,
-                                        std::string gsp) {
-  Render::Shader *newShader = new Render::Shader();
+std::shared_ptr<Render::Shader>
+AssetsLoader::GetShader(std::string vsp, std::string fsp, std::string gsp) {
+  std::shared_ptr<Render::Shader> newShader = std::make_shared<Render::Shader>();
   if (newShader->LoadAndRecompileShader(vsp, fsp, gsp)) {
     // create identifier for this shader
     newShader->identifier = fs::path(vsp).stem().string() + ":" +

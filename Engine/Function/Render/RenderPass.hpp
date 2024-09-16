@@ -25,16 +25,7 @@ public:
   std::string path;
   bool Enabled = true;
 
-  // force reload, compile and link the shader program
-  void SetShader(Shader *s) {
-    if (s == nullptr) {
-      LOG_F(ERROR, "can\'t set shader to nullptr");
-    } else {
-      shader = s;
-    }
-  }
-
-  Shader *GetShader() { return shader; }
+  Shader *GetShader() { return shader.get(); }
 
   // Setup lights in the environment automatically,
   // create variables with predefined names
@@ -44,8 +35,9 @@ public:
   void DrawInspectorGUIInternal();
 
   // This function will get called before the rendering
-  void BeforePassInternal(glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection,
-                 glm::vec3 &viewDir, bool receiveShadow);
+  void BeforePassInternal(glm::mat4 &model, glm::mat4 &view,
+                          glm::mat4 &projection, glm::vec3 &viewDir,
+                          bool receiveShadow);
   // This function will get called after the rendering
   virtual void FinishPass() {}
   virtual std::string getInspectorWindowName();
@@ -53,7 +45,7 @@ public:
 protected:
   int idCounter = 0;
 
-  Shader *shader = nullptr;
+  std::shared_ptr<Shader> shader = nullptr;
 
   // To create custom material, override this function,
   // pass custom variables to the shader, this function is called
@@ -66,6 +58,7 @@ protected:
   virtual void BeforePass() {}
 };
 
+extern const std::string basicVS, basicFS, basicGS;
 class Basic : public BasePass {
 public:
   Basic();
@@ -86,6 +79,7 @@ protected:
   std::string getInspectorWindowName() override;
 };
 
+extern const std::string outlineVS, outlineFS;
 class OutlinePass : public BasePass {
 public:
   OutlinePass();
@@ -105,6 +99,7 @@ protected:
   void DrawInspectorGUI() override;
 };
 
+extern const std::string wireframeVS, wireframeFS;
 class WireFramePass : public BasePass {
 public:
   WireFramePass();
@@ -120,6 +115,7 @@ private:
   void DrawInspectorGUI() override;
 };
 
+extern const std::string GBVMainVS, GBVMainFS;
 class GBVMainPass : public BasePass {
 public:
   GBVMainPass();
@@ -153,18 +149,17 @@ private:
   void DrawInspectorGUI() override;
 };
 
+extern const std::string pbrVS, pbrFS;
 class PBRPass : public BasePass {
 public:
   PBRPass();
 
-  // 0 -> cook torrance
-  int currentType = 0;
+  float RoughnessFactor = 1.0f;
 
   std::string getInspectorWindowName() override;
   void FinishPass() override;
-private:
-  std::shared_ptr<Shader> cookTorrance;
 
+private:
   void BeforePass() override;
   void DrawInspectorGUI() override;
 };

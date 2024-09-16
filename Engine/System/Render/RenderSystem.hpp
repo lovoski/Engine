@@ -63,7 +63,7 @@ private:
   void bakeShadowMap();
   void fillLightsBuffer();
 
-  Render::Shader *shadowMapDirLight;
+  std::shared_ptr<Render::Shader> shadowMapDirLight;
 };
 
 }; // namespace aEngine
