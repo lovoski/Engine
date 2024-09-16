@@ -5,7 +5,7 @@ namespace aEngine {
 
 namespace GUIUtils {
 
-void ColorEdit3(glm::vec3 &color, std::string label) {
+void ColorEdit3(std::string label, glm::vec3 &color) {
   float c[3] = {color.x, color.y, color.z};
   if (ImGui::ColorEdit3(label.c_str(), c)) {
     color.x = c[0];
@@ -13,7 +13,7 @@ void ColorEdit3(glm::vec3 &color, std::string label) {
     color.z = c[2];
   }
 }
-void ColorEdit4(glm::vec4 &color, std::string label) {
+void ColorEdit4(std::string label, glm::vec4 &color) {
   float c[4] = {color.x, color.y, color.z, color.w};
   if (ImGui::ColorEdit4(label.c_str(), c)) {
     color.x = c[0];
@@ -23,7 +23,13 @@ void ColorEdit4(glm::vec4 &color, std::string label) {
   }
 }
 
-void DragableTextureTarget(Texture &texture, std::string name) {
+void DragableTextureTarget(std::string label, Texture &texture) {
+  if (ImGui::Button(("Reset##" + label).c_str())) {
+    static Texture *null = Loader.GetTexture("::null_texture");
+    texture.id = null->id;
+    texture.path = null->path;
+  }
+  ImGui::SameLine();
   ImGui::Image((void *)(static_cast<std::uintptr_t>(texture.id)), {128, 128});
   if (ImGui::BeginDragDropTarget()) {
     if (const ImGuiPayload *payload =
@@ -42,7 +48,23 @@ void DragableTextureTarget(Texture &texture, std::string name) {
     ImGui::EndDragDropTarget();
   }
   ImGui::SameLine();
-  ImGui::TextWrapped(name.c_str());
+  ImGui::TextWrapped(label.c_str());
+}
+
+void Combo(std::string label, std::vector<std::string> &names, int &current,
+           std::function<void(int)> handleCurrent) {
+  if (ImGui::BeginCombo(label.c_str(), names[current].c_str())) {
+    for (int comboIndex = 0; comboIndex < names.size(); ++comboIndex) {
+      bool isSelected = current == comboIndex;
+      if (ImGui::Selectable(names[comboIndex].c_str(), isSelected)) {
+        current = comboIndex;
+        handleCurrent(current);
+      }
+      if (isSelected)
+        ImGui::SetItemDefaultFocus();
+    }
+    ImGui::EndCombo();
+  }
 }
 
 }; // namespace GUIUtils

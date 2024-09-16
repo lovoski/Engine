@@ -125,36 +125,22 @@ void AssetsLoader::LoadDefaultAssets() {
   allTextures.insert(std::make_pair("::white_texture", whiteTexture));
 
   // load shaders
-  Render::Shader *diffuseShader = new Render::Shader();
-  diffuseShader->identifier = "::diffuse";
-  diffuseShader->LoadAndRecompileShaderSource(basicVS, basicFS, basicGS);
-  allShaders.insert(std::make_pair("::diffuse", diffuseShader));
+  prepareDefaultShader(basicVS, basicFS, basicGS, "::basic");
+  prepareDefaultShader(errorVS, errorFS, "none", "::error");
+  prepareDefaultShader(outlineVS, outlineFS, "none", "::outline");
+  prepareDefaultShader(GBVMainVS, GBVMainFS, "none", "::gbvmain");
+  prepareDefaultShader(shadowMapDirLightVS, shadowMapDirLightFS, "none",
+                       "::shadowMapDirLight");
+  prepareDefaultShader(wireframeVS, wireframeFS, "none", "::wireframe");
+}
 
-  Render::Shader *errorShader = new Render::Shader();
-  errorShader->identifier = "::error";
-  errorShader->LoadAndRecompileShaderSource(errorVS, errorFS);
-  allShaders.insert(std::make_pair("::error", errorShader));
-
-  Render::Shader *outlineShader = new Render::Shader();
-  outlineShader->identifier = "::outline";
-  outlineShader->LoadAndRecompileShaderSource(outlineVS, outlineFS);
-  allShaders.insert(std::make_pair("::outline", outlineShader));
-
-  Render::Shader *gbvMainShader = new Render::Shader();
-  gbvMainShader->identifier = "::gbvmain";
-  gbvMainShader->LoadAndRecompileShaderSource(GBVMainVS, GBVMainFS);
-  allShaders.insert(std::make_pair("::gbvmain", gbvMainShader));
-
-  Render::Shader *wireframeShader = new Render::Shader();
-  wireframeShader->identifier = "::wireframe";
-  wireframeShader->LoadAndRecompileShaderSource(wireframeVS, wireframeFS);
-  allShaders.insert(std::make_pair("::wireframe", wireframeShader));
-
-  Render::Shader *shadowMapDirLight = new Render::Shader();
-  shadowMapDirLight->identifier = "::shadowMapDirLight";
-  shadowMapDirLight->LoadAndRecompileShaderSource(shadowMapDirLightVS,
-                                                  shadowMapDirLightFS);
-  allShaders.insert(std::make_pair("::shadowMapDirLight", shadowMapDirLight));
+void AssetsLoader::prepareDefaultShader(std::string vs, std::string fs,
+                                        std::string gs,
+                                        std::string identifier) {
+  auto shader = new Render::Shader();
+  shader->identifier = identifier;
+  shader->LoadAndRecompileShaderSource(vs, fs, gs);
+  allShaders.insert(std::make_pair(identifier, shader));
 }
 
 std::vector<std::string> AssetsLoader::GetIndetifiersForAllCachedMaterials() {
@@ -555,7 +541,7 @@ void AssetsLoader::loadOBJModelFile(std::vector<Render::Mesh *> &meshes,
         if (withoutNormal) {
           // manually compute the normal
           auto faceNormal = Math::FaceNormal(vert[0].Position, vert[1].Position,
-                                          vert[2].Position);
+                                             vert[2].Position);
           vert[0].Normal = glm::vec4(faceNormal, 0.0f);
           vert[1].Normal = glm::vec4(faceNormal, 0.0f);
           vert[2].Normal = glm::vec4(faceNormal, 0.0f);

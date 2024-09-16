@@ -56,14 +56,18 @@ void MeshRenderer::drawAppendPassPopup() {
   if (ImGui::BeginPopup("appendpasspanelpopup")) {
     ImGui::MenuItem("Registered Pass", nullptr, nullptr, false);
     ImGui::Separator();
+    if (ImGui::MenuItem("Basic Pass"))
+      handleAppendPass<Render::Basic>("Basic");
+    ImGui::Separator();
     if (ImGui::MenuItem("Wireframe Pass"))
       handleAppendPass<Render::WireFramePass>("Wireframe");
     if (ImGui::MenuItem("Outline Pass"))
       handleAppendPass<Render::OutlinePass>("Outline");
-    if (ImGui::MenuItem("Basic Pass"))
-      handleAppendPass<Render::Basic>("Basic");
     if (ImGui::MenuItem("GBV Toon Pass"))
       handleAppendPass<Render::GBVMainPass>("GBV Main");
+    ImGui::Separator();
+    if (ImGui::MenuItem("PBR Pass"))
+      handleAppendPass<Render::PBRPass>("PBR");
     ImGui::EndPopup();
   }
 }

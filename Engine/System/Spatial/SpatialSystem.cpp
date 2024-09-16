@@ -16,10 +16,15 @@ SpatialSystem::SpatialSystem() {
 
 SpatialSystem::~SpatialSystem() {}
 
+static std::vector<glm::vec3> collisionPoints;
+
 void SpatialSystem::PreUpdate(float dt) {
   // update the spatial ds, precompute the collision pair
   std::vector<std::shared_ptr<Entity>> e;
   std::vector<std::shared_ptr<Mesh>> m;
+
+  collisionPoints.clear();
+
   for (auto id : entities) {
     auto mi = GWORLD.GetComponent<Mesh>(id);
     auto ei = GWORLD.EntityFromID(id);
@@ -41,6 +46,12 @@ void SpatialSystem::PreUpdate(float dt) {
       if (m[i]->bvh.Intersect(m[j]->bvh, hit)) {
         LOG_F(INFO, "%d pairs of colliding triangle between \"%s\" and \"%s\"",
               hit.size(), e[i]->name.c_str(), e[j]->name.c_str());
+        for (auto &pair : hit) {
+          collisionPoints.push_back(
+              m[i]->bvh.Primitives[pair.first].Barycenter());
+          collisionPoints.push_back(
+              m[j]->bvh.Primitives[pair.second].Barycenter());
+        }
       }
     }
   }
@@ -53,6 +64,7 @@ void SpatialSystem::Render() {
   if (GWORLD.GetActiveCamera(camera)) {
     auto cameraComp = GWORLD.GetComponent<Camera>(camera);
     auto vp = cameraComp->VP;
+    auto viewport = GWORLD.Context.sceneWindowSize;
     for (auto id : entities) {
       auto entity = GWORLD.EntityFromID(id);
       auto mesh = entity->GetComponent<Mesh>();
@@ -68,6 +80,11 @@ void SpatialSystem::Render() {
             VisUtils::DrawAABB(node.bbox.Min, node.bbox.Max, vp);
           }
         }
+        glDisable(GL_DEPTH);
+        // draw collision points
+        VisUtils::DrawSquares(collisionPoints, 1.0f, vp, viewport,
+                              glm::vec3(1.0f, 0.0f, 0.0f));
+        glEnable(GL_DEPTH);
       }
     }
   }

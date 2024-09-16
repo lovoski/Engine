@@ -33,8 +33,8 @@ void BasePass::DrawInspectorGUIInternal() {
 }
 
 void BasePass::BeforePassInternal(glm::mat4 &model, glm::mat4 &view,
-                         glm::mat4 &projection, glm::vec3 &viewDir,
-                         bool receiveShadow) {
+                                  glm::mat4 &projection, glm::vec3 &viewDir,
+                                  bool receiveShadow) {
   if (shader != nullptr) {
     shader->Use();
     glm::mat4 ModelToWorldPoint = model;
@@ -54,18 +54,18 @@ void BasePass::BeforePassInternal(glm::mat4 &model, glm::mat4 &view,
 
 Basic::Basic() {
   // initialize shader to defualt value
-  shader = Loader.GetShader("::diffuse");
+  shader = Loader.GetShader("::basic");
 }
 
 void Basic::DrawInspectorGUI() {
   ImGui::Checkbox("Wireframe", &withWireframe);
   ImGui::SliderFloat("Width", &WireframeWidth, 0.5f, 5.0f);
   ImGui::SliderFloat("Smooth", &WireframeSmooth, 0.0f, 1.0f);
-  GUIUtils::ColorEdit3(WireframeColor, "Color");
+  GUIUtils::ColorEdit3("Color", WireframeColor);
   ImGui::Separator();
   ImGui::Checkbox("View Normal", &viewNormal);
   ImGui::Separator();
-  GUIUtils::ColorEdit3(Albedo, "Albedo");
+  GUIUtils::ColorEdit3("Albedo", Albedo);
 }
 
 void Basic::BeforePass() {
@@ -95,7 +95,7 @@ void OutlinePass::DrawInspectorGUI() {
   if (ImGui::ColorEdit3("Color", outlineColor)) {
     OutlineColor = glm::vec3(outlineColor[0], outlineColor[1], outlineColor[2]);
   }
-  GUIUtils::DragableTextureTarget(OutlineColorMap, "Outline Map");
+  GUIUtils::DragableTextureTarget("Outline Map", OutlineColorMap);
 }
 
 void OutlinePass::BeforePass() {
@@ -130,7 +130,7 @@ void WireFramePass::BeforePass() {
 
 void WireFramePass::DrawInspectorGUI() {
   ImGui::DragFloat("Offset", &wireframeOffset, 0.0001, 0.0f, 10.0f);
-  GUIUtils::ColorEdit3(wireFrameColor, "Color");
+  GUIUtils::ColorEdit3("Color", wireFrameColor);
 }
 
 // ----------- GBV shader -------------
@@ -150,8 +150,8 @@ void GBVMainPass::DrawInspectorGUI() {
   ImGui::BeginChild("gbvmainpasschild", {-1, -1});
 
   ImGui::MenuItem("Basic Textures", nullptr, nullptr, false);
-  GUIUtils::DragableTextureTarget(base, "Base");
-  GUIUtils::DragableTextureTarget(ILM, "ILM");
+  GUIUtils::DragableTextureTarget("Base", base);
+  GUIUtils::DragableTextureTarget("ILM", ILM);
   ImGui::Separator();
 
   ImGui::MenuItem("Ramp", nullptr, nullptr, false);
@@ -159,20 +159,20 @@ void GBVMainPass::DrawInspectorGUI() {
   ImGui::SliderFloat("First Ramp Stop", &firstRampStop, 0.0f, 1.0f);
   ImGui::SliderFloat("Ramp Offset", &rampOffset, 0.0f, 1.0f);
   ImGui::SliderFloat("Ramp Shadow Wegith", &rampShadowWeight, 0.0f, 1.0f);
-  GUIUtils::DragableTextureTarget(SSS, "SSS");
+  GUIUtils::DragableTextureTarget("SSS", SSS);
 
   ImGui::MenuItem("Specular", nullptr, nullptr, false);
   ImGui::SliderInt("Specular Gloss", &specularGloss, 1, 128);
   ImGui::SliderFloat("Specular Weight", &specularWeight, 0.0f, 2.0f);
 
   ImGui::MenuItem("Rim Light", nullptr, nullptr, false);
-  GUIUtils::ColorEdit3(rimLightColor, "Rim Light Color");
+  GUIUtils::ColorEdit3("Rim Light Color", rimLightColor);
   ImGui::SliderFloat("Rim Light Width", &rimLightWidth, 0.0f, 1.0f);
   ImGui::SliderFloat("Rim Light Smooth", &rimLightSmooth, 0.0f, 0.1f);
   ImGui::Separator();
 
   ImGui::MenuItem("Details", nullptr, nullptr, false);
-  GUIUtils::DragableTextureTarget(detail, "Detail");
+  GUIUtils::DragableTextureTarget("Detail", detail);
   ImGui::SliderFloat("Detail Weight", &detailWeight, 0.0f, 1.0f);
   ImGui::SliderFloat("Inner Line Weight", &innerLineWeight, 0.0f, 1.0f);
 
@@ -206,6 +206,66 @@ void GBVMainPass::BeforePass() {
 }
 
 void GBVMainPass::FinishPass() { glDisable(GL_CULL_FACE); }
+
+// ----------- PBR shader -------------
+
+const std::string cookTorranceVS = R"(
+#version 460 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aNormal;
+layout (location = 2) in vec4 aTexCoord;
+
+uniform mat4 ModelToWorldPoint;
+uniform mat3 ModelToWorldDir;
+uniform mat4 View;
+uniform mat4 Projection;
+uniform vec3 ViewDir;
+
+out vec2 texCoord;
+out vec3 worldPos;
+out vec3 worldView;
+out vec3 worldNormal;
+
+void main() {
+  texCoord = aTexCoord.xy;
+  worldView = normalize(ViewDir);
+  worldPos = (ModelToWorldPoint * aPos).xyz;
+  worldNormal = normalize(ModelToWorldDir * aNormal.xyz);
+  gl_Position = Projection * View * vec4(worldPos, 1.0);
+}
+)";
+
+const std::string cookTorranceFS = R"(
+#version 460 core
+
+in vec2 texCoord;
+in vec3 worldPos;
+in vec3 worldView;
+in vec3 worldNormal;
+
+out vec4 FragColor;
+
+void main() {
+  FragColor = vec4(1.0);
+}
+)";
+
+PBRPass::PBRPass() {
+  cookTorrance = std::make_shared<Shader>();
+  cookTorrance->LoadAndRecompileShaderSource(cookTorranceVS, cookTorranceFS);
+  shader = cookTorrance.get();
+}
+
+std::string PBRPass::getInspectorWindowName() { return "PBR Pass"; }
+
+void PBRPass::FinishPass() {}
+
+void PBRPass::BeforePass() {}
+
+void PBRPass::DrawInspectorGUI() {
+  static std::vector<std::string> types{"Cook Torrance"};
+  GUIUtils::Combo("Type", types, currentType);
+}
 
 }; // namespace Render
 

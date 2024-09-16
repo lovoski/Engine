@@ -7,6 +7,8 @@
 #include "System/Render/CameraSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 
+#include "Function/GUI/Helpers.hpp"
+
 void BuildTestScene(Engine *engine) {
   GWORLD.SetupDefaultScene();
 
@@ -24,7 +26,7 @@ void BuildTestScene(Engine *engine) {
   plane->AddComponent<Mesh>(Loader.GetMesh("::planePrimitive", ""));
   plane->AddComponent<MeshRenderer>();
   plane->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(nullptr,
-                                                                "Ground Mat");
+                                                              "Ground Mat");
 }
 
 Editor::Editor(int width, int height) {
@@ -52,8 +54,8 @@ void Editor::Start() {
   context.io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   context.io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  context.io->Fonts->AddFontFromFileTTF(ASSETS_PATH "/fonts/DSM/DroidSansMono.ttf",
-                                        20);
+  context.io->Fonts->AddFontFromFileTTF(
+      ASSETS_PATH "/fonts/DSM/DroidSansMono.ttf", 20);
 
   context.io->IniFilename = context.layoutFileName;
 
@@ -242,20 +244,12 @@ void Editor::MainMenuBar() {
             currentActiveCameraComboIndex = it->second;
           }
         }
-        if (ImGui::BeginCombo(
-                "Active Camera",
-                cameraNames[currentActiveCameraComboIndex].c_str())) {
-          for (int comboIndex = 0; comboIndex < cameraNames.size();
-               ++comboIndex) {
-            bool isSelected = currentActiveCameraComboIndex == comboIndex;
-            if (ImGui::Selectable(cameraNames[comboIndex].c_str(),
-                                  isSelected)) {
-              currentActiveCameraComboIndex = comboIndex;
-              // switch active camera
+        GUIUtils::Combo(
+            "Active Camera", cameraNames, currentActiveCameraComboIndex,
+            [&](int current) {
               for (auto cameraComboMapPair : cameraToComboMap) {
                 auto cameraEntityID = cameraComboMapPair.first;
-                if (cameraComboMapPair.second ==
-                    currentActiveCameraComboIndex) {
+                if (cameraComboMapPair.second == current) {
                   if (GWORLD.EntityValid(cameraEntityID)) {
                     GWORLD.SetActiveCamera(cameraEntityID);
                   } else {
@@ -263,12 +257,7 @@ void Editor::MainMenuBar() {
                   }
                 }
               }
-            }
-            if (isSelected)
-              ImGui::SetItemDefaultFocus();
-          }
-          ImGui::EndCombo();
-        }
+            });
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }

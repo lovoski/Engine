@@ -153,6 +153,22 @@ private:
   void DrawInspectorGUI() override;
 };
 
+class PBRPass : public BasePass {
+public:
+  PBRPass();
+
+  // 0 -> cook torrance
+  int currentType = 0;
+
+  std::string getInspectorWindowName() override;
+  void FinishPass() override;
+private:
+  std::shared_ptr<Shader> cookTorrance;
+
+  void BeforePass() override;
+  void DrawInspectorGUI() override;
+};
+
 }; // namespace Render
 
 }; // namespace aEngine

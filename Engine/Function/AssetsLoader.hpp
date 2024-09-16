@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Global.hpp"
-#include "Function/AssetsType.hpp"
-#include "Function/Render/RenderPass.hpp"
 #include "Function/Animation/Motion.hpp"
+#include "Function/AssetsType.hpp"
 #include "Function/General/ComputeShader.hpp"
+#include "Function/Render/RenderPass.hpp"
+#include "Global.hpp"
+
 
 namespace aEngine {
 
@@ -66,9 +67,15 @@ private:
 
   std::vector<Render::BasePass *> allMaterials;
 
-  void loadFBXModelFile(std::vector<Render::Mesh *> &meshes, std::string modelPath);
-  void loadOBJModelFile(std::vector<Render::Mesh *> &meshes, std::string modelPath);
-  std::vector<Render::Mesh *> loadAndCreateAssetsFromFile(std::string modelPath);
+  void loadFBXModelFile(std::vector<Render::Mesh *> &meshes,
+                        std::string modelPath);
+  void loadOBJModelFile(std::vector<Render::Mesh *> &meshes,
+                        std::string modelPath);
+  std::vector<Render::Mesh *>
+  loadAndCreateAssetsFromFile(std::string modelPath);
+
+  void prepareDefaultShader(std::string vs, std::string fs, std::string gs,
+                            std::string identifier);
 };
 
 static AssetsLoader &Loader = AssetsLoader::Ref();
