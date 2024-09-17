@@ -77,7 +77,7 @@ Check `Engine/Component/NativeScript.hpp` for more details.
 
 Here's a screen shot of the rendering from this engine:
 
-![toon_shading](Doc/render_toon_20240909.png)
+![toon_shading](Doc/render_toon_20240917.png)
 
 The main code for render system lies in `Engine/System/RenderSystem`, however, there are some sub-systems that work tightly with render system (`CameraSystem`, `LightSystem` etc.).
 
