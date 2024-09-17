@@ -68,6 +68,8 @@ public:
   // ::null_texture, pure white texture will be activated instead.
   bool SetTexture2D(Texture &texture, std::string name, int slot);
 
+  bool SetCubeMap(std::string name, unsigned int cubemapID, int slot);
+
 private:
   void checkCompileErrors(GLuint shader, std::string type) {
     GLint success;

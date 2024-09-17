@@ -28,22 +28,23 @@ void MeshRenderer::DrawMeshShadowPass(Render::Shader &shader,
     model = modelMat;
   shader.SetMat4("Model", model);
   DrawMesh(shader, mesh);
-  mesh->Deformed = false;
+  // mesh->Deformed = false;
 }
 
 void MeshRenderer::ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
                                  glm::mat4 viewMat, Entity *camera,
-                                 Entity *object, Render::Buffer &lightsBuffer) {
+                                 Entity *object, Render::Buffer &lightsBuffer,
+                                 std::shared_ptr<SkyLight> skyLight) {
   for (auto pass : passes) {
     if (pass->Enabled) {
       pass->GetShader()->Use();
-      pass->SetupLights(lightsBuffer);
+      pass->SetupLights(lightsBuffer, skyLight);
       auto modelMat = glm::mat4(1.0f);
       if (!mesh->Deformed)
         modelMat = object->GlobalTransformMatrix();
       auto viewDir = camera->LocalForward;
       pass->BeforePassInternal(modelMat, viewMat, projMat, viewDir,
-                      receiveShadow);
+                               receiveShadow);
       DrawMesh(*pass->GetShader(), mesh);
       pass->FinishPass();
     }

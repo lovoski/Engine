@@ -13,10 +13,15 @@ using glm::vec3;
 using std::string;
 using std::vector;
 
-void BasePass::SetupLights(Buffer &lightsBuffer, int bindingPoint) {
+void BasePass::SetupLights(Buffer &lightsBuffer,
+                           std::shared_ptr<SkyLight> skyLight,
+                           int bindingPoint) {
   if (shader != nullptr) {
     shader->Use();
     lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
+    // setup skylight
+    if (skyLight != nullptr)
+      shader->SetCubeMap("SkyBox", skyLight->CubeMap, 0);
   } else {
     LOG_F(ERROR, "shader not setup for render pass %s, set to error shader",
           identifier.c_str());

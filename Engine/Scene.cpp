@@ -112,13 +112,16 @@ void Scene::SetupDefaultScene() {
   cam->SetGlobalPosition(glm::vec3(0.0f, 3.0f, 5.0f));
   SetActiveCamera(cam->ID);
 
-  auto dLight = AddNewEntity();
-  dLight->name = "Light";
-  dLight->SetGlobalPosition({-2, 3, 2});
-  dLight->SetGlobalRotation(
-      glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
-  dLight->AddComponent<Light>();
-  dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+  // auto dLight = AddNewEntity();
+  // dLight->name = "Light";
+  // dLight->SetGlobalPosition({-2, 3, 2});
+  // dLight->SetGlobalRotation(
+  //     glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
+  // dLight->AddComponent<DirectionalLight>();
+
+  auto skybox = AddNewEntity();
+  skybox->name = "Sky Light";
+  skybox->AddComponent<SkyLight>();
 }
 
 void Scene::Reset() {

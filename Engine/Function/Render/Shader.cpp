@@ -9,7 +9,7 @@ namespace Render {
 
 // Load shader from path, compile and link them into a program
 bool Shader::LoadAndRecompileShader(std::string vsp, std::string fsp,
-                            std::string gsp) {
+                                    std::string gsp) {
   // delete previous program if exists
   if (ID != 0) {
     // free old shader if there's any
@@ -91,6 +91,16 @@ bool Shader::SetTexture2D(Texture &texture, std::string name, int slot) {
   }
   glUniform1i(location, slot);
   glBindTexture(GL_TEXTURE_2D, activateTexId);
+  return true;
+}
+
+bool Shader::SetCubeMap(std::string name, unsigned int cubemapID, int slot) {
+  glActiveTexture(GL_TEXTURE0 + slot);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);
+  int location = glGetUniformLocation(ID, name.c_str());
+  if (location == -1)
+    return false;
+  glUniform1i(location, slot);
   return true;
 }
 

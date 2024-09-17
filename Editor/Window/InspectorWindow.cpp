@@ -114,7 +114,9 @@ void Editor::InspectorWindow() {
     // TODO: automatically register component?
     DrawComponent<Mesh>(entity, "Mesh Data");
     DrawComponent<Camera>(entity, "Camera");
-    DrawComponent<Light>(entity, "Light");
+    DrawComponent<DirectionalLight>(entity, "Directional Light");
+    DrawComponent<PointLight>(entity, "Point Light");
+    DrawComponent<SkyLight>(entity, "Sky Light");
     DrawComponent<Animator>(entity, "Animator");
     DrawComponent<MeshRenderer>(entity, "Mesh Renderer");
     DrawComponent<DeformRenderer>(entity, "Deform Renderer");

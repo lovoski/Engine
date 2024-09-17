@@ -46,10 +46,7 @@ glm::vec3 ConvertToGLM(ufbx_vec3 &v) { return {v.x, v.y, v.z}; }
 glm::vec4 ConvertToGLM(ufbx_vec4 &v) { return {v.x, v.y, v.z, v.w}; }
 glm::quat ConvertToGLM(ufbx_quat &q) { return glm::quat(q.w, q.x, q.y, q.z); }
 
-AssetsLoader::AssetsLoader() {
-  // stb image library setup
-  stbi_set_flip_vertically_on_load(true);
-}
+AssetsLoader::AssetsLoader() {}
 
 AssetsLoader::~AssetsLoader() {
   for (auto texture : allTextures) {
@@ -70,7 +67,8 @@ AssetsLoader::~AssetsLoader() {
   allSkeletons.clear();
 }
 
-unsigned int loadAndCreateTextureFromFile(string texturePath);
+unsigned int loadAndCreateTextureFromFile(string texturePath,
+                                          bool flipVertically = true);
 
 void AssetsLoader::LoadDefaultAssets() {
   // initialize all the primitives
@@ -120,6 +118,12 @@ void AssetsLoader::LoadDefaultAssets() {
   whiteTexture->path = "::white_texture";
   allTextures.insert(std::make_pair("::white_texture", whiteTexture));
 
+  Texture *blackTexture = new Texture();
+  blackTexture->id =
+      loadAndCreateTextureFromFile(ASSETS_PATH "/textures/black.png");
+  blackTexture->path = "::black_texture";
+  allTextures.insert(std::make_pair("::black_texture", blackTexture));
+
   // load shaders
   prepareDefaultShader(Render::basicVS, Render::basicFS, Render::basicGS,
                        "::basic");
@@ -133,6 +137,7 @@ void AssetsLoader::LoadDefaultAssets() {
   prepareDefaultShader(Render::wireframeVS, Render::wireframeFS, "none",
                        "::wireframe");
   prepareDefaultShader(Render::pbrVS, Render::pbrFS, "none", "::pbr");
+  prepareDefaultShader(skyboxVS, skyboxFS, "none", "::skybox");
 }
 
 void AssetsLoader::prepareDefaultShader(std::string vs, std::string fs,
@@ -171,7 +176,8 @@ AssetsLoader::GetShader(std::string identifier) {
 }
 std::shared_ptr<Render::Shader>
 AssetsLoader::GetShader(std::string vsp, std::string fsp, std::string gsp) {
-  std::shared_ptr<Render::Shader> newShader = std::make_shared<Render::Shader>();
+  std::shared_ptr<Render::Shader> newShader =
+      std::make_shared<Render::Shader>();
   if (newShader->LoadAndRecompileShader(vsp, fsp, gsp)) {
     // create identifier for this shader
     newShader->identifier = fs::path(vsp).stem().string() + ":" +
@@ -216,11 +222,11 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
   }
 }
 
-Texture *AssetsLoader::GetTexture(string texturePath) {
+Texture *AssetsLoader::GetTexture(string texturePath, bool flipVertically) {
   if (allTextures.find(texturePath) == allTextures.end()) {
     // load new texture
     Texture *newTexture = new Texture();
-    auto id = loadAndCreateTextureFromFile(texturePath);
+    auto id = loadAndCreateTextureFromFile(texturePath, flipVertically);
     if (id == (unsigned int)(-1)) {
       // failed to load texture, return null
       return allTextures["::null_texture"];
@@ -294,10 +300,12 @@ Render::Mesh *AssetsLoader::GetMesh(string modelPath, string identifier) {
   }
 }
 
-unsigned int loadAndCreateTextureFromFile(string texturePath) {
+unsigned int loadAndCreateTextureFromFile(string texturePath,
+                                          bool flipVertically) {
   unsigned int textureID;
   glGenTextures(1, &textureID);
 
+  stbi_set_flip_vertically_on_load(flipVertically);
   int width, height, nrComponents;
   unsigned char *data =
       stbi_load(texturePath.c_str(), &width, &height, &nrComponents, 0);

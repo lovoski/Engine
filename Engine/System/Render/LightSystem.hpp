@@ -14,54 +14,45 @@
 
 namespace aEngine {
 
+struct LightData {
+  // [0]: 0 for directional light, 1 for point light
+  // [1]: 0 for not receive shadow, 1 for receive shadow
+  int meta[4];
+  // [0]: intensity of point light source
+  float fmeta[4];
+  glm::vec4 color;
+  glm::vec4 position;    // for point light
+  glm::vec4 direction;   // for directional light
+  glm::mat4 lightMatrix; // light space transform matrix
+  // bindless handle for shadow map,
+  // requires `ARB_bindless_texture` extension
+  int64_t shadowMapHandle[2];
+};
+
 class LightSystem : public aEngine::BaseSystem {
 public:
-  LightSystem() { AddComponentSignatureRequireAll<Light>(); }
+  LightSystem() {
+    AddComponentSignatureRequireOne<DirectionalLight>();
+    AddComponentSignatureRequireOne<PointLight>();
+    AddComponentSignatureRequireOne<SkyLight>();
+  }
 
-  // Maintain the Lights array in RenderSystem
-  void PreUpdate(float dt) override {
-    auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
-    // Clear the light array
-    renderSystem->Lights.clear();
-    for (auto id : entities) {
-      if (GWORLD.EntityFromID(id)->Enabled)
-        renderSystem->Lights.push_back(GWORLD.GetComponent<Light>(id));
-    }
+  void Update(float dt) override;
+
+  void Reset() override {
+    activeSkyLight = nullptr;
+    lights.clear();
+    skyLights.clear();
   }
 
   // Draw visualizations for light sources
-  void Render() {
-    EntityID camera;
-    if (GWORLD.GetActiveCamera(camera)) {
-      auto cameraEntity = GWORLD.EntityFromID(camera);
-      auto cameraComp = cameraEntity->GetComponent<Camera>();
-      auto viewMat = cameraComp->ViewMat;
-      auto projMat = cameraComp->ProjMat;
-      for (auto id : entities) {
-        auto entity = GWORLD.EntityFromID(id);
-        auto lightComp = entity->GetComponent<Light>();
-        if (lightComp->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
-          VisUtils::DrawDirectionalLight(entity->LocalForward, entity->LocalUp,
-                                         entity->LocalLeft, entity->Position(),
-                                         projMat * viewMat);
-          if (lightComp->ShowShadowFrustom) {
-            VisUtils::DrawCube(
-                entity->Position() -
-                    (lightComp->ShadowOrthoW * 0.5f * entity->LocalLeft +
-                     lightComp->ShadowOrthoH * 0.5f * entity->LocalUp -
-                     lightComp->ShadowZNear * entity->LocalForward),
-                entity->LocalForward, entity->LocalLeft, entity->LocalUp,
-                projMat * viewMat,
-                {lightComp->ShadowOrthoW, lightComp->ShadowOrthoH,
-                 lightComp->ShadowZFar - lightComp->ShadowZNear});
-          }
-        } else if (lightComp->type == LIGHT_TYPE::POINT_LIGHT) {
-          VisUtils::DrawPointLight(entity->Position(), projMat * viewMat,
-                                   lightComp->lightRadius);
-        }
-      }
-    }
-  }
+  void Render();
+
+  // The enabled global skylight
+  std::vector<std::shared_ptr<SkyLight>> skyLights;
+  std::shared_ptr<SkyLight> activeSkyLight = nullptr;
+  // Stores pointers to all enabled lights
+  std::vector<std::shared_ptr<Light>> lights;
 };
 
 }; // namespace aEngine

@@ -28,8 +28,12 @@ public:
   Shader *GetShader() { return shader.get(); }
 
   // Setup lights in the environment automatically,
-  // create variables with predefined names
-  void SetupLights(Buffer &lightsBuffer, int bindingPoint = 0);
+  // create variables with predefined names.
+  // The parameter `bindingPoint` is the binding point of
+  // light buffer as a SSBO.
+  void SetupLights(Buffer &lightsBuffer,
+                   std::shared_ptr<SkyLight> skyLight = nullptr,
+                   int bindingPoint = 0);
 
   // don't override this function in custom pass
   void DrawInspectorGUIInternal();

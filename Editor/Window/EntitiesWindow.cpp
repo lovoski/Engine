@@ -149,14 +149,17 @@ void Editor::EntitiesWindow() {
         dLight->name = "Light";
         dLight->SetGlobalRotation(
             glm::quat(glm::radians(vec3(180.0f, 0.0f, 0.0f))));
-        dLight->AddComponent<Light>();
-        dLight->GetComponent<Light>()->type = LIGHT_TYPE::DIRECTIONAL_LIGHT;
+        dLight->AddComponent<DirectionalLight>();
       }
       if (ImGui::MenuItem("Point Light")) {
         auto pLight = GWORLD.AddNewEntity();
         pLight->name = "Point light";
-        pLight->AddComponent<Light>();
-        pLight->GetComponent<Light>()->type = LIGHT_TYPE::POINT_LIGHT;
+        pLight->AddComponent<PointLight>();
+      }
+      if (ImGui::MenuItem("Sky Light")) {
+        auto skyLight = GWORLD.AddNewEntity();
+        skyLight->name = "Sky light";
+        skyLight->AddComponent<SkyLight>();
       }
       ImGui::EndMenu();
     }

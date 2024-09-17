@@ -207,19 +207,21 @@ void Editor::MainMenuBar() {
       if (ImGui::BeginMenu("Render")) {
         auto renderSystem = GWORLD.GetSystemInstance<RenderSystem>();
         auto cameraSystem = GWORLD.GetSystemInstance<CameraSystem>();
+        auto lightSystem = GWORLD.GetSystemInstance<LightSystem>();
         ImGui::PushItemWidth(180);
         ImGui::MenuItem("Shadows", nullptr, nullptr, false);
-        ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMaps);
-        std::vector<const char *> shadowMapSizeSlectable{
-            "64", "128", "256", "512", "1024", "2048", "4096"};
-        static int currentShadowMapSizeSlectableIndex = 4;
-        if (ImGui::Combo("Shadow Map Size", &currentShadowMapSizeSlectableIndex,
-                         shadowMapSizeSlectable.data(),
-                         shadowMapSizeSlectable.size())) {
-          renderSystem->GlobalShadowMapSize = std::stoi(
-              shadowMapSizeSlectable[currentShadowMapSizeSlectableIndex]);
-          renderSystem->ResizeAllShadowMaps();
-        }
+        ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMap);
+        // std::vector<const char *> shadowMapSizeSlectable{
+        //     "64", "128", "256", "512", "1024", "2048", "4096"};
+        // static int currentShadowMapSizeSlectableIndex = 4;
+        // if (ImGui::Combo("Shadow Map Size",
+        // &currentShadowMapSizeSlectableIndex,
+        //                  shadowMapSizeSlectable.data(),
+        //                  shadowMapSizeSlectable.size())) {
+        //   renderSystem->GlobalShadowMapSize = std::stoi(
+        //       shadowMapSizeSlectable[currentShadowMapSizeSlectableIndex]);
+        //   renderSystem->ResizeAllShadowMaps();
+        // }
         ImGui::Separator();
         ImGui::MenuItem("Camera", nullptr, nullptr, false);
         std::vector<std::string> cameraNames;
@@ -256,6 +258,28 @@ void Editor::MainMenuBar() {
                     LOG_F(ERROR, "Can't set active camera to a invalid entity");
                   }
                 }
+              }
+            });
+        ImGui::Separator();
+        ImGui::MenuItem("Skybox", nullptr, nullptr, false);
+        ImGui::Checkbox("Render Skybox", &renderSystem->RenderSkybox);
+        std::vector<std::string> skyLightNames{"None:-1"};
+        for (auto light : lightSystem->skyLights) {
+          auto id = light->GetID();
+          if (GWORLD.EntityValid(id)) {
+            skyLightNames.push_back(GWORLD.EntityFromID(id)->name + ":" +
+                                    std::to_string(id));
+          } else lightSystem->activeSkyLight = nullptr;
+        }
+        static int currentSkyLight = 0;
+        GUIUtils::Combo(
+            "Active Skybox", skyLightNames, currentSkyLight, [&](int current) {
+              if (current > 0 && current <= lightSystem->skyLights.size()) {
+                lightSystem->activeSkyLight =
+                    lightSystem->skyLights[current - 1];
+              } else {
+                lightSystem->activeSkyLight = nullptr;
+                currentSkyLight = 0;
               }
             });
         ImGui::PopItemWidth();

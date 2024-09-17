@@ -1,5 +1,6 @@
 #include "System/Render/RenderSystem.hpp"
 #include "Scene.hpp"
+#include "System/Render/LightSystem.hpp"
 
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
@@ -15,81 +16,81 @@ RenderSystem::RenderSystem() {
   AddComponentSignatureRequireOne<DeformRenderer>();
 }
 
+void RenderSystem::renderSkyBox(unsigned int skybox, glm::mat4 &vp) {
+  static Render::VAO vao;
+  static bool vaoInitialized = false;
+  static unsigned int indices;
+  if (!vaoInitialized) {
+    vao.Bind();
+    auto cube = Loader.GetMesh("::cubePrimitive", "");
+    cube->vbo.BindAs(GL_ARRAY_BUFFER);
+    cube->ebo.BindAs(GL_ELEMENT_ARRAY_BUFFER);
+    indices = cube->indices.size();
+    vao.LinkAttrib(cube->vbo, 0, 4, GL_FLOAT, sizeof(Vertex), (void *)0);
+    vao.Unbind();
+    cube->vbo.UnbindAs(GL_ARRAY_BUFFER);
+    cube->ebo.UnbindAs(GL_ELEMENT_ARRAY_BUFFER);
+    vaoInitialized = true;
+  }
+  glDepthMask(GL_FALSE);
+  skyboxShader->Use();
+  skyboxShader->SetMat4("VP", vp);
+  vao.Bind();
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
+  glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
+  vao.Unbind();
+  glDepthMask(GL_TRUE);
+}
+
 void RenderSystem::bakeShadowMap() {
-  for (int i = 0; i < Lights.size(); ++i) {
-    auto light = Lights[i];
+  auto lightSystem = GWORLD.GetSystemInstance<LightSystem>();
+  auto &lights = lightSystem->lights;
+  LightsBuffer.BindAs(GL_SHADER_STORAGE_BUFFER);
+  for (int i = 0; i < lights.size(); ++i) {
+    auto light = lights[i];
     light->StartShadow();
-    shadowMapDirLight->Use();
-    auto lightMatrix = light->GetShadowSpaceOrthoMatrix();
-    shadowMapDirLight->SetMat4("LightSpaceMatrix", lightMatrix);
-    if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
-      // render shadow map for directional light
+    if (auto dirLight = dynamic_cast<DirectionalLight *>(light.get())) {
+      shadowMapDirLight->Use();
+      auto lightMatrix = dirLight->GetLightSpaceMatrix();
+      shadowMapDirLight->SetMat4("LightSpaceMatrix", lightMatrix);
       auto offset =
           i * sizeof(LightData) + offsetof(LightData, meta) + 1 * sizeof(int);
-      // set meta[1] to 1
+      // this light will cast shadow
       LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, 1, offset);
       offset = i * sizeof(LightData) + offsetof(LightData, lightMatrix);
-      // set up lightMatrix
+      // setup light matrix
       LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, lightMatrix, offset);
       for (auto id : entities) {
         auto entity = GWORLD.EntityFromID(id);
         auto mesh = entity->GetComponent<Mesh>();
-        // only perform rendering when the mesh is not null
         std::shared_ptr<MeshRenderer> renderer;
-        if (entity->HasComponent<MeshRenderer>()) {
-          renderer = entity->GetComponent<MeshRenderer>();
-        } else if (entity->HasComponent<DeformRenderer>()) {
-          renderer = entity->GetComponent<DeformRenderer>()->renderer;
-          entity->GetComponent<DeformRenderer>()->DeformMesh(mesh);
+        if (auto r = entity->GetComponent<MeshRenderer>()) {
+          renderer = r;
+        } else if (auto d = entity->GetComponent<DeformRenderer>()) {
+          renderer = d->renderer;
+          d->DeformMesh(mesh);
         }
         if (renderer->castShadow) {
           renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
                                        entity->GlobalTransformMatrix());
         }
       }
-      offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
-      auto shadowMapHandle = glGetTextureHandleARB(light->ShadowMap);
+      // bindless texture setup
+      auto shadowMapHandle = glGetTextureHandleARB(dirLight->ShadowMap);
       glMakeTextureHandleResidentARB(shadowMapHandle);
-      // set up shadowMapHandle
+      offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
       LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, shadowMapHandle,
                                 offset);
-    } else if (light->type == LIGHT_TYPE::POINT_LIGHT) {
-      // render shadow map for point lights
+    } else if (auto pointLight = dynamic_cast<PointLight *>(light.get())) {
     }
     light->EndShadow();
   }
   LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
 }
 
-void RenderSystem::fillLightsBuffer() {
-  std::vector<LightData> lightDataArray;
-  for (auto light : Lights) {
-    auto entity = GWORLD.EntityFromID(light->GetID());
-    LightData ld;
-    if (light->type == LIGHT_TYPE::DIRECTIONAL_LIGHT)
-      ld.meta[0] = 0;
-    else if (light->type == LIGHT_TYPE::POINT_LIGHT) {
-      ld.meta[0] = 1;
-      ld.fmeta[0] = light->lightRadius; // setup radius of point light
-    }
-    ld.meta[1] = 0;
-    ld.color = glm::vec4(light->lightColor, 1.0f);
-    ld.position = glm::vec4(entity->Position(), 1.0f);
-    ld.direction = glm::vec4(entity->LocalForward, 1.0f);
-    ld.lightMatrix = glm::mat4(1.0f);
-    lightDataArray.push_back(ld);
-  }
-  LightsBuffer.SetDataAs(GL_SHADER_STORAGE_BUFFER, lightDataArray);
-  LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
-}
-
-void RenderSystem::ResizeAllShadowMaps() {
-  for (auto light : Lights) {
-    light->ResizeShadowMap(GlobalShadowMapSize, GlobalShadowMapSize);
-  }
-}
-
 void RenderSystem::Render() {
+  auto lightSystem = GWORLD.GetSystemInstance<LightSystem>();
+
   glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -102,10 +103,11 @@ void RenderSystem::Render() {
     glm::mat4 projMat = cameraComp->ProjMat;
     glEnable(GL_DEPTH_TEST);
 
-    // Fill the LightsBuffer
-    fillLightsBuffer();
-    // Generate the shadow map
-    if (EnableShadowMaps)
+    if (RenderSkybox && (lightSystem->activeSkyLight != nullptr))
+      renderSkyBox(lightSystem->activeSkyLight->CubeMap,
+                   projMat * glm::mat4(glm::mat3(viewMat)));
+
+    if (EnableShadowMap)
       bakeShadowMap();
 
     // The main render pass
@@ -121,7 +123,8 @@ void RenderSystem::Render() {
         renderer = entity->GetComponent<MeshRenderer>();
       }
       renderer->ForwardRender(mesh, projMat, viewMat, camera.get(),
-                              entity.get(), LightsBuffer);
+                              entity.get(), LightsBuffer,
+                              lightSystem->activeSkyLight);
     }
 
     // draw the grid in 3d space

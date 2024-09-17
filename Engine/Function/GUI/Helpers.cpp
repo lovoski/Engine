@@ -23,7 +23,8 @@ void ColorEdit4(std::string label, glm::vec4 &color) {
   }
 }
 
-void DragableTextureTarget(std::string label, Texture &texture) {
+void DragableTextureTarget(std::string label, Texture &texture,
+                           bool flipVertically) {
   if (ImGui::Button(("Reset##" + label).c_str())) {
     static Texture *null = Loader.GetTexture("::null_texture");
     texture.id = null->id;
@@ -38,7 +39,8 @@ void DragableTextureTarget(std::string label, Texture &texture) {
       fs::path filepath = fs::path(assetFilename);
       std::string extension = filepath.extension().string();
       if (extension == ".png" || extension == ".tga" || extension == ".jpg") {
-        auto loadedTexture = Loader.GetTexture(filepath.string());
+        auto loadedTexture =
+            Loader.GetTexture(filepath.string(), flipVertically);
         texture.id = loadedTexture->id;
         texture.path = loadedTexture->path;
       } else {
@@ -53,6 +55,8 @@ void DragableTextureTarget(std::string label, Texture &texture) {
 
 void Combo(std::string label, std::vector<std::string> &names, int &current,
            std::function<void(int)> handleCurrent) {
+  if (current >= names.size())
+    current = 0; // set current to null when index out of range
   if (ImGui::BeginCombo(label.c_str(), names[current].c_str())) {
     for (int comboIndex = 0; comboIndex < names.size(); ++comboIndex) {
       bool isSelected = current == comboIndex;

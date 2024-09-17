@@ -120,6 +120,8 @@ uniform vec3 WireframeColor;
 
 uniform bool ViewNormal;
 
+uniform samplerCube SkyBox;
+
 in vec2 texCoord;
 in vec3 worldPos;
 in vec3 worldNormal;

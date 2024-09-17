@@ -2,13 +2,19 @@
 #include "Entity.hpp"
 #include "Scene.hpp"
 
+#include "Function/AssetsLoader.hpp"
+#include "Function/AssetsType.hpp"
+#include "Function/GUI/Helpers.hpp"
+
 namespace aEngine {
 
-Light::Light(EntityID id) : BaseComponent(id) {
+// -------------- Directional Light --------------
+
+DirectionalLight::DirectionalLight(EntityID id) : Light(id) {
   glGenFramebuffers(1, &ShadowFBO);
   ResizeShadowMap(ShadowMapWidth, ShadowMapHeight);
 }
-Light::~Light() {
+DirectionalLight::~DirectionalLight() {
   GLint currentlyBoundFBO;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentlyBoundFBO);
 
@@ -22,7 +28,7 @@ Light::~Light() {
   glDeleteFramebuffers(1, &ShadowFBO);
 }
 
-void Light::StartShadow() {
+void DirectionalLight::StartShadow() {
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &currentFBO);
   glGetIntegerv(GL_VIEWPORT, viewport);
   glViewport(0, 0, ShadowMapWidth, ShadowMapHeight);
@@ -30,12 +36,13 @@ void Light::StartShadow() {
   glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void Light::EndShadow() {
+void DirectionalLight::EndShadow() {
   glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
   glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
 
-void Light::ResizeShadowMap(unsigned int width, unsigned int height) {
+void DirectionalLight::ResizeShadowMap(unsigned int width,
+                                       unsigned int height) {
   ShadowMapWidth = width;
   ShadowMapHeight = height;
   if (glIsTexture(ShadowMap))
@@ -64,7 +71,7 @@ void Light::ResizeShadowMap(unsigned int width, unsigned int height) {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-glm::mat4 Light::GetShadowSpaceOrthoMatrix() {
+glm::mat4 DirectionalLight::GetLightSpaceMatrix() {
   auto projMat = glm::ortho(-ShadowOrthoW * 0.5f, ShadowOrthoW * 0.5f,
                             -ShadowOrthoH * 0.5f, ShadowOrthoH * 0.5f,
                             ShadowZNear, ShadowZFar);
@@ -75,33 +82,105 @@ glm::mat4 Light::GetShadowSpaceOrthoMatrix() {
   return projMat * viewMat;
 }
 
-void ModifyLightColor(glm::vec3 &lightColor) {
-  float color[3] = {lightColor.x, lightColor.y, lightColor.z};
-  if (ImGui::ColorEdit3("Color", color)) {
-    lightColor.x = color[0];
-    lightColor.y = color[1];
-    lightColor.z = color[2];
-  }
+void DirectionalLight::DrawInspectorGUI() {
+  ImGui::Checkbox("Enable", &enable);
+  ImGui::Separator();
+  if (!enable)
+    ImGui::BeginDisabled();
+  GUIUtils::ColorEdit3("Color", LightColor);
+  ImGui::MenuItem("Shadow", nullptr, nullptr, false);
+  ImGui::MenuItem("Shadow Frustom", nullptr, nullptr, false);
+  ImGui::Checkbox("Show Frustom", &ShowShadowFrustom);
+  ImGui::SliderFloat("Width", &ShadowOrthoW, 0.0f, 100.0f);
+  ImGui::SliderFloat("Height", &ShadowOrthoH, 0.0f, 100.0f);
+  ImGui::DragFloat("Near", &ShadowZNear, 0.01f, 0.0f, 10.0f);
+  ImGui::DragFloat("Far", &ShadowZFar, 1, 10.0f, 200.0f);
+  if (!enable)
+    ImGui::EndDisabled();
 }
 
-void Light::DrawInspectorGUI() {
-  std::vector<const char *> comboItems = {"Directional light", "Point light"};
-  static int baseLightGUIComboItemIndex =
-      type == LIGHT_TYPE::DIRECTIONAL_LIGHT ? 0 : 1;
-  ImGui::Combo("Light Type", &baseLightGUIComboItemIndex, comboItems.data(),
-               comboItems.size());
+// -------------- Point Light --------------
 
-  ModifyLightColor(lightColor);
-  if (type == LIGHT_TYPE::POINT_LIGHT) {
-    ImGui::DragFloat("Radius", &lightRadius, 0.06f, 0.0f, 100.0f);
-  } else if (type == LIGHT_TYPE::DIRECTIONAL_LIGHT) {
-    ImGui::MenuItem("Shadow Frustom", nullptr, nullptr, false);
-    ImGui::Checkbox("Show Frustom", &ShowShadowFrustom);
-    ImGui::SliderFloat("Width", &ShadowOrthoW, 0.0f, 100.0f);
-    ImGui::SliderFloat("Height", &ShadowOrthoH, 0.0f, 100.0f);
-    ImGui::DragFloat("Near", &ShadowZNear, 0.01f, 0.0f, 10.0f);
-    ImGui::DragFloat("Far", &ShadowZFar, 1, 10.0f, 200.0f);
+PointLight::PointLight(EntityID id) : Light(id) {}
+PointLight::~PointLight() {}
+
+void PointLight::DrawInspectorGUI() {
+  ImGui::Checkbox("Enable", &enable);
+  ImGui::Separator();
+  if (!enable)
+    ImGui::BeginDisabled();
+  GUIUtils::ColorEdit3("Color", LightColor);
+  ImGui::DragFloat("Radius", &LightRadius, 0.1f, 0.0f, 10000.0f);
+  if (!enable)
+    ImGui::EndDisabled();
+}
+
+// -------------- Sky Light --------------
+
+SkyLight::SkyLight(EntityID id) : Light(id) {
+  // initilaize all faces
+  for (int i = 0; i < 6; ++i)
+    faces[i] = *Loader.GetTexture("::null_texture");
+  // create the cubemap by default
+  createCubeMap();
+}
+
+SkyLight::~SkyLight() {}
+
+void SkyLight::DrawInspectorGUI() {
+  ImGui::Checkbox("Enable", &enable);
+  ImGui::Separator();
+  if (!enable)
+    ImGui::BeginDisabled();
+  if (ImGui::Button("Build Cubemap", {-1, 30})) {
+    createCubeMap();
   }
+  static const char *faceLabels[6] = {"POS X", "NEG X", "POS Y",
+                                      "NEG Y", "POS Z", "NEG Z"};
+  for (int i = 0; i < 6; ++i) {
+    GUIUtils::DragableTextureTarget(faceLabels[i], faces[i], false);
+  }
+  if (!enable)
+    ImGui::EndDisabled();
+}
+
+void SkyLight::createCubeMap() {
+  static Texture pureBlack = *Loader.GetTexture("::black_texture");
+  static const GLenum cubemapFaces[6] = {
+      GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+      GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z};
+
+  glGenTextures(1, &CubeMap);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, CubeMap);
+
+  std::vector<unsigned char *> textureData(6);
+  // all textures of a cubemap must have uniformed size
+  int w = width, h = height;
+  for (int i = 0; i < 6; i++) {
+    // Bind the existing texture
+    unsigned int id = faces[i].id;
+    if (faces[i].path == "::null_texture")
+      id = pureBlack.id;
+    glBindTexture(GL_TEXTURE_2D, id);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    textureData[i] = new unsigned char[w * h * 3];
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[i]);
+  }
+
+  for (unsigned int i = 0; i < 6; ++i) {
+    glTexImage2D(cubemapFaces[i], 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                 textureData[i]);
+    delete[] textureData[i];
+  }
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 }; // namespace aEngine

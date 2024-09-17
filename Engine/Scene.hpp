@@ -124,7 +124,8 @@ public:
     UpdateEntityTargetSystems(entity);
   }
 
-  // find the component belongs to some entity
+  // find the component belongs to some entity, returns nullptr when the 
+  // entity don't have this component.
   template <typename T> std::shared_ptr<T> GetComponent(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)
       throw std::runtime_error(
