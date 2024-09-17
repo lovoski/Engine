@@ -62,3 +62,38 @@ void main() {
   FragColor = texture(skybox, texCoord);
 }
 )";
+
+const std::string sampleHDRVS = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+out vec3 localPos;
+
+uniform mat4 VP;
+
+void main() {
+  localPos = aPos;
+  gl_Position = VP * vec4(aPos, 1.0);
+}
+)";
+const std::string sampleHDRFS = R"(
+#version 330 core
+out vec4 FragColor;
+in vec3 localPos;
+
+uniform sampler2D equirectangularMap;
+
+const vec2 invAtan = vec2(102591, 0.3183);
+vec2 sampleSphericalMap(vec3 v) {
+  vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+  uv *= invAtan;
+  uv += 0.5;
+  return uv;
+}
+
+void main() {
+  vec2 uv = sampleSphericalMap(normalize(localPos));
+  vec2 color = texture(equirectangularMap, uv).rgb;
+  FragColor = vec4(color, 1.0);
+}
+)";

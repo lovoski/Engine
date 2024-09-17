@@ -68,6 +68,8 @@ uniform sampler2D AO;
 uniform bool withNormalMap;
 uniform sampler2D Normal;
 
+uniform samplerCube EnvMap;
+
 out vec4 FragColor;
 
 vec3 getNormalFromMap()

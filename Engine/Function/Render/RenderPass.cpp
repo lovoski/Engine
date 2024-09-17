@@ -4,6 +4,8 @@
 #include "Function/GUI/Helpers.hpp"
 #include "Scene.hpp"
 
+#include "Component/Light.hpp"
+
 namespace aEngine {
 
 namespace Render {
@@ -20,8 +22,11 @@ void BasePass::SetupLights(Buffer &lightsBuffer,
     shader->Use();
     lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
     // setup skylight
+    static SkyLight pureBlack(-1);
     if (skyLight != nullptr)
-      shader->SetCubeMap("SkyBox", skyLight->CubeMap, 0);
+      shader->SetCubeMap("EnvMap", skyLight->CubeMap, 0);
+    else
+      shader->SetCubeMap("EnvMap", pureBlack.CubeMap, 0);
   } else {
     LOG_F(ERROR, "shader not setup for render pass %s, set to error shader",
           identifier.c_str());

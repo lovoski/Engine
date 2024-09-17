@@ -16,7 +16,12 @@ public:
   void SetDataAs(GLenum TARGET_BUFFER_NAME, const std::vector<T> &data,
                  GLenum usage = GL_STATIC_DRAW) {
     glBindBuffer(TARGET_BUFFER_NAME, ID);
-    glBufferData(TARGET_BUFFER_NAME, data.size() * sizeof(T),
+    // setting a buffer of size 0 is a invalid operation
+    // use a buffer of size 1 byte with null datq instead
+    if (data.size() == 0)
+      glBufferData(TARGET_BUFFER_NAME, 1, nullptr, usage);
+    else
+      glBufferData(TARGET_BUFFER_NAME, data.size() * sizeof(T),
                  (void *)data.data(), usage);
   }
   // Update the data in this buffer as described in offset. Make sure the buffer
@@ -25,7 +30,10 @@ public:
   void UpdateDataAs(GLenum TARGET_BUFFER_NAME, const std::vector<T> &data,
                     size_t offset) {
     glBindBuffer(TARGET_BUFFER_NAME, ID);
-    glBufferSubData(TARGET_BUFFER_NAME, offset, data.size() * sizeof(T),
+    if (data.size() == 0)
+      glBufferSubData(TARGET_BUFFER_NAME, offset, 1, nullptr);
+    else
+      glBufferSubData(TARGET_BUFFER_NAME, offset, data.size() * sizeof(T),
                     data.data());
   }
   template<typename T>
