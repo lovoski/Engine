@@ -10,10 +10,11 @@ In each main loop, all components are maintained by corresponding systems. For e
 
 ## Features
 
-- Easy to use native scripting system and api.
-- Motion capture data structures for `.bvh` and `.fbx`.
-- Simple and extensible material system.
-- OpenGL based render system for static mesh and skinned mesh.
+- Native scripting system and API.
+- PBR and NPR shaders for static mesh and skinned mesh.
+- Extensible multi-pass forward rendering pipeline.
+- Data structure for mocap data (.bvh, .fbx motion files).
+- Real time collision system.
 
 ## How To Compile
 
@@ -75,9 +76,11 @@ Check `Engine/Component/NativeScript.hpp` for more details.
 
 ## Render System
 
-Here's a screen shot of the rendering from this engine:
+Here are some screen shots of the rendering from this engine:
 
 ![toon_shading](Doc/render_toon_20240917.png)
+
+![pbr_shading](Doc/render_pbr_20240918.png)
 
 The main code for render system lies in `Engine/System/RenderSystem`, however, there are some sub-systems that work tightly with render system (`CameraSystem`, `LightSystem` etc.).
 
@@ -132,4 +135,11 @@ Here's a screen shot of the bvh data structure:
 
 ## Animation System
 
-...
+The animation system is based on the data structure describing the mocap data, you can find it in `Function/Animation/Motion`.
+
+Each motion contains one `Skeleton` and an array of `Pose`, we need to apply the motion data in each `Pose` to specific `Skeleton` to get the final animation.
+
+The `Skeleton` holds information for all joints (parent-child relation, names, relative transforms etc.) and the `Pose` records the relative transform for all joints in one frame.
+
+A simple neural retargeting script for character with varied skeleton is provided in `Scripts/Animation/SAMERetarget`. Here's a simple demo to it:
+
