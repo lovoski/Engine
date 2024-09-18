@@ -59,7 +59,6 @@ uniform float roughnessFactor;
 uniform float metallicFactor;
 uniform float aoFactor;
 uniform vec3 albedoFactor;
-uniform float Ambient;
 uniform vec3 F0;
 uniform sampler2D Albedo;
 uniform sampler2D Roughness;
@@ -68,7 +67,8 @@ uniform sampler2D AO;
 uniform bool withNormalMap;
 uniform sampler2D Normal;
 
-uniform samplerCube EnvMap;
+uniform samplerCube EnvironmentMap;
+uniform samplerCube DiffuseIrradiance;
 
 out vec4 FragColor;
 
@@ -118,9 +118,9 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
   return ggx1 * ggx2;
 }
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
+vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
 {
-  return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+  return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 void main() {
@@ -155,7 +155,7 @@ void main() {
 
     float NDF = DistributionGGX(N, H, roughness);
     float G = GeometrySmith(N, V, L, roughness);
-    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), _F0);
+    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), _F0, roughness);
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
@@ -169,7 +169,7 @@ void main() {
     Lo += (kD * albedo / PI + specular) * radiance * NdotL;
   }
 
-  vec3 ambient = vec3(Ambient) * albedo * ao;
+  vec3 ambient = texture(DiffuseIrradiance, N).rgb * albedo * ao;
   vec3 color = ambient + Lo;
 
   color = color / (color + vec3(1.0));
@@ -204,7 +204,6 @@ void PBRPass::BeforePass() {
   shader->SetTexture2D(AO, "AO", 3);
   shader->SetVec3("F0", F0);
   shader->SetBool("withNormalMap", WithNormalMap);
-  shader->SetFloat("Ambient", Ambient);
 }
 
 void PBRPass::DrawInspectorGUI() {
@@ -217,7 +216,6 @@ void PBRPass::DrawInspectorGUI() {
   ImGui::SliderFloat("AO", &AOFactor, 0.0f, 1.0f);
   GUIUtils::DragableTextureTarget("AO", AO);
   ImGui::InputFloat3("F0", &F0.x);
-  ImGui::DragFloat("Ambient", &Ambient, 0.001f, 0.0f, 1.0f);
   ImGui::Checkbox("With Normal Map", &WithNormalMap);
   if (!WithNormalMap)
     ImGui::BeginDisabled();

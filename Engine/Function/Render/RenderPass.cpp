@@ -23,10 +23,13 @@ void BasePass::SetupLights(Buffer &lightsBuffer,
     lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
     // setup skylight
     static EnvironmentLight pureBlack(-1);
-    if (skyLight != nullptr)
-      shader->SetCubeMap("EnvMap", skyLight->CubeMap, 0);
-    else
-      shader->SetCubeMap("EnvMap", pureBlack.CubeMap, 0);
+    if (skyLight != nullptr) {
+      shader->SetCubeMap("EnvironmentMap", skyLight->CubeMap, 0);
+      shader->SetCubeMap("DiffuseIrradiance", skyLight->Irradiance, 1);
+    } else {
+      shader->SetCubeMap("EnvironmentMap", pureBlack.CubeMap, 0);
+      shader->SetCubeMap("DiffuseIrradiance", pureBlack.CubeMap, 1);
+    }
   } else {
     LOG_F(ERROR, "shader not setup for render pass %s, set to error shader",
           identifier.c_str());

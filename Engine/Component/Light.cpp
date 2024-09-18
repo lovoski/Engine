@@ -157,6 +157,7 @@ void EnvironmentLight::DrawInspectorGUI() {
 
 void EnvironmentLight::createCubeMapFromHDR() {
   Render::HDRToCubeMap(hdr.id, CubeMap);
+  Render::ConvoluteCubeMap(CubeMap, Irradiance);
 }
 
 void EnvironmentLight::createCubeMapFromImages() {

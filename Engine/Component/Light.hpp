@@ -64,12 +64,12 @@ struct EnvironmentLight : public Light {
   void DrawInspectorGUI() override;
 
   unsigned int CubeMap;
+  // This map is automatically computed when cubemap is built
+  unsigned int Irradiance;
 
 protected:
   int width = 1024, height = 1024;
   Texture faces[6], hdr;
-  // this map is automatically build when cubemap is built
-  unsigned int irradiance;
   void createCubeMapFromImages();
   void createCubeMapFromHDR();
 };
