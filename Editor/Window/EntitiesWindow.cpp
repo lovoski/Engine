@@ -156,10 +156,10 @@ void Editor::EntitiesWindow() {
         pLight->name = "Point light";
         pLight->AddComponent<PointLight>();
       }
-      if (ImGui::MenuItem("Sky Light")) {
+      if (ImGui::MenuItem("Environment Light")) {
         auto skyLight = GWORLD.AddNewEntity();
-        skyLight->name = "Sky light";
-        skyLight->AddComponent<SkyLight>();
+        skyLight->name = "Environment light";
+        skyLight->AddComponent<EnvironmentLight>();
       }
       ImGui::EndMenu();
     }

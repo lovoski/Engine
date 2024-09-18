@@ -116,7 +116,7 @@ void Editor::InspectorWindow() {
     DrawComponent<Camera>(entity, "Camera");
     DrawComponent<DirectionalLight>(entity, "Directional Light");
     DrawComponent<PointLight>(entity, "Point Light");
-    DrawComponent<SkyLight>(entity, "Sky Light");
+    DrawComponent<EnvironmentLight>(entity, "Environment Light");
     DrawComponent<Animator>(entity, "Animator");
     DrawComponent<MeshRenderer>(entity, "Mesh Renderer");
     DrawComponent<DeformRenderer>(entity, "Deform Renderer");

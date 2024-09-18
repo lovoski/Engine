@@ -94,6 +94,19 @@ bool Shader::SetTexture2D(Texture &texture, std::string name, int slot) {
   return true;
 }
 
+bool Shader::SetTexture2D(unsigned int texture, std::string name, int slot) {
+  Use();
+  glActiveTexture(GL_TEXTURE0 + slot);
+  int location = glGetUniformLocation(ID, name.c_str());
+  if (location == -1) {
+    // LOG_F(WARNING, "location for %s not valid", name.c_str());
+    return false;
+  }
+  glUniform1i(location, slot);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  return true;
+}
+
 bool Shader::SetCubeMap(std::string name, unsigned int cubemapID, int slot) {
   glActiveTexture(GL_TEXTURE0 + slot);
   glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapID);

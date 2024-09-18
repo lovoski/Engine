@@ -16,13 +16,13 @@ using std::string;
 using std::vector;
 
 void BasePass::SetupLights(Buffer &lightsBuffer,
-                           std::shared_ptr<SkyLight> skyLight,
+                           std::shared_ptr<EnvironmentLight> skyLight,
                            int bindingPoint) {
   if (shader != nullptr) {
     shader->Use();
     lightsBuffer.BindToPointAs(GL_SHADER_STORAGE_BUFFER, bindingPoint);
     // setup skylight
-    static SkyLight pureBlack(-1);
+    static EnvironmentLight pureBlack(-1);
     if (skyLight != nullptr)
       shader->SetCubeMap("EnvMap", skyLight->CubeMap, 0);
     else

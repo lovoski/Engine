@@ -32,7 +32,7 @@ public:
   // The parameter `bindingPoint` is the binding point of
   // light buffer as a SSBO.
   void SetupLights(Buffer &lightsBuffer,
-                   std::shared_ptr<SkyLight> skyLight = nullptr,
+                   std::shared_ptr<EnvironmentLight> skyLight = nullptr,
                    int bindingPoint = 0);
 
   // don't override this function in custom pass

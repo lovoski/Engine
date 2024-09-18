@@ -22,7 +22,7 @@ struct MeshRenderer : public aEngine::BaseComponent {
   void ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
                      glm::mat4 viewMat, Entity *camera, Entity *object,
                      Render::Buffer &lightsBuffer,
-                     std::shared_ptr<SkyLight> skyLight = nullptr);
+                     std::shared_ptr<EnvironmentLight> skyLight = nullptr);
 
   // Setup `Model` shader variable for the shader, draw the mesh
   void DrawMeshShadowPass(Render::Shader &shader, std::shared_ptr<Mesh> mesh,

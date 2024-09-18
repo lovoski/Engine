@@ -34,7 +34,7 @@ void MeshRenderer::DrawMeshShadowPass(Render::Shader &shader,
 void MeshRenderer::ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
                                  glm::mat4 viewMat, Entity *camera,
                                  Entity *object, Render::Buffer &lightsBuffer,
-                                 std::shared_ptr<SkyLight> skyLight) {
+                                 std::shared_ptr<EnvironmentLight> skyLight) {
   for (auto pass : passes) {
     if (pass->Enabled) {
       pass->GetShader()->Use();

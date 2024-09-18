@@ -57,9 +57,9 @@ struct PointLight : public Light {
 protected:
 };
 
-struct SkyLight : public Light {
-  SkyLight(EntityID id);
-  ~SkyLight();
+struct EnvironmentLight : public Light {
+  EnvironmentLight(EntityID id);
+  ~EnvironmentLight();
 
   void DrawInspectorGUI() override;
 
@@ -67,8 +67,11 @@ struct SkyLight : public Light {
 
 protected:
   int width = 1024, height = 1024;
-  Texture faces[6];
-  void createCubeMap();
+  Texture faces[6], hdr;
+  // this map is automatically build when cubemap is built
+  unsigned int irradiance;
+  void createCubeMapFromImages();
+  void createCubeMapFromHDR();
 };
 
 }; // namespace aEngine

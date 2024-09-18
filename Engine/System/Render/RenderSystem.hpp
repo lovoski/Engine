@@ -25,7 +25,6 @@ public:
     GridColor = glm::vec3(0.5f);
     EnableShadowMap = false;
     ShadowMapResolution = 1024;
-    skyboxShader = Loader.GetShader("::skybox");
     shadowMapDirLight = Loader.GetShader("::shadowMapDirLight");
   }
 
@@ -44,9 +43,7 @@ public:
 
 protected:
   std::shared_ptr<Render::Shader> shadowMapDirLight;
-  std::shared_ptr<Render::Shader> skyboxShader;
   void bakeShadowMap();
-  void renderSkyBox(unsigned int skybox, glm::mat4 &vp);
 };
 
 }; // namespace aEngine

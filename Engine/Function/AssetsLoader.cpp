@@ -69,6 +69,7 @@ AssetsLoader::~AssetsLoader() {
 
 unsigned int loadAndCreateTextureFromFile(string texturePath,
                                           bool flipVertically = true);
+unsigned int loadHDRImageFromFile(string filePath, bool flipVertically = true);
 
 void AssetsLoader::LoadDefaultAssets() {
   // initialize all the primitives
@@ -137,7 +138,6 @@ void AssetsLoader::LoadDefaultAssets() {
   prepareDefaultShader(Render::wireframeVS, Render::wireframeFS, "none",
                        "::wireframe");
   prepareDefaultShader(Render::pbrVS, Render::pbrFS, "none", "::pbr");
-  prepareDefaultShader(skyboxVS, skyboxFS, "none", "::skybox");
 }
 
 void AssetsLoader::prepareDefaultShader(std::string vs, std::string fs,
@@ -227,6 +227,26 @@ Texture *AssetsLoader::GetTexture(string texturePath, bool flipVertically) {
     // load new texture
     Texture *newTexture = new Texture();
     auto id = loadAndCreateTextureFromFile(texturePath, flipVertically);
+    if (id == (unsigned int)(-1)) {
+      // failed to load texture, return null
+      return allTextures["::null_texture"];
+    } else {
+      newTexture->id = id;
+      newTexture->path = texturePath;
+      allTextures[texturePath] = newTexture;
+      return newTexture;
+    }
+  } else {
+    return allTextures[texturePath];
+  }
+}
+
+Texture *AssetsLoader::GetHDRTexture(std::string texturePath,
+                                     bool flipVertically) {
+  if (allTextures.find(texturePath) == allTextures.end()) {
+    // load new texture
+    Texture *newTexture = new Texture();
+    auto id = loadHDRImageFromFile(texturePath, flipVertically);
     if (id == (unsigned int)(-1)) {
       // failed to load texture, return null
       return allTextures["::null_texture"];

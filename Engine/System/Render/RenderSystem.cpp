@@ -5,6 +5,7 @@
 #include "Component/Camera.hpp"
 #include "Component/Light.hpp"
 
+#include "Function/Render/Tools.hpp"
 #include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
@@ -14,32 +15,6 @@ RenderSystem::RenderSystem() {
   AddComponentSignatureRequireAll<Mesh>();
   AddComponentSignatureRequireOne<MeshRenderer>();
   AddComponentSignatureRequireOne<DeformRenderer>();
-}
-
-void RenderSystem::renderSkyBox(unsigned int skybox, glm::mat4 &vp) {
-  static Render::VAO vao;
-  static bool vaoInitialized = false;
-  static unsigned int indices;
-  if (!vaoInitialized) {
-    vao.Bind();
-    auto cube = Loader.GetMesh("::cubePrimitive", "");
-    cube->vbo.BindAs(GL_ARRAY_BUFFER);
-    cube->ebo.BindAs(GL_ELEMENT_ARRAY_BUFFER);
-    indices = cube->indices.size();
-    vao.LinkAttrib(cube->vbo, 0, 4, GL_FLOAT, sizeof(Vertex), (void *)0);
-    vao.Unbind();
-    cube->vbo.UnbindAs(GL_ARRAY_BUFFER);
-    cube->ebo.UnbindAs(GL_ELEMENT_ARRAY_BUFFER);
-    vaoInitialized = true;
-  }
-  glDepthMask(GL_FALSE);
-  skyboxShader->Use();
-  skyboxShader->SetMat4("VP", vp);
-  vao.Bind();
-  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
-  glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
-  vao.Unbind();
-  glDepthMask(GL_TRUE);
 }
 
 void RenderSystem::bakeShadowMap() {
@@ -104,8 +79,8 @@ void RenderSystem::Render() {
     glEnable(GL_DEPTH_TEST);
 
     if (RenderSkybox && (lightSystem->activeSkyLight != nullptr))
-      renderSkyBox(lightSystem->activeSkyLight->CubeMap,
-                   projMat * glm::mat4(glm::mat3(viewMat)));
+      Render::RenderEnvironmentMap(lightSystem->activeSkyLight->CubeMap,
+                                   projMat * glm::mat4(glm::mat3(viewMat)));
 
     if (EnableShadowMap)
       bakeShadowMap();

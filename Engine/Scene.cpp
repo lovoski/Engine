@@ -121,7 +121,7 @@ void Scene::SetupDefaultScene() {
 
   auto skybox = AddNewEntity();
   skybox->name = "Sky Light";
-  skybox->AddComponent<SkyLight>();
+  skybox->AddComponent<EnvironmentLight>();
 }
 
 void Scene::Reset() {

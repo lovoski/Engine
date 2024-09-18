@@ -5,10 +5,12 @@
 #include "Function/Animation/Deform.hpp"
 #include "Function/AssetsLoader.hpp"
 #include "Function/AssetsType.hpp"
+#include "Function/GUI/Helpers.hpp"
 #include "Function/Render/Mesh.hpp"
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
 #include "Function/Render/VisUtils.hpp"
+
 
 namespace aEngine {
 
@@ -215,11 +217,7 @@ void Animator::DrawInspectorGUI() {
     }
     ImGui::EndDragDropTarget();
   }
-  float skeletonColor[3] = {SkeletonColor.x, SkeletonColor.y, SkeletonColor.z};
-  if (ImGui::ColorEdit3("Color", skeletonColor)) {
-    SkeletonColor =
-        glm::vec3(skeletonColor[0], skeletonColor[1], skeletonColor[2]);
-  }
+  GUIUtils::ColorEdit3("Color", SkeletonColor);
   if (ImGui::TreeNode("Hierarchy")) {
     drawSkeletonHierarchy();
     ImGui::TreePop();

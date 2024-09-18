@@ -2,6 +2,13 @@
 
 namespace aEngine {
 
+LightSystem::LightSystem() {
+  Reset();
+  AddComponentSignatureRequireOne<DirectionalLight>();
+  AddComponentSignatureRequireOne<PointLight>();
+  AddComponentSignatureRequireOne<EnvironmentLight>();
+}
+
 void LightSystem::Update(float dt) {
   std::vector<LightData> ld;
   lights.clear();
@@ -27,7 +34,7 @@ void LightSystem::Update(float dt) {
         ld.push_back(light);
         lights.push_back(pointLight);
       }
-    } else if (auto skyLightComp = GWORLD.GetComponent<SkyLight>(id)) {
+    } else if (auto skyLightComp = GWORLD.GetComponent<EnvironmentLight>(id)) {
       if (skyLightComp->enable)
         skyLights.push_back(skyLightComp);
     }

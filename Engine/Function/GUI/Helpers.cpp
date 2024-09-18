@@ -43,8 +43,13 @@ void DragableTextureTarget(std::string label, Texture &texture,
             Loader.GetTexture(filepath.string(), flipVertically);
         texture.id = loadedTexture->id;
         texture.path = loadedTexture->path;
+      } else if (extension == ".hdr") {
+        auto loadedTexture =
+            Loader.GetHDRTexture(filepath.string(), flipVertically);
+        texture.id = loadedTexture->id;
+        texture.path = loadedTexture->path;
       } else {
-        LOG_F(ERROR, "only .png, .tga and .jpg texture are supported");
+        LOG_F(ERROR, "only .png, .tga, .jpg and .hdr texture are supported");
       }
     }
     ImGui::EndDragDropTarget();
@@ -68,6 +73,17 @@ void Combo(std::string label, std::vector<std::string> &names, int &current,
         ImGui::SetItemDefaultFocus();
     }
     ImGui::EndCombo();
+  }
+}
+
+void DragdropTarget(std::string source,
+                    std::function<void(void *)> handlePayload) {
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload(source.c_str())) {
+      handlePayload(payload->Data);
+    }
+    ImGui::EndDragDropTarget();
   }
 }
 

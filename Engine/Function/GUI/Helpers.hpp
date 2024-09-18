@@ -15,6 +15,8 @@ void DragableTextureTarget(std::string label, Texture &texture,
 void Combo(
     std::string label, std::vector<std::string> &names, int &current,
     std::function<void(int)> handleCurrent = [](int) {});
+void DragdropTarget(std::string source,
+                    std::function<void(void *)> handlePayload);
 
 }; // namespace GUIUtils
 

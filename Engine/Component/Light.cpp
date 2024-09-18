@@ -6,6 +6,8 @@
 #include "Function/AssetsType.hpp"
 #include "Function/GUI/Helpers.hpp"
 
+#include "Function/Render/Tools.hpp"
+
 namespace aEngine {
 
 // -------------- Directional Light --------------
@@ -37,6 +39,7 @@ void DirectionalLight::StartShadow() {
 }
 
 void DirectionalLight::EndShadow() {
+  glFinish(); // don't return until previous render finishes
   glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
   glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
@@ -117,34 +120,46 @@ void PointLight::DrawInspectorGUI() {
 
 // -------------- Sky Light --------------
 
-SkyLight::SkyLight(EntityID id) : Light(id) {
+EnvironmentLight::EnvironmentLight(EntityID id) : Light(id) {
   // initilaize all faces
   for (int i = 0; i < 6; ++i)
     faces[i] = *Loader.GetTexture("::null_texture");
+  hdr = *Loader.GetTexture("::null_texture");
   // create the cubemap by default
-  createCubeMap();
+  createCubeMapFromImages();
 }
 
-SkyLight::~SkyLight() {}
+EnvironmentLight::~EnvironmentLight() {}
 
-void SkyLight::DrawInspectorGUI() {
+void EnvironmentLight::DrawInspectorGUI() {
   ImGui::Checkbox("Enable", &enable);
   ImGui::Separator();
   if (!enable)
     ImGui::BeginDisabled();
-  if (ImGui::Button("Build Cubemap", {-1, 30})) {
-    createCubeMap();
+  if (ImGui::TreeNode("From Images")) {
+    if (ImGui::Button("Build Cubemap", {-1, 30}))
+      createCubeMapFromImages();
+    static const char *faceLabels[6] = {"POS X", "NEG X", "POS Y",
+                                        "NEG Y", "POS Z", "NEG Z"};
+    for (int i = 0; i < 6; ++i)
+      GUIUtils::DragableTextureTarget(faceLabels[i], faces[i], false);
+    ImGui::TreePop();
   }
-  static const char *faceLabels[6] = {"POS X", "NEG X", "POS Y",
-                                      "NEG Y", "POS Z", "NEG Z"};
-  for (int i = 0; i < 6; ++i) {
-    GUIUtils::DragableTextureTarget(faceLabels[i], faces[i], false);
+  if (ImGui::TreeNode("From HDR")) {
+    if (ImGui::Button("Build Cubemap", {-1, 30}))
+      createCubeMapFromHDR();
+    GUIUtils::DragableTextureTarget("HDR Image", hdr);
+    ImGui::TreePop();
   }
   if (!enable)
     ImGui::EndDisabled();
 }
 
-void SkyLight::createCubeMap() {
+void EnvironmentLight::createCubeMapFromHDR() {
+  Render::HDRToCubeMap(hdr.id, CubeMap);
+}
+
+void EnvironmentLight::createCubeMapFromImages() {
   static Texture pureBlack = *Loader.GetTexture("::black_texture");
   static const GLenum cubemapFaces[6] = {
       GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X,

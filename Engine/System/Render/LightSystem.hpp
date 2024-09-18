@@ -1,6 +1,3 @@
-/**
- * Maintain the activeLights property in GWORLD's context.
- */
 #pragma once
 
 #include "Base/BaseSystem.hpp"
@@ -31,11 +28,7 @@ struct LightData {
 
 class LightSystem : public aEngine::BaseSystem {
 public:
-  LightSystem() {
-    AddComponentSignatureRequireOne<DirectionalLight>();
-    AddComponentSignatureRequireOne<PointLight>();
-    AddComponentSignatureRequireOne<SkyLight>();
-  }
+  LightSystem();
 
   void Update(float dt) override;
 
@@ -49,8 +42,8 @@ public:
   void Render();
 
   // The enabled global skylight
-  std::vector<std::shared_ptr<SkyLight>> skyLights;
-  std::shared_ptr<SkyLight> activeSkyLight = nullptr;
+  std::vector<std::shared_ptr<EnvironmentLight>> skyLights;
+  std::shared_ptr<EnvironmentLight> activeSkyLight = nullptr;
   // Stores pointers to all enabled lights
   std::vector<std::shared_ptr<Light>> lights;
 };

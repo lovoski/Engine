@@ -27,6 +27,7 @@ public:
   // load and cache a texture from file, returns "::null_texture" if
   // failed to load.
   Texture *GetTexture(std::string texturePath, bool flipVertically = true);
+  Texture *GetHDRTexture(std::string texturePath, bool flipVertically = true);
   Render::Mesh *GetMesh(std::string modelPath, std::string identifier);
   std::vector<Render::Mesh *> GetModel(std::string modelPath);
   Animation::Motion *GetMotion(std::string motionPath);
