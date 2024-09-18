@@ -143,3 +143,4 @@ The `Skeleton` holds information for all joints (parent-child relation, names, r
 
 A simple neural retargeting script for character with varied skeleton is provided in `Scripts/Animation/SAMERetarget`. Here's a simple demo to it:
 
+[neural_retargeting.webm](https://github.com/user-attachments/assets/fc87cc00-2e0b-4929-ac66-5bc6f7f236d2)
