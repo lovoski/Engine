@@ -1,4 +1,5 @@
 #include "Function/Animation/Motion.hpp"
+#include "Function/Math/Math.hpp"
 
 #include <exception>
 #include <filesystem>
@@ -483,6 +484,14 @@ void Skeleton::ExportAsBVH(std::string filepath, bool keepJointNames) {
   tmpMotion.fps = 30;
   tmpMotion.poses.push_back(emptyPose);
   tmpMotion.SaveToBVH(filepath, keepJointNames);
+}
+
+vec3 Pose::GetFacingDirection(vec3 restFacing) {
+  auto q = jointRotations[0];
+  auto xzRot = q * vec3(0.0f, 1.0f, 0.0f);
+  auto qxz = Math::FromToRotation(vec3(0.0f, 1.0f, 0.0f), xzRot);
+  auto qy = glm::inverse(qxz) * q;
+  return qy * restFacing;
 }
 
 }; // namespace Animation

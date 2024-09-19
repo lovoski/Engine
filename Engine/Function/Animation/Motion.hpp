@@ -82,6 +82,9 @@ struct Pose {
   // local rotations of all joints in quaternion
   std::vector<glm::quat> jointRotations;
 
+  // Extract the facing direction projected to xz plane,
+  glm::vec3 GetFacingDirection(glm::vec3 restFacing = glm::vec3(0.0f, 0.0f, 1.0f));
+
   // Perform FK to get global positions for all joints.
   // Mind that `self.ori = parent.ori * self.rot`
   // where `ori` means global rotation, `rot` means local rotation.

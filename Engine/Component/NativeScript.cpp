@@ -2,6 +2,7 @@
 
 #include "Scripts/Animation/SAMERetarget.hpp"
 #include "Scripts/Animation/VisMetrics.hpp"
+#include "Scripts/Animation/MotionMatching.hpp"
 #include "Scripts/SelfIntersection.hpp"
 
 namespace aEngine {
@@ -19,10 +20,13 @@ void NativeScript::drawAddScriptPopup() {
   if (ImGui::BeginPopup("addscriptpanelpopup")) {
     ImGui::MenuItem("Registered Scripts", nullptr, nullptr, false);
     ImGui::Separator();
-    if (ImGui::MenuItem("Visual Metrics"))
-      Bind<VisMetrics>();
     if (ImGui::MenuItem("SAME Retarget"))
       Bind<SAMERetarget>();
+    if (ImGui::MenuItem("Motion Matching"))
+      Bind<MotionMatching>();
+    ImGui::Separator();
+    if (ImGui::MenuItem("Visual Metrics"))
+      Bind<VisMetrics>();
     if (ImGui::MenuItem("Self Intersection"))
       Bind<SelfIntersection>();
     ImGui::EndPopup();

@@ -88,8 +88,8 @@ void DrawFileHierarchy(string parentPath, int &parentTreeNodeInd,
       selectedFile = parentTreeNodeInd - 1;
     // judge the file type from its extension
     string fileExtension = entry.path().extension().string();
-    if (!isDirectory) {
-      // make the file dragable
+    {
+      // make the file or directory dragable
       if (ImGui::BeginDragDropSource()) {
         char nameBuffer[200] = {0};
         std::strcpy(nameBuffer, entry.path().string().c_str());

@@ -226,8 +226,6 @@ void Editor::MainMenuBar() {
         ImGui::MenuItem("Camera", nullptr, nullptr, false);
         std::vector<std::string> cameraNames;
         std::map<EntityID, std::size_t> cameraToComboMap;
-        cameraNames.push_back("None:-1");
-        cameraToComboMap.insert(std::make_pair((EntityID)(-1), 0));
         auto availableCamera = cameraSystem->GetAvailableCamera();
         for (auto availCam : availableCamera) {
           auto cameraToComboMapSize = cameraToComboMap.size();
@@ -237,17 +235,17 @@ void Editor::MainMenuBar() {
           cameraNames.push_back(cameraName);
         }
         EntityID camera;
-        static int currentActiveCameraComboIndex = 0;
+        static int cacInd = 0;
         if (GWORLD.GetActiveCamera(camera)) {
           auto it = cameraToComboMap.find(camera);
           if (it == cameraToComboMap.end()) {
             LOG_F(ERROR, "Inconsistent camera combo and active camera");
           } else {
-            currentActiveCameraComboIndex = it->second;
+            cacInd = it->second + 1;
           }
         }
         GUIUtils::Combo(
-            "Active Camera", cameraNames, currentActiveCameraComboIndex,
+            "Active Camera", cameraNames, cacInd,
             [&](int current) {
               for (auto cameraComboMapPair : cameraToComboMap) {
                 auto cameraEntityID = cameraComboMapPair.first;
@@ -263,7 +261,7 @@ void Editor::MainMenuBar() {
         ImGui::Separator();
         ImGui::MenuItem("Skybox", nullptr, nullptr, false);
         ImGui::Checkbox("Render Skybox", &renderSystem->RenderSkybox);
-        std::vector<std::string> skyLightNames{"None:-1"};
+        std::vector<std::string> skyLightNames;
         for (auto light : lightSystem->skyLights) {
           auto id = light->GetID();
           if (GWORLD.EntityValid(id)) {
@@ -271,15 +269,15 @@ void Editor::MainMenuBar() {
                                     std::to_string(id));
           } else lightSystem->activeSkyLight = nullptr;
         }
-        static int currentSkyLight = 0;
+        static int cslInd = 0;
         GUIUtils::Combo(
-            "Active Skybox", skyLightNames, currentSkyLight, [&](int current) {
-              if (current > 0 && current <= lightSystem->skyLights.size()) {
+            "Active Skybox", skyLightNames, cslInd, [&](int current) {
+              if (current >= 0 && current < lightSystem->skyLights.size()) {
                 lightSystem->activeSkyLight =
-                    lightSystem->skyLights[current - 1];
+                    lightSystem->skyLights[current];
               } else {
                 lightSystem->activeSkyLight = nullptr;
-                currentSkyLight = 0;
+                cslInd = 0;
               }
             });
         ImGui::PopItemWidth();

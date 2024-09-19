@@ -25,6 +25,7 @@ struct NativeScript : public aEngine::BaseComponent {
     // set up entity for this script instance
     instance->entity = GWORLD.EntityFromID(entityID).get();
     instance->Start();
+    instance->OnEnable();
     instances[sid] = instance;
   }
 
@@ -35,6 +36,7 @@ struct NativeScript : public aEngine::BaseComponent {
       LOG_F(ERROR, "unbind a scriptable don't exist %s", typeid(T).name());
     } else {
       auto instance = static_cast<T *>(instances[sid]);
+      instance->OnDisable();
       instance->Destroy();
       if (instance)
         delete instance;

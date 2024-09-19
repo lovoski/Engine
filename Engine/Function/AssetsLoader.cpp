@@ -411,9 +411,9 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
 
   if (skel != nullptr) {
     globalParent->AddComponent<Animator>(skel);
-    globalParent->AddComponent<NativeScript>();
-    globalParent->GetComponent<NativeScript>()->Bind<SAMERetarget>();
-    globalParent->GetComponent<NativeScript>()->Bind<VisMetrics>();
+    // globalParent->AddComponent<NativeScript>();
+    // globalParent->GetComponent<NativeScript>()->Bind<SAMERetarget>();
+    // globalParent->GetComponent<NativeScript>()->Bind<VisMetrics>();
   }
 
   auto meshParent = GWORLD.AddNewEntity();

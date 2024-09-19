@@ -82,8 +82,8 @@ void AnimationSystem::collectSkeletonDrawQueue(
         } else if (curData.active && !parentData.active) {
           toBeMatched = cur;
         } else if (!curData.active && parentData.active && toBeMatched != -1) {
-          auto childData =
-              animator->SkeletonMap[animator->HashString(actor->jointNames[toBeMatched])];
+          auto childData = animator->SkeletonMap[animator->HashString(
+              actor->jointNames[toBeMatched])];
           drawQueue.push_back(std::make_pair(parentData.joint->Position(),
                                              childData.joint->Position()));
           visitsRemains[parent]--;
@@ -120,6 +120,18 @@ void AnimationSystem::Render() {
           glDisable(GL_DEPTH_TEST);
         else
           glEnable(GL_DEPTH_TEST);
+
+        // if (animator->motion) {
+        //   glm::vec3 rootProjPos = glm::vec3(animator->skeleton->Position());
+        //   rootProjPos.y = 0.5f;
+        //   glm::vec3 targetProjPos =
+        //       20.0f *
+        //       animator->motion->At(SystemCurrentFrame).GetFacingDirection();
+        //   VisUtils::DrawArrow(rootProjPos, rootProjPos + targetProjPos, vp,
+        //                       glm::vec3(1.0f, 0.0f, 0.0f),
+        //                       glm::length(targetProjPos) * 0.2f);
+        // }
+
         // Draw the bones
         VisUtils::DrawBones(drawQueue, GWORLD.Context.sceneWindowSize, vp,
                             animator->SkeletonColor);

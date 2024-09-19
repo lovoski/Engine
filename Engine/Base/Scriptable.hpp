@@ -24,7 +24,8 @@ public:
   virtual void Start() {}
 
   // This function will gets called when switch from `disable` to `enable`
-  // at the inspector gui
+  // at the inspector gui, this function will also gets called once after
+  // the start function.
   virtual void OnEnable();
   // This function will gets called when switch from `enable` to `disable`
   // at the inspector gui

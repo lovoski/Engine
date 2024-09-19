@@ -58,16 +58,18 @@ void DragableTextureTarget(std::string label, Texture &texture,
   ImGui::TextWrapped(label.c_str());
 }
 
-void Combo(std::string label, std::vector<std::string> &names, int &current,
+void Combo(std::string label, std::vector<std::string> &names, int &augInd,
            std::function<void(int)> handleCurrent) {
-  if (current >= names.size())
-    current = 0; // set current to null when index out of range
-  if (ImGui::BeginCombo(label.c_str(), names[current].c_str())) {
-    for (int comboIndex = 0; comboIndex < names.size(); ++comboIndex) {
-      bool isSelected = current == comboIndex;
-      if (ImGui::Selectable(names[comboIndex].c_str(), isSelected)) {
-        current = comboIndex;
-        handleCurrent(current);
+  std::vector<std::string> augNames {"None:-1"};
+  augNames.insert(augNames.end(), names.begin(), names.end());
+  if (augInd >= augNames.size())
+    augInd = 0; // set current to null when index out of range
+  if (ImGui::BeginCombo(label.c_str(), augNames[augInd].c_str())) {
+    for (int comboIndex = 0; comboIndex < augNames.size(); ++comboIndex) {
+      bool isSelected = augInd == comboIndex;
+      if (ImGui::Selectable(augNames[comboIndex].c_str(), isSelected)) {
+        augInd = comboIndex;
+        handleCurrent(augInd - 1);
       }
       if (isSelected)
         ImGui::SetItemDefaultFocus();
@@ -82,6 +84,33 @@ void DragdropTarget(std::string source,
     if (const ImGuiPayload *payload =
             ImGui::AcceptDragDropPayload(source.c_str())) {
       handlePayload(payload->Data);
+    }
+    ImGui::EndDragDropTarget();
+  }
+}
+
+void DragableFileTarget(std::string label, std::string hint,
+                        std::function<bool(std::string)> handleLoad,
+                        std::vector<char> &filenameBuffer,
+                        std::function<void(void)> handleClear) {
+  ImGui::BeginChild((label + "##children" + label).c_str(), {-1, 30});
+  ImGui::InputTextWithHint(("##inputwithhint" + label).c_str(), hint.c_str(),
+                           filenameBuffer.data(), filenameBuffer.size(),
+                           ImGuiInputTextFlags_ReadOnly);
+  ImGui::SameLine();
+  if (ImGui::Button(("Clear##clear" + label).c_str(), {-1, -1})) {
+    handleClear();
+    for (int i = 0; i < filenameBuffer.size(); ++i)
+      filenameBuffer[i] = 0;
+  }
+  ImGui::EndChild();
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("ASSET_FILENAME")) {
+      fs::path filepath = fs::path((char *)payload->Data);
+      if (handleLoad(filepath.string())) {
+        sprintf(filenameBuffer.data(), filepath.string().c_str());
+      }
     }
     ImGui::EndDragDropTarget();
   }
