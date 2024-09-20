@@ -2,7 +2,7 @@
 
 namespace aEngine {
 
-using asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 void SAMERetarget::resetMotionVariables() {
   motion = nullptr;
@@ -13,7 +13,7 @@ void SAMERetarget::resetMotionVariables() {
 void SAMERetarget::Connect() {
   tcp::resolver resolver(context);
   auto endPoints = resolver.resolve(server, port);
-  asio::async_connect(socket, endPoints,
+  boost::asio::async_connect(socket, endPoints,
                       [this](std::error_code ec, tcp::endpoint) {
                         if (!ec) {
                           LOG_F(INFO, "Successfully connect to server %s:%s",
@@ -35,7 +35,7 @@ void SAMERetarget::sendDataToServer() {
   sourceMotion->SaveToBVH(exportMotionFilepath);
   sendBuffer = fs::canonical(exportSkeletonFilepath).string();
   sendBuffer = sendBuffer + ";" + fs::canonical(exportMotionFilepath).string();
-  asio::async_write(socket, asio::buffer(sendBuffer),
+  boost::asio::async_write(socket, boost::asio::buffer(sendBuffer),
                     [this](std::error_code ec, std::size_t length) {
                       if (!ec) {
                         LOG_F(INFO, "send data to server");
@@ -49,7 +49,7 @@ void SAMERetarget::sendDataToServer() {
                     });
 }
 void SAMERetarget::receiveDataFromServer() {
-  asio::async_read_until(socket, asio::dynamic_buffer(responseBuffer), ';',
+  boost::asio::async_read_until(socket, boost::asio::dynamic_buffer(responseBuffer), ';',
                          [this](std::error_code ec, std::size_t length) {
                            if (!ec) {
                              LOG_F(INFO,

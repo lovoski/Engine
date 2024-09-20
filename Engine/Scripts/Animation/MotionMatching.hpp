@@ -4,6 +4,12 @@
  * This is a implementation to a character controller based on motion matching,
  * attach this script to some entity with `Animator` component, setup the
  * motion database to use. Then you should be free to control the character.
+ * 
+ * The idea of motion matching is to precompute a database of features for all
+ * motion clips, construct a query feature from user input and previous motion,
+ * select a motion clip with closest feature to the user input and play it for
+ * a while. After playing current clip for a while, perform another query and
+ * decide whether to switch current animation clip or not.
  */
 #pragma once
 
@@ -13,11 +19,28 @@ namespace aEngine {
 
 struct MotionDatabaseData {
   glm::vec3 facingDir = glm::vec3(0.0f);
+  // global positions
   std::vector<glm::vec3> positions;
+  // global orientations
+  std::vector<glm::quat> rotations;
   std::vector<glm::vec3> velocities;
 
   template <typename Archive> void serialize(Archive &archive) {
-    archive(facingDir, positions, velocities);
+    archive(facingDir, positions, rotations, velocities);
+  }
+};
+
+struct MotionDatabase {
+  // nframes * ndata_dim
+  std::vector<MotionDatabaseData> data;
+  // nanim * 2 (begin, end)
+  std::vector<std::pair<int, int>> range;
+
+  // // search database for closest motion
+  // void Query();
+
+  template <typename Archive> void serialize(Archive &archive) {
+    archive(range, data);
   }
 };
 
@@ -26,7 +49,6 @@ public:
   MotionMatching();
   ~MotionMatching();
 
-  void Start() override;
   void OnEnable() override;
   void OnDisable() override;
 
@@ -48,6 +70,7 @@ private:
   void queryJoysticks();
 
   // player related
+  bool orbitCamera = false;
   glm::vec3 playerPosition = glm::vec3(0.0f);
   glm::vec3 playerFacing = Entity::WorldForward;
 };

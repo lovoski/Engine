@@ -5,8 +5,6 @@
  */
 #pragma once
 
-#include <asio.hpp>
-
 #include <tinyfiledialogs.h>
 
 #include <algorithm>

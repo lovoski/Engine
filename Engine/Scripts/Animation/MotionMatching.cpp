@@ -3,21 +3,21 @@
 #include "Function/GUI/Helpers.hpp"
 
 #include <cereal/archives/binary.hpp>
+#include <cereal/types/common.hpp>
+#include <cereal/types/tuple.hpp>
+#include <cereal/types/utility.hpp>
 #include <cereal/types/vector.hpp>
 
 namespace aEngine {
 
 void buildMotionDatabase(std::string filepath);
-void loadMotionDatabase(std::string filepath,
-                        std::vector<MotionDatabaseData> &data);
-void saveMotionDatabase(std::string filepath,
-                        std::vector<MotionDatabaseData> &data);
+void loadMotionDatabase(std::string filepath, MotionDatabase &db);
+void saveMotionDatabase(std::string filepath, MotionDatabase &db);
 
 MotionMatching::MotionMatching() {}
 
 MotionMatching::~MotionMatching() {}
 
-void MotionMatching::Start() { LOG_F(WARNING, "start"); }
 void MotionMatching::OnEnable() { LOG_F(WARNING, "onenable"); }
 void MotionMatching::OnDisable() { LOG_F(WARNING, "ondisable"); }
 
@@ -33,8 +33,12 @@ void MotionMatching::Update(float dt) {
     leftInput = glm::vec2(0.0f);
     rightInput = glm::vec2(0.0f);
   }
-  // update player position
+  // update player position and facing direction
   glm::vec3 speed{leftInput.x, 0.0f, leftInput.y};
+  if (glm::length(rightInput) > 1e-3f) {
+    auto normalizedFacing = glm::normalize(rightInput);
+    playerFacing = glm::vec3(normalizedFacing.x, 0.0f, normalizedFacing.y);
+  }
   playerPosition += dt * speed;
 }
 
@@ -43,6 +47,12 @@ void MotionMatching::LateUpdate(float dt) {
   if (auto animator = entity->GetComponent<Animator>()) {
   }
   // camera adjustment
+  if (orbitCamera) {
+    EntityID camera;
+    if (GWORLD.GetActiveCamera(camera)) {
+      auto cameraObject = GWORLD.EntityFromID(camera);
+    }
+  }
 }
 
 void MotionMatching::DrawToScene() {
@@ -52,10 +62,10 @@ void MotionMatching::DrawToScene() {
     auto vp = cameraComp->VP;
     VisUtils::DrawWireSphere(playerPosition, vp);
     VisUtils::DrawArrow(playerPosition,
-                        playerPosition + glm::vec3(leftInput.x, 0.0f, leftInput.y), vp,
-                        glm::vec3(1.0f, 0.0f, 0.0f));
-    VisUtils::DrawArrow(playerPosition,
-                        playerPosition + glm::vec3(rightInput.x, 0.0f, rightInput.y), vp,
+                        playerPosition +
+                            glm::vec3(leftInput.x, 0.0f, leftInput.y),
+                        vp, glm::vec3(1.0f, 0.0f, 0.0f));
+    VisUtils::DrawArrow(playerPosition, playerPosition + playerFacing, vp,
                         glm::vec3(0.0f, 0.0f, 1.0f));
   }
 }
@@ -77,8 +87,8 @@ void MotionMatching::DrawInspectorGUI() {
       "motionmatchingdatabase", "Database File (data.bin)",
       [&](std::string file) {
         if (fs::path(file).filename().string() == "data.bin") {
-          std::vector<MotionDatabaseData> data;
-          loadMotionDatabase(file, data);
+          MotionDatabase db;
+          loadMotionDatabase(file, db);
           return true;
         }
         return false;
@@ -92,6 +102,9 @@ void MotionMatching::DrawInspectorGUI() {
     else
       currentJoystick = availableJoysticks[current];
   });
+
+  ImGui::MenuItem("Options", nullptr, nullptr, false);
+  ImGui::Checkbox("Orbit Camera", &orbitCamera);
 }
 
 void MotionMatching::queryJoysticks() {
@@ -105,41 +118,41 @@ void MotionMatching::queryJoysticks() {
   }
 }
 
-void saveMotionDatabase(std::string filepath,
-                        std::vector<MotionDatabaseData> &data) {
+void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
   std::ofstream output(filepath, std::ios::binary);
   cereal::BinaryOutputArchive archive(output);
-  archive(data);
+  archive(db);
 }
 
-void loadMotionDatabase(std::string filepath,
-                        std::vector<MotionDatabaseData> &data) {
+void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
   std::ifstream input(filepath, std::ios::binary);
   cereal::BinaryInputArchive archive(input);
-  data.clear();
-  archive(data);
+  archive(db);
 }
 
 void buildMotionDatabase(std::string filepath) {
   // load motion data from the filepath
-  std::vector<MotionDatabaseData> data;
+  MotionDatabase db;
   auto processMotionData = [&](std::string file) {
     Animation::Motion motion;
     motion.LoadFromBVH(file);
     std::vector<glm::vec3> lastPositions;
+    int start = db.data.size();
     for (auto &pose : motion.poses) {
       MotionDatabaseData mdd;
       mdd.facingDir = pose.GetFacingDirection();
-      mdd.positions = pose.GetGlobalPositions();
+      mdd.positions = pose.GetGlobalPositionOrientation(mdd.rotations);
       mdd.velocities.resize(mdd.positions.size(), glm::vec3(0.0f));
       if (!lastPositions.empty()) {
         for (int i = 0; i < mdd.positions.size(); ++i) {
           mdd.velocities[i] = mdd.positions[i] - lastPositions[i];
         }
       }
-      data.push_back(mdd);
+      db.data.push_back(mdd);
       lastPositions = mdd.positions;
     }
+    int end = db.data.size();
+    db.range.push_back(std::make_pair(start, end));
   };
   if (fs::exists(filepath) && fs::is_directory(filepath)) {
     for (const auto &entry : fs::recursive_directory_iterator(filepath)) {
@@ -149,7 +162,7 @@ void buildMotionDatabase(std::string filepath) {
       }
     }
     saveMotionDatabase((fs::path(filepath) / fs::path("data.bin")).string(),
-                       data);
+                       db);
   } else {
     LOG_F(ERROR, "%s is not a directory", filepath.c_str());
   }

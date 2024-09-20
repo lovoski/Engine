@@ -8,6 +8,8 @@
 
 #include "API.hpp"
 
+#include <boost/asio.hpp>
+
 namespace aEngine {
 
 struct SAMERetarget : public Scriptable {
@@ -19,8 +21,8 @@ struct SAMERetarget : public Scriptable {
   std::shared_ptr<Animation::Motion> sourceMotion = nullptr;
 
   // Network related
-  asio::io_context context;
-  asio::ip::tcp::socket socket;
+  boost::asio::io_context context;
+  boost::asio::ip::tcp::socket socket;
   std::string server = "127.0.0.1", port = "9999";
   std::string responseBuffer, sendBuffer;
 
