@@ -237,7 +237,11 @@ void Basic::BeforePass() {
   shader->SetFloat("WireframeSmooth", WireframeSmooth);
   shader->SetBool("Wireframe", withWireframe);
   shader->SetBool("ViewNormal", viewNormal);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
 }
+
+void Basic::FinishPass() {}
 
 std::string Basic::getInspectorWindowName() { return "Basic"; }
 

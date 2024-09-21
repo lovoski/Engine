@@ -1,6 +1,7 @@
 #include "Scripts/Animation/MotionMatching.hpp"
 
 #include "Function/GUI/Helpers.hpp"
+#include "Function/Math/Dampers.hpp"
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/common.hpp>
@@ -53,6 +54,11 @@ void MotionMatching::LateUpdate(float dt) {
       auto cameraObject = GWORLD.EntityFromID(camera);
     }
   }
+
+  // damper test
+  Math::DamperSpring(damperPosition, damperVelocity, entity->Position(),
+                     glm::vec3(0.0f), dt, stiffness, damping);
+  ;
 }
 
 void MotionMatching::DrawToScene() {
@@ -67,6 +73,8 @@ void MotionMatching::DrawToScene() {
                         vp, glm::vec3(1.0f, 0.0f, 0.0f));
     VisUtils::DrawArrow(playerPosition, playerPosition + playerFacing, vp,
                         glm::vec3(0.0f, 0.0f, 1.0f));
+
+    VisUtils::DrawWireSphere(damperPosition, vp);
   }
 }
 
@@ -105,6 +113,10 @@ void MotionMatching::DrawInspectorGUI() {
 
   ImGui::MenuItem("Options", nullptr, nullptr, false);
   ImGui::Checkbox("Orbit Camera", &orbitCamera);
+
+  ImGui::MenuItem("Damper", nullptr, nullptr, false);
+  ImGui::SliderFloat("Damping", &damping, 0.0f, 40.0f);
+  ImGui::SliderFloat("Stiffness", &stiffness, 0.0f, 40.0f);
 }
 
 void MotionMatching::queryJoysticks() {

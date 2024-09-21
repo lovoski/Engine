@@ -108,6 +108,8 @@ void RenderSystem::Render() {
   }
 }
 
-void RenderSystem::RenderEnd() { glfwSwapBuffers(GWORLD.Context.window); }
+void RenderSystem::RenderEnd() {
+  glfwSwapBuffers(GWORLD.Context.window);
+}
 
 }; // namespace aEngine

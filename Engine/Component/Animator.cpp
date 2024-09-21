@@ -11,8 +11,24 @@
 #include "Function/Render/Shader.hpp"
 #include "Function/Render/VisUtils.hpp"
 
-
 namespace aEngine {
+
+Animator::Animator(EntityID id, Animation::Skeleton *act)
+    : actor(act), BaseComponent(id) {
+  jointActive.resize(actor->GetNumJoints(), 1);
+  createSkeletonEntities();
+  BuildSkeletonMap();
+}
+
+Animator::Animator(EntityID id, Animation::Motion *m)
+    : motion(m), BaseComponent(id) {
+  actor = &motion->skeleton;
+  jointActive.resize(actor->GetNumJoints(), 1);
+  createSkeletonEntities();
+  BuildSkeletonMap();
+}
+
+Animator::~Animator() {}
 
 void Animator::BuildSkeletonMap() {
   SkeletonMap.clear();

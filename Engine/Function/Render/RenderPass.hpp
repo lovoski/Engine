@@ -47,8 +47,6 @@ public:
   virtual std::string getInspectorWindowName();
 
 protected:
-  int idCounter = 0;
-
   std::shared_ptr<Shader> shader = nullptr;
 
   // To create custom material, override this function,
@@ -75,6 +73,8 @@ public:
   bool withWireframe = false;
   float WireframeWidth = 0.5f, WireframeSmooth = 1.0f;
   glm::vec3 WireframeColor = glm::vec3(0.0f);
+
+  void FinishPass() override;
 
 protected:
   void BeforePass() override;

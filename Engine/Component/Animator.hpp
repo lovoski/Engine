@@ -32,17 +32,9 @@ struct BoneMatrixBlock {
 // Each animator must bind to one actor (Skeleton),
 // the entity structure will be created when one animator gets created
 struct Animator : public BaseComponent {
-  Animator(EntityID id, Animation::Skeleton *act)
-      : actor(act), BaseComponent(id) {
-    jointActive.resize(actor->GetNumJoints(), 1);
-    createSkeletonEntities();
-  }
-  Animator(EntityID id, Animation::Motion *m) : motion(m), BaseComponent(id) {
-    actor = &motion->skeleton;
-    jointActive.resize(actor->GetNumJoints(), 1);
-    createSkeletonEntities();
-  }
-  ~Animator() {}
+  Animator(EntityID id, Animation::Skeleton *act);
+  Animator(EntityID id, Animation::Motion *m);
+  ~Animator();
 
   void DrawInspectorGUI() override;
 
@@ -53,8 +45,8 @@ struct Animator : public BaseComponent {
   void ApplyMotionToSkeleton(Animation::Pose &pose);
   // Maintain member variable `SkeletonMap`, the key for this map is the name
   // of the entity.
-  // The function is rather costly, don't call it multiple times in one render
-  // loop.
+  // The function is rather costly, only call it when the skeleton entity hierarchy
+  // is actually modified.
   void BuildSkeletonMap();
 
   // Skeleton visualization related

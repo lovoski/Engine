@@ -73,6 +73,11 @@ private:
   bool orbitCamera = false;
   glm::vec3 playerPosition = glm::vec3(0.0f);
   glm::vec3 playerFacing = Entity::WorldForward;
+
+  // damper test
+  float damping = 5.0f, stiffness = 10.0f;
+  glm::vec3 damperPosition = glm::vec3(0.0f);
+  glm::vec3 damperVelocity = glm::vec3(0.0f);
 };
 
 }; // namespace aEngine

@@ -1,6 +1,3 @@
-#include "Scripts/Animation/SAMERetarget.hpp"
-#include "Scripts/Animation/VisMetrics.hpp"
-
 #include "Component/Animator.hpp"
 #include "Component/DeformRenderer.hpp"
 #include "Component/MeshRenderer.hpp"
@@ -11,6 +8,7 @@
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
 #include "Function/ShaderCode.hpp"
+#include "Function/Math/Math.hpp"
 
 #include "System/Animation/AnimationSystem.hpp"
 
@@ -411,9 +409,6 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
 
   if (skel != nullptr) {
     globalParent->AddComponent<Animator>(skel);
-    // globalParent->AddComponent<NativeScript>();
-    // globalParent->GetComponent<NativeScript>()->Bind<SAMERetarget>();
-    // globalParent->GetComponent<NativeScript>()->Bind<VisMetrics>();
   }
 
   auto meshParent = GWORLD.AddNewEntity();
