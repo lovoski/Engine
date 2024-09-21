@@ -71,13 +71,12 @@ private:
 
   // player related
   bool orbitCamera = false;
+  float cameraOffset = 4.0f, cameraAngle = -40.0f;
+  glm::vec3 cameraFacing = Entity::WorldForward;
+  // this is the player position projected to xz plane
   glm::vec3 playerPosition = glm::vec3(0.0f);
+  // this vector will always on xz plane
   glm::vec3 playerFacing = Entity::WorldForward;
-
-  // damper test
-  float damping = 5.0f, stiffness = 10.0f;
-  glm::vec3 damperPosition = glm::vec3(0.0f);
-  glm::vec3 damperVelocity = glm::vec3(0.0f);
 };
 
 }; // namespace aEngine

@@ -34,31 +34,43 @@ void MotionMatching::Update(float dt) {
     leftInput = glm::vec2(0.0f);
     rightInput = glm::vec2(0.0f);
   }
-  // update player position and facing direction
+  // update player position and rotation
   glm::vec3 speed{leftInput.x, 0.0f, leftInput.y};
+  speed = glm::length(speed) * glm::normalize((speed + playerFacing));
   if (glm::length(rightInput) > 1e-3f) {
     auto normalizedFacing = glm::normalize(rightInput);
     playerFacing = glm::vec3(normalizedFacing.x, 0.0f, normalizedFacing.y);
+  }
+  if (glm::length(leftInput) > 1e-3f) {
+    Math::DamperExp(playerFacing, glm::normalize(speed), dt, 0.5f);
   }
   playerPosition += dt * speed;
 }
 
 void MotionMatching::LateUpdate(float dt) {
   // database query
-  if (auto animator = entity->GetComponent<Animator>()) {
-  }
+  if (auto animator = entity->GetComponent<Animator>()) {}
   // camera adjustment
   if (orbitCamera) {
     EntityID camera;
     if (GWORLD.GetActiveCamera(camera)) {
       auto cameraObject = GWORLD.EntityFromID(camera);
+      // re-pose the camera
+      // camForward = -camFacing
+      glm::vec3 camLeft =
+          glm::normalize(glm::cross(Entity::WorldUp, -cameraFacing));
+      Math::DamperExp(cameraFacing, playerFacing, dt, 0.5f);
+      glm::vec3 offsetDir =
+          glm::angleAxis(glm::radians(cameraAngle), camLeft) * cameraFacing;
+      cameraObject->SetGlobalPosition(playerPosition -
+                                      cameraOffset * glm::normalize(offsetDir));
+      glm::vec3 rotForward = glm::normalize(-offsetDir);
+      glm::vec3 rotLeft = camLeft;
+      glm::vec3 rotUp = glm::normalize(glm::cross(rotForward, rotLeft));
+      cameraObject->SetGlobalRotation(
+          glm::quat_cast(glm::mat3(rotLeft, rotUp, rotForward)));
     }
   }
-
-  // damper test
-  Math::DamperSpring(damperPosition, damperVelocity, entity->Position(),
-                     glm::vec3(0.0f), dt, stiffness, damping);
-  ;
 }
 
 void MotionMatching::DrawToScene() {
@@ -73,8 +85,6 @@ void MotionMatching::DrawToScene() {
                         vp, glm::vec3(1.0f, 0.0f, 0.0f));
     VisUtils::DrawArrow(playerPosition, playerPosition + playerFacing, vp,
                         glm::vec3(0.0f, 0.0f, 1.0f));
-
-    VisUtils::DrawWireSphere(damperPosition, vp);
   }
 }
 
@@ -113,10 +123,8 @@ void MotionMatching::DrawInspectorGUI() {
 
   ImGui::MenuItem("Options", nullptr, nullptr, false);
   ImGui::Checkbox("Orbit Camera", &orbitCamera);
-
-  ImGui::MenuItem("Damper", nullptr, nullptr, false);
-  ImGui::SliderFloat("Damping", &damping, 0.0f, 40.0f);
-  ImGui::SliderFloat("Stiffness", &stiffness, 0.0f, 40.0f);
+  ImGui::SliderFloat("Camera Offset", &cameraOffset, 0.0f, 10.0f);
+  ImGui::SliderFloat("Camera Angle", &cameraAngle, -80.0f, -20.0f);
 }
 
 void MotionMatching::queryJoysticks() {

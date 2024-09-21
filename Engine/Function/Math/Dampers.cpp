@@ -26,14 +26,19 @@ inline vec3 Lerp(vec3 &a, vec3 &b, float alpha) {
   return (1.0f - alpha) * a + alpha * b;
 }
 
-void DamperExact(vec3 &position, vec3 target, float dt, float halfLife) {
+void DamperExp(float &position, float target, float dt, float halfLife) {
+  float alpha = 1.0f - FastNegExp((0.69314718056f * dt) / (halfLife + 1e-8f));
+  position = (1.0f - alpha) * position + alpha * target;
+}
+void DamperExp(vec3 &position, vec3 target, float dt, float halfLife) {
   position =
       Lerp(position, target,
            1.0f - FastNegExp((0.69314718056f * dt) / (halfLife + 1e-8f)));
 }
 
-void DamperSpring(float &x, float &v, float x_goal, float v_goal,
-                  float stiffness, float damping, float dt, float eps) {
+void DamperSpring(float &x, float &v, float x_goal, float v_goal, float dt,
+                  float stiffness, float damping) {
+  static float eps = 1e-5f;
   float g = x_goal;
   float q = v_goal;
   float s = stiffness;
@@ -79,10 +84,9 @@ void DamperSpring(float &x, float &v, float x_goal, float v_goal,
 
 void DamperSpring(glm::vec3 &x, glm::vec3 &v, glm::vec3 pGoal, glm::vec3 vGoal,
                   float dt, float stiffness, float damping) {
-  static float eps = 1e-5f;
-  DamperSpring(x.x, v.x, pGoal.x, vGoal.x, stiffness, damping, dt, eps);
-  DamperSpring(x.y, v.y, pGoal.y, vGoal.y, stiffness, damping, dt, eps);
-  DamperSpring(x.z, v.z, pGoal.z, vGoal.z, stiffness, damping, dt, eps);
+  DamperSpring(x.x, v.x, pGoal.x, vGoal.x, dt, stiffness, damping);
+  DamperSpring(x.y, v.y, pGoal.y, vGoal.y, dt, stiffness, damping);
+  DamperSpring(x.z, v.z, pGoal.z, vGoal.z, dt, stiffness, damping);
 }
 
 }; // namespace Math
