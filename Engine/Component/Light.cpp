@@ -197,6 +197,8 @@ void EnvironmentLight::createCubeMapFromImages() {
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
   glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+  Render::ConvoluteCubeMap(CubeMap, Irradiance);
 }
 
 }; // namespace aEngine

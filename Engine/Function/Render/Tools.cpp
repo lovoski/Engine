@@ -111,6 +111,9 @@ void HDRToCubeMap(unsigned int &hdr, unsigned int &cubemap,
   shader.SetTexture2D(hdr, "equirectangularMap", 0);
   shader.SetMat4("projection", captureProjection);
   glViewport(0, 0, cubeDimension, cubeDimension);
+  // as we are rendering inside the cube, 
+  // make sure the inside face won't get culled
+  glDisable(GL_CULL_FACE);
   for (int i = 0; i < 6; ++i) {
     shader.SetMat4("view", captureViews[i]);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
@@ -172,6 +175,9 @@ void RenderEnvironmentMap(unsigned int handle, glm::mat4 &vp) {
     initialized = true;
   }
   glDepthMask(GL_FALSE);
+  // as we are rendering inside the cube, 
+  // make sure the inside face won't get culled
+  glDisable(GL_CULL_FACE);
   skyboxShader.Use();
   skyboxShader.SetMat4("VP", vp);
   skyboxShader.SetCubeMap("skybox", handle, 0);
@@ -290,6 +296,9 @@ void ConvoluteCubeMap(unsigned int &source, unsigned int &target) {
   shader.SetMat4("projection", captureProjection);
   shader.SetCubeMap("environmentMap", source, 0);
   glViewport(0, 0, 32, 32);
+  // as we are rendering inside the cube, 
+  // make sure the inside face won't get culled
+  glDisable(GL_CULL_FACE);
   for (int i = 0; i < 6; ++i) {
     shader.SetMat4("view", captureViews[i]);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,

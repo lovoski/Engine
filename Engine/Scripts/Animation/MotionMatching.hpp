@@ -72,6 +72,8 @@ private:
   // player related
   bool orbitCamera = false;
   float cameraOffset = 4.0f, cameraAngle = -40.0f;
+  float playerSpeed = 3.0f;
+  glm::vec3 speed = glm::vec3(0.0f);
   glm::vec3 cameraFacing = Entity::WorldForward;
   // this is the player position projected to xz plane
   glm::vec3 playerPosition = glm::vec3(0.0f);

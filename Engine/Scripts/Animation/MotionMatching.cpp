@@ -35,15 +35,20 @@ void MotionMatching::Update(float dt) {
     rightInput = glm::vec2(0.0f);
   }
   // update player position and rotation
-  glm::vec3 speed{leftInput.x, 0.0f, leftInput.y};
-  speed = glm::length(speed) * glm::normalize((speed + playerFacing));
-  if (glm::length(rightInput) > 1e-3f) {
+  glm::vec3 forward = glm::normalize(playerFacing);
+  glm::vec3 right = glm::normalize(glm::cross(Entity::WorldUp, forward));
+  speed = -playerSpeed * (leftInput.y * forward + leftInput.x * right);
+  LOG_F(INFO, "x=%f, y=%f", leftInput.x, leftInput.y);
+  bool hasLeftInput = glm::length(leftInput) > 1e-3f;
+  bool hasRightInput = glm::length(rightInput) > 1e-3f;
+  if (hasRightInput) {
     auto normalizedFacing = glm::normalize(rightInput);
     playerFacing = glm::vec3(normalizedFacing.x, 0.0f, normalizedFacing.y);
   }
-  if (glm::length(leftInput) > 1e-3f) {
-    Math::DamperExp(playerFacing, glm::normalize(speed), dt, 0.5f);
-  }
+  // if (hasLeftInput && !hasRightInput) {
+  //   // if there's no right input, align player facing to speed direction
+  //   Math::DamperExp(playerFacing, glm::normalize(speed), dt, 0.5f);
+  // }
   playerPosition += dt * speed;
 }
 
@@ -81,7 +86,7 @@ void MotionMatching::DrawToScene() {
     VisUtils::DrawWireSphere(playerPosition, vp);
     VisUtils::DrawArrow(playerPosition,
                         playerPosition +
-                            glm::vec3(leftInput.x, 0.0f, leftInput.y),
+                            speed,
                         vp, glm::vec3(1.0f, 0.0f, 0.0f));
     VisUtils::DrawArrow(playerPosition, playerPosition + playerFacing, vp,
                         glm::vec3(0.0f, 0.0f, 1.0f));
@@ -125,6 +130,7 @@ void MotionMatching::DrawInspectorGUI() {
   ImGui::Checkbox("Orbit Camera", &orbitCamera);
   ImGui::SliderFloat("Camera Offset", &cameraOffset, 0.0f, 10.0f);
   ImGui::SliderFloat("Camera Angle", &cameraAngle, -80.0f, -20.0f);
+  ImGui::SliderFloat("Player Speed", &playerSpeed, 0.5f, 10.0f);
 }
 
 void MotionMatching::queryJoysticks() {
