@@ -19,10 +19,10 @@ void DamperExp(glm::vec3 &position, glm::vec3 target, float dt,
 // Approach `position` to `target`, higher `damping` make the damper less
 // responsive, while higher `stiffness` makes the spring more powerful.
 void DamperSpring(float &position, float &velocity, float pGoal, float vGoal,
-                  float dt, float stiffness = 5.0f, float damping = 20.0f);
+                  float dt, float stiffness = 20.0f, float damping = 5.0f);
 void DamperSpring(glm::vec3 &position, glm::vec3 &velocity, glm::vec3 pGoal,
-                  glm::vec3 vGoal, float dt, float stiffness = 5.0f,
-                  float damping = 20.0f);
+                  glm::vec3 vGoal, float dt, float stiffness = 20.0f,
+                  float damping = 5.0f);
 
 }; // namespace Math
 

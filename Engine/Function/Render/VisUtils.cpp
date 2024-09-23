@@ -6,6 +6,15 @@ namespace aEngine {
 
 namespace VisUtils {
 
+glm::vec3 Red = glm::vec3(1.0f, 0.0f, 0.0f);
+glm::vec3 Green = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 Blue = glm::vec3(0.0f, 0.0f, 1.0f);
+glm::vec3 Yellow = glm::vec3(1.0f, 1.0f, 0.0f);
+glm::vec3 Purple = glm::vec3(1.0f, 0.0f, 1.0f);
+glm::vec3 White = glm::vec3(1.0f);
+glm::vec3 Grey = glm::vec3(0.5f);
+glm::vec3 Black = glm::vec3(0.0f);
+
 std::string lineVS = R"(
 #version 460 core
 layout (location = 0) in vec3 aPos;

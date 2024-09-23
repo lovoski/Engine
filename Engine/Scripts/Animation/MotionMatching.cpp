@@ -19,8 +19,8 @@ MotionMatching::MotionMatching() {}
 
 MotionMatching::~MotionMatching() {}
 
-void MotionMatching::OnEnable() { LOG_F(WARNING, "onenable"); }
-void MotionMatching::OnDisable() { LOG_F(WARNING, "ondisable"); }
+void MotionMatching::OnEnable() {}
+void MotionMatching::OnDisable() {}
 
 void MotionMatching::Update(float dt) {
   // joystick related
@@ -37,24 +37,36 @@ void MotionMatching::Update(float dt) {
   // update player position and rotation
   glm::vec3 forward = glm::normalize(playerFacing);
   glm::vec3 right = glm::normalize(glm::cross(Entity::WorldUp, forward));
-  speed = -playerSpeed * (leftInput.y * forward + leftInput.x * right);
-  LOG_F(INFO, "x=%f, y=%f", leftInput.x, leftInput.y);
+  glm::vec3 desiredSpeed =
+      -playerSpeed * (leftInput.y * forward + leftInput.x * right);
+
   bool hasLeftInput = glm::length(leftInput) > 1e-3f;
   bool hasRightInput = glm::length(rightInput) > 1e-3f;
   if (hasRightInput) {
-    auto normalizedFacing = glm::normalize(rightInput);
-    playerFacing = glm::vec3(normalizedFacing.x, 0.0f, normalizedFacing.y);
+    glm::quat rotY = glm::angleAxis(-4.0f * dt * rightInput.x, Entity::WorldUp);
+    playerFacing = rotY * playerFacing;
+    playerFacing.y = 0.0f;
   }
-  // if (hasLeftInput && !hasRightInput) {
-  //   // if there's no right input, align player facing to speed direction
-  //   Math::DamperExp(playerFacing, glm::normalize(speed), dt, 0.5f);
-  // }
+
+  Math::DamperExp(speed, desiredSpeed, dt, speedHalfLife);
   playerPosition += dt * speed;
+
+  // update trajectory
+  trajPos.clear();
+  trajSpeed.clear();
+  trajPos.resize(trajCount, playerPosition);
+  trajSpeed.resize(trajCount, speed);
+  for (int i = 1; i < trajCount; ++i) {
+    Math::DamperExp(trajSpeed[i], desiredSpeed, trajInterval * i,
+                    speedHalfLife);
+    trajPos[i] = 0.5f * (trajSpeed[i] + trajSpeed[i - 1]) + trajPos[i - 1];
+  }
 }
 
 void MotionMatching::LateUpdate(float dt) {
   // database query
-  if (auto animator = entity->GetComponent<Animator>()) {}
+  if (auto animator = entity->GetComponent<Animator>()) {
+  }
   // camera adjustment
   if (orbitCamera) {
     EntityID camera;
@@ -84,12 +96,14 @@ void MotionMatching::DrawToScene() {
     auto cameraComp = GWORLD.GetComponent<Camera>(camera);
     auto vp = cameraComp->VP;
     VisUtils::DrawWireSphere(playerPosition, vp);
-    VisUtils::DrawArrow(playerPosition,
-                        playerPosition +
-                            speed,
-                        vp, glm::vec3(1.0f, 0.0f, 0.0f));
     VisUtils::DrawArrow(playerPosition, playerPosition + playerFacing, vp,
-                        glm::vec3(0.0f, 0.0f, 1.0f));
+                        VisUtils::Blue);
+    VisUtils::DrawLineStrip3D(trajPos, vp, VisUtils::Red);
+    for (int i = 0; i < trajCount; ++i) {
+      VisUtils::DrawWireSphere(trajPos[i], vp, 0.1f, VisUtils::Red);
+      VisUtils::DrawArrow(trajPos[i], trajPos[i] + 0.5f * trajSpeed[i], vp,
+                          VisUtils::Yellow, 0.05f);
+    }
   }
 }
 
@@ -126,11 +140,17 @@ void MotionMatching::DrawInspectorGUI() {
       currentJoystick = availableJoysticks[current];
   });
 
-  ImGui::MenuItem("Options", nullptr, nullptr, false);
+  ImGui::MenuItem("Camera", nullptr, nullptr, false);
   ImGui::Checkbox("Orbit Camera", &orbitCamera);
-  ImGui::SliderFloat("Camera Offset", &cameraOffset, 0.0f, 10.0f);
+  ImGui::DragFloat("Camera Offset", &cameraOffset, 0.2f, 0.0f, 1000.0f);
   ImGui::SliderFloat("Camera Angle", &cameraAngle, -80.0f, -20.0f);
+  ImGui::SliderFloat("Camera Sensitivity", &cameraSensitivity, 0.0f, 10.0f);
+  ImGui::MenuItem("Player", nullptr, nullptr, false);
   ImGui::SliderFloat("Player Speed", &playerSpeed, 0.5f, 10.0f);
+  ImGui::SliderFloat("Speed Half Life", &speedHalfLife, 0.0f, 3.0f);
+  ImGui::MenuItem("Trajectory", nullptr, nullptr, false);
+  ImGui::SliderInt("Trajectory Count", &trajCount, 1, 9);
+  ImGui::SliderFloat("Trajectory Interval", &trajInterval, 0.1f, 1.0f);
 }
 
 void MotionMatching::queryJoysticks() {
@@ -193,5 +213,7 @@ void buildMotionDatabase(std::string filepath) {
     LOG_F(ERROR, "%s is not a directory", filepath.c_str());
   }
 }
+
+void MotionDatabase::Query() {}
 
 }; // namespace aEngine

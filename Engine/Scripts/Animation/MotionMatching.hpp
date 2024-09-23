@@ -36,8 +36,8 @@ struct MotionDatabase {
   // nanim * 2 (begin, end)
   std::vector<std::pair<int, int>> range;
 
-  // // search database for closest motion
-  // void Query();
+  // search database for closest motion
+  void Query();
 
   template <typename Archive> void serialize(Archive &archive) {
     archive(range, data);
@@ -71,14 +71,20 @@ private:
 
   // player related
   bool orbitCamera = false;
-  float cameraOffset = 4.0f, cameraAngle = -40.0f;
-  float playerSpeed = 3.0f;
+  float cameraOffset = 8.0f, cameraAngle = -40.0f;
+  float cameraSensitivity = 3.0f;
+  float playerSpeed = 3.0f, speedHalfLife = 1.0f;
   glm::vec3 speed = glm::vec3(0.0f);
   glm::vec3 cameraFacing = Entity::WorldForward;
   // this is the player position projected to xz plane
   glm::vec3 playerPosition = glm::vec3(0.0f);
   // this vector will always on xz plane
   glm::vec3 playerFacing = Entity::WorldForward;
+
+  int trajCount = 4;
+  float trajInterval = 0.2f;
+  std::vector<glm::vec3> trajPos;
+  std::vector<glm::vec3> trajSpeed;
 };
 
 }; // namespace aEngine

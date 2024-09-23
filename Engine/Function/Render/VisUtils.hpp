@@ -8,6 +8,15 @@ namespace aEngine {
 
 namespace VisUtils {
 
+extern glm::vec3 Red;
+extern glm::vec3 Green;
+extern glm::vec3 Blue;
+extern glm::vec3 Yellow;
+extern glm::vec3 Purple;
+extern glm::vec3 White;
+extern glm::vec3 Grey;
+extern glm::vec3 Black;
+
 // Draw GL_LINE_STRIP primitive
 void DrawLineStrip3D(std::vector<glm::vec3> &lineStrip,
                      glm::mat4 vp = glm::mat4(1.0f),
