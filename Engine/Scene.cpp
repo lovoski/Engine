@@ -7,16 +7,24 @@
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
 
-
 #include "System/Animation/AnimationSystem.hpp"
+#include "System/Audio/AudioSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
 #include "System/Render/CameraSystem.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 #include "System/Spatial/SpatialSystem.hpp"
-#include "System/Audio/AudioSystem.hpp"
+
 
 #include "Scripts/CameraController.hpp"
+
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/set.hpp>
+#include <cereal/types/vector.hpp>
+
 
 namespace aEngine {
 
@@ -213,6 +221,26 @@ void Scene::PlotSceneProfile() {
               GetSystemInstance<LightSystem>()->GetNumEntities());
   ImGui::Text("Script Entities: %d",
               GetSystemInstance<NativeScriptSystem>()->GetNumEntities());
+
+  ImGui::SeparatorText("Registered Types");
+  static bool queryRegisteredTypes = false;
+  ImGui::Checkbox("Enable Query", &queryRegisteredTypes);
+  if (queryRegisteredTypes) {
+    ImGui::MenuItem("Systems", nullptr, nullptr, false);
+    for (auto &system : registeredSystems) {
+      ImGui::Text("%s", typeid(*system.second.get()).name());
+    }
+    ImGui::MenuItem("Components", nullptr, nullptr, false);
+    for (auto &compPair : BaseSystem::CompMap) {
+      ImGui::Text("%d:%s", compPair.first,
+                  typeid(*compPair.second.get()).name());
+    }
+    ImGui::MenuItem("Native Scripts", nullptr, nullptr, false);
+    for (auto &scriptPair : NativeScript::ScriptMap) {
+      ImGui::Text("%d:%s", scriptPair.first,
+                  typeid(*scriptPair.second.get()).name());
+    }
+  }
 }
 
 void Scene::Destroy() {
@@ -411,6 +439,19 @@ void Scene::rebuildHierarchyStructure() {
     }
   }
 }
+
+bool Scene::Save(std::string path) {
+  std::ofstream output(path, std::ios::binary);
+  if (output.is_open()) {
+    cereal::BinaryOutputArchive archieve(output);
+    return true;
+  } else {
+    LOG_F(ERROR, "failed to create scene file %s", path.c_str());
+    return false;
+  }
+}
+
+bool Scene::Load(std::string path) { return true; }
 
 // // Serialize current scene to a json file
 // Json Scene::Serialize() {

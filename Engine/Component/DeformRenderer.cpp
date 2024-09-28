@@ -14,10 +14,12 @@ DeformRenderer::~DeformRenderer() {}
 
 void DeformRenderer::DeformMesh(std::shared_ptr<Mesh> mesh) {
   // setup targetVBO of the renderer
-  DeformSkinnedMesh(animator, mesh->GetMeshInstance()->vbo,
-                    mesh->GetMeshInstance()->vertices.size(), mesh->target,
-                    skeletonMatrices);
-  mesh->Deformed = true; // setup the flag
+  if (animator) {
+    DeformSkinnedMesh(animator, mesh->GetMeshInstance()->vbo,
+                      mesh->GetMeshInstance()->vertices.size(), mesh->target,
+                      skeletonMatrices);
+    mesh->Deformed = true; // setup the flag
+  }
 }
 
 void DeformRenderer::DrawInspectorGUI() {

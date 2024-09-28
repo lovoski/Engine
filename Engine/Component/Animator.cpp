@@ -197,6 +197,10 @@ void Animator::DrawInspectorGUI() {
       std::string extension = filepath.extension().string();
       if (extension == ".bvh" || extension == ".fbx") {
         motion = Loader.GetMotion(filepath.string());
+        if (!actor) {
+          // assign actor if not exists
+          actor = &motion->skeleton;
+        }
         motionName = filepath.string();
       } else {
         LOG_F(ERROR, "only .bvh and .fbx motion are supported");

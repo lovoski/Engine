@@ -16,6 +16,7 @@
 namespace aEngine {
 
 struct MeshRenderer : public aEngine::BaseComponent {
+  MeshRenderer() : BaseComponent(-1) {}
   MeshRenderer(EntityID id);
   ~MeshRenderer();
 
@@ -35,6 +36,8 @@ struct MeshRenderer : public aEngine::BaseComponent {
   // Add a render pass for this renderer, pass in the nullptr
   // to instantiate a new pass of the defualt type
   template <typename T> void AddPass(T *pass, std::string identifier) {
+    static_assert((std::is_base_of<Render::BasePass, T>::value),
+                  "Invalid template type for MeshRenderer");
     if (pass == nullptr) {
       // create default material
       passes.push_back(Loader.InstantiateMaterial<T>(identifier));
@@ -45,6 +48,8 @@ struct MeshRenderer : public aEngine::BaseComponent {
 
   // Get the pass of desired type, returns nullptr if don't exist
   template <typename T> T *GetPass() {
+    static_assert((std::is_base_of<Render::BasePass, T>::value),
+                  "Invalid template type for MeshRenderer");
     for (auto pass : passes) {
       if (typeid(*pass) == typeid(T))
         return (T *)pass;

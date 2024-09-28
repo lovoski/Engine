@@ -32,6 +32,7 @@ struct BoneMatrixBlock {
 // Each animator must bind to one actor (Skeleton),
 // the entity structure will be created when one animator gets created
 struct Animator : public BaseComponent {
+  Animator() : BaseComponent(-1) {}
   Animator(EntityID id, Animation::Skeleton *act);
   Animator(EntityID id, Animation::Motion *m);
   ~Animator();

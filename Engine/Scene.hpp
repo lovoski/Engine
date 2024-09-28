@@ -233,6 +233,13 @@ public:
 
   float GetTime() { return glfwGetTime(); }
 
+  // Serialize current scene into a binary file,
+  // returns true for success.
+  bool Save(std::string path);
+  // Reset the scene from a binary file
+  // returns true for success.
+  bool Load(std::string path);
+
   std::shared_ptr<Entity> AddNewEntity();
   std::shared_ptr<Entity> EntityFromID(const EntityID entity);
 

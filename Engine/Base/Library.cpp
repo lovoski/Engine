@@ -2,6 +2,7 @@
  * This file contains some implementation function in Base folder.
  */
 #include "Base/BaseComponent.hpp"
+#include "Base/BaseSystem.hpp"
 #include "Base/Scriptable.hpp"
 #include "Global.hpp"
 
@@ -53,5 +54,8 @@ void Scriptable::DrawInspectorGUIInternal() {
   if (!Enabled)
     ImGui::EndDisabled();
 }
+
+std::map<ComponentTypeID, std::unique_ptr<BaseComponent>> BaseSystem::CompMap =
+    std::map<ComponentTypeID, std::unique_ptr<BaseComponent>>();
 
 }; // namespace aEngine

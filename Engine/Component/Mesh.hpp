@@ -20,6 +20,7 @@
 namespace aEngine {
 
 struct Mesh : public BaseComponent {
+  Mesh() : BaseComponent(-1) {}
   Mesh(EntityID id, Render::Mesh *mesh);
 
   void DrawInspectorGUI() override;

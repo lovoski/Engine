@@ -5,12 +5,16 @@
 #include "Function/Render/Mesh.hpp"
 
 #include "Component/Animator.hpp"
-#include "Component/MeshRenderer.hpp"
 #include "Component/Mesh.hpp"
+#include "Component/MeshRenderer.hpp"
 
 namespace aEngine {
 
 struct DeformRenderer : public aEngine::BaseComponent {
+  DeformRenderer() : BaseComponent(-1) {
+    animator = nullptr;
+    renderer = nullptr;
+  }
   DeformRenderer(EntityID id, Animator *ar);
   ~DeformRenderer();
 

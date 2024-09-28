@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Base/BaseComponent.hpp"
 #include "Base/Types.hpp"
 
 namespace aEngine {
@@ -23,12 +24,14 @@ public:
   // registered with this function
   template <typename T> void AddComponentSignatureRequireAll() {
     signature.insert(ComponentType<T>());
+    CompMap.insert(std::make_pair(ComponentType<T>(), std::make_unique<T>()));
   }
 
   // Add some component to a system, the entity must has at least one of the
   // component registered with this function
   template <typename T> void AddComponentSignatureRequireOne() {
     signatureOne.insert(ComponentType<T>());
+    CompMap.insert(std::make_pair(ComponentType<T>(), std::make_unique<T>()));
   }
 
   // Initialize system related resources
@@ -46,6 +49,9 @@ public:
 
   // Get all the ids of entities maintained by this system.
   const std::set<EntityID> GetEntities() const { return entities; }
+
+  // from component id to component instance
+  static std::map<ComponentTypeID, std::unique_ptr<BaseComponent>> CompMap;
 
 protected:
   EntitySignature signature;

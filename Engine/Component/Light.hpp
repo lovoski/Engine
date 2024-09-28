@@ -7,6 +7,7 @@
 namespace aEngine {
 
 struct Light : public aEngine::BaseComponent {
+  Light() : BaseComponent(-1) {}
   Light(EntityID id) : BaseComponent(id) {}
   ~Light() {}
 
@@ -21,6 +22,7 @@ struct Light : public aEngine::BaseComponent {
 
 // The direction of a directional light is LocalForward of its entity.
 struct DirectionalLight : public Light {
+  DirectionalLight() {}
   DirectionalLight(EntityID id);
   ~DirectionalLight();
 
@@ -47,6 +49,7 @@ protected:
 };
 
 struct PointLight : public Light {
+  PointLight() {}
   PointLight(EntityID id);
   ~PointLight();
 
@@ -58,6 +61,7 @@ protected:
 };
 
 struct EnvironmentLight : public Light {
+  EnvironmentLight() {}
   EnvironmentLight(EntityID id);
   ~EnvironmentLight();
 

@@ -1,11 +1,16 @@
 #include "Component/NativeScript.hpp"
 
+#include "Scripts/Animation/MotionMatching.hpp"
 #include "Scripts/Animation/SAMERetarget.hpp"
 #include "Scripts/Animation/VisMetrics.hpp"
-#include "Scripts/Animation/MotionMatching.hpp"
 #include "Scripts/SelfIntersection.hpp"
 
+
 namespace aEngine {
+
+std::map<ScriptableTypeID, std::unique_ptr<Scriptable>>
+    NativeScript::ScriptMap =
+        std::map<ScriptableTypeID, std::unique_ptr<Scriptable>>();
 
 NativeScript::~NativeScript() {
   // free all scriptable instance
@@ -40,7 +45,8 @@ void NativeScript::DrawInspectorGUI() {
   for (auto instance : instances) {
     if (instance.second != nullptr) {
       // if this is a valid scriptable
-      bool nodeOpen = ImGui::TreeNodeEx(instance.second->getInspectorWindowName().c_str());
+      bool nodeOpen =
+          ImGui::TreeNodeEx(instance.second->getInspectorWindowName().c_str());
       if (nodeOpen) {
         instance.second->DrawInspectorGUIInternal();
         ImGui::TreePop();

@@ -3,6 +3,7 @@
 #pragma once
 
 #include <set>
+#include <map>
 #include <vector>
 #include <string>
 #include <memory>

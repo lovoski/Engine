@@ -6,7 +6,7 @@
 namespace aEngine {
 
 struct Camera : public aEngine::BaseComponent {
-
+  Camera() : BaseComponent(-1) {}
   Camera(EntityID id) : BaseComponent(id) {}
 
   // The camera look at -LocalForward direction

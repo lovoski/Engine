@@ -1,3 +1,10 @@
+/**
+ * Base class for each component,
+ * to implement a new component, the component must derive from
+ * this BaseComponent, and contains a default constructor.
+ * The default constructor don't neccessaryly need to do anything,
+ * its just for serialization and reflection need.
+ */
 #pragma once
 
 #include "Global.hpp"
