@@ -14,6 +14,7 @@
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 #include "System/Spatial/SpatialSystem.hpp"
+#include "System/Audio/AudioSystem.hpp"
 
 #include "Scripts/CameraController.hpp"
 
@@ -41,6 +42,7 @@ void Scene::Start() {
   RegisterSystem<AnimationSystem>();
   RegisterSystem<NativeScriptSystem>();
   RegisterSystem<SpatialSystem>();
+  RegisterSystem<AudioSystem>();
 
   // start all the systems
   GetSystemInstance<RenderSystem>()->Start();
@@ -49,6 +51,7 @@ void Scene::Start() {
   GetSystemInstance<AnimationSystem>()->Start();
   GetSystemInstance<NativeScriptSystem>()->Start();
   GetSystemInstance<SpatialSystem>()->Start();
+  GetSystemInstance<AudioSystem>()->Start();
 }
 
 void Scene::Update() {
@@ -85,6 +88,7 @@ void Scene::ForceRender() {
   GetSystemInstance<RenderSystem>()->Render();
   // enable the scripts to draw something in the scene
   float t4 = GetTime();
+  GetSystemInstance<AudioSystem>()->Render();
   GetSystemInstance<CameraSystem>()->Render();
   GetSystemInstance<LightSystem>()->Render();
   GetSystemInstance<AnimationSystem>()->Render();
@@ -225,6 +229,7 @@ void Scene::Destroy() {
   GetSystemInstance<AnimationSystem>()->Destroy();
   GetSystemInstance<NativeScriptSystem>()->Destroy();
   GetSystemInstance<SpatialSystem>()->Destroy();
+  GetSystemInstance<AudioSystem>()->Destroy();
 }
 
 bool Scene::LoopCursorInSceneWindow() {

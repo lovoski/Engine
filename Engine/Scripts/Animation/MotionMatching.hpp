@@ -4,7 +4,7 @@
  * This is a implementation to a character controller based on motion matching,
  * attach this script to some entity with `Animator` component, setup the
  * motion database to use. Then you should be free to control the character.
- * 
+ *
  * The idea of motion matching is to precompute a database of features for all
  * motion clips, construct a query feature from user input and previous motion,
  * select a motion clip with closest feature to the user input and play it for
@@ -30,17 +30,42 @@ struct MotionDatabaseData {
   }
 };
 
+struct MotionDatabaseFeature {
+  // 12: left & right foot position, velocity
+  //  6: hip position, velocity
+  //  6: trajectory xz positions (3 future positions)
+  std::array<float, 24> data;
+
+  template <typename Archive> void serialize(Archive &archive) {
+    archive(data);
+  }
+};
+
 struct MotionDatabase {
   // nframes * ndata_dim
   std::vector<MotionDatabaseData> data;
   // nanim * 2 (begin, end)
   std::vector<std::pair<int, int>> range;
+  // nframes * nfeat_dim
+  std::vector<MotionDatabaseFeature> features;
 
-  // search database for closest motion
-  void Query();
+  int dataFPS = 30;
+  float trajInterval = 0.2f;
+
+  // compute the features based on given joint index
+  void ComputeFeatures(int lfoot, int rfoot, int hip);
+
+  MotionDatabaseFeature CompressFeature(std::array<glm::vec3, 2> &hip,
+                                        std::array<glm::vec3, 2> &lfoot,
+                                        std::array<glm::vec3, 2> &rfoot,
+                                        std::array<glm::vec2, 3> &traj);
+
+  // search database for closest motion,
+  // returns index for the closet motion frames
+  int Query(MotionDatabaseFeature &feature);
 
   template <typename Archive> void serialize(Archive &archive) {
-    archive(range, data);
+    archive(range, data, features);
   }
 };
 

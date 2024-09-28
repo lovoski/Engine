@@ -5,3 +5,6 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobjloader.h>
+
+#define MINIAUDIO_IMPLEMENTATION
+#include <miniaudio.h>

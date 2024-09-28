@@ -39,6 +39,8 @@
 
 #include <stb_image.h>
 
+#include <miniaudio.h>
+
 #include <filesystem>
 namespace fs = std::filesystem;
 

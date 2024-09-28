@@ -4,6 +4,7 @@
 #include "Function/Math/Dampers.hpp"
 
 #include <cereal/archives/binary.hpp>
+#include <cereal/types/array.hpp>
 #include <cereal/types/common.hpp>
 #include <cereal/types/tuple.hpp>
 #include <cereal/types/utility.hpp>
@@ -214,6 +215,54 @@ void buildMotionDatabase(std::string filepath) {
   }
 }
 
-void MotionDatabase::Query() {}
+void MotionDatabase::ComputeFeatures(int lfoot, int rfoot, int hip) {
+  int interval = trajInterval * dataFPS;
+  for (int animInd = 0; animInd < range.size(); ++animInd) {
+    int start = range[animInd].first;
+    int end = range[animInd].second;
+    for (int f = start; f < end; ++f) {
+      std::array<glm::vec3, 2> hipData, lfootData, rfootData;
+      hipData[0] = data[f].positions[hip];
+      hipData[1] = data[f].velocities[hip];
+      lfootData[0] = data[f].positions[lfoot];
+      lfootData[1] = data[f].velocities[lfoot];
+      rfootData[0] = data[f].positions[rfoot];
+      rfootData[1] = data[f].velocities[rfoot];
+      std::array<glm::vec2, 3> trajData;
+      // sample trajectories
+      for (int i = 1; i <= 3; ++i) {
+        int sampleF = std::max(end - 1, f + i * interval);
+        glm::vec3 sampleHip = data[sampleF].positions[hip];
+        trajData[i - 1] = glm::vec2(sampleHip.x, sampleHip.z);
+      }
+      features.push_back(
+          CompressFeature(hipData, lfootData, rfootData, trajData));
+    }
+  }
+}
+
+MotionDatabaseFeature MotionDatabase::CompressFeature(
+    std::array<glm::vec3, 2> &hip, std::array<glm::vec3, 2> &lfoot,
+    std::array<glm::vec3, 2> &rfoot, std::array<glm::vec2, 3> &traj) {
+  MotionDatabaseFeature feature;
+  int index = 0;
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 3; ++j)
+      feature.data[index++] = hip[i][j];
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 3; ++j)
+      feature.data[index++] = lfoot[i][j];
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 3; ++j)
+      feature.data[index++] = rfoot[i][j];
+  for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 2; ++j)
+      feature.data[index++] = traj[i][j];
+  return feature;
+}
+
+int MotionDatabase::Query(MotionDatabaseFeature &feature) {
+  return -1;
+}
 
 }; // namespace aEngine
