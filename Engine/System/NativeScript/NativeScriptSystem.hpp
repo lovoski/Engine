@@ -14,7 +14,8 @@ public:
 
   void DrawToScene();
 
-private:
+  template <typename Archive> void serialize(Archive &archive) {
+  }
 };
 
-};
+}; // namespace aEngine

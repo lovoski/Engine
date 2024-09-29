@@ -28,6 +28,12 @@ public:
     shadowMapDirLight = Loader.GetShader("::shadowMapDirLight");
   }
 
+  template<typename Archive>
+  void serialize(Archive &archive) {
+    archive(ShowGrid, GridSize, GridSpacing, GridColor);
+    archive(EnableShadowMap, ShadowMapResolution);
+  }
+
   // Grid options
   bool ShowGrid;
   unsigned int GridSize;

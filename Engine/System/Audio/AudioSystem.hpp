@@ -3,7 +3,6 @@
 #include "Base/BaseSystem.hpp"
 #include "Global.hpp"
 
-
 namespace aEngine {
 
 class AudioSystem : public BaseSystem {
@@ -18,10 +17,12 @@ public:
 
   void Render();
 
+  template <typename Archive> void serialize(Archive &archive) {
+  }
+
 private:
   ma_uint32 playbackDeviceCount = 0, captureDeviceCount = 0;
-  ma_device_info *playbackDeviceInfo = nullptr,
-                     *captureDeviceInfo = nullptr;
+  ma_device_info *playbackDeviceInfo = nullptr, *captureDeviceInfo = nullptr;
   void queryAviableDevice();
 };
 

@@ -52,6 +52,9 @@ public:
     }
     return result;
   }
+
+  template <typename Archive> void serialize(Archive &archive) {
+  }
 };
 
 }; // namespace aEngine

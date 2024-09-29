@@ -9,7 +9,8 @@ namespace aEngine {
 class Entity {
 public:
   friend class Scene;
-
+  // default constructor for serialization only
+  Entity() {}
   Entity(EntityID id) : ID(id) {
     m_scale = glm::vec3(1.0f);
     m_position = glm::vec3(0.0f);
@@ -45,11 +46,6 @@ public:
   }
 
   static glm::vec3 WorldUp, WorldLeft, WorldForward;
-
-  // local axis are updated at the start of each loop
-  glm::vec3 LocalUp, LocalLeft, LocalForward;
-
-  bool Enabled = true;
 
   // set global position
   void SetGlobalPosition(glm::vec3 p);
@@ -92,6 +88,15 @@ public:
     return GWORLD.GetComponent<T>(ID);
   }
 
+  template<typename Archive>
+  void serialize(Archive &archive) {
+    // don't serialize parent child relation
+    archive(ID, name, Enabled);
+    archive(LocalUp, LocalLeft, LocalForward);
+    archive(transformDirty, localScale, localRotation, localPosition);
+    archive(m_scale, m_rotation, m_position, globalTransform);
+  }
+
   // Call this function to clear parent child relations related to this object,
   // we need to make sure that nothing could refer to this object after its deleted
   void Destroy();
@@ -101,6 +106,11 @@ public:
   void UpdateGlobalTransform();
 
   const glm::mat4 GlobalTransformMatrix() { return globalTransform; }
+
+  // local axis are updated at the start of each loop
+  glm::vec3 LocalUp, LocalLeft, LocalForward;
+
+  bool Enabled = true;
 
   EntityID ID;
   std::string name = "New Entity ";

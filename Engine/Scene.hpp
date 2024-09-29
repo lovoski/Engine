@@ -74,6 +74,13 @@ struct SceneContext {
     debugDrawTime = 0.0f;
     hierarchyUpdateTime = 0.0f;
   }
+
+  template <typename Archive> void serialize(Archive &archive) {
+    archive(hasActiveCamera, activeCamera);
+    archive(enableDebugDraw, sceneFilePath);
+    archive(lastTime, deltaTime, renderTime, updateTime, debugDrawTime,
+            hierarchyUpdateTime);
+  }
 };
 
 class Scene {
@@ -124,7 +131,7 @@ public:
     UpdateEntityTargetSystems(entity);
   }
 
-  // find the component belongs to some entity, returns nullptr when the 
+  // find the component belongs to some entity, returns nullptr when the
   // entity don't have this component.
   template <typename T> std::shared_ptr<T> GetComponent(const EntityID entity) {
     if (entity >= MAX_ENTITY_COUNT)

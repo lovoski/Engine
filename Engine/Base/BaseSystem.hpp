@@ -53,6 +53,10 @@ public:
   // from component id to component instance
   static std::map<ComponentTypeID, std::unique_ptr<BaseComponent>> CompMap;
 
+  template <typename Archive> void serialize(Archive &archive) {
+    archive(entities, signature, signatureOne);
+  }
+
 protected:
   EntitySignature signature;
   EntitySignature signatureOne;

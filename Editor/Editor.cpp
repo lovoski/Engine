@@ -188,17 +188,19 @@ void Editor::MainMenuBar() {
               "Save Scene", (context.activeBaseFolder + "/").c_str(), 1,
               filters, "Scene File");
           if (result != NULL) {
-            LOG_F(INFO, "save default scene to %s", result);
+            GWORLD.Save(result);
           }
         } else {
-          std::ofstream sceneFileOutput(sceneFilePath);
-          if (!sceneFileOutput.is_open()) {
-            LOG_F(ERROR, "can't save scene to %s", sceneFilePath.c_str());
-          } else {
-            // sceneFileOutput << GWORLD.Serialize();
-            LOG_F(INFO, "save scene to %s", sceneFilePath.c_str());
-          }
-          sceneFileOutput.close();
+          GWORLD.Save(sceneFilePath);
+        }
+      }
+      if (ImGui::MenuItem("Load Scene")) {
+        const char *filters[] = {"*.scene"};
+        auto result = tinyfd_openFileDialog(
+            "Load Scene", (context.activeBaseFolder + "/").c_str(), 1, filters,
+            "Scene File", 0);
+        if (result != NULL) {
+          GWORLD.Load(result);
         }
       }
       ImGui::EndMenu();
@@ -244,20 +246,18 @@ void Editor::MainMenuBar() {
             cacInd = it->second + 1;
           }
         }
-        GUIUtils::Combo(
-            "Active Camera", cameraNames, cacInd,
-            [&](int current) {
-              for (auto cameraComboMapPair : cameraToComboMap) {
-                auto cameraEntityID = cameraComboMapPair.first;
-                if (cameraComboMapPair.second == current) {
-                  if (GWORLD.EntityValid(cameraEntityID)) {
-                    GWORLD.SetActiveCamera(cameraEntityID);
-                  } else {
-                    LOG_F(ERROR, "Can't set active camera to a invalid entity");
-                  }
-                }
+        GUIUtils::Combo("Active Camera", cameraNames, cacInd, [&](int current) {
+          for (auto cameraComboMapPair : cameraToComboMap) {
+            auto cameraEntityID = cameraComboMapPair.first;
+            if (cameraComboMapPair.second == current) {
+              if (GWORLD.EntityValid(cameraEntityID)) {
+                GWORLD.SetActiveCamera(cameraEntityID);
+              } else {
+                LOG_F(ERROR, "Can't set active camera to a invalid entity");
               }
-            });
+            }
+          }
+        });
         ImGui::Separator();
         ImGui::MenuItem("Skybox", nullptr, nullptr, false);
         ImGui::Checkbox("Render Skybox", &renderSystem->RenderSkybox);
@@ -267,14 +267,14 @@ void Editor::MainMenuBar() {
           if (GWORLD.EntityValid(id)) {
             skyLightNames.push_back(GWORLD.EntityFromID(id)->name + ":" +
                                     std::to_string(id));
-          } else lightSystem->activeSkyLight = nullptr;
+          } else
+            lightSystem->activeSkyLight = nullptr;
         }
         static int cslInd = 0;
         GUIUtils::Combo(
             "Active Skybox", skyLightNames, cslInd, [&](int current) {
               if (current >= 0 && current < lightSystem->skyLights.size()) {
-                lightSystem->activeSkyLight =
-                    lightSystem->skyLights[current];
+                lightSystem->activeSkyLight = lightSystem->skyLights[current];
               } else {
                 lightSystem->activeSkyLight = nullptr;
                 cslInd = 0;

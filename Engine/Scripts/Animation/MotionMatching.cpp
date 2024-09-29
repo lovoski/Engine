@@ -3,13 +3,6 @@
 #include "Function/GUI/Helpers.hpp"
 #include "Function/Math/Dampers.hpp"
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/array.hpp>
-#include <cereal/types/common.hpp>
-#include <cereal/types/tuple.hpp>
-#include <cereal/types/utility.hpp>
-#include <cereal/types/vector.hpp>
-
 namespace aEngine {
 
 void buildMotionDatabase(std::string filepath);
@@ -167,14 +160,14 @@ void MotionMatching::queryJoysticks() {
 
 void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
   std::ofstream output(filepath, std::ios::binary);
-  cereal::BinaryOutputArchive archive(output);
-  archive(db);
+  boost::archive::binary_oarchive oa(output);
+  oa << db;
 }
 
 void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
   std::ifstream input(filepath, std::ios::binary);
-  cereal::BinaryInputArchive archive(input);
-  archive(db);
+  boost::archive::binary_iarchive ia(input);
+  ia >> db;
 }
 
 void buildMotionDatabase(std::string filepath) {
@@ -231,7 +224,7 @@ void MotionDatabase::ComputeFeatures(int lfoot, int rfoot, int hip) {
       std::array<glm::vec2, 3> trajData;
       // sample trajectories
       for (int i = 1; i <= 3; ++i) {
-        int sampleF = std::max(end - 1, f + i * interval);
+        int sampleF = ((end - 1) > (f + i * interval)) ? (end - 1) : (f + i * interval);
         glm::vec3 sampleHip = data[sampleF].positions[hip];
         trajData[i - 1] = glm::vec2(sampleHip.x, sampleHip.z);
       }

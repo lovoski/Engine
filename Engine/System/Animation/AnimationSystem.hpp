@@ -39,6 +39,11 @@ public:
 
   void DrawSequencer();
 
+  template <typename Archive> void serialize(Archive &archive) {
+    archive(SystemFPS, EnableAutoPlay, ShowSequencer);
+    archive(SystemStartFrame, SystemEndFrame, SystemCurrentFrame);
+  }
+
 private:
   void collectSkeletonDrawQueue(
       std::shared_ptr<Animator> animator,

@@ -25,8 +25,12 @@ struct MotionDatabaseData {
   std::vector<glm::quat> rotations;
   std::vector<glm::vec3> velocities;
 
-  template <typename Archive> void serialize(Archive &archive) {
-    archive(facingDir, positions, rotations, velocities);
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    archive &facingDir;
+    archive &positions;
+    archive &rotations;
+    archive &velocities;
   }
 };
 
@@ -36,8 +40,9 @@ struct MotionDatabaseFeature {
   //  6: trajectory xz positions (3 future positions)
   std::array<float, 24> data;
 
-  template <typename Archive> void serialize(Archive &archive) {
-    archive(data);
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    archive &data;
   }
 };
 
@@ -64,8 +69,11 @@ struct MotionDatabase {
   // returns index for the closet motion frames
   int Query(MotionDatabaseFeature &feature);
 
-  template <typename Archive> void serialize(Archive &archive) {
-    archive(range, data, features);
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    archive &range;
+    archive &data;
+    archive &features;
   }
 };
 
