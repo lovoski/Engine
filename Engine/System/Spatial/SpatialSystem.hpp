@@ -3,7 +3,6 @@
 #include "Base/BaseSystem.hpp"
 #include "Global.hpp"
 
-
 namespace aEngine {
 
 class SpatialSystem : public BaseSystem {
@@ -19,7 +18,12 @@ public:
   // Render debug utils related to geometry
   void Render();
 
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    boost::serialization::base_object<BaseSystem>(*this);
+  }
+
 private:
 };
 
-};
+}; // namespace aEngine

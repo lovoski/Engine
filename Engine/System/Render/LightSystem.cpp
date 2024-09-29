@@ -79,3 +79,5 @@ void LightSystem::Render() {
 }
 
 }; // namespace aEngine
+
+BOOST_CLASS_EXPORT(aEngine::LightSystem)

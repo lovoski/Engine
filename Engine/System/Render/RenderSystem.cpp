@@ -113,3 +113,5 @@ void RenderSystem::RenderEnd() {
 }
 
 }; // namespace aEngine
+
+BOOST_CLASS_EXPORT(aEngine::RenderSystem)

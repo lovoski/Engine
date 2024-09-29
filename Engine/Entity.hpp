@@ -88,17 +88,28 @@ public:
     return GWORLD.GetComponent<T>(ID);
   }
 
-  template<typename Archive>
-  void serialize(Archive &archive) {
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
     // don't serialize parent child relation
-    archive(ID, name, Enabled);
-    archive(LocalUp, LocalLeft, LocalForward);
-    archive(transformDirty, localScale, localRotation, localPosition);
-    archive(m_scale, m_rotation, m_position, globalTransform);
+    archive &ID;
+    archive &name;
+    archive &Enabled;
+    archive &LocalUp;
+    archive &LocalLeft;
+    archive &LocalForward;
+    archive &transformDirty;
+    archive &localScale;
+    archive &localRotation;
+    archive &localPosition;
+    archive &m_scale;
+    archive &m_rotation;
+    archive &m_position;
+    archive &globalTransform;
   }
 
   // Call this function to clear parent child relations related to this object,
-  // we need to make sure that nothing could refer to this object after its deleted
+  // we need to make sure that nothing could refer to this object after its
+  // deleted
   void Destroy();
 
   void AssignChild(Entity *c);

@@ -17,7 +17,9 @@ public:
 
   void Render();
 
-  template <typename Archive> void serialize(Archive &archive) {
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    boost::serialization::base_object<BaseSystem>(*this);
   }
 
 private:

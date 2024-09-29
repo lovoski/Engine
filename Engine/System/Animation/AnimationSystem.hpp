@@ -39,9 +39,15 @@ public:
 
   void DrawSequencer();
 
-  template <typename Archive> void serialize(Archive &archive) {
-    archive(SystemFPS, EnableAutoPlay, ShowSequencer);
-    archive(SystemStartFrame, SystemEndFrame, SystemCurrentFrame);
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    boost::serialization::base_object<BaseSystem>(*this);
+    archive &SystemFPS;
+    archive &EnableAutoPlay;
+    archive &ShowSequencer;
+    archive &SystemStartFrame;
+    archive &SystemEndFrame;
+    archive &SystemCurrentFrame;
   }
 
 private:

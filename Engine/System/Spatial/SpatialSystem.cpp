@@ -91,3 +91,5 @@ void SpatialSystem::Render() {
 }
 
 }; // namespace aEngine
+
+BOOST_CLASS_EXPORT(aEngine::SpatialSystem)

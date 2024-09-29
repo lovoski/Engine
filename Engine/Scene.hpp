@@ -75,11 +75,18 @@ struct SceneContext {
     hierarchyUpdateTime = 0.0f;
   }
 
-  template <typename Archive> void serialize(Archive &archive) {
-    archive(hasActiveCamera, activeCamera);
-    archive(enableDebugDraw, sceneFilePath);
-    archive(lastTime, deltaTime, renderTime, updateTime, debugDrawTime,
-            hierarchyUpdateTime);
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    archive &hasActiveCamera;
+    archive &activeCamera;
+    archive &enableDebugDraw;
+    archive &sceneFilePath;
+    archive &lastTime;
+    archive &deltaTime;
+    archive &renderTime;
+    archive &updateTime;
+    archive &debugDrawTime;
+    archive &hierarchyUpdateTime;
   }
 };
 

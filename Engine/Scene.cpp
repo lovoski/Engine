@@ -434,40 +434,43 @@ void Scene::rebuildHierarchyStructure() {
 bool Scene::Save(std::string path) {
   std::ofstream output(path, std::ios::binary);
   if (output.is_open()) {
-    // LOG_F(INFO, "save scene to %s", path.c_str());
-    // cereal::BinaryOutputArchive archive(output);
-    // archive(Context);
-    // // 1. Entities
-    // archive(entityCount, availableEntities);
-    // // the parent-child relation is not serialized here
-    // archive(entities);
-    // // collect parent-child relation for all entities
-    // std::map<EntityID, EntityID> parentSerialize;
-    // std::map<EntityID, std::vector<EntityID>> childrenSerialize;
-    // for (auto &entity : entities) {
-    //   if (entity.second->parent != nullptr)
-    //     parentSerialize[entity.second->ID] = entity.second->parent->ID;
-    //   else
-    //     parentSerialize[entity.second->ID] = -1;
-    //   childrenSerialize[entity.second->ID] = std::vector<EntityID>();
-    //   auto &cref = childrenSerialize[entity.second->ID];
-    //   for (auto child : entity.second->children) {
-    //     cref.push_back(child->ID);
-    //   }
-    // }
-    // // serialize parent child entity
-    // archive(parentSerialize, childrenSerialize);
-    // // the component signatures
-    // archive(entitiesSignatures);
-    // // hierarchy roots
-    // std::vector<EntityID> roots;
-    // for (auto r : HierarchyRoots)
-    //   roots.push_back(r->ID);
-    // archive(roots);
-    // // 2. Components
+    LOG_F(INFO, "save scene to %s", path.c_str());
+    boost::archive::binary_oarchive oa(output);
+    oa << Context;
+    // 1. Entities
+    // the parent-child relation is not serialized here
+    auto tmpCopy = availableEntities;
+    std::vector<EntityID> ae;
+    while (!tmpCopy.empty()) {
+      ae.push_back(tmpCopy.front());
+      tmpCopy.pop();
+    }
+    oa << entityCount << ae << entities << entitiesSignatures;
+    // collect parent-child relation for all entities
+    std::map<EntityID, EntityID> parentSerialize;
+    std::map<EntityID, std::vector<EntityID>> childrenSerialize;
+    for (auto &entity : entities) {
+      if (entity.second->parent != nullptr)
+        parentSerialize[entity.second->ID] = entity.second->parent->ID;
+      else
+        parentSerialize[entity.second->ID] = -1;
+      childrenSerialize[entity.second->ID] = std::vector<EntityID>();
+      auto &cref = childrenSerialize[entity.second->ID];
+      for (auto child : entity.second->children) {
+        cref.push_back(child->ID);
+      }
+    }
+    // serialize parent child entity
+    oa << parentSerialize << childrenSerialize;
+    // hierarchy roots
+    std::vector<EntityID> roots;
+    for (auto r : HierarchyRoots)
+      roots.push_back(r->ID);
+    oa << roots;
+    // 2. Components
 
-    // // 3. Systems
-    // archive(registeredSystems);
+    // 3. Systems
+    oa << registeredSystems;
 
     return true;
   } else {
@@ -479,50 +482,52 @@ bool Scene::Save(std::string path) {
 bool Scene::Load(std::string path) {
   std::ifstream input(path, std::ios::binary);
   if (input.is_open()) {
-    // // reset current scene
-    // Reset();
-    // LOG_F(INFO, "load scene from %s", path.c_str());
-    // cereal::BinaryInputArchive archive(input);
-    // archive(Context);
-    // // 1. Entities
-    // archive(entityCount, availableEntities);
-    // archive(entities);
-    // std::map<EntityID, EntityID> parentSerialize;
-    // std::map<EntityID, std::vector<EntityID>> childrenSerialize;
-    // // get parent-child relation
-    // archive(parentSerialize, childrenSerialize);
-    // // restore parent-child relation
-    // for (auto &entity : entities) {
-    //   auto id = entity.second->ID;
-    //   auto parentId = parentSerialize[id];
-    //   auto childrenId = childrenSerialize[id];
-    //   if (parentId == (EntityID)(-1)) {
-    //     entity.second->parent = nullptr;
-    //   } else {
-    //     entity.second->parent = entities[parentId].get();
-    //   }
-    //   entity.second->children.clear();
-    //   for (auto child : childrenId) {
-    //     entity.second->children.push_back(entities[child].get());
-    //   }
-    // }
-    // // component signatures
-    // archive(entitiesSignatures);
-    // // hierarchy root
-    // std::vector<EntityID> roots;
-    // archive(roots);
-    // HierarchyRoots.clear();
-    // for (auto id : roots)
-    //   HierarchyRoots.push_back(entities[id].get());
-    // // 2. Components
+    // reset current scene
+    Reset();
+    LOG_F(INFO, "load scene from %s", path.c_str());
+    boost::archive::binary_iarchive ia(input);
+    ia >> Context;
+    // 1. Entities
+    std::vector<EntityID> ae;
+    ia >> entityCount >> ae >> entities >> entitiesSignatures;
+    while (!availableEntities.empty())
+      availableEntities.pop();
+    for (auto id : ae)
+      availableEntities.push(id);
+    std::map<EntityID, EntityID> parentSerialize;
+    std::map<EntityID, std::vector<EntityID>> childrenSerialize;
+    // get parent-child relation
+    ia >> parentSerialize >> childrenSerialize;
+    // restore parent-child relation
+    for (auto &entity : entities) {
+      auto id = entity.second->ID;
+      auto parentId = parentSerialize[id];
+      auto childrenId = childrenSerialize[id];
+      if (parentId == (EntityID)(-1)) {
+        entity.second->parent = nullptr;
+      } else {
+        entity.second->parent = entities[parentId].get();
+      }
+      entity.second->children.clear();
+      for (auto child : childrenId) {
+        entity.second->children.push_back(entities[child].get());
+      }
+    }
+    // hierarchy root
+    std::vector<EntityID> roots;
+    ia >> roots;
+    HierarchyRoots.clear();
+    for (auto id : roots)
+      HierarchyRoots.push_back(entities[id].get());
+    // 2. Components
 
-    // // 3. Systems
-    // archive(registeredSystems);
+    // 3. Systems
+    ia >> registeredSystems;
 
     return true;
   } else {
     LOG_F(ERROR, "failed to load scene from %s", path.c_str());
-    return true;
+    return false;
   }
 }
 

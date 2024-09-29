@@ -31,3 +31,5 @@ void AudioSystem::queryAviableDevice() {
 }
 
 }; // namespace aEngine
+
+BOOST_CLASS_EXPORT(aEngine::AudioSystem)

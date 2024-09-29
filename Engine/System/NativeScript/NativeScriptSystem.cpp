@@ -1,8 +1,9 @@
+#include "System/NativeScript/NativeScriptSystem.hpp"
 #include "Base/Scriptable.hpp"
 #include "Component/NativeScript.hpp"
-#include "System/NativeScript/NativeScriptSystem.hpp"
 #include "Entity.hpp"
 #include "Scene.hpp"
+
 
 namespace aEngine {
 
@@ -48,4 +49,6 @@ void NativeScriptSystem::DrawToScene() {
   }
 }
 
-};
+}; // namespace aEngine
+
+BOOST_CLASS_EXPORT(aEngine::NativeScriptSystem)

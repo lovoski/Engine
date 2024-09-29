@@ -28,10 +28,15 @@ public:
     shadowMapDirLight = Loader.GetShader("::shadowMapDirLight");
   }
 
-  template<typename Archive>
-  void serialize(Archive &archive) {
-    archive(ShowGrid, GridSize, GridSpacing, GridColor);
-    archive(EnableShadowMap, ShadowMapResolution);
+  template <typename Archive>
+  void serialize(Archive &archive, const unsigned int version) {
+    boost::serialization::base_object<BaseSystem>(*this);
+    archive &ShowGrid;
+    archive &GridSize;
+    archive &GridSpacing;
+    archive &GridColor;
+    archive &EnableShadowMap;
+    archive &ShadowMapResolution;
   }
 
   // Grid options

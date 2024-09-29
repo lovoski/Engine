@@ -61,6 +61,10 @@ namespace fs = std::filesystem;
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/queue.hpp>
+#include <boost/serialization/deque.hpp>
+#include <boost/serialization/stack.hpp>
+#include <boost/serialization/base_object.hpp>
 
 namespace boost {
 namespace serialization {
