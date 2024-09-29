@@ -40,7 +40,7 @@ public:
 
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    boost::serialization::base_object<BaseSystem>(*this);
+    ar &boost::serialization::base_object<BaseSystem>(*this);
   }
 
   // Draw visualizations for light sources

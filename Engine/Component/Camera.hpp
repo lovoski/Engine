@@ -10,22 +10,18 @@ struct Camera : public aEngine::BaseComponent {
   Camera(EntityID id) : BaseComponent(id) {}
 
   // The camera look at -LocalForward direction
-  void GetCameraViewPerpProjMatrix(glm::mat4 &view, glm::mat4 &proj) {
-    auto size = GWORLD.Context.sceneWindowSize;
-    if (GWORLD.EntityValid(entityID)) {
-      auto entity = GWORLD.EntityFromID(entityID);
-      proj = glm::perspective(glm::radians(fovY), size.x / size.y, zNear, zFar);
-      view = glm::lookAt(entity->Position(),
-                         entity->Position() - entity->LocalForward,
-                         entity->LocalUp);
-    } else
-      LOG_F(ERROR, "Entity of camera component not valid");
-  }
+  void GetCameraViewPerpProjMatrix(glm::mat4 &view, glm::mat4 &proj);
 
-  void DrawInspectorGUI() override {
-    ImGui::DragFloat("FovY", &fovY, 1.0f, 0.0f, 150.0f);
-    ImGui::DragFloat("zNear", &zNear, 0.001f, 0.0000001f, 10.0f);
-    ImGui::DragFloat("zFar", &zFar, 0.1f, 20.0f, 2000.0f);
+  void DrawInspectorGUI() override;
+
+  std::string getInspectorWindowName() override { return "Camera"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<BaseComponent>(*this);
+    ar &fovY;
+    ar &zFar;
+    ar &zNear;
   }
 
   float fovY = 45.0f, zNear = 0.1f, zFar = 100.0f;

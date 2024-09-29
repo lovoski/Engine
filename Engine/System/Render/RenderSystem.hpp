@@ -30,7 +30,7 @@ public:
 
   template <typename Archive>
   void serialize(Archive &archive, const unsigned int version) {
-    boost::serialization::base_object<BaseSystem>(*this);
+    archive &boost::serialization::base_object<BaseSystem>(*this);
     archive &ShowGrid;
     archive &GridSize;
     archive &GridSpacing;

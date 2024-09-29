@@ -22,6 +22,13 @@ struct DeformRenderer : public aEngine::BaseComponent {
   std::shared_ptr<MeshRenderer> renderer;
   Render::Buffer skeletonMatrices;
 
+  std::string getInspectorWindowName() override { return "Deform Renderer"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<BaseComponent>(*this);
+  }
+
   void DeformMesh(std::shared_ptr<Mesh> mesh);
 
   void DrawInspectorGUI() override;

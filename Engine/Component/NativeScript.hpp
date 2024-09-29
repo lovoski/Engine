@@ -54,6 +54,13 @@ struct NativeScript : public aEngine::BaseComponent {
     }
   }
 
+  std::string getInspectorWindowName() override { return "Native Script"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<BaseComponent>(*this);
+  }
+
   void DrawInspectorGUI() override;
 
   // A scriptable component can hold multiple scriptable objects

@@ -56,3 +56,5 @@ void NativeScript::DrawInspectorGUI() {
 }
 
 }; // namespace aEngine
+
+REGISTER_COMPONENT(aEngine, NativeScript)

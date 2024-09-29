@@ -91,3 +91,5 @@ void MeshRenderer::DrawInspectorGUI() {
 }
 
 }; // namespace aEngine
+
+REGISTER_COMPONENT(aEngine, MeshRenderer)

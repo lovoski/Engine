@@ -39,6 +39,13 @@ struct Mesh : public BaseComponent {
   // this function should be safe to use.
   Render::Mesh *GetMeshInstance() { return meshInstance; }
 
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<BaseComponent>(*this);
+  }
+
+  std::string getInspectorWindowName() override { return "Mesh"; }
+
   // VAO for mesh rendering
   Render::VAO vao;
   // VBO for rendering

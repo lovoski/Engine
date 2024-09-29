@@ -57,6 +57,13 @@ struct MeshRenderer : public aEngine::BaseComponent {
     return nullptr;
   }
 
+  std::string getInspectorWindowName() override { return "Mesh Renderer"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<BaseComponent>(*this);
+  }
+
   bool castShadow = true;
   bool receiveShadow = true;
   std::vector<Render::BasePass *> passes;

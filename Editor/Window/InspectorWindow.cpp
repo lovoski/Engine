@@ -31,12 +31,14 @@ inline void DrawTransformGUI(EntityID selectedEntity) {
     vec3 position = transform->Position();
     vec3 scale = transform->Scale();
     // dirctly decompose to euler angles could result in gimbal lock
-    if (ImGui::DragFloat3("Position", &position.x, 0.01f, -MAX_FLOAT, MAX_FLOAT))
+    if (ImGui::DragFloat3("Position", &position.x, 0.01f, -MAX_FLOAT,
+                          MAX_FLOAT))
       transform->SetGlobalPosition(position);
     if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.0f, MAX_FLOAT))
       transform->SetGlobalScale(scale);
-    // glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform->Rotation()));
-    // if (ImGui::InputFloat3("Rotation", &rotation.x)) {
+    // glm::vec3 rotation =
+    // glm::degrees(glm::eulerAngles(transform->Rotation())); if
+    // (ImGui::InputFloat3("Rotation", &rotation.x)) {
     //   transform->SetGlobalRotation(glm::quat(glm::radians(rotation)));
     // }
   }

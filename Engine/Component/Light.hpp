@@ -6,7 +6,8 @@
 
 namespace aEngine {
 
-struct Light : public aEngine::BaseComponent {
+class Light : public BaseComponent {
+public:
   Light() : BaseComponent(-1) {}
   Light(EntityID id) : BaseComponent(id) {}
   ~Light() {}
@@ -15,6 +16,11 @@ struct Light : public aEngine::BaseComponent {
   glm::vec3 LightColor = glm::vec3(1.0f);
 
   virtual glm::mat4 GetLightSpaceMatrix() { return glm::mat4(1.0f); }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<BaseComponent>(*this);
+  }
 
   virtual void StartShadow() {}
   virtual void EndShadow() {}
@@ -34,6 +40,13 @@ struct DirectionalLight : public Light {
 
   void StartShadow() override;
   void EndShadow() override;
+
+  std::string getInspectorWindowName() override { return "Directional Light"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<Light>(*this);
+  }
 
   unsigned int ShadowFBO, ShadowMap;
   unsigned int ShadowMapWidth = 1024, ShadowMapHeight = 1024;
@@ -55,6 +68,13 @@ struct PointLight : public Light {
 
   void DrawInspectorGUI() override;
 
+  std::string getInspectorWindowName() override { return "Point Light"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<Light>(*this);
+  }
+
   float LightRadius = 0.5f;
 
 protected:
@@ -66,6 +86,13 @@ struct EnvironmentLight : public Light {
   ~EnvironmentLight();
 
   void DrawInspectorGUI() override;
+
+  std::string getInspectorWindowName() override { return "Environment Light"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<Light>(*this);
+  }
 
   unsigned int CubeMap;
   // This map is automatically computed when cubemap is built

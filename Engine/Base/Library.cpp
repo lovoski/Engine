@@ -32,6 +32,10 @@ std::string Scriptable::getInspectorWindowName() {
   return std::string(typeid(*this).name());
 }
 
+std::string BaseComponent::getInspectorWindowName() {
+  return std::string(typeid(*this).name());
+}
+
 void Scriptable::OnEnable() {
   LOG_F(INFO, "call OnEnable for %s", getInspectorWindowName().c_str());
 }

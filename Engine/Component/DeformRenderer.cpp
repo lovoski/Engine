@@ -31,3 +31,5 @@ void DeformRenderer::DrawInspectorGUI() {
 }
 
 }; // namespace aEngine
+
+REGISTER_COMPONENT(aEngine, DeformRenderer)

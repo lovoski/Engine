@@ -46,9 +46,37 @@ struct Animator : public BaseComponent {
   void ApplyMotionToSkeleton(Animation::Pose &pose);
   // Maintain member variable `SkeletonMap`, the key for this map is the name
   // of the entity.
-  // The function is rather costly, only call it when the skeleton entity hierarchy
-  // is actually modified.
+  // The function is rather costly, only call it when the skeleton entity
+  // hierarchy is actually modified.
   void BuildSkeletonMap();
+
+  std::string getInspectorWindowName() override { return "Animator"; }
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar &boost::serialization::base_object<BaseComponent>(*this);
+    if (typename Archive::is_saving()) {
+      EntityID id = skeleton == nullptr ? (EntityID)(-1) : skeleton->ID;
+      ar &id;
+    } else if (typename Archive::is_loading()) {
+      EntityID id;
+      ar &id;
+      if (id != (EntityID)(-1))
+        skeleton = nullptr;
+      else
+        skeleton = GWORLD.EntityFromID(id).get();
+    }
+    ar &ShowSkeleton;
+    ar &ShowJoints;
+    ar &SkeletonOnTop;
+    ar &SkeletonColor;
+    ar &skeletonName;
+    ar &motionName;
+    ar &jointActive;
+    // TODO: actor serialization
+    ar &actorJointMap;
+    // motion serialization
+  }
 
   // Skeleton visualization related
   // This entity should be the root joint

@@ -467,7 +467,9 @@ bool Scene::Save(std::string path) {
     for (auto r : HierarchyRoots)
       roots.push_back(r->ID);
     oa << roots;
+
     // 2. Components
+    oa << componentsArrays;
 
     // 3. Systems
     oa << registeredSystems;
@@ -519,7 +521,9 @@ bool Scene::Load(std::string path) {
     HierarchyRoots.clear();
     for (auto id : roots)
       HierarchyRoots.push_back(entities[id].get());
+
     // 2. Components
+    ia >> componentsArrays;
 
     // 3. Systems
     ia >> registeredSystems;
