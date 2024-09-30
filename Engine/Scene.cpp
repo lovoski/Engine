@@ -132,7 +132,9 @@ void Scene::Reset() {
   for (auto root : HierarchyRoots)
     DestroyEntity(root->ID);
   GetComponentList<Camera>()->data.clear();
-  GetComponentList<Light>()->data.clear();
+  GetComponentList<DirectionalLight>()->data.clear();
+  GetComponentList<PointLight>()->data.clear();
+  GetComponentList<EnvironmentLight>()->data.clear();
   GetComponentList<Animator>()->data.clear();
   GetComponentList<DeformRenderer>()->data.clear();
   GetComponentList<MeshRenderer>()->data.clear();

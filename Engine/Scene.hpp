@@ -261,6 +261,11 @@ public:
   // also be destroyed
   void DestroyEntity(const EntityID entity);
 
+  const std::map<ComponentTypeID, std::shared_ptr<IComponentList>> &
+  GetAllComponentArrays() const {
+    return componentsArrays;
+  }
+
 private:
   // create a component list that stores a specified type of components
   template <typename T> void AddComponentList() {

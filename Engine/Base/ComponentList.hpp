@@ -12,6 +12,14 @@ public:
   virtual ~IComponentList() = default;
   virtual void Erase(const EntityID entity) {}
 
+  // Returns true if the entity has this component, false otherwise
+  virtual bool DrawInspectorGUI(const EntityID entity) { return false; }
+
+  // Returns true if the entity has this component
+  virtual bool Has(const EntityID entity) { return false; }
+
+  virtual std::string getInspectorWindowName() { return ""; }
+
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {}
 };
@@ -46,7 +54,7 @@ public:
     return (*comp);
   }
 
-  void Erase(const EntityID entity) override final {
+  void Erase(const EntityID entity) override {
     auto comp =
         std::find_if(data.begin(), data.end(), [&](const std::shared_ptr<T> c) {
           return c->GetID() == entity;
@@ -54,6 +62,31 @@ public:
     if (comp != data.end()) {
       data.erase(comp);
     }
+  }
+
+  bool Has(const EntityID entity) override {
+    auto comp =
+        std::find_if(data.begin(), data.end(), [&](const std::shared_ptr<T> c) {
+          return c->GetID() == entity;
+        });
+    return comp != data.end();
+  }
+
+  bool DrawInspectorGUI(const EntityID entity) override {
+    auto comp =
+        std::find_if(data.begin(), data.end(), [&](const std::shared_ptr<T> c) {
+          return c->GetID() == entity;
+        });
+    if (comp != data.end()) {
+      (*comp)->DrawInspectorGUI();
+      return true;
+    } else
+      return false;
+  }
+
+  std::string getInspectorWindowName() override {
+    auto &it = BaseSystem::CompMap.find(ComponentType<T>());
+    return (*it).second->getInspectorWindowName();
   }
 
   template <typename Archive>

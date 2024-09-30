@@ -53,18 +53,8 @@ template <typename T> void DrawComponent(EntityID entity, std::string name) {
     showComponent = false;
   }
   if (ImGui::CollapsingHeader(name.c_str(), &showComponent)) {
-    GWORLD.GetComponent<T>(entity)->DrawInspectorGUI();
   }
   if (hasComponent && !showComponent) {
-    // the component should be removed
-    if constexpr (std::is_same_v<Animator, T>) {
-      // animator is not a removable component
-      // there might be some component from other entities depending on it
-      LOG_F(WARNING, "can't remove animator from entity %d", entity);
-    } else {
-      LOG_F(INFO, "remove component %s from entiy %d", name.c_str(), entity);
-      GWORLD.RemoveComponent<T>(entity);
-    }
   }
 }
 
@@ -111,18 +101,28 @@ void Editor::InspectorWindow() {
                       {-1, ImGui::GetContentRegionAvail().y});
     DrawTransformGUI(entity);
 
-    // draw components of this entity if exists
-    // new components need to manually register here
-    // TODO: automatically register component?
-    DrawComponent<Mesh>(entity, "Mesh Data");
-    DrawComponent<Camera>(entity, "Camera");
-    DrawComponent<DirectionalLight>(entity, "Directional Light");
-    DrawComponent<PointLight>(entity, "Point Light");
-    DrawComponent<EnvironmentLight>(entity, "Environment Light");
-    DrawComponent<Animator>(entity, "Animator");
-    DrawComponent<MeshRenderer>(entity, "Mesh Renderer");
-    DrawComponent<DeformRenderer>(entity, "Deform Renderer");
-    DrawComponent<NativeScript>(entity, "Native Script");
+    // automatically draw the components
+    static std::map<ComponentTypeID, bool> showComponent;
+    for (auto &ca : GWORLD.GetAllComponentArrays()) {
+      bool hasComponent = ca.second->Has(entity);
+      showComponent[ca.first] = hasComponent;
+      if (ImGui::CollapsingHeader(ca.second->getInspectorWindowName().c_str(),
+                                  &showComponent[ca.first])) {
+        ca.second->DrawInspectorGUI(entity);
+      }
+      if (hasComponent && !showComponent[ca.first]) {
+        // the component should be removed
+        if (ComponentType<Animator>() == ca.first) {
+          // animator is not a removable component
+          // there might be some component from other entities depending on it
+          LOG_F(WARNING, "can't remove animator from entity %d", entity);
+        } else {
+          LOG_F(INFO, "remove component %s from entiy %d",
+                ca.second->getInspectorWindowName().c_str(), entity);
+          ca.second->Erase(entity);
+        }
+      }
+    }
     ImGui::EndChild();
   }
   ImGui::End();

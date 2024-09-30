@@ -19,46 +19,44 @@ RenderSystem::RenderSystem() {
 
 void RenderSystem::bakeShadowMap() {
   auto lightSystem = GWORLD.GetSystemInstance<LightSystem>();
-  auto &lights = lightSystem->lights;
+  // point light shadows
+  auto &dlights = lightSystem->dlights;
   LightsBuffer.BindAs(GL_SHADER_STORAGE_BUFFER);
-  for (int i = 0; i < lights.size(); ++i) {
-    auto light = lights[i];
-    light->StartShadow();
-    if (auto dirLight = dynamic_cast<DirectionalLight *>(light.get())) {
-      shadowMapDirLight->Use();
-      auto lightMatrix = dirLight->GetLightSpaceMatrix();
-      shadowMapDirLight->SetMat4("LightSpaceMatrix", lightMatrix);
-      auto offset =
-          i * sizeof(LightData) + offsetof(LightData, meta) + 1 * sizeof(int);
-      // this light will cast shadow
-      LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, 1, offset);
-      offset = i * sizeof(LightData) + offsetof(LightData, lightMatrix);
-      // setup light matrix
-      LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, lightMatrix, offset);
-      for (auto id : entities) {
-        auto entity = GWORLD.EntityFromID(id);
-        auto mesh = entity->GetComponent<Mesh>();
-        std::shared_ptr<MeshRenderer> renderer;
-        if (auto r = entity->GetComponent<MeshRenderer>()) {
-          renderer = r;
-        } else if (auto d = entity->GetComponent<DeformRenderer>()) {
-          renderer = d->renderer;
-          d->DeformMesh(mesh);
-        }
-        if (renderer->castShadow) {
-          renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
-                                       entity->GlobalTransformMatrix());
-        }
+  for (int i = 0; i < dlights.size(); ++i) {
+    auto dlight = dlights[i];
+    dlight->StartShadow();
+    shadowMapDirLight->Use();
+    auto lightMatrix = dlight->GetLightSpaceMatrix();
+    shadowMapDirLight->SetMat4("LightSpaceMatrix", lightMatrix);
+    auto offset =
+        i * sizeof(LightData) + offsetof(LightData, meta) + 1 * sizeof(int);
+    // this light will cast shadow
+    LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, 1, offset);
+    offset = i * sizeof(LightData) + offsetof(LightData, lightMatrix);
+    // setup light matrix
+    LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, lightMatrix, offset);
+    for (auto id : entities) {
+      auto entity = GWORLD.EntityFromID(id);
+      auto mesh = entity->GetComponent<Mesh>();
+      std::shared_ptr<MeshRenderer> renderer;
+      if (auto r = entity->GetComponent<MeshRenderer>()) {
+        renderer = r;
+      } else if (auto d = entity->GetComponent<DeformRenderer>()) {
+        renderer = d->renderer;
+        d->DeformMesh(mesh);
       }
-      // bindless texture setup
-      auto shadowMapHandle = glGetTextureHandleARB(dirLight->ShadowMap);
-      glMakeTextureHandleResidentARB(shadowMapHandle);
-      offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
-      LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, shadowMapHandle,
-                                offset);
-    } else if (auto pointLight = dynamic_cast<PointLight *>(light.get())) {
+      if (renderer->castShadow) {
+        renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
+                                     entity->GlobalTransformMatrix());
+      }
     }
-    light->EndShadow();
+    // bindless texture setup
+    auto shadowMapHandle = glGetTextureHandleARB(dlight->ShadowMap);
+    glMakeTextureHandleResidentARB(shadowMapHandle);
+    offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
+    LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, shadowMapHandle,
+                              offset);
+    dlight->EndShadow();
   }
   LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
 }
@@ -108,9 +106,7 @@ void RenderSystem::Render() {
   }
 }
 
-void RenderSystem::RenderEnd() {
-  glfwSwapBuffers(GWORLD.Context.window);
-}
+void RenderSystem::RenderEnd() { glfwSwapBuffers(GWORLD.Context.window); }
 
 }; // namespace aEngine
 

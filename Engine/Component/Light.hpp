@@ -6,29 +6,9 @@
 
 namespace aEngine {
 
-class Light : public BaseComponent {
-public:
-  Light() : BaseComponent(-1) {}
-  Light(EntityID id) : BaseComponent(id) {}
-  ~Light() {}
-
-  bool enable = true;
-  glm::vec3 LightColor = glm::vec3(1.0f);
-
-  virtual glm::mat4 GetLightSpaceMatrix() { return glm::mat4(1.0f); }
-
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
-  }
-
-  virtual void StartShadow() {}
-  virtual void EndShadow() {}
-};
-
 // The direction of a directional light is LocalForward of its entity.
-struct DirectionalLight : public Light {
-  DirectionalLight() {}
+struct DirectionalLight : public BaseComponent {
+  DirectionalLight() : BaseComponent(-1) {}
   DirectionalLight(EntityID id);
   ~DirectionalLight();
 
@@ -36,17 +16,20 @@ struct DirectionalLight : public Light {
 
   void DrawInspectorGUI() override;
 
-  glm::mat4 GetLightSpaceMatrix() override;
+  glm::mat4 GetLightSpaceMatrix();
 
-  void StartShadow() override;
-  void EndShadow() override;
+  void StartShadow();
+  void EndShadow();
 
   std::string getInspectorWindowName() override { return "Directional Light"; }
 
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<Light>(*this);
+    ar &boost::serialization::base_object<BaseComponent>(*this);
   }
+
+  bool Enabled = true;
+  glm::vec3 LightColor = glm::vec3(1.0f);
 
   unsigned int ShadowFBO, ShadowMap;
   unsigned int ShadowMapWidth = 1024, ShadowMapHeight = 1024;
@@ -61,8 +44,8 @@ protected:
   int viewport[4];
 };
 
-struct PointLight : public Light {
-  PointLight() {}
+struct PointLight : public BaseComponent {
+  PointLight() : BaseComponent(-1) {}
   PointLight(EntityID id);
   ~PointLight();
 
@@ -72,16 +55,19 @@ struct PointLight : public Light {
 
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<Light>(*this);
+    ar &boost::serialization::base_object<BaseComponent>(*this);
   }
+
+  bool Enabled = true;
+  glm::vec3 LightColor = glm::vec3(1.0f);
 
   float LightRadius = 0.5f;
 
 protected:
 };
 
-struct EnvironmentLight : public Light {
-  EnvironmentLight() {}
+struct EnvironmentLight : public BaseComponent {
+  EnvironmentLight() : BaseComponent(-1) {}
   EnvironmentLight(EntityID id);
   ~EnvironmentLight();
 
@@ -91,8 +77,11 @@ struct EnvironmentLight : public Light {
 
   template <typename Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<Light>(*this);
+    ar &boost::serialization::base_object<BaseComponent>(*this);
   }
+
+  bool Enabled = true;
+  glm::vec3 LightColor = glm::vec3(1.0f);
 
   unsigned int CubeMap;
   // This map is automatically computed when cubemap is built

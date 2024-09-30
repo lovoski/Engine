@@ -34,7 +34,8 @@ public:
 
   void Reset() override {
     activeSkyLight = nullptr;
-    lights.clear();
+    dlights.clear();
+    plights.clear();
     skyLights.clear();
   }
 
@@ -50,7 +51,8 @@ public:
   std::vector<std::shared_ptr<EnvironmentLight>> skyLights;
   std::shared_ptr<EnvironmentLight> activeSkyLight = nullptr;
   // Stores pointers to all enabled lights
-  std::vector<std::shared_ptr<Light>> lights;
+  std::vector<std::shared_ptr<DirectionalLight>> dlights;
+  std::vector<std::shared_ptr<PointLight>> plights;
 };
 
 }; // namespace aEngine

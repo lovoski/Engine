@@ -12,7 +12,7 @@ namespace aEngine {
 
 // -------------- Directional Light --------------
 
-DirectionalLight::DirectionalLight(EntityID id) : Light(id) {
+DirectionalLight::DirectionalLight(EntityID id) : BaseComponent(id) {
   glGenFramebuffers(1, &ShadowFBO);
   ResizeShadowMap(ShadowMapWidth, ShadowMapHeight);
 }
@@ -86,9 +86,9 @@ glm::mat4 DirectionalLight::GetLightSpaceMatrix() {
 }
 
 void DirectionalLight::DrawInspectorGUI() {
-  ImGui::Checkbox("Enable", &enable);
+  ImGui::Checkbox("Enabled", &Enabled);
   ImGui::Separator();
-  if (!enable)
+  if (!Enabled)
     ImGui::BeginDisabled();
   GUIUtils::ColorEdit3("Color", LightColor);
   ImGui::MenuItem("Shadow", nullptr, nullptr, false);
@@ -98,29 +98,29 @@ void DirectionalLight::DrawInspectorGUI() {
   ImGui::SliderFloat("Height", &ShadowOrthoH, 0.0f, 100.0f);
   ImGui::DragFloat("Near", &ShadowZNear, 0.01f, 0.0f, 10.0f);
   ImGui::DragFloat("Far", &ShadowZFar, 1, 10.0f, 200.0f);
-  if (!enable)
+  if (!Enabled)
     ImGui::EndDisabled();
 }
 
 // -------------- Point Light --------------
 
-PointLight::PointLight(EntityID id) : Light(id) {}
+PointLight::PointLight(EntityID id) : BaseComponent(id) {}
 PointLight::~PointLight() {}
 
 void PointLight::DrawInspectorGUI() {
-  ImGui::Checkbox("Enable", &enable);
+  ImGui::Checkbox("Enabled", &Enabled);
   ImGui::Separator();
-  if (!enable)
+  if (!Enabled)
     ImGui::BeginDisabled();
   GUIUtils::ColorEdit3("Color", LightColor);
   ImGui::DragFloat("Radius", &LightRadius, 0.1f, 0.0f, 10000.0f);
-  if (!enable)
+  if (!Enabled)
     ImGui::EndDisabled();
 }
 
 // -------------- Sky Light --------------
 
-EnvironmentLight::EnvironmentLight(EntityID id) : Light(id) {
+EnvironmentLight::EnvironmentLight(EntityID id) : BaseComponent(id) {
   // initilaize all faces
   for (int i = 0; i < 6; ++i)
     faces[i] = *Loader.GetTexture("::null_texture");
@@ -132,9 +132,9 @@ EnvironmentLight::EnvironmentLight(EntityID id) : Light(id) {
 EnvironmentLight::~EnvironmentLight() {}
 
 void EnvironmentLight::DrawInspectorGUI() {
-  ImGui::Checkbox("Enable", &enable);
+  ImGui::Checkbox("Enabledd", &Enabled);
   ImGui::Separator();
-  if (!enable)
+  if (!Enabled)
     ImGui::BeginDisabled();
   if (ImGui::TreeNode("From Images")) {
     if (ImGui::Button("Build Cubemap", {-1, 30}))
@@ -151,7 +151,7 @@ void EnvironmentLight::DrawInspectorGUI() {
     GUIUtils::DragableTextureTarget("HDR Image", hdr);
     ImGui::TreePop();
   }
-  if (!enable)
+  if (!Enabled)
     ImGui::EndDisabled();
 }
 
@@ -203,7 +203,6 @@ void EnvironmentLight::createCubeMapFromImages() {
 
 }; // namespace aEngine
 
-REGISTER_COMPONENT(aEngine, Light)
 REGISTER_COMPONENT(aEngine, DirectionalLight)
 REGISTER_COMPONENT(aEngine, PointLight)
 REGISTER_COMPONENT(aEngine, EnvironmentLight)

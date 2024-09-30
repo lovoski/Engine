@@ -11,31 +11,35 @@ LightSystem::LightSystem() {
 
 void LightSystem::Update(float dt) {
   std::vector<LightData> ld;
-  lights.clear();
+  dlights.clear();
+  plights.clear();
   skyLights.clear();
   for (auto id : entities) {
     auto entity = GWORLD.EntityFromID(id);
-    LightData light;
     if (auto dirLight = GWORLD.GetComponent<DirectionalLight>(id)) {
-      if (dirLight->enable) {
+      if (dirLight->Enabled) {
+        LightData light;
         light.meta[0] = 0;
         light.color = glm::vec4(dirLight->LightColor, 1.0f);
         light.position = glm::vec4(entity->Position(), 1.0f);
         light.direction = glm::vec4(entity->LocalForward, 1.0f);
         ld.push_back(light);
-        lights.push_back(dirLight);
+        dlights.push_back(dirLight);
       }
-    } else if (auto pointLight = GWORLD.GetComponent<PointLight>(id)) {
-      if (pointLight->enable) {
+    }
+    if (auto pointLight = GWORLD.GetComponent<PointLight>(id)) {
+      if (pointLight->Enabled) {
+        LightData light;
         light.meta[0] = 1;
         light.fmeta[0] = pointLight->LightRadius;
         light.color = glm::vec4(pointLight->LightColor, 1.0f);
         light.position = glm::vec4(entity->Position(), 1.0f);
         ld.push_back(light);
-        lights.push_back(pointLight);
+        plights.push_back(pointLight);
       }
-    } else if (auto skyLightComp = GWORLD.GetComponent<EnvironmentLight>(id)) {
-      if (skyLightComp->enable)
+    }
+    if (auto skyLightComp = GWORLD.GetComponent<EnvironmentLight>(id)) {
+      if (skyLightComp->Enabled)
         skyLights.push_back(skyLightComp);
     }
   }
