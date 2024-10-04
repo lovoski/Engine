@@ -16,7 +16,7 @@
 namespace aEngine {
 
 struct MeshRenderer : public aEngine::BaseComponent {
-  MeshRenderer() : BaseComponent(-1) {}
+  MeshRenderer() : BaseComponent(0) {}
   MeshRenderer(EntityID id);
   ~MeshRenderer();
 
@@ -35,7 +35,8 @@ struct MeshRenderer : public aEngine::BaseComponent {
 
   // Add a render pass for this renderer, pass in the nullptr
   // to instantiate a new pass of the defualt type
-  template <typename T> void AddPass(T *pass, std::string identifier) {
+  template <typename T>
+  void AddPass(std::shared_ptr<T> pass, std::string identifier) {
     static_assert((std::is_base_of<Render::BasePass, T>::value),
                   "Invalid template type for MeshRenderer");
     if (pass == nullptr) {
@@ -47,33 +48,33 @@ struct MeshRenderer : public aEngine::BaseComponent {
   }
 
   // Get the pass of desired type, returns nullptr if don't exist
-  template <typename T> T *GetPass() {
+  template <typename T> std::shared_ptr<T> GetPass() {
     static_assert((std::is_base_of<Render::BasePass, T>::value),
                   "Invalid template type for MeshRenderer");
     for (auto pass : passes) {
-      if (typeid(*pass) == typeid(T))
-        return (T *)pass;
+      if (typeid(*(pass.get())) == typeid(T))
+        return pass;
     }
     return nullptr;
   }
 
   std::string getInspectorWindowName() override { return "Mesh Renderer"; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(CEREAL_NVP(entityID));
+    ar(castShadow, receiveShadow, passes);
   }
 
   bool castShadow = true;
   bool receiveShadow = true;
-  std::vector<Render::BasePass *> passes;
+  std::vector<std::shared_ptr<Render::BasePass>> passes;
 
 private:
   void drawAppendPassPopup();
 
   template <typename T> void handleAppendPass(std::string identifier) {
     for (auto &pass : passes) {
-      if (typeid(*pass) == typeid(T)) {
+      if (typeid(*(pass.get())) == typeid(T)) {
         // there's a pass of the same type
         // replace the original pass with a new one
         LOG_F(INFO, "replacing material %s with new %s",

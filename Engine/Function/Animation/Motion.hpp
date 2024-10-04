@@ -49,6 +49,9 @@ struct Skeleton {
   std::vector<int> jointParent;
   std::vector<std::vector<int>> jointChildren;
 
+  // file containing the data
+  std::string path;
+
   // Get the default pose with identity transform on all joints.
   Pose GetRestPose();
 
@@ -107,6 +110,8 @@ struct Motion {
   int fps;
   Skeleton skeleton;
   std::vector<Pose> poses;
+  // file containing the data
+  std::string path;
 
   // We assume that the root's position channels always has the order XYZ,
   // while the rotation channels can have arbitrary orders,

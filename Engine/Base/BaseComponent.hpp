@@ -25,13 +25,6 @@ public:
 
   virtual std::string getInspectorWindowName();
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &entityID;
-  }
-
-protected:
-  friend class Scene;
   EntityID entityID;
 };
 

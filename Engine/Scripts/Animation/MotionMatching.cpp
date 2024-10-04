@@ -160,14 +160,14 @@ void MotionMatching::queryJoysticks() {
 
 void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
   std::ofstream output(filepath, std::ios::binary);
-  boost::archive::binary_oarchive oa(output);
-  oa << db;
+  cereal::PortableBinaryOutputArchive oa(output);
+  oa(db);
 }
 
 void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
   std::ifstream input(filepath, std::ios::binary);
-  boost::archive::binary_iarchive ia(input);
-  ia >> db;
+  cereal::PortableBinaryInputArchive ia(input);
+  ia(db);
 }
 
 void buildMotionDatabase(std::string filepath) {
@@ -259,3 +259,5 @@ int MotionDatabase::Query(MotionDatabaseFeature &feature) {
 }
 
 }; // namespace aEngine
+
+REGISTER_SCRIPT(aEngine, MotionMatching)

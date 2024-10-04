@@ -1,6 +1,6 @@
 #include "Component/MeshRenderer.hpp"
-
 #include "Function/Render/RenderPass.hpp"
+#include "Function/Render/Passes/Header.hpp"
 
 namespace aEngine {
 
@@ -92,4 +92,4 @@ void MeshRenderer::DrawInspectorGUI() {
 
 }; // namespace aEngine
 
-REGISTER_COMPONENT(aEngine, MeshRenderer)
+REGISTER_COMPONENT(aEngine, MeshRenderer);

@@ -7,6 +7,25 @@
 #include "Function/Render/Shader.hpp"
 #include "Global.hpp"
 
+// place this macro outside all namespace inside the source file where the
+// render pass is defined.
+#define REGISTER_RENDER_PASS(Namespace, RenderPassType)                        \
+  CEREAL_REGISTER_TYPE(Namespace::RenderPassType);                             \
+  CEREAL_REGISTER_POLYMORPHIC_RELATION(aEngine::Render::BasePass,              \
+                                       Namespace::RenderPassType)
+
+// IMPORTANT!!!
+// as the BasePass class already have the serialize function, by default the
+// serialization process should take place in serialize function only, if
+// you use the (load, save) function pair instead, declare the macro
+// `CEREAL_SPECIALIZE_FOR_ALL_ARCHIVES` in the source of relative render pass
+// to do disambiguation. Refer to `Outlin.cpp` for more details.
+// Or you can use the following macro helper instead
+#define REGISTER_RENDER_PASS_SL(Namespace, RenderPassType)                     \
+  CEREAL_SPECIALIZE_FOR_ALL_ARCHIVES(Namespace::RenderPassType,                \
+                                     cereal::specialization::member_load_save) \
+  REGISTER_RENDER_PASS(Namespace, RenderPassType)
+
 namespace aEngine {
 
 namespace Render {
@@ -46,6 +65,8 @@ public:
   virtual void FinishPass() {}
   virtual std::string getInspectorWindowName();
 
+  template <typename Archive> void serialize(Archive &ar) {}
+
 protected:
   std::shared_ptr<Shader> shader = nullptr;
 
@@ -74,6 +95,11 @@ public:
   float WireframeWidth = 0.5f, WireframeSmooth = 1.0f;
   glm::vec3 WireframeColor = glm::vec3(0.0f);
 
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(Enabled, Ambient, Albedo, viewNormal, withWireframe, WireframeWidth,
+       WireframeSmooth, WireframeColor);
+  }
+
   void FinishPass() override;
 
 protected:
@@ -81,97 +107,6 @@ protected:
   void DrawInspectorGUI() override;
 
   std::string getInspectorWindowName() override;
-};
-
-extern const std::string outlineVS, outlineFS;
-class OutlinePass : public BasePass {
-public:
-  OutlinePass();
-
-  float OutlineWidth = 0.02f;
-  // interpolate between OutlineColor and OutlineColorMap
-  float OutlineWeight = 0.0f;
-  glm::vec3 OutlineColor = glm::vec3(0.0f);
-
-  Texture OutlineColorMap;
-
-  void FinishPass() override;
-  std::string getInspectorWindowName() override;
-
-protected:
-  void BeforePass() override;
-  void DrawInspectorGUI() override;
-};
-
-extern const std::string wireframeVS, wireframeFS;
-class WireFramePass : public BasePass {
-public:
-  WireFramePass();
-
-  float wireframeOffset = 0.001f;
-  glm::vec3 wireFrameColor = glm::vec3(1.0f);
-
-  void FinishPass() override;
-  std::string getInspectorWindowName() override;
-
-private:
-  void BeforePass() override;
-  void DrawInspectorGUI() override;
-};
-
-extern const std::string GBVMainVS, GBVMainFS;
-class GBVMainPass : public BasePass {
-public:
-  GBVMainPass();
-
-  // texture maps
-  Texture base, ILM, SSS;
-
-  // ramp
-  float firstRampStart = 0.2, firstRampStop = 0.22;
-  float rampOffset = 1.0f, rampShadowWeight = 1.0f;
-
-  // rim light
-  glm::vec3 rimLightColor = glm::vec3(0.8f);
-  float rimLightWidth = 0.063f;
-  float rimLightSmooth = 0.01f;
-
-  // specular
-  int specularGloss = 20;
-  float specularWeight = 0.0f;
-
-  // details
-  float detailWeight = 0.3f;
-  float innerLineWeight = 1.0f;
-  Texture detail;
-
-  std::string getInspectorWindowName() override;
-  void FinishPass() override;
-
-private:
-  void BeforePass() override;
-  void DrawInspectorGUI() override;
-};
-
-extern const std::string pbrVS, pbrFS;
-class PBRPass : public BasePass {
-public:
-  PBRPass();
-
-  float RoughnessFactor = 1.0f;
-  float MetallicFactor = 1.0f;
-  float AOFactor = 1.0f;
-  glm::vec3 AlbedoFactor = glm::vec3(1.0f);
-  glm::vec3 F0 = glm::vec3(0.04f);
-  bool WithNormalMap = false;
-  Texture Roughness, Metallic, AO, Albedo, Normal;
-
-  std::string getInspectorWindowName() override;
-  void FinishPass() override;
-
-private:
-  void BeforePass() override;
-  void DrawInspectorGUI() override;
 };
 
 }; // namespace Render

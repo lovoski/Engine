@@ -6,6 +6,18 @@
 
 #include "Types.hpp"
 
+// refer to REGISTER_RENDER_PASS
+#define REGISTER_SCRIPT(Namespace, ScriptType)                                 \
+  CEREAL_REGISTER_TYPE(Namespace::ScriptType);                                 \
+  CEREAL_REGISTER_POLYMORPHIC_RELATION(aEngine::Scriptable,                    \
+                                       Namespace::ScriptType)
+
+// refer to REGISTER_RENDER_PASS_SL
+#define REGISTER_SCRIPT_SL(Namespace, ScriptType)                              \
+  CEREAL_SPECIALIZE_FOR_ALL_ARCHIVES(aEngine::Scriptable,                      \
+                                     cereal::specialization::member_load_save) \
+  REGISTER_SCRIPT(Namespace, ScriptType)
+
 namespace aEngine {
 
 class Entity;
@@ -52,10 +64,11 @@ public:
 
   Entity *entity = nullptr;
 
+  template <typename Archive> void serialize(Archive &ar) {}
+
 private:
   // override this function
   virtual void DrawInspectorGUI() {}
-
 };
 
 }; // namespace aEngine

@@ -20,8 +20,7 @@ public:
 
   virtual std::string getInspectorWindowName() { return ""; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {}
+  template <typename Archive> void serialize(Archive &ar) {}
 };
 
 // The component list will hold shared pointers of type T
@@ -89,32 +88,17 @@ public:
     return (*it).second->getInspectorWindowName();
   }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<IComponentList>(*this);
-  }
-
   std::vector<std::shared_ptr<T>> data;
+
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(cereal::base_class<IComponentList>(this), data);
+  }
 };
 
 }; // namespace aEngine
 
-// place this macro outside any namespace in a source file
 #define REGISTER_COMPONENT(Namespace, ComponentType)                           \
-  class ComponentList##ComponentType                                           \
-      : public aEngine::ComponentList<Namespace::ComponentType> {              \
-  public:                                                                      \
-    ComponentList##ComponentType() = default;                                  \
-    ~ComponentList##ComponentType() = default;                                 \
-                                                                               \
-  private:                                                                     \
-    friend class boost::serialization::access;                                 \
-    template <class Archive>                                                   \
-    void serialize(Archive &ar, const unsigned int version) {                  \
-      ar &boost::serialization::base_object<                                   \
-          aEngine::ComponentList<Namespace::ComponentType>>(*this);            \
-      ar &data;                                                                \
-    }                                                                          \
-  };                                                                           \
-  BOOST_CLASS_EXPORT(ComponentList##ComponentType)                             \
-  BOOST_CLASS_EXPORT(Namespace::ComponentType)
+  CEREAL_REGISTER_TYPE(aEngine::ComponentList<Namespace::ComponentType>);      \
+  CEREAL_REGISTER_POLYMORPHIC_RELATION(                                        \
+      aEngine::IComponentList,                                                 \
+      aEngine::ComponentList<Namespace::ComponentType>)

@@ -92,3 +92,5 @@ void SelfIntersection::DrawInspectorGUI() {
 }
 
 }; // namespace aEngine
+
+REGISTER_SCRIPT(aEngine, SelfIntersection)

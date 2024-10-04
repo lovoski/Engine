@@ -62,7 +62,7 @@ struct SceneContext {
 
   void Reset() {
     hasActiveCamera = false;
-    activeCamera = (EntityID)(-1);
+    activeCamera = (EntityID)(0);
     enableDebugDraw = true;
     // Don't change the size and position of scene window
     sceneFilePath = "::defaultScene";
@@ -76,17 +76,11 @@ struct SceneContext {
   }
 
   template <typename Archive>
-  void serialize(Archive &archive, const unsigned int version) {
-    archive &hasActiveCamera;
-    archive &activeCamera;
-    archive &enableDebugDraw;
-    archive &sceneFilePath;
-    archive &lastTime;
-    archive &deltaTime;
-    archive &renderTime;
-    archive &updateTime;
-    archive &debugDrawTime;
-    archive &hierarchyUpdateTime;
+  void serialize(Archive &ar) {
+    ar(hasActiveCamera, activeCamera);
+    ar(enableDebugDraw);
+    ar(sceneFilePath);
+    ar(lastTime, deltaTime, renderTime, updateTime, debugDrawTime, hierarchyUpdateTime);
   }
 };
 

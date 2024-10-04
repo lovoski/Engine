@@ -1,6 +1,7 @@
 #include "Function/AssetsLoader.hpp"
 #include "Function/GUI/Helpers.hpp"
 #include "Function/Render/RenderPass.hpp"
+#include "Function/Render/Passes/Header.hpp"
 
 namespace aEngine {
 
@@ -248,3 +249,5 @@ std::string Basic::getInspectorWindowName() { return "Basic"; }
 }; // namespace Render
 
 }; // namespace aEngine
+
+REGISTER_RENDER_PASS(aEngine::Render, Basic)

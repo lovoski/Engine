@@ -196,4 +196,4 @@ void AnimationSystem::DrawSequencer() {
 
 }; // namespace aEngine
 
-BOOST_CLASS_EXPORT(aEngine::AnimationSystem)
+REGISTER_SYSTEM(aEngine, AnimationSystem)

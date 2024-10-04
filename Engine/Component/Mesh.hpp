@@ -20,7 +20,7 @@
 namespace aEngine {
 
 struct Mesh : public BaseComponent {
-  Mesh() : BaseComponent(-1) {}
+  Mesh() : BaseComponent(0) {}
   Mesh(EntityID id, Render::Mesh *mesh);
 
   void DrawInspectorGUI() override;
@@ -39,9 +39,17 @@ struct Mesh : public BaseComponent {
   // this function should be safe to use.
   Render::Mesh *GetMeshInstance() { return meshInstance; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
+  template <typename Archive> void save(Archive &ar) const {
+    ar(CEREAL_NVP(entityID));
+    ar(meshInstance->modelPath, meshInstance->identifier);
+  }
+
+  template <typename Archive> void load(Archive &ar) {
+    ar(CEREAL_NVP(entityID));
+    std::string modelPath, identifier;
+    ar(modelPath, identifier);
+    meshInstance = Loader.GetMesh(modelPath, identifier);
+    SetMeshInstance(meshInstance);
   }
 
   std::string getInspectorWindowName() override { return "Mesh"; }
@@ -67,6 +75,7 @@ struct Mesh : public BaseComponent {
   bool DrawLeafNodeOnly = true;
 
 private:
+  friend class cereal::access;
   Render::Mesh *meshInstance = nullptr;
 
   void buildBVHDeformed();

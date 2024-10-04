@@ -270,3 +270,5 @@ void SAMERetarget::DrawInspectorGUI() {
 }
 
 }; // namespace aEngine
+
+REGISTER_SCRIPT(aEngine, SAMERetarget)

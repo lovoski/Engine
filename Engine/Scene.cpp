@@ -22,7 +22,8 @@ namespace aEngine {
 Scene::Scene() {
   // create the entities
   entityCount = 0;
-  for (EntityID entity = 0u; entity < MAX_ENTITY_COUNT; ++entity) {
+  // entityID = 0 is considered an invalid entity
+  for (EntityID entity = 1; entity <= MAX_ENTITY_COUNT; ++entity) {
     availableEntities.push(entity);
   }
   HierarchyRoots.reserve(MAX_ENTITY_COUNT);
@@ -44,13 +45,8 @@ void Scene::Start() {
   RegisterSystem<AudioSystem>();
 
   // start all the systems
-  GetSystemInstance<RenderSystem>()->Start();
-  GetSystemInstance<CameraSystem>()->Start();
-  GetSystemInstance<LightSystem>()->Start();
-  GetSystemInstance<AnimationSystem>()->Start();
-  GetSystemInstance<NativeScriptSystem>()->Start();
-  GetSystemInstance<SpatialSystem>()->Start();
-  GetSystemInstance<AudioSystem>()->Start();
+  for (auto &sys : registeredSystems)
+    sys.second->Start();
 }
 
 void Scene::Update() {
@@ -115,15 +111,8 @@ void Scene::SetupDefaultScene() {
   cam->SetGlobalPosition(glm::vec3(0.0f, 3.0f, 5.0f));
   SetActiveCamera(cam->ID);
 
-  // auto dLight = AddNewEntity();
-  // dLight->name = "Light";
-  // dLight->SetGlobalPosition({-2, 3, 2});
-  // dLight->SetGlobalRotation(
-  //     glm::quat(glm::radians(glm::vec3(30.0f, 150.0f, 0.0f))));
-  // dLight->AddComponent<DirectionalLight>();
-
   auto skybox = AddNewEntity();
-  skybox->name = "Sky Light";
+  skybox->name = "Environment Light";
   skybox->AddComponent<EnvironmentLight>();
 }
 
@@ -138,7 +127,6 @@ void Scene::Reset() {
   GetComponentList<Animator>()->data.clear();
   GetComponentList<DeformRenderer>()->data.clear();
   GetComponentList<MeshRenderer>()->data.clear();
-  GetComponentList<NativeScript>()->data.clear();
   GetComponentList<NativeScript>()->data.clear();
   GetComponentList<Mesh>()->data.clear();
   HierarchyRoots.clear();
@@ -244,13 +232,8 @@ void Scene::Destroy() {
   entities.clear();
 
   // destroy all the systems
-  GetSystemInstance<RenderSystem>()->Destroy();
-  GetSystemInstance<CameraSystem>()->Destroy();
-  GetSystemInstance<LightSystem>()->Destroy();
-  GetSystemInstance<AnimationSystem>()->Destroy();
-  GetSystemInstance<NativeScriptSystem>()->Destroy();
-  GetSystemInstance<SpatialSystem>()->Destroy();
-  GetSystemInstance<AudioSystem>()->Destroy();
+  for (auto &sys : registeredSystems)
+    sys.second->Destroy();
 }
 
 bool Scene::LoopCursorInSceneWindow() {
@@ -274,7 +257,7 @@ bool Scene::LoopCursorInSceneWindow() {
 
 bool Scene::GetActiveCamera(EntityID &camera) {
   if (!Context.hasActiveCamera) {
-    camera = (EntityID)(-1);
+    camera = (EntityID)(0);
     return false;
   } else {
     camera = Context.activeCamera;
@@ -302,15 +285,15 @@ bool Scene::EntityValid(EntityID &id) {
   auto it = entities.find(id);
   if (it == entities.end()) {
     // this entity is not valid
-    id = (EntityID)(-1);
+    id = (EntityID)(0);
     return false;
   } else
     return true;
 }
 
 std::shared_ptr<Entity> Scene::EntityFromID(const EntityID entity) {
-  if (entity == (EntityID)(-1)) {
-    LOG_F(ERROR, "can't get entity index -1");
+  if (entity == (EntityID)(0)) {
+    LOG_F(ERROR, "can't get entity index 0");
     return nullptr;
   }
   if (entity >= MAX_ENTITY_COUNT)
@@ -327,7 +310,7 @@ std::shared_ptr<Entity> Scene::EntityFromID(const EntityID entity) {
 void Scene::DestroyEntity(const EntityID entity) {
   if (entity == Context.activeCamera) {
     LOG_F(WARNING, "remove active camera on the scene");
-    Context.activeCamera = (EntityID)(-1);
+    Context.activeCamera = (EntityID)(0);
     Context.hasActiveCamera = false;
   }
   if (entity >= MAX_ENTITY_COUNT)
@@ -437,17 +420,11 @@ bool Scene::Save(std::string path) {
   std::ofstream output(path, std::ios::binary);
   if (output.is_open()) {
     LOG_F(INFO, "save scene to %s", path.c_str());
-    boost::archive::binary_oarchive oa(output);
-    oa << Context;
+    cereal::JSONOutputArchive oa(output);
+    oa(CEREAL_NVP(Context));
     // 1. Entities
     // the parent-child relation is not serialized here
-    auto tmpCopy = availableEntities;
-    std::vector<EntityID> ae;
-    while (!tmpCopy.empty()) {
-      ae.push_back(tmpCopy.front());
-      tmpCopy.pop();
-    }
-    oa << entityCount << ae << entities << entitiesSignatures;
+    oa(CEREAL_NVP(entityCount), CEREAL_NVP(entities), CEREAL_NVP(entitiesSignatures));
     // collect parent-child relation for all entities
     std::map<EntityID, EntityID> parentSerialize;
     std::map<EntityID, std::vector<EntityID>> childrenSerialize;
@@ -455,7 +432,7 @@ bool Scene::Save(std::string path) {
       if (entity.second->parent != nullptr)
         parentSerialize[entity.second->ID] = entity.second->parent->ID;
       else
-        parentSerialize[entity.second->ID] = -1;
+        parentSerialize[entity.second->ID] = 0; // set parent to null entity
       childrenSerialize[entity.second->ID] = std::vector<EntityID>();
       auto &cref = childrenSerialize[entity.second->ID];
       for (auto child : entity.second->children) {
@@ -463,18 +440,18 @@ bool Scene::Save(std::string path) {
       }
     }
     // serialize parent child entity
-    oa << parentSerialize << childrenSerialize;
+    oa(CEREAL_NVP(parentSerialize), CEREAL_NVP(childrenSerialize));
     // hierarchy roots
     std::vector<EntityID> roots;
     for (auto r : HierarchyRoots)
       roots.push_back(r->ID);
-    oa << roots;
+    oa(roots);
 
     // 2. Components
-    oa << componentsArrays;
+    oa(CEREAL_NVP(componentsArrays));
 
     // 3. Systems
-    oa << registeredSystems;
+    oa(CEREAL_NVP(registeredSystems));
 
     return true;
   } else {
@@ -489,25 +466,26 @@ bool Scene::Load(std::string path) {
     // reset current scene
     Reset();
     LOG_F(INFO, "load scene from %s", path.c_str());
-    boost::archive::binary_iarchive ia(input);
-    ia >> Context;
+    cereal::JSONInputArchive ia(input);
+    ia(CEREAL_NVP(Context));
     // 1. Entities
-    std::vector<EntityID> ae;
-    ia >> entityCount >> ae >> entities >> entitiesSignatures;
+    ia(CEREAL_NVP(entityCount), CEREAL_NVP(entities), CEREAL_NVP(entitiesSignatures));
     while (!availableEntities.empty())
       availableEntities.pop();
-    for (auto id : ae)
-      availableEntities.push(id);
+    for (EntityID entID = 1; entID <= MAX_ENTITY_COUNT; ++entID)
+      if (entities.count(entID) == 0)
+        availableEntities.push(entID);
+
     std::map<EntityID, EntityID> parentSerialize;
     std::map<EntityID, std::vector<EntityID>> childrenSerialize;
     // get parent-child relation
-    ia >> parentSerialize >> childrenSerialize;
+    ia(CEREAL_NVP(parentSerialize), CEREAL_NVP(childrenSerialize));
     // restore parent-child relation
     for (auto &entity : entities) {
       auto id = entity.second->ID;
       auto parentId = parentSerialize[id];
       auto childrenId = childrenSerialize[id];
-      if (parentId == (EntityID)(-1)) {
+      if (parentId == (EntityID)(0)) {
         entity.second->parent = nullptr;
       } else {
         entity.second->parent = entities[parentId].get();
@@ -519,16 +497,16 @@ bool Scene::Load(std::string path) {
     }
     // hierarchy root
     std::vector<EntityID> roots;
-    ia >> roots;
+    ia(roots);
     HierarchyRoots.clear();
     for (auto id : roots)
       HierarchyRoots.push_back(entities[id].get());
 
     // 2. Components
-    ia >> componentsArrays;
+    ia(CEREAL_NVP(componentsArrays));
 
     // 3. Systems
-    ia >> registeredSystems;
+    ia(CEREAL_NVP(registeredSystems));
 
     return true;
   } else {

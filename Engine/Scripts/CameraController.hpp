@@ -18,6 +18,11 @@ struct EditorCameraController : public Scriptable {
   float speedPow = 1.5f;
   float maxSpeed = 8e2f;
 
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(mouseFirstMove, mouseLastPos, cameraPivot, initialFactor, speedPow,
+       maxSpeed);
+  }
+
   void Update(float dt) override {
     EntityID camera;
     if (GWORLD.GetActiveCamera(camera)) {
@@ -124,3 +129,5 @@ struct EditorCameraController : public Scriptable {
 };
 
 }; // namespace aEngine
+
+REGISTER_SCRIPT(aEngine, EditorCameraController)

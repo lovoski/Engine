@@ -1,5 +1,6 @@
 #include "Function/AssetsLoader.hpp"
 #include "Function/GUI/Helpers.hpp"
+#include "Function/Render/Passes/Header.hpp"
 #include "Function/Render/RenderPass.hpp"
 
 namespace aEngine {
@@ -188,6 +189,15 @@ PBRPass::PBRPass() {
   Normal = *Loader.GetTexture("::null_texture");
 }
 
+void PBRPass::initTexture(std::string p1, std::string p2, std::string p3,
+                          std::string p4, std::string p5) {
+  Roughness = *Loader.GetTexture(p1);
+  Metallic = *Loader.GetTexture(p2);
+  AO = *Loader.GetTexture(p3);
+  Albedo = *Loader.GetTexture(p4);
+  Normal = *Loader.GetTexture(p5);
+}
+
 std::string PBRPass::getInspectorWindowName() { return "PBR Pass"; }
 
 void PBRPass::FinishPass() {}
@@ -227,3 +237,5 @@ void PBRPass::DrawInspectorGUI() {
 }; // namespace Render
 
 }; // namespace aEngine
+
+REGISTER_RENDER_PASS_SL(aEngine::Render, PBRPass)

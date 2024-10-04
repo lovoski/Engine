@@ -92,4 +92,4 @@ void SpatialSystem::Render() {
 
 }; // namespace aEngine
 
-BOOST_CLASS_EXPORT(aEngine::SpatialSystem)
+REGISTER_SYSTEM(aEngine, SpatialSystem)

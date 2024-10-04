@@ -39,15 +39,10 @@ public:
 
   void DrawSequencer();
 
-  template <typename Archive>
-  void serialize(Archive &archive, const unsigned int version) {
-    archive &boost::serialization::base_object<BaseSystem>(*this);
-    archive &SystemFPS;
-    archive &EnableAutoPlay;
-    archive &ShowSequencer;
-    archive &SystemStartFrame;
-    archive &SystemEndFrame;
-    archive &SystemCurrentFrame;
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(cereal::base_class<BaseSystem>(this));
+    ar(SystemFPS, SystemCurrentFrame, SystemStartFrame, SystemEndFrame,
+       EnableAutoPlay, ShowSequencer);
   }
 
 private:

@@ -40,4 +40,4 @@ std::vector<std::shared_ptr<Entity>> CameraSystem::GetAvailableCamera() {
 
 }; // namespace aEngine
 
-BOOST_CLASS_EXPORT(aEngine::CameraSystem)
+REGISTER_SYSTEM(aEngine, CameraSystem)

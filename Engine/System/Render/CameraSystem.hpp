@@ -24,8 +24,8 @@ public:
   std::vector<std::shared_ptr<Entity>> GetAvailableCamera();
 
   template <typename Archive>
-  void serialize(Archive &archive, const unsigned int version) {
-    archive &boost::serialization::base_object<BaseSystem>(*this);
+  void serialize(Archive &ar) {
+    ar(cereal::base_class<BaseSystem>(this));
   }
 };
 

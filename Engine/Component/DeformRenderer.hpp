@@ -11,22 +11,24 @@
 namespace aEngine {
 
 struct DeformRenderer : public aEngine::BaseComponent {
-  DeformRenderer() : BaseComponent(-1) {
-    animator = nullptr;
+  DeformRenderer() : BaseComponent(0) {
+    animator = 0;
     renderer = nullptr;
   }
-  DeformRenderer(EntityID id, Animator *ar);
+  DeformRenderer(EntityID id, EntityID anim);
   ~DeformRenderer();
 
-  Animator *animator;
+  EntityID animator;
   std::shared_ptr<MeshRenderer> renderer;
   Render::Buffer skeletonMatrices;
 
   std::string getInspectorWindowName() override { return "Deform Renderer"; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
+  template <typename Archive> void save(Archive &ar) const {
+    ar(CEREAL_NVP(entityID), animator, renderer);
+  }
+  template <typename Archive> void load(Archive &ar) {
+    ar(CEREAL_NVP(entityID), animator, renderer);
   }
 
   void DeformMesh(std::shared_ptr<Mesh> mesh);

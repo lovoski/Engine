@@ -1,6 +1,7 @@
 #include "Function/AssetsLoader.hpp"
 #include "Function/GUI/Helpers.hpp"
 #include "Function/Render/RenderPass.hpp"
+#include "Function/Render/Passes/Header.hpp"
 
 namespace aEngine {
 
@@ -151,6 +152,14 @@ GBVMainPass::GBVMainPass() {
 
 std::string GBVMainPass::getInspectorWindowName() { return "GBV Main"; }
 
+void GBVMainPass::initTexture(std::string p1, std::string p2, std::string p3,
+  std::string p4) {
+  base = *Loader.GetTexture(p1);
+  ILM = *Loader.GetTexture(p2);
+  SSS = *Loader.GetTexture(p3);
+  detail = *Loader.GetTexture(p4);
+}
+
 void GBVMainPass::DrawInspectorGUI() {
   ImGui::BeginChild("gbvmainpasschild", {-1, -1});
 
@@ -215,3 +224,5 @@ void GBVMainPass::FinishPass() { glDisable(GL_CULL_FACE); }
 }; // namespace Render
 
 }; // namespace aEngine
+
+REGISTER_RENDER_PASS_SL(aEngine::Render, GBVMainPass)

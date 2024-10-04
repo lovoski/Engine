@@ -261,4 +261,4 @@ std::vector<BoneMatrixBlock> Animator::GetSkeletonTransforms() {
 
 }; // namespace aEngine
 
-REGISTER_COMPONENT(aEngine, Animator)
+REGISTER_COMPONENT(aEngine, Animator);

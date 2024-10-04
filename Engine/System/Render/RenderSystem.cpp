@@ -110,4 +110,4 @@ void RenderSystem::RenderEnd() { glfwSwapBuffers(GWORLD.Context.window); }
 
 }; // namespace aEngine
 
-BOOST_CLASS_EXPORT(aEngine::RenderSystem)
+REGISTER_SYSTEM(aEngine, RenderSystem)

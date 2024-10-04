@@ -22,4 +22,4 @@ void Camera::DrawInspectorGUI() {
 
 }; // namespace aEngine
 
-REGISTER_COMPONENT(aEngine, Camera)
+REGISTER_COMPONENT(aEngine, Camera);

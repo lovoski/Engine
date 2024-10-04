@@ -52,109 +52,41 @@ namespace fs = std::filesystem;
 
 #include <EngineConfig.h>
 
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/set.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/queue.hpp>
-#include <boost/serialization/deque.hpp>
-#include <boost/serialization/stack.hpp>
-#include <boost/serialization/base_object.hpp>
+#include <cereal/archives/portable_binary.hpp>
+#include <cereal/archives/xml.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/queue.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/base_class.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/set.hpp>
+#include <cereal/types/stack.hpp>
+#include <cereal/types/tuple.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/utility.hpp>
 
-namespace boost {
-namespace serialization {
+namespace glm {
+  template<class Archive> void serialize(Archive& archive, glm::vec2& v) { archive(v.x, v.y); }
+  template<class Archive> void serialize(Archive& archive, glm::vec3& v) { archive(v.x, v.y, v.z); }
+  template<class Archive> void serialize(Archive& archive, glm::vec4& v) { archive(v.x, v.y, v.z, v.w); }
+  template<class Archive> void serialize(Archive& archive, glm::ivec2& v) { archive(v.x, v.y); }
+  template<class Archive> void serialize(Archive& archive, glm::ivec3& v) { archive(v.x, v.y, v.z); }
+  template<class Archive> void serialize(Archive& archive, glm::ivec4& v) { archive(v.x, v.y, v.z, v.w); }
+  template<class Archive> void serialize(Archive& archive, glm::uvec2& v) { archive(v.x, v.y); }
+  template<class Archive> void serialize(Archive& archive, glm::uvec3& v) { archive(v.x, v.y, v.z); }
+  template<class Archive> void serialize(Archive& archive, glm::uvec4& v) { archive(v.x, v.y, v.z, v.w); }
+  template<class Archive> void serialize(Archive& archive, glm::dvec2& v) { archive(v.x, v.y); }
+  template<class Archive> void serialize(Archive& archive, glm::dvec3& v) { archive(v.x, v.y, v.z); }
+  template<class Archive> void serialize(Archive& archive, glm::dvec4& v) { archive(v.x, v.y, v.z, v.w); }
 
-template <class Archive>
-void serialize(Archive &ar, glm::vec2 &v, const unsigned int version) {
-  ar &v.x;
-  ar &v.y;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::vec3 &v, const unsigned int version) {
-  ar &v.x;
-  ar &v.y;
-  ar &v.z;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::vec4 &v, const unsigned int version) {
-  ar &v.x;
-  ar &v.y;
-  ar &v.z;
-  ar &v.w;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::ivec2 &v, const unsigned int version) {
-  ar &v.x;
-  ar &v.y;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::ivec3 &v, const unsigned int version) {
-  ar &v.x;
-  ar &v.y;
-  ar &v.z;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::ivec4 &v, const unsigned int version) {
-  ar &v.x;
-  ar &v.y;
-  ar &v.z;
-  ar &v.w;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::quat &q, const unsigned int version) {
-  ar &q.x;
-  ar &q.y;
-  ar &q.z;
-  ar &q.w;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::dquat &q, const unsigned int version) {
-  ar &q.x;
-  ar &q.y;
-  ar &q.z;
-  ar &q.w;
-}
-template <class Archive>
-void serialize(Archive &ar, glm::mat2 &m, const unsigned int version) {
-  ar &m[0];
-  ar &m[1];
-}
-template <class Archive>
-void serialize(Archive &ar, glm::dmat2 &m, const unsigned int version) {
-  ar &m[0];
-  ar &m[1];
-}
-template <class Archive>
-void serialize(Archive &ar, glm::mat3 &m, const unsigned int version) {
-  ar &m[0];
-  ar &m[1];
-  ar &m[2];
-}
-template <class Archive>
-void serialize(Archive &ar, glm::dmat3 &m, const unsigned int version) {
-  ar &m[0];
-  ar &m[1];
-  ar &m[2];
-}
-template <class Archive>
-void serialize(Archive &ar, glm::mat4 &m, const unsigned int version) {
-  ar &m[0];
-  ar &m[1];
-  ar &m[2];
-  ar &m[3];
-}
-template <class Archive>
-void serialize(Archive &ar, glm::dmat4 &m, const unsigned int version) {
-  ar &m[0];
-  ar &m[1];
-  ar &m[2];
-  ar &m[3];
-}
+  template<class Archive> void serialize(Archive& archive, glm::mat2& m) { archive(m[0], m[1]); }
+  template<class Archive> void serialize(Archive& archive, glm::dmat2& m) { archive(m[0], m[1]); }
+  template<class Archive> void serialize(Archive& archive, glm::mat3& m) { archive(m[0], m[1], m[2]); }
+  template<class Archive> void serialize(Archive& archive, glm::mat4& m) { archive(m[0], m[1], m[2], m[3]); }
+  template<class Archive> void serialize(Archive& archive, glm::dmat4& m) { archive(m[0], m[1], m[2], m[3]); }
 
-} // namespace serialization
-} // namespace boost
+  template<class Archive> void serialize(Archive& archive, glm::quat& q) { archive(q.x, q.y, q.z, q.w); }
+  template<class Archive> void serialize(Archive& archive, glm::dquat& q) { archive(q.x, q.y, q.z, q.w); }
+}

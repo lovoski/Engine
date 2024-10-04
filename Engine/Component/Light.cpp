@@ -203,6 +203,6 @@ void EnvironmentLight::createCubeMapFromImages() {
 
 }; // namespace aEngine
 
-REGISTER_COMPONENT(aEngine, DirectionalLight)
-REGISTER_COMPONENT(aEngine, PointLight)
-REGISTER_COMPONENT(aEngine, EnvironmentLight)
+REGISTER_COMPONENT(aEngine, DirectionalLight);
+REGISTER_COMPONENT(aEngine, PointLight);
+REGISTER_COMPONENT(aEngine, EnvironmentLight);

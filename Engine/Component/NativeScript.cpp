@@ -14,10 +14,6 @@ std::map<ScriptableTypeID, std::unique_ptr<Scriptable>>
 
 NativeScript::~NativeScript() {
   // free all scriptable instance
-  for (auto ele : instances) {
-    ele.second->Destroy();
-    delete ele.second;
-  }
   instances.clear();
 }
 
@@ -42,7 +38,7 @@ void NativeScript::DrawInspectorGUI() {
   if (ImGui::Button("Add Script", {-1, 30}))
     ImGui::OpenPopup("addscriptpanelpopup");
   drawAddScriptPopup();
-  for (auto instance : instances) {
+  for (auto &instance : instances) {
     if (instance.second != nullptr) {
       // if this is a valid scriptable
       bool nodeOpen =
@@ -57,4 +53,4 @@ void NativeScript::DrawInspectorGUI() {
 
 }; // namespace aEngine
 
-REGISTER_COMPONENT(aEngine, NativeScript)
+REGISTER_COMPONENT(aEngine, NativeScript);

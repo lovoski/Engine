@@ -4,11 +4,13 @@
 #include "Component/NativeScript.hpp"
 
 #include "Function/AssetsLoader.hpp"
+#include "Function/Math/Math.hpp"
 #include "Function/Render/Mesh.hpp"
+#include "Function/Render/Passes/Header.hpp"
 #include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Shader.hpp"
 #include "Function/ShaderCode.hpp"
-#include "Function/Math/Math.hpp"
+
 
 #include "System/Animation/AnimationSystem.hpp"
 
@@ -58,9 +60,9 @@ AssetsLoader::~AssetsLoader() {
       if (mesh)
         delete mesh;
   }
-  for (auto skeleton : allSkeletons) {
-    if (skeleton.second)
-      delete skeleton.second;
+  for (auto motion : allMotions) {
+    if (motion.second)
+      delete motion.second;
   }
   allSkeletons.clear();
 }
@@ -95,13 +97,19 @@ void AssetsLoader::LoadDefaultAssets() {
   // sphere
   auto sphereMesh =
       loadAndCreateAssetsFromFile(ASSETS_PATH "/meshes/sphere.fbx");
+  sphereMesh[0]->identifier = "sphere";
+  sphereMesh[0]->modelPath = "::spherePrimitive";
   allMeshes.insert(std::make_pair("::spherePrimitive", sphereMesh));
   // cube
   auto cubeMesh = loadAndCreateAssetsFromFile(ASSETS_PATH "/meshes/cube.fbx");
+  cubeMesh[0]->identifier = "cube";
+  cubeMesh[0]->modelPath = "::cubePrimitive";
   allMeshes.insert(std::make_pair("::cubePrimitive", cubeMesh));
   // cylinder
   auto cylinderMesh =
       loadAndCreateAssetsFromFile(ASSETS_PATH "/meshes/cylinder.fbx");
+  cylinderMesh[0]->identifier = "cylinder";
+  cylinderMesh[0]->modelPath = "::cylinderPrimitive";
   allMeshes.insert(std::make_pair("::cylinderPrimitive", cylinderMesh));
 
   // load default textures
@@ -190,6 +198,18 @@ AssetsLoader::GetShader(std::string vsp, std::string fsp, std::string gsp) {
     return GetShader(":error");
 }
 
+Animation::Skeleton *AssetsLoader::GetActor(std::string filepath) {
+  if (allSkeletons.find(filepath) == allSkeletons.end())
+    auto motion = GetMotion(filepath);
+  if (allSkeletons.find(filepath) == allSkeletons.end()) {
+    LOG_F(ERROR, "can't find actor from file %s", filepath.c_str());
+    return nullptr;
+  } else {
+    LOG_F(INFO, "load actor from %s", filepath.c_str());
+    return allSkeletons[filepath];
+  }
+}
+
 Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
   if (allMotions.find(motionPath) == allMotions.end()) {
     // load new motion
@@ -198,7 +218,10 @@ Animation::Motion *AssetsLoader::GetMotion(std::string motionPath) {
     if (extension == ".bvh") {
       LOG_F(INFO, "load motion data from %s", motionPath.c_str());
       motion->LoadFromBVH(motionPath);
+      motion->path = motionPath;
+      motion->skeleton.path = motionPath;
       allMotions.insert(std::make_pair(motionPath, motion));
+      allSkeletons.insert(std::make_pair(motionPath, &motion->skeleton));
       return motion;
     } else if (extension == ".fbx") {
       LOG_F(INFO, "load motion data from %s", motionPath.c_str());
@@ -422,8 +445,7 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
     if (skel != nullptr) {
       // add deform renderer
       c->AddComponent<Mesh>(mesh);
-      c->AddComponent<DeformRenderer>(
-          globalParent->GetComponent<Animator>().get());
+      c->AddComponent<DeformRenderer>(globalParent->ID);
       c->GetComponent<DeformRenderer>()->renderer->AddPass(
           globalMaterial, globalMaterial->identifier);
       meshParent->AssignChild(c.get());
@@ -440,7 +462,8 @@ AssetsLoader::LoadAndCreateEntityFromFile(string modelPath) {
 }
 
 Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part,
-                          std::map<string, std::size_t> &boneMapping) {
+                          std::map<string, std::size_t> &boneMapping,
+                          std::string modelPath) {
   vector<Vertex> vertices;
   vector<unsigned int> indices(mesh->max_face_triangles * 3);
   for (auto faceInd : part.face_indices) {
@@ -536,6 +559,7 @@ Render::Mesh *ProcessMesh(ufbx_mesh *mesh, ufbx_mesh_part &part,
   // create the final mesh
   auto result = new Render::Mesh(vertices, indices);
   result->identifier = mesh->name.data;
+  result->modelPath = modelPath;
   return result;
 }
 
@@ -608,6 +632,7 @@ void AssetsLoader::loadOBJModelFile(std::vector<Render::Mesh *> &meshes,
 
       Render::Mesh *mesh = new Render::Mesh(vertices, indices);
       mesh->identifier = shape.name;
+      mesh->modelPath = modelPath;
       meshes.push_back(mesh);
     }
   } else {
@@ -736,6 +761,7 @@ void AssetsLoader::loadFBXModelFile(std::vector<Render::Mesh *> &meshes,
 
     // setup variables in the skeleton
     skel->skeletonName = "armature";
+    skel->path = modelPath;
     for (int jointInd = 0; jointInd < globalBones.size(); ++jointInd) {
       skel->jointNames.push_back(globalBones[jointInd].boneName);
       skel->jointParent.push_back(globalBones[jointInd].parentIndex);
@@ -752,6 +778,7 @@ void AssetsLoader::loadFBXModelFile(std::vector<Render::Mesh *> &meshes,
       Animation::Motion *motion = new Animation::Motion();
       motion->fps = 30; // use 30fps by default
       motion->skeleton = *skel;
+      motion->path = modelPath;
       allMotions.insert(std::make_pair(modelPath, motion));
       for (int frameInd = 0; frameInd < numFrames; ++frameInd) {
         Animation::Pose pose;
@@ -774,7 +801,8 @@ void AssetsLoader::loadFBXModelFile(std::vector<Render::Mesh *> &meshes,
   // process the meshes after the bone has setup
   for (auto fbxMesh : scene->meshes) {
     for (auto fbxMeshPart : fbxMesh->material_parts) {
-      meshes.push_back(ProcessMesh(fbxMesh, fbxMeshPart, boneMapping));
+      meshes.push_back(
+          ProcessMesh(fbxMesh, fbxMeshPart, boneMapping, modelPath));
     }
   }
 

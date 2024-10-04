@@ -166,3 +166,5 @@ void VisMetrics::Update(float dt) {
 }
 
 }; // namespace aEngine
+
+REGISTER_SCRIPT(aEngine, VisMetrics)

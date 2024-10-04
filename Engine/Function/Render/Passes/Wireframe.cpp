@@ -1,6 +1,7 @@
 #include "Function/AssetsLoader.hpp"
 #include "Function/GUI/Helpers.hpp"
 #include "Function/Render/RenderPass.hpp"
+#include "Function/Render/Passes/Header.hpp"
 
 namespace aEngine {
 
@@ -60,3 +61,5 @@ void WireFramePass::DrawInspectorGUI() {
 }; // namespace Render
 
 }; // namespace aEngine
+
+REGISTER_RENDER_PASS(aEngine::Render, WireFramePass)

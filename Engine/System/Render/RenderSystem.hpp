@@ -29,14 +29,10 @@ public:
   }
 
   template <typename Archive>
-  void serialize(Archive &archive, const unsigned int version) {
-    archive &boost::serialization::base_object<BaseSystem>(*this);
-    archive &ShowGrid;
-    archive &GridSize;
-    archive &GridSpacing;
-    archive &GridColor;
-    archive &EnableShadowMap;
-    archive &ShadowMapResolution;
+  void serialize(Archive &ar) {
+    ar(cereal::base_class<BaseSystem>(this));
+    ar(ShowGrid, GridSize, GridSpacing, GridColor);
+    ar(EnableShadowMap, ShadowMapResolution);
   }
 
   // Grid options

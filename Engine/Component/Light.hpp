@@ -8,7 +8,7 @@ namespace aEngine {
 
 // The direction of a directional light is LocalForward of its entity.
 struct DirectionalLight : public BaseComponent {
-  DirectionalLight() : BaseComponent(-1) {}
+  DirectionalLight() : BaseComponent(0) {}
   DirectionalLight(EntityID id);
   ~DirectionalLight();
 
@@ -23,9 +23,10 @@ struct DirectionalLight : public BaseComponent {
 
   std::string getInspectorWindowName() override { return "Directional Light"; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(CEREAL_NVP(entityID));
+    ar(Enabled, LightColor, ShowShadowFrustom, ShadowZNear, ShadowZFar,
+       ShadowOrthoW, ShadowOrthoH);
   }
 
   bool Enabled = true;
@@ -45,7 +46,7 @@ protected:
 };
 
 struct PointLight : public BaseComponent {
-  PointLight() : BaseComponent(-1) {}
+  PointLight() : BaseComponent(0) {}
   PointLight(EntityID id);
   ~PointLight();
 
@@ -53,9 +54,9 @@ struct PointLight : public BaseComponent {
 
   std::string getInspectorWindowName() override { return "Point Light"; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(CEREAL_NVP(entityID));
+    ar(Enabled, LightColor, LightRadius);
   }
 
   bool Enabled = true;
@@ -67,7 +68,7 @@ protected:
 };
 
 struct EnvironmentLight : public BaseComponent {
-  EnvironmentLight() : BaseComponent(-1) {}
+  EnvironmentLight() : BaseComponent(0) {}
   EnvironmentLight(EntityID id);
   ~EnvironmentLight();
 
@@ -75,9 +76,9 @@ struct EnvironmentLight : public BaseComponent {
 
   std::string getInspectorWindowName() override { return "Environment Light"; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(CEREAL_NVP(entityID));
+    ar(Enabled, LightColor);
   }
 
   bool Enabled = true;

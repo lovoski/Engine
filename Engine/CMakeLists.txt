@@ -4,6 +4,7 @@ project(libEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_subdirectory("Deps/cereal")
 add_subdirectory("Deps/eigen3")
 add_subdirectory("Deps/glfw")
 add_subdirectory("Deps/glad")
@@ -18,7 +19,8 @@ set(ASSETS_PATH ${PROJECT_SOURCE_DIR}/Assets)
 configure_file(Config.h.in EngineConfig.h)
 
 # boost
-find_package(Boost CONFIG REQUIRED COMPONENTS asio serialization)
+find_package(Boost CONFIG REQUIRED 
+  COMPONENTS asio json)
 
 # cgal
 find_package(CGAL CONFIG REQUIRED)
@@ -27,7 +29,7 @@ include_directories(
   "${PROJECT_SOURCE_DIR}/"
   "${PROJECT_SOURCE_DIR}/Deps/headers/")
 
-set(aEngine_DEPS glad glfw stb imgui loguru filedialog ufbx Eigen3::Eigen Boost::asio Boost::serialization CGAL::CGAL)
+set(aEngine_DEPS glad glfw stb imgui loguru filedialog cereal ufbx Eigen3::Eigen Boost::asio Boost::json CGAL::CGAL)
 set(aEngine_SOURCE_DIRS
   ${PROJECT_SOURCE_DIR}/Base
   ${PROJECT_SOURCE_DIR}/System

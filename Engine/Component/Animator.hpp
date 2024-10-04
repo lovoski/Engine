@@ -22,6 +22,15 @@ struct SkeletonMapData {
   bool active;
   int actorInd;
   Entity *joint;
+
+  template <typename Archive> void save(Archive &ar) const {
+    ar(active, actorInd, joint->ID);
+  }
+  template <typename Archive> void load(Archive &ar) {
+    EntityID id;
+    ar(active, actorInd, id);
+    joint = GWORLD.EntityFromID(id).get();
+  }
 };
 
 struct BoneMatrixBlock {
@@ -32,7 +41,7 @@ struct BoneMatrixBlock {
 // Each animator must bind to one actor (Skeleton),
 // the entity structure will be created when one animator gets created
 struct Animator : public BaseComponent {
-  Animator() : BaseComponent(-1) {}
+  Animator() : BaseComponent(0) {}
   Animator(EntityID id, Animation::Skeleton *act);
   Animator(EntityID id, Animation::Motion *m);
   ~Animator();
@@ -52,30 +61,27 @@ struct Animator : public BaseComponent {
 
   std::string getInspectorWindowName() override { return "Animator"; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
-    if (typename Archive::is_saving()) {
-      EntityID id = skeleton == nullptr ? (EntityID)(-1) : skeleton->ID;
-      ar &id;
-    } else if (typename Archive::is_loading()) {
-      EntityID id;
-      ar &id;
-      if (id != (EntityID)(-1))
-        skeleton = nullptr;
-      else
-        skeleton = GWORLD.EntityFromID(id).get();
-    }
-    ar &ShowSkeleton;
-    ar &ShowJoints;
-    ar &SkeletonOnTop;
-    ar &SkeletonColor;
-    ar &skeletonName;
-    ar &motionName;
-    ar &jointActive;
-    // TODO: actor serialization
-    ar &actorJointMap;
-    // motion serialization
+  template <typename Archive> void save(Archive &ar) const {
+    ar(CEREAL_NVP(entityID));
+    ar(skeleton->ID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
+       SkeletonColor, skeletonName, motionName, jointActive,
+       actor == nullptr ? "none" : actor->path, actorJointMap, SkeletonMap,
+       motion == nullptr ? "none" : motion->path);
+  }
+  template <typename Archive> void load(Archive &ar) {
+    ar(CEREAL_NVP(entityID));
+    EntityID skelID;
+    std::string actorPath, motionPath;
+    ar(skelID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
+       SkeletonColor, skeletonName, motionName, jointActive, actorPath,
+       actorJointMap, SkeletonMap, motionPath);
+    skeleton = GWORLD.EntityFromID(skelID).get();
+    if (actorPath == "none")
+      throw std::exception("deserializing an animator without actor");
+    else
+      actor = Loader.GetActor(actorPath);
+    if (motionPath != "none")
+      motion = Loader.GetMotion(motionPath);
   }
 
   // Skeleton visualization related

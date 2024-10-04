@@ -31,12 +31,13 @@ public:
   Render::Mesh *GetMesh(std::string modelPath, std::string identifier);
   std::vector<Render::Mesh *> GetModel(std::string modelPath);
   Animation::Motion *GetMotion(std::string motionPath);
+  Animation::Skeleton *GetActor(std::string filepath);
 
   // Create a new instance of this material by the type,
   // cache it in an internal array
   template <typename T>
-  Render::BasePass *InstantiateMaterial(std::string identifier) {
-    Render::BasePass *material = new T();
+  std::shared_ptr<Render::BasePass> InstantiateMaterial(std::string identifier) {
+    std::shared_ptr<Render::BasePass> material = std::make_shared<T>();
     material->identifier = identifier;
     allMaterials.push_back(material);
     return material;
@@ -65,7 +66,7 @@ private:
   // path to motion data
   std::map<std::string, Animation::Motion *> allMotions;
 
-  std::vector<Render::BasePass *> allMaterials;
+  std::vector<std::shared_ptr<Render::BasePass>> allMaterials;
 
   void loadFBXModelFile(std::vector<Render::Mesh *> &meshes,
                         std::string modelPath);

@@ -56,7 +56,7 @@ inline void DrawHierarchyGUI(Entity *entity, EntityID &selectedEntity,
         LOG_F(INFO, "Destroy entity %s", entity->name.c_str());
       GWORLD.DestroyEntity(entity->ID);
       // reset selected entity every time remove an entity
-      selectedEntity = (EntityID)(-1);
+      selectedEntity = (EntityID)(0);
       ImGui::CloseCurrentPopup();
     }
     if (ImGui::BeginMenu("Rename")) {
@@ -94,7 +94,7 @@ void Editor::EntitiesWindow() {
       ImGui::OpenPopup("EntitiesWindowContextMenu");
     // unselect entities
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-      context.selectedEntity = (EntityID)(-1);
+      context.selectedEntity = (EntityID)(0);
   }
   if (ImGui::BeginPopup("EntitiesWindowContextMenu")) {
     ImGui::MenuItem("Window Options", nullptr, nullptr, false);

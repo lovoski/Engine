@@ -192,4 +192,4 @@ void Mesh::DrawInspectorGUI() {
 
 }; // namespace aEngine
 
-REGISTER_COMPONENT(aEngine, Mesh)
+REGISTER_COMPONENT(aEngine, Mesh);

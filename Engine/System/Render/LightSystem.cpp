@@ -84,4 +84,4 @@ void LightSystem::Render() {
 
 }; // namespace aEngine
 
-BOOST_CLASS_EXPORT(aEngine::LightSystem)
+REGISTER_SYSTEM(aEngine, LightSystem)

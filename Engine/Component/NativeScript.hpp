@@ -7,7 +7,7 @@
 namespace aEngine {
 
 struct NativeScript : public aEngine::BaseComponent {
-  NativeScript() : BaseComponent(-1) {}
+  NativeScript() : BaseComponent(0) {}
   NativeScript(EntityID id) : BaseComponent(id) {}
 
   ~NativeScript();
@@ -28,12 +28,11 @@ struct NativeScript : public aEngine::BaseComponent {
       LOG_F(INFO, "overwrite existing scriptable %s", typeid(T).name());
       Unbind<T>();
     }
-    Scriptable *instance = new T();
+    instances[sid] = std::make_unique<T>();
     // set up entity for this script instance
-    instance->entity = GWORLD.EntityFromID(entityID).get();
-    instance->Start();
-    instance->OnEnable();
-    instances[sid] = instance;
+    instances[sid]->entity = GWORLD.EntityFromID(entityID).get();
+    instances[sid]->Start();
+    instances[sid]->OnEnable();
   }
 
   template <typename T> void Unbind() {
@@ -45,26 +44,24 @@ struct NativeScript : public aEngine::BaseComponent {
       // unbind a scriptable that don't exists
       LOG_F(ERROR, "unbind a scriptable don't exist %s", typeid(T).name());
     } else {
-      auto instance = static_cast<T *>(instances[sid]);
-      instance->OnDisable();
-      instance->Destroy();
-      if (instance)
-        delete instance;
+      if (auto instance = dynamic_cast<T *>(instances[sid].get())) {
+        instance->OnDisable();
+        instance->Destroy();
+      }
       instances.erase(sid);
     }
   }
 
   std::string getInspectorWindowName() override { return "Native Script"; }
 
-  template <typename Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar &boost::serialization::base_object<BaseComponent>(*this);
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(CEREAL_NVP(entityID), instances);
   }
 
   void DrawInspectorGUI() override;
 
   // A scriptable component can hold multiple scriptable objects
-  std::map<ScriptableTypeID, Scriptable *> instances;
+  std::map<ScriptableTypeID, std::unique_ptr<Scriptable>> instances;
 
   // map scriptable id to scriptable instance
   static std::map<ScriptableTypeID, std::unique_ptr<Scriptable>> ScriptMap;

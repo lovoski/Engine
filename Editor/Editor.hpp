@@ -13,8 +13,8 @@ struct EditorContext {
   ImGuizmo::MODE mCurrentGizmoMode;
 
   // context variable related to gui interactions
-  EntityID selectedEntity = (EntityID)(-1);
-  EntityID lockedSelectedEntity = (EntityID)(-1);
+  EntityID selectedEntity = (EntityID)(0);
+  EntityID lockedSelectedEntity = (EntityID)(0);
   std::string activeBaseFolder = ".";
   const char *layoutFileName = "layout.ini";
 
@@ -37,8 +37,8 @@ struct EditorContext {
     mCurrentGizmoMode = ImGuizmo::MODE::WORLD;
     mCurrentGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 
-    selectedEntity = (EntityID)(-1);
-    lockedSelectedEntity = (EntityID)(-1);
+    selectedEntity = (EntityID)(0);
+    lockedSelectedEntity = (EntityID)(0);
     activeBaseFolder = ".";
     layoutFileName = "layout.ini";
 

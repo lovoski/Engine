@@ -53,17 +53,20 @@ public:
   // from component id to component instance
   static std::map<ComponentTypeID, std::unique_ptr<BaseComponent>> CompMap;
 
-  template <typename Archive>
-  void serialize(Archive &archive, const unsigned int version) {
-    archive &entities;
-    archive &signature;
-    archive &signatureOne;
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(entities, signature, signatureOne);
   }
 
 protected:
+  friend class cereal::access;
   EntitySignature signature;
   EntitySignature signatureOne;
   std::set<EntityID> entities;
 };
 
 }; // namespace aEngine
+
+#define REGISTER_SYSTEM(Namespace, SystemType)                                 \
+  CEREAL_REGISTER_TYPE(Namespace::SystemType);                                 \
+  CEREAL_REGISTER_POLYMORPHIC_RELATION(aEngine::BaseSystem,                    \
+                                       Namespace::SystemType)

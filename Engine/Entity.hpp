@@ -89,22 +89,12 @@ public:
   }
 
   template <typename Archive>
-  void serialize(Archive &archive, const unsigned int version) {
+  void serialize(Archive &ar) {
     // don't serialize parent child relation
-    archive &ID;
-    archive &name;
-    archive &Enabled;
-    archive &LocalUp;
-    archive &LocalLeft;
-    archive &LocalForward;
-    archive &transformDirty;
-    archive &localScale;
-    archive &localRotation;
-    archive &localPosition;
-    archive &m_scale;
-    archive &m_rotation;
-    archive &m_position;
-    archive &globalTransform;
+    ar(ID, name, Enabled);
+    ar(LocalUp, LocalLeft, LocalForward);
+    ar(transformDirty, localScale, localRotation, localPosition);
+    ar(m_scale, m_rotation, m_position, globalTransform);
   }
 
   // Call this function to clear parent child relations related to this object,

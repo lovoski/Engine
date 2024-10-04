@@ -44,20 +44,6 @@ inline void DrawTransformGUI(EntityID selectedEntity) {
   }
 }
 
-template <typename T> void DrawComponent(EntityID entity, std::string name) {
-  static bool showComponent = false;
-  bool hasComponent = GWORLD.HasComponent<T>(entity);
-  if (hasComponent) {
-    showComponent = true;
-  } else {
-    showComponent = false;
-  }
-  if (ImGui::CollapsingHeader(name.c_str(), &showComponent)) {
-  }
-  if (hasComponent && !showComponent) {
-  }
-}
-
 void InspectorRightClickMenu(EntityID entity) {
   if (ImGui::BeginPopup("ComponentWindowContextMenu")) {
     if (ImGui::MenuItem("Add Component", nullptr, nullptr, false))

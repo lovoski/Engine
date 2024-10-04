@@ -1,6 +1,7 @@
 #include "Function/AssetsLoader.hpp"
 #include "Function/GUI/Helpers.hpp"
 #include "Function/Render/RenderPass.hpp"
+#include "Function/Render/Passes/Header.hpp"
 
 namespace aEngine {
 
@@ -53,6 +54,10 @@ OutlinePass::OutlinePass() {
   OutlineColorMap = *Loader.GetTexture("::null_texture");
 }
 
+void OutlinePass::initTexture(std::string path) {
+  OutlineColorMap = *Loader.GetTexture(path);
+}
+
 void OutlinePass::DrawInspectorGUI() {
   ImGui::DragFloat("Width", &OutlineWidth, 0.001f, 0.0f, 10.0f);
   ImGui::SliderFloat("Weight", &OutlineWeight, 0.0f, 1.0f);
@@ -80,3 +85,5 @@ std::string OutlinePass::getInspectorWindowName() { return "Outline"; }
 }; // namespace Render
 
 }; // namespace aEngine
+
+REGISTER_RENDER_PASS_SL(aEngine::Render, OutlinePass)
