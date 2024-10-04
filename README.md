@@ -193,7 +193,7 @@ For mesh-mesh collision detection, brute force has `O(n^2)` time complexity, whi
 
 Here's a screen shot of the bvh data structure:
 
-![bvh_ds](Doc/bvh_ds_20240913.png)
+![bvh_ds](Doc/bvh_ds_20241004.png)
 
 ## Animation System
 
@@ -203,8 +203,4 @@ Each motion contains one `Skeleton` and an array of `Pose`, we need to apply the
 
 The `Skeleton` holds information for all joints (parent-child relation, names, relative transforms etc.) and the `Pose` records the relative transform for all joints in one frame.
 
-A simple neural retargeting script for character with varied skeleton is provided in `Scripts/Animation/SAMERetarget`. Here's a simple demo to it:
-
-<div>
-<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=113084861517276&bvid=BV1hypgeAEBN&cid=25751129116&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
-</div>
+A simple neural retargeting script for character with varied skeleton is provided in `Scripts/Animation/SAMERetarget`. [Here's a simple demo to it](https://www.bilibili.com/video/BV1hypgeAEBN/?vd_source=bcaf713b6b1c92e7d54cf304c76ff4d2).
