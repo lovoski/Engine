@@ -54,8 +54,17 @@ struct NativeScript : public aEngine::BaseComponent {
 
   std::string getInspectorWindowName() override { return "Native Script"; }
 
-  template <typename Archive> void serialize(Archive &ar) {
-    ar(CEREAL_NVP(entityID), instances);
+  template <typename Archive> void save(Archive &ar) const {
+    std::map<ScriptableTypeID, EntityID> ie;
+    for (auto &i : instances)
+      ie.insert(std::make_pair(i.first, i.second->entity->ID));
+    ar(CEREAL_NVP(entityID), instances, ie);
+  }
+  template <typename Archive> void load(Archive &ar) {
+    std::map<ScriptableTypeID, EntityID> ie;
+    ar(CEREAL_NVP(entityID), instances, ie);
+    for (auto &i : instances)
+      i.second->entity = GWORLD.EntityFromID(ie[i.first]).get();
   }
 
   void DrawInspectorGUI() override;
