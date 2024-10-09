@@ -15,6 +15,8 @@
 
 #include "API.hpp"
 
+#include "Function/General/KDTree.hpp"
+
 namespace aEngine {
 
 struct MotionDatabaseData {
@@ -25,21 +27,8 @@ struct MotionDatabaseData {
   std::vector<glm::quat> rotations;
   std::vector<glm::vec3> velocities;
 
-  template <typename Archive>
-  void serialize(Archive &ar) {
+  template <typename Archive> void serialize(Archive &ar) {
     ar(facingDir, positions, rotations, velocities);
-  }
-};
-
-struct MotionDatabaseFeature {
-  // 12: left & right foot position, velocity
-  //  6: hip position, velocity
-  //  6: trajectory xz positions (3 future positions)
-  std::array<float, 24> data;
-
-  template <typename Archive>
-  void serialize(Archive &ar) {
-    ar(data);
   }
 };
 
@@ -49,7 +38,10 @@ struct MotionDatabase {
   // nanim * 2 (begin, end)
   std::vector<std::pair<int, int>> range;
   // nframes * nfeat_dim
-  std::vector<MotionDatabaseFeature> features;
+  // 12: left & right foot position, velocity
+  //  6: hip position, velocity
+  //  6: trajectory xz positions (3 future positions)
+  std::vector<std::array<float, 24>> features;
 
   int dataFPS = 30;
   float trajInterval = 0.2f;
@@ -57,18 +49,13 @@ struct MotionDatabase {
   // compute the features based on given joint index
   void ComputeFeatures(int lfoot, int rfoot, int hip);
 
-  MotionDatabaseFeature CompressFeature(std::array<glm::vec3, 2> &hip,
+  std::array<float, 24> CompressFeature(std::array<glm::vec3, 2> &hip,
                                         std::array<glm::vec3, 2> &lfoot,
                                         std::array<glm::vec3, 2> &rfoot,
                                         std::array<glm::vec2, 3> &traj);
 
-  // search database for closest motion,
-  // returns index for the closet motion frames
-  int Query(MotionDatabaseFeature &feature);
-
-  template <typename Archive>
-  void serialize(Archive &ar) {
-    ar(range, data,features, dataFPS, trajInterval);
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(range, data, features, dataFPS, trajInterval);
   }
 };
 
@@ -113,6 +100,14 @@ private:
   float trajInterval = 0.2f;
   std::vector<glm::vec3> trajPos;
   std::vector<glm::vec3> trajSpeed;
+
+  // query related
+  KDTree<float, 24> tree;
+  MotionDatabase database;
+  // for pfnn mocap only
+  const int pfnnLfoot = 4, pfnnRfoot = 10, pfnnHip = 0;
+
+  int queryMotionDatabase(int current);
 };
 
 }; // namespace aEngine

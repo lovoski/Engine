@@ -18,6 +18,11 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 add_subdirectory(Engine)
 
+option(BUILD_AENGINE_TESTS "Build tests for engine components" ON)
+if(${BUILD_AENGINE_TESTS})
+  add_subdirectory(Tests)
+endif()
+
 add_executable(${PROJECT_NAME} ${editor_SOURCES})
 target_link_libraries(${PROJECT_NAME} libEngine)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)

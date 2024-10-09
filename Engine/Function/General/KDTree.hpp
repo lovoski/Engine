@@ -4,6 +4,9 @@
  *
  * kdtree is most useful when the scale of data >> the dimension of data, for
  * high dimensional data search, it might not be as useful.
+ *
+ * Define the macro KDTREE_GPU to enable a simple implementation of gpu
+ * accelerated search method.
  */
 #pragma once
 
@@ -14,8 +17,10 @@
 #include <stack>
 #include <vector>
 
+#ifdef KDTREE_GPU
 #include "Function/General/ComputeShader.hpp"
 #include "Function/Render/Buffers.hpp"
+#endif
 
 namespace aEngine {
 
@@ -107,8 +112,9 @@ public:
     }
 
     // setup variable for search
-    kdsearchs.resize(nodes.size() + 1, -1);
+    kdSearchStack.resize(nodes.size() + 1, -1);
 
+#ifdef KDTREE_GPU
     char shaderBuffer[1024];
     snprintf(shaderBuffer, sizeof(shaderBuffer), parelleSearchSource.c_str(),
              Dim, Dim);
@@ -121,16 +127,17 @@ public:
     _outputData.resize(data.size(), 0.0f);
     _output.SetDataAs(GL_SHADER_STORAGE_BUFFER, _outputData);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+#endif
   }
 
   // Nearest neighbor search with kdtree, returns index for the closest data
   int NearestSearch(std::array<Type, Dim> &target) {
     Type nearestVal = std::numeric_limits<Type>::max();
     int nearestInd = -1, stackTop = 0;
-    kdsearchs[0] = 0;
+    kdSearchStack[0] = 0;
     stackTop++;
     while (stackTop != 0) {
-      int cur = kdsearchs[--stackTop];
+      int cur = kdSearchStack[--stackTop];
       if (cur == -1)
         continue;
       const Node &curNode = nodes[cur];
@@ -151,12 +158,12 @@ public:
           nextBranch = curNode.right;
           otherBranch = curNode.left;
         }
-        kdsearchs[stackTop++] = nextBranch;
+        kdSearchStack[stackTop++] = nextBranch;
         // don't search the other branch when its already too far from current
         // node
         if (std::abs(target[splitDim] - data[curNode.self][splitDim]) <=
             nearestVal)
-          kdsearchs[stackTop++] = otherBranch;
+          kdSearchStack[stackTop++] = otherBranch;
       }
     }
     return nearestInd;
@@ -176,14 +183,16 @@ public:
     return nearestInd;
   }
 
-  int ParelleNearestSearch(std::array<Type, Dim> &target) {
+#ifdef KDTREE_GPU
+  int ParelleNearestSearch(std::array<Type, Dim> &target,
+                           int workdGroupSize = 64) {
     cs->Use();
     for (int i = 0; i < Dim; ++i)
       _inputData[0].pos[i] = target[i];
     _input.SetDataAs(GL_SHADER_STORAGE_BUFFER, _inputData);
     _input.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 0);
     _output.BindToPointAs(GL_SHADER_STORAGE_BUFFER, 1);
-    cs->Dispatch((data.size() + 63) / 64, 1, 1);
+    cs->Dispatch((data.size() + workdGroupSize - 1) / workdGroupSize, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     // read from gpu
     _output.BindAs(GL_SHADER_STORAGE_BUFFER);
@@ -204,6 +213,7 @@ public:
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     return nearestInd;
   }
+#endif
 
   // Get data with a index
   const std::array<Type, Dim> &Data(int index) const { return data[index]; }
@@ -211,6 +221,7 @@ public:
 private:
   std::vector<std::array<Type, Dim>> data;
 
+#ifdef KDTREE_GPU
   struct _Point {
     float pos[Dim];
   };
@@ -240,6 +251,7 @@ private:
     dist[index-1] = result;
   }
   )";
+#endif
 
   struct StackEntry {
     bool isleft;
@@ -262,7 +274,7 @@ private:
     return std::sqrt(result);
   }
 
-  std::vector<int> kdsearchs;
+  std::vector<int> kdSearchStack;
 };
 
 using KDTree2f = KDTree<float, 2>;

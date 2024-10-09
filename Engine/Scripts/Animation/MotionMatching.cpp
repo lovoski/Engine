@@ -5,7 +5,9 @@
 
 namespace aEngine {
 
-void buildMotionDatabase(std::string filepath);
+// Clear and fill the database before saving it to filepath
+void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
+                         int rfoot, int hip);
 void loadMotionDatabase(std::string filepath, MotionDatabase &db);
 void saveMotionDatabase(std::string filepath, MotionDatabase &db);
 
@@ -107,7 +109,9 @@ void MotionMatching::DrawInspectorGUI() {
   GUIUtils::DragableFileTarget(
       "motionmatchingsourcedir", "Directory Path",
       [&](std::string path) {
-        buildMotionDatabase(path);
+        // TODO: make it modifiable in inspector gui
+        buildMotionDatabase(path, database, pfnnLfoot, pfnnRfoot, pfnnHip);
+        tree.Build(database.features);
         return true;
       },
       sourceDirBuffer);
@@ -118,8 +122,8 @@ void MotionMatching::DrawInspectorGUI() {
       "motionmatchingdatabase", "Database File (data.bin)",
       [&](std::string file) {
         if (fs::path(file).filename().string() == "data.bin") {
-          MotionDatabase db;
-          loadMotionDatabase(file, db);
+          loadMotionDatabase(file, database);
+          tree.Build(database.features);
           return true;
         }
         return false;
@@ -158,21 +162,13 @@ void MotionMatching::queryJoysticks() {
   }
 }
 
-void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
-  std::ofstream output(filepath, std::ios::binary);
-  cereal::PortableBinaryOutputArchive oa(output);
-  oa(db);
-}
-
-void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
-  std::ifstream input(filepath, std::ios::binary);
-  cereal::PortableBinaryInputArchive ia(input);
-  ia(db);
-}
-
-void buildMotionDatabase(std::string filepath) {
+void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
+                         int rfoot, int hip) {
+  // clear the database
+  db.features.clear();
+  db.range.clear();
+  db.data.clear();
   // load motion data from the filepath
-  MotionDatabase db;
   auto processMotionData = [&](std::string file) {
     Animation::Motion motion;
     motion.LoadFromBVH(file);
@@ -201,6 +197,8 @@ void buildMotionDatabase(std::string filepath) {
         processMotionData(entry.path().string());
       }
     }
+    // calculate motion feature
+    db.ComputeFeatures(lfoot, rfoot, hip);
     saveMotionDatabase((fs::path(filepath) / fs::path("data.bin")).string(),
                        db);
   } else {
@@ -224,7 +222,8 @@ void MotionDatabase::ComputeFeatures(int lfoot, int rfoot, int hip) {
       std::array<glm::vec2, 3> trajData;
       // sample trajectories
       for (int i = 1; i <= 3; ++i) {
-        int sampleF = ((end - 1) > (f + i * interval)) ? (end - 1) : (f + i * interval);
+        int sampleF =
+            ((end - 1) < (f + i * interval)) ? (end - 1) : (f + i * interval);
         glm::vec3 sampleHip = data[sampleF].positions[hip];
         trajData[i - 1] = glm::vec2(sampleHip.x, sampleHip.z);
       }
@@ -234,28 +233,41 @@ void MotionDatabase::ComputeFeatures(int lfoot, int rfoot, int hip) {
   }
 }
 
-MotionDatabaseFeature MotionDatabase::CompressFeature(
+std::array<float, 24> MotionDatabase::CompressFeature(
     std::array<glm::vec3, 2> &hip, std::array<glm::vec3, 2> &lfoot,
     std::array<glm::vec3, 2> &rfoot, std::array<glm::vec2, 3> &traj) {
-  MotionDatabaseFeature feature;
+  std::array<float, 24> feature;
   int index = 0;
   for (int i = 0; i < 2; ++i)
     for (int j = 0; j < 3; ++j)
-      feature.data[index++] = hip[i][j];
+      feature[index++] = hip[i][j];
   for (int i = 0; i < 2; ++i)
     for (int j = 0; j < 3; ++j)
-      feature.data[index++] = lfoot[i][j];
+      feature[index++] = lfoot[i][j];
   for (int i = 0; i < 2; ++i)
     for (int j = 0; j < 3; ++j)
-      feature.data[index++] = rfoot[i][j];
+      feature[index++] = rfoot[i][j];
   for (int i = 0; i < 3; ++i)
     for (int j = 0; j < 2; ++j)
-      feature.data[index++] = traj[i][j];
+      feature[index++] = traj[i][j];
   return feature;
 }
 
-int MotionDatabase::Query(MotionDatabaseFeature &feature) {
+int MotionMatching::queryMotionDatabase(int current) {
+  // int target = tree.BruteForceNearestSearch(database.features[current]);
   return -1;
+}
+
+void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
+  std::ofstream output(filepath, std::ios::binary);
+  cereal::PortableBinaryOutputArchive oa(output);
+  oa(db);
+}
+
+void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
+  std::ifstream input(filepath, std::ios::binary);
+  cereal::PortableBinaryInputArchive ia(input);
+  ia(db);
 }
 
 }; // namespace aEngine
