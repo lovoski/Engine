@@ -1,6 +1,9 @@
 #pragma once
 
-#include "Global.hpp"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <loguru.hpp>
+#include <string>
 
 namespace aEngine {
 
