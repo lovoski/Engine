@@ -1,4 +1,4 @@
-#include "Scripts/SelfIntersection.hpp"
+#include "Scripts/Geometry/SelfIntersection.hpp"
 
 namespace aEngine {
 

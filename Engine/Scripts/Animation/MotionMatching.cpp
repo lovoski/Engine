@@ -5,18 +5,14 @@
 
 namespace aEngine {
 
-// Clear and fill the database before saving it to filepath
 void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
                          int rfoot, int hip);
 void loadMotionDatabase(std::string filepath, MotionDatabase &db);
 void saveMotionDatabase(std::string filepath, MotionDatabase &db);
-
-MotionMatching::MotionMatching() {}
-
-MotionMatching::~MotionMatching() {}
-
-void MotionMatching::OnEnable() {}
-void MotionMatching::OnDisable() {}
+std::array<float, 24> CompressFeature(std::array<glm::vec3, 2> &hip,
+                                      std::array<glm::vec3, 2> &lfoot,
+                                      std::array<glm::vec3, 2> &rfoot,
+                                      std::array<glm::vec2, 3> &traj);
 
 void MotionMatching::Update(float dt) {
   // joystick related
@@ -60,9 +56,9 @@ void MotionMatching::Update(float dt) {
 }
 
 void MotionMatching::LateUpdate(float dt) {
-  // database query
-  if (auto animator = entity->GetComponent<Animator>()) {
-  }
+  // database query, update animator motion
+  if (auto animator = entity->GetComponent<Animator>())
+    updateAnimatorMotion(animator);
   // camera adjustment
   if (orbitCamera) {
     EntityID camera;
@@ -146,20 +142,10 @@ void MotionMatching::DrawInspectorGUI() {
   ImGui::MenuItem("Player", nullptr, nullptr, false);
   ImGui::SliderFloat("Player Speed", &playerSpeed, 0.5f, 10.0f);
   ImGui::SliderFloat("Speed Half Life", &speedHalfLife, 0.0f, 3.0f);
-  ImGui::MenuItem("Trajectory", nullptr, nullptr, false);
-  ImGui::SliderInt("Trajectory Count", &trajCount, 1, 9);
-  ImGui::SliderFloat("Trajectory Interval", &trajInterval, 0.1f, 1.0f);
-}
-
-void MotionMatching::queryJoysticks() {
-  availableJoysticks.clear();
-  joystickNames.clear();
-  for (int jid = GLFW_JOYSTICK_1; jid < GLFW_JOYSTICK_LAST; ++jid) {
-    if (glfwJoystickPresent(jid)) {
-      availableJoysticks.push_back(jid);
-      joystickNames.push_back(glfwGetJoystickName(jid));
-    }
-  }
+  // TODO: hard code trajectory parameters for now
+  // ImGui::MenuItem("Trajectory", nullptr, nullptr, false);
+  // ImGui::SliderInt("Trajectory Count", &trajCount, 1, 9);
+  // ImGui::SliderFloat("Trajectory Interval", &trajInterval, 0.1f, 1.0f);
 }
 
 void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
@@ -233,9 +219,74 @@ void MotionDatabase::ComputeFeatures(int lfoot, int rfoot, int hip) {
   }
 }
 
-std::array<float, 24> MotionDatabase::CompressFeature(
-    std::array<glm::vec3, 2> &hip, std::array<glm::vec3, 2> &lfoot,
-    std::array<glm::vec3, 2> &rfoot, std::array<glm::vec2, 3> &traj) {
+void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
+  // create feature from user input
+  auto hipHash = animator->HashString(animator->actor->jointNames[pfnnHip]);
+  auto lfootHash = animator->HashString(animator->actor->jointNames[pfnnLfoot]);
+  auto rfootHash = animator->HashString(animator->actor->jointNames[pfnnRfoot]);
+  auto &hip = animator->SkeletonMap[hipHash];
+  auto &lfoot = animator->SkeletonMap[lfootHash];
+  auto &rfoot = animator->SkeletonMap[rfootHash];
+  std::array<glm::vec3, 2> hipData{hip.joint->Position(),
+                                   hip.joint->Position() - oldHipPos};
+  oldHipPos = hip.joint->Position();
+  std::array<glm::vec3, 2> lfootData{lfoot.joint->Position(),
+                                     lfoot.joint->Position() - oldLfootPos};
+  oldLfootPos = lfoot.joint->Position();
+  std::array<glm::vec3, 2> rfootData{rfoot.joint->Position(),
+                                     rfoot.joint->Position() - oldRfootPos};
+  oldRfootPos = rfoot.joint->Position();
+  std::array<glm::vec2, 3> trajData;
+  for (int i = 1; i <= 3; ++i)
+    trajData[i] = glm::vec2(trajPos[i].x, trajPos[i].z);
+  auto currentFeature =
+      CompressFeature(hipData, lfootData, rfootData, trajData);
+
+  // query motion database for closest feature
+  auto nearestFrameInd = tree.BruteForceNearestSearch(currentFeature);
+  auto bpSearch = [&](int target) {
+    int point = database.range.size() / 2;
+    int first = database.range[point].first;
+    int second = database.range[point].second;
+    while (!(first <= target && second >= target)) {
+      if (target < first) {
+        point = point / 2;
+      } else if (target > second) {
+        point = (point + database.range.size()) / 2;
+      }
+      first = database.range[point].first;
+      second = database.range[point].second;
+    }
+    return point;
+  };
+  int currentClip = bpSearch(currentFrameInd);
+  int nextClip = bpSearch(nearestFrameInd);
+
+  if (currentClip != nextClip) {
+    // transition from current to next
+  } else {
+    // keep playing current motion
+  }
+}
+
+// ---------------------- Helper functions ----------------------
+
+void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
+  std::ofstream output(filepath, std::ios::binary);
+  cereal::PortableBinaryOutputArchive oa(output);
+  oa(db);
+}
+
+void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
+  std::ifstream input(filepath, std::ios::binary);
+  cereal::PortableBinaryInputArchive ia(input);
+  ia(db);
+}
+
+std::array<float, 24> CompressFeature(std::array<glm::vec3, 2> &hip,
+                                      std::array<glm::vec3, 2> &lfoot,
+                                      std::array<glm::vec3, 2> &rfoot,
+                                      std::array<glm::vec2, 3> &traj) {
   std::array<float, 24> feature;
   int index = 0;
   for (int i = 0; i < 2; ++i)
@@ -253,21 +304,15 @@ std::array<float, 24> MotionDatabase::CompressFeature(
   return feature;
 }
 
-int MotionMatching::queryMotionDatabase(int current) {
-  // int target = tree.BruteForceNearestSearch(database.features[current]);
-  return -1;
-}
-
-void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
-  std::ofstream output(filepath, std::ios::binary);
-  cereal::PortableBinaryOutputArchive oa(output);
-  oa(db);
-}
-
-void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
-  std::ifstream input(filepath, std::ios::binary);
-  cereal::PortableBinaryInputArchive ia(input);
-  ia(db);
+void MotionMatching::queryJoysticks() {
+  availableJoysticks.clear();
+  joystickNames.clear();
+  for (int jid = GLFW_JOYSTICK_1; jid < GLFW_JOYSTICK_LAST; ++jid) {
+    if (glfwJoystickPresent(jid)) {
+      availableJoysticks.push_back(jid);
+      joystickNames.push_back(glfwGetJoystickName(jid));
+    }
+  }
 }
 
 }; // namespace aEngine

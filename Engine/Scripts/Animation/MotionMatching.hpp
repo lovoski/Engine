@@ -49,11 +49,6 @@ struct MotionDatabase {
   // compute the features based on given joint index
   void ComputeFeatures(int lfoot, int rfoot, int hip);
 
-  std::array<float, 24> CompressFeature(std::array<glm::vec3, 2> &hip,
-                                        std::array<glm::vec3, 2> &lfoot,
-                                        std::array<glm::vec3, 2> &rfoot,
-                                        std::array<glm::vec2, 3> &traj);
-
   template <typename Archive> void serialize(Archive &ar) {
     ar(range, data, features, dataFPS, trajInterval);
   }
@@ -61,11 +56,8 @@ struct MotionDatabase {
 
 class MotionMatching : public Scriptable {
 public:
-  MotionMatching();
-  ~MotionMatching();
-
-  void OnEnable() override;
-  void OnDisable() override;
+  MotionMatching() {}
+  ~MotionMatching() {}
 
   void Update(float dt) override;
   void LateUpdate(float dt) override;
@@ -106,8 +98,10 @@ private:
   MotionDatabase database;
   // for pfnn mocap only
   const int pfnnLfoot = 4, pfnnRfoot = 10, pfnnHip = 0;
-
-  int queryMotionDatabase(int current);
+  glm::vec3 oldHipPos = glm::vec3(0.0f), oldLfootPos = glm::vec3(0.0f),
+            oldRfootPos = glm::vec3(0.0f);
+  int currentFrameInd = 0;
+  void updateAnimatorMotion(std::shared_ptr<Animator> &animator);
 };
 
 }; // namespace aEngine

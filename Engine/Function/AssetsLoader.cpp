@@ -144,6 +144,7 @@ void AssetsLoader::LoadDefaultAssets() {
   prepareDefaultShader(Render::wireframeVS, Render::wireframeFS, "none",
                        "::wireframe");
   prepareDefaultShader(Render::pbrVS, Render::pbrFS, "none", "::pbr");
+  prepareDefaultShader(Render::fvpVS, Render::fvpFS, "none", "::fvp");
 }
 
 void AssetsLoader::prepareDefaultShader(std::string vs, std::string fs,

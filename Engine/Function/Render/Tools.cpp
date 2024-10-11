@@ -111,7 +111,7 @@ void HDRToCubeMap(unsigned int &hdr, unsigned int &cubemap,
   shader.SetTexture2D(hdr, "equirectangularMap", 0);
   shader.SetMat4("projection", captureProjection);
   glViewport(0, 0, cubeDimension, cubeDimension);
-  // as we are rendering inside the cube, 
+  // as we are rendering inside the cube,
   // make sure the inside face won't get culled
   glDisable(GL_CULL_FACE);
   for (int i = 0; i < 6; ++i) {
@@ -175,7 +175,7 @@ void RenderEnvironmentMap(unsigned int handle, glm::mat4 &vp) {
     initialized = true;
   }
   glDepthMask(GL_FALSE);
-  // as we are rendering inside the cube, 
+  // as we are rendering inside the cube,
   // make sure the inside face won't get culled
   glDisable(GL_CULL_FACE);
   skyboxShader.Use();
@@ -296,7 +296,7 @@ void ConvoluteCubeMap(unsigned int &source, unsigned int &target) {
   shader.SetMat4("projection", captureProjection);
   shader.SetCubeMap("environmentMap", source, 0);
   glViewport(0, 0, 32, 32);
-  // as we are rendering inside the cube, 
+  // as we are rendering inside the cube,
   // make sure the inside face won't get culled
   glDisable(GL_CULL_FACE);
   for (int i = 0; i < 6; ++i) {
@@ -316,6 +316,95 @@ void ConvoluteCubeMap(unsigned int &source, unsigned int &target) {
   glViewport(previousViewport[0], previousViewport[1], previousViewport[2],
              previousViewport[3]);
 }
+
+void ProgramTexture(Shader &shader, unsigned int &target, unsigned int width,
+                    unsigned int height) {
+  static VAO vao;
+  static bool initialized = false;
+  static int indices;
+  if (!initialized) {
+    vao.Bind();
+    auto plane = Loader.GetMesh("::planePrimitive", "");
+    indices = plane->indices.size();
+    plane->vbo.BindAs(GL_ARRAY_BUFFER);
+    plane->ebo.BindAs(GL_ELEMENT_ARRAY_BUFFER);
+    vao.LinkAttrib(plane->vbo, 0, 4, GL_FLOAT, sizeof(Vertex), (void *)0);
+    vao.LinkAttrib(plane->vbo, 1, 4, GL_FLOAT, sizeof(Vertex),
+                   (void *)(offsetof(Vertex, Normal)));
+    vao.LinkAttrib(plane->vbo, 2, 4, GL_FLOAT, sizeof(Vertex),
+                   (void *)(offsetof(Vertex, TexCoords)));
+    vao.Unbind();
+    plane->vbo.UnbindAs(GL_ARRAY_BUFFER);
+    plane->ebo.UnbindAs(GL_ELEMENT_ARRAY_BUFFER);
+    initialized = true;
+  }
+  // store previous states
+  int previousFBO, previousViewport[4];
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFBO);
+  glGetIntegerv(GL_VIEWPORT, previousViewport);
+  // start rendering the hdr to cubemap
+  unsigned int captureFBO, captureRBO;
+  glGenFramebuffers(1, &captureFBO);
+  glGenRenderbuffers(1, &captureRBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                            GL_RENDERBUFFER, captureRBO);
+  glGenTextures(1, &target);
+  glBindTexture(GL_TEXTURE_2D, target);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT,
+               nullptr);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glm::mat4 captureProjection =
+      glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+  glm::mat4 captureView =
+      glm::lookAt(glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                  glm::vec3(0.0f, 0.0f, -1.0f));
+  shader.Use();
+  shader.SetMat4("Projection", captureProjection);
+  shader.SetMat4("View", captureView);
+  shader.SetMat4("Model", glm::mat4(1.0f));
+  glViewport(0, 0, width, height);
+  glDisable(GL_CULL_FACE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         target, 0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  vao.Bind();
+  glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
+  vao.Unbind();
+
+  // restore framebuffer and viewport after the render completes
+  glFinish();
+  glDeleteFramebuffers(1, &captureFBO);
+  glDeleteRenderbuffers(1, &captureRBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
+  glViewport(previousViewport[0], previousViewport[1], previousViewport[2],
+             previousViewport[3]);
+}
+
+const std::string defaultProgramTextureVS = R"(
+#version 430 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aNormal;
+layout (location = 2) in vec4 aTexCoord;
+
+uniform mat4 Model;
+uniform mat4 View;
+uniform mat4 Projection;
+
+out vec2 texCoord;
+
+void main() {
+  texCoord = aTexCoord.xy;
+  gl_Position = Projection * View * Model * aPos;
+}
+)";
 
 }; // namespace Render
 

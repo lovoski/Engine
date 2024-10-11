@@ -3,8 +3,8 @@
 #include "Scripts/Animation/MotionMatching.hpp"
 #include "Scripts/Animation/SAMERetarget.hpp"
 #include "Scripts/Animation/VisMetrics.hpp"
-#include "Scripts/SelfIntersection.hpp"
-
+#include "Scripts/Geometry/SelfIntersection.hpp"
+#include "Scripts/Geometry/PolygonMeshProcessing.hpp"
 
 namespace aEngine {
 
@@ -20,16 +20,22 @@ NativeScript::~NativeScript() {
 void NativeScript::drawAddScriptPopup() {
   if (ImGui::BeginPopup("addscriptpanelpopup")) {
     ImGui::MenuItem("Registered Scripts", nullptr, nullptr, false);
+
+    // animation scripts
     ImGui::Separator();
     if (ImGui::MenuItem("SAME Retarget"))
       Bind<SAMERetarget>();
-    if (ImGui::MenuItem("Motion Matching"))
-      Bind<MotionMatching>();
-    ImGui::Separator();
     if (ImGui::MenuItem("Visual Metrics"))
       Bind<VisMetrics>();
+    if (ImGui::MenuItem("Motion Matching"))
+      Bind<MotionMatching>();
+
+    // geometry scripts
+    ImGui::Separator();
     if (ImGui::MenuItem("Self Intersection"))
       Bind<SelfIntersection>();
+    if (ImGui::MenuItem("Polygon Mesh Processing"))
+      Bind<PolygonMeshProcessing>();
     ImGui::EndPopup();
   }
 }

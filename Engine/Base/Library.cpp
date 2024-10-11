@@ -37,11 +37,11 @@ std::string BaseComponent::getInspectorWindowName() {
 }
 
 void Scriptable::OnEnable() {
-  LOG_F(INFO, "call OnEnable for %s", getInspectorWindowName().c_str());
+  LOG_F(INFO, "enable script %s", getInspectorWindowName().c_str());
 }
 
 void Scriptable::OnDisable() {
-  LOG_F(INFO, "call OnDisable for %s", getInspectorWindowName().c_str());
+  LOG_F(INFO, "disable script %s", getInspectorWindowName().c_str());
 }
 
 void Scriptable::DrawInspectorGUIInternal() {

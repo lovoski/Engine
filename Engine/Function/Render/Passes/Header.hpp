@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Function/Render/RenderPass.hpp"
+#include "Function/Render/VisUtils.hpp"
 
 namespace aEngine {
 
@@ -137,6 +138,49 @@ public:
 private:
   void initTexture(std::string p1, std::string p2, std::string p3,
                    std::string p4, std::string p5);
+  void BeforePass() override;
+  void DrawInspectorGUI() override;
+};
+
+/**
+ * Visualize a field defined on the vertices of a surface mesh. The field value
+ * should be stored in the first parameter of texture coordniate (u of uv) of
+ * the render mesh and normalized to [0.0, 1.0].
+ */
+extern const std::string fvpVS, fvpFS;
+class DiscreteFieldVisualizePass : public BasePass {
+public:
+  DiscreteFieldVisualizePass();
+
+  std::string getInspectorWindowName() override { return "Field Visualizer"; }
+  void FinishPass() override;
+
+  template <typename Archive> void save(Archive &ar) const {
+    ar(WithBar, BarWidth, BarInterval, BarColor, BeginColor, EndColor,
+       ColorBarWidth, ColorBarHeight);
+  }
+  template <typename Archive> void load(Archive &ar) {
+    ar(WithBar, BarWidth, BarInterval, BarColor, BeginColor, EndColor,
+       ColorBarWidth, ColorBarHeight);
+    initTexture();
+  }
+
+  void BuildColorBar();
+
+  // Whether to render the bar or not
+  bool WithBar = true;
+  // Width of the bar relative to 1.0f
+  float BarWidth = 0.01f;
+  // Interval between the center of bars relative to 1.0f
+  float BarInterval = 0.1f;
+  unsigned int ColorBarWidth = 1024, ColorBarHeight = 32;
+  glm::vec3 BarColor = VisUtils::White;
+  glm::vec3 BeginColor = VisUtils::White, EndColor = VisUtils::Black;
+
+  unsigned int ColorBar, WhiteTexture;
+
+private:
+  void initTexture();
   void BeforePass() override;
   void DrawInspectorGUI() override;
 };

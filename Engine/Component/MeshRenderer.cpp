@@ -1,6 +1,7 @@
 #include "Component/MeshRenderer.hpp"
-#include "Function/Render/RenderPass.hpp"
 #include "Function/Render/Passes/Header.hpp"
+#include "Function/Render/RenderPass.hpp"
+
 
 namespace aEngine {
 
@@ -56,16 +57,21 @@ void MeshRenderer::ForwardRender(std::shared_ptr<Mesh> mesh, glm::mat4 projMat,
 void MeshRenderer::drawAppendPassPopup() {
   if (ImGui::BeginPopup("appendpasspanelpopup")) {
     ImGui::MenuItem("Registered Pass", nullptr, nullptr, false);
+
     ImGui::Separator();
     if (ImGui::MenuItem("Basic Pass"))
       handleAppendPass<Render::Basic>("Basic");
-    ImGui::Separator();
+    if (ImGui::MenuItem("Discrete Field Visulizer"))
+      handleAppendPass<Render::DiscreteFieldVisualizePass>("FieldVisualize");
     if (ImGui::MenuItem("Wireframe Pass"))
       handleAppendPass<Render::WireFramePass>("Wireframe");
+
+    ImGui::Separator();
     if (ImGui::MenuItem("Outline Pass"))
       handleAppendPass<Render::OutlinePass>("Outline");
     if (ImGui::MenuItem("GBV Toon Pass"))
       handleAppendPass<Render::GBVMainPass>("GBV Main");
+
     ImGui::Separator();
     if (ImGui::MenuItem("PBR Pass"))
       handleAppendPass<Render::PBRPass>("PBR");
