@@ -147,7 +147,7 @@ private:
  * should be stored in the first parameter of texture coordniate (u of uv) of
  * the render mesh and normalized to [0.0, 1.0].
  */
-extern const std::string fvpVS, fvpFS;
+extern const std::string fvpVS, fvpFS, fvpGS;
 class DiscreteFieldVisualizePass : public BasePass {
 public:
   DiscreteFieldVisualizePass();
@@ -157,11 +157,13 @@ public:
 
   template <typename Archive> void save(Archive &ar) const {
     ar(WithBar, BarWidth, BarInterval, BarColor, BeginColor, EndColor,
-       ColorBarWidth, ColorBarHeight);
+       ColorBarWidth, ColorBarHeight, Wireframe, WireframeWidth,
+       WireframeSmooth, WireframeColor);
   }
   template <typename Archive> void load(Archive &ar) {
     ar(WithBar, BarWidth, BarInterval, BarColor, BeginColor, EndColor,
-       ColorBarWidth, ColorBarHeight);
+       ColorBarWidth, ColorBarHeight, Wireframe, WireframeWidth,
+       WireframeSmooth, WireframeColor);
     initTexture();
   }
 
@@ -176,6 +178,11 @@ public:
   unsigned int ColorBarWidth = 1024, ColorBarHeight = 32;
   glm::vec3 BarColor = VisUtils::White;
   glm::vec3 BeginColor = VisUtils::White, EndColor = VisUtils::Black;
+
+  // wireframe related
+  bool Wireframe = true;
+  float WireframeWidth = 0.5f, WireframeSmooth = 1.0f;
+  glm::vec3 WireframeColor = VisUtils::Black;
 
   unsigned int ColorBar, WhiteTexture;
 
