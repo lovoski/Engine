@@ -7,7 +7,6 @@
  */
 #pragma once
 
-#include "Base/ComponentList.hpp"
 #include "Base/Types.hpp"
 #include "Global.hpp"
 

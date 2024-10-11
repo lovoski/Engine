@@ -1,7 +1,10 @@
 // Stores all the components in a compact array
 #pragma once
 
+#include "Base/BaseSystem.hpp"
 #include "Base/Types.hpp"
+
+#include <cereal/types/base_class.hpp>
 
 namespace aEngine {
 
@@ -84,7 +87,7 @@ public:
   }
 
   std::string getInspectorWindowName() override {
-    auto &it = BaseSystem::CompMap.find(ComponentType<T>());
+    auto it = BaseSystem::CompMap.find(ComponentType<T>());
     return (*it).second->getInspectorWindowName();
   }
 

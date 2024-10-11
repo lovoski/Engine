@@ -2,6 +2,7 @@
  * This file contains some implementation function in Base folder.
  */
 #include "Base/BaseComponent.hpp"
+#include "Base/ComponentList.hpp"
 #include "Base/BaseSystem.hpp"
 #include "Base/Scriptable.hpp"
 #include "Global.hpp"

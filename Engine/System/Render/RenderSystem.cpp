@@ -76,9 +76,10 @@ void RenderSystem::Render() {
     glm::mat4 projMat = cameraComp->ProjMat;
     glEnable(GL_DEPTH_TEST);
 
-    if (RenderSkybox && (lightSystem->activeSkyLight != nullptr))
-      Render::RenderEnvironmentMap(lightSystem->activeSkyLight->CubeMap,
-                                   projMat * glm::mat4(glm::mat3(viewMat)));
+    if (RenderSkybox && (lightSystem->activeSkyLight != nullptr)) {
+      auto tmpVP = projMat * glm::mat4(glm::mat3(viewMat));
+      Render::RenderEnvironmentMap(lightSystem->activeSkyLight->CubeMap, tmpVP);
+    }
 
     if (EnableShadowMap)
       bakeShadowMap();

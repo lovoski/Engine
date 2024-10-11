@@ -369,7 +369,8 @@ void ProgramTexture(Shader &shader, unsigned int &target, unsigned int width,
   shader.Use();
   shader.SetMat4("Projection", captureProjection);
   shader.SetMat4("View", captureView);
-  shader.SetMat4("Model", glm::mat4(1.0f));
+  auto modelMat = glm::mat4(1.0f);
+  shader.SetMat4("Model", modelMat);
   glViewport(0, 0, width, height);
   glDisable(GL_CULL_FACE);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,

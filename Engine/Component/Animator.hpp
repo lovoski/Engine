@@ -77,7 +77,7 @@ struct Animator : public BaseComponent {
        actorJointMap, SkeletonMap, motionPath);
     skeleton = GWORLD.EntityFromID(skelID).get();
     if (actorPath == "none")
-      throw std::exception("deserializing an animator without actor");
+      throw std::runtime_error("deserializing an animator without actor");
     else
       actor = Loader.GetActor(actorPath);
     if (motionPath != "none")
