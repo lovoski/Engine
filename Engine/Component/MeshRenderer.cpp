@@ -1,7 +1,7 @@
 #include "Component/MeshRenderer.hpp"
 #include "Function/Render/Passes/Header.hpp"
+#include "Function/Render/Passes/ZenlessZoneZero.hpp"
 #include "Function/Render/RenderPass.hpp"
-
 
 namespace aEngine {
 
@@ -71,6 +71,9 @@ void MeshRenderer::drawAppendPassPopup() {
       handleAppendPass<Render::OutlinePass>("Outline");
     if (ImGui::MenuItem("GBV Toon Pass"))
       handleAppendPass<Render::GBVMainPass>("GBV Main");
+    if (ImGui::MenuItem("ZZZ Character Beta"))
+      handleAppendPass<Render::ZenlessZoneZeroCharacterBeta>(
+          "ZZZ Character Beta");
 
     ImGui::Separator();
     if (ImGui::MenuItem("PBR Pass"))

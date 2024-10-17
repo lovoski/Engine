@@ -11,7 +11,6 @@
 #include "Function/Render/Shader.hpp"
 #include "Function/ShaderCode.hpp"
 
-
 #include "System/Animation/AnimationSystem.hpp"
 
 #include <tinyobjloader.h>
