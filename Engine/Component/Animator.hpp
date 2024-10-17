@@ -111,6 +111,11 @@ struct Animator : public BaseComponent {
   // map the hash of jointName to skeleton data
   std::map<std::size_t, SkeletonMapData> SkeletonMap;
 
+  // joint index in actor -> entity of the joint in the scene
+  std::map<std::size_t, Entity *> jointMap;
+  // joint index in actor -> whether the joint is active
+  std::map<std::size_t, bool> jointActiveMap;
+
   // Stores the motion data
   Animation::Motion *motion = nullptr;
 

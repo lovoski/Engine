@@ -26,9 +26,10 @@ struct MotionDatabaseData {
   // global orientations
   std::vector<glm::quat> rotations;
   std::vector<glm::vec3> velocities;
+  std::vector<glm::vec3> angularVel;
 
   template <typename Archive> void serialize(Archive &ar) {
-    ar(facingDir, positions, rotations, velocities);
+    ar(facingDir, positions, rotations, velocities, angularVel);
   }
 };
 
@@ -110,9 +111,10 @@ private:
             oldRfootPos = glm::vec3(0.0f);
   int currentFrameInd = 0, targetMotionFPS = 60;
   int searchFrame = 30, searchFrameCounter = 0;
+  // transition from current motion to next motion in 10 updates
+  int crossFadeWndSize = 10, crossFadeDeltaCount = 0;
+  std::vector<glm::quat> deltaRotation, lastRotation;
   float elapsedTime = 0.0f, fixedUpdateTime = 1.0f / targetMotionFPS;
-  glm::vec3 inerRootVelocity;
-  std::vector<glm::vec4> inerJointRotVelocity;
   void updateAnimatorMotion(std::shared_ptr<Animator> &animator);
 };
 

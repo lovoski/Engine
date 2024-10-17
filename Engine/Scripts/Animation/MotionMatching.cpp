@@ -57,11 +57,6 @@ void MotionMatching::LateUpdate(float dt) {
   auto animator = entity->GetComponent<Animator>();
   if (animator != nullptr && database.features.size() > 0) {
     elapsedTime += dt;
-    if (inerJointRotVelocity.size() == 0) {
-      inerRootVelocity = glm::vec3(0.0f);
-      inerJointRotVelocity.resize(animator->SkeletonMap.size(),
-                                  glm::vec4(0.0f));
-    }
     if (elapsedTime >= fixedUpdateTime) {
       while (elapsedTime >= fixedUpdateTime) {
         updateAnimatorMotion(animator);
@@ -95,8 +90,19 @@ void MotionMatching::LateUpdate(float dt) {
 }
 
 void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
+  if (lastRotation.empty()) {
+    lastRotation.resize(animator->SkeletonMap.size());
+    for (auto &jointData : animator->SkeletonMap) {
+      lastRotation[jointData.second.actorInd] =
+          jointData.second.joint->Rotation();
+    }
+  }
+  if (deltaRotation.empty())
+    deltaRotation.resize(animator->SkeletonMap.size(),
+                         glm::quat(1.0f, glm::vec3(0.0f)));
   searchFrameCounter--;
-  if (searchFrameCounter <= 0 || (currentFrameInd + 1) >= database.data.size()) {
+  if (searchFrameCounter <= 0 ||
+      (currentFrameInd + 1) >= database.data.size()) {
     int bestFrameInd = currentFrameInd + 1;
     glm::vec3 hipvel = database.data[bestFrameInd].velocities[hipIndex];
     glm::vec3 hippos = database.data[bestFrameInd].positions[hipIndex];
@@ -123,10 +129,18 @@ void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
                           database.featureStd[k];
     // query motion database for closest feature
     currentFrameInd = tree.BruteForceNearestSearch(currentFeature);
+    // update delta rotations
+    for (auto &jointData : animator->SkeletonMap) {
+      auto lrot = lastRotation[jointData.second.actorInd];
+      auto crot = jointData.second.joint->Rotation();
+      deltaRotation[jointData.second.actorInd] = crot * glm::inverse(lrot);
+    }
     // reset counter
     searchFrameCounter = searchFrame;
+    crossFadeDeltaCount = 0;
   } else {
     currentFrameInd++;
+    crossFadeDeltaCount++;
   }
 
   // update character motion, make transition
@@ -134,11 +148,22 @@ void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
   for (auto &jointData : animator->SkeletonMap) {
     auto jointInd = jointData.second.actorInd;
     auto currentRot = jointData.second.joint->Rotation();
+    // update last rotation
+    lastRotation[jointInd] = currentRot;
+
     auto nextRot = motionData.rotations[jointInd];
     // make sure these rotations are in the same hemisphere
     if (glm::dot(currentRot, nextRot) < 0.0f)
       nextRot *= -1;
-    currentRot = glm::normalize(0.5f * (currentRot + nextRot));
+
+    // utilize delta rotation to blend the motion
+    float alpha = (float)crossFadeDeltaCount / (float)crossFadeWndSize;
+    if (alpha < 1.0f) {
+      currentRot =
+          glm::normalize((1.0f - alpha) * currentRot + alpha * nextRot);
+    } else
+      currentRot = nextRot;
+
     if (jointInd == 0) {
       glm::vec3 currentPos = glm::vec3(
           playerPosition.x, motionData.positions[jointInd].y, playerPosition.z);
@@ -211,6 +236,9 @@ void MotionMatching::DrawInspectorGUI() {
   // ImGui::MenuItem("Trajectory", nullptr, nullptr, false);
   // ImGui::SliderInt("Trajectory Count", &trajCount, 1, 9);
   // ImGui::SliderFloat("Trajectory Interval", &trajInterval, 0.1f, 1.0f);
+
+  ImGui::SliderInt("Cross Fade Window Size", &crossFadeWndSize, 10, 50);
+  ImGui::SliderInt("Search Frames", &searchFrame, 1, 60);
 }
 
 // ---------------------- Helper functions ----------------------
@@ -238,20 +266,30 @@ void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
     Animation::Motion motion;
     motion.LoadFromBVH(file);
     std::vector<glm::vec3> lastPositions;
+    std::vector<glm::quat> lastRotations;
     int start = db.data.size();
     for (auto &pose : motion.poses) {
       MotionDatabaseData mdd;
       mdd.facingDir = pose.GetFacingDirection();
       mdd.positions = pose.GetGlobalPositionOrientation(mdd.rotations);
       mdd.velocities.resize(mdd.positions.size(), glm::vec3(0.0f));
+      mdd.angularVel.resize(mdd.positions.size(), glm::vec3(0.0f));
       if (!lastPositions.empty()) {
         for (int i = 0; i < mdd.positions.size(); ++i) {
           mdd.velocities[i] =
               (mdd.positions[i] - lastPositions[i]) / (float)motion.fps;
         }
       }
+      if (!lastRotations.empty()) {
+        for (int i = 0; i < mdd.positions.size(); ++i) {
+          auto delta = mdd.rotations[i] * glm::inverse(lastRotations[i]);
+          mdd.angularVel[i] =
+              2.0f * motion.fps * glm::vec3(delta.x, delta.y, delta.z);
+        }
+      }
       db.data.push_back(mdd);
       lastPositions = mdd.positions;
+      lastRotations = mdd.rotations;
     }
     int end = db.data.size();
     db.dataFPS = motion.fps;
