@@ -9,10 +9,6 @@ void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
                          int rfoot, int hip);
 void loadMotionDatabase(std::string filepath, MotionDatabase &db);
 void saveMotionDatabase(std::string filepath, MotionDatabase &db);
-std::array<float, 24> CompressFeature(std::array<glm::vec3, 2> &hip,
-                                      std::array<glm::vec3, 2> &lfoot,
-                                      std::array<glm::vec3, 2> &rfoot,
-                                      std::array<glm::vec2, 3> &traj);
 
 void MotionMatching::Update(float dt) {
   // joystick related
@@ -51,14 +47,30 @@ void MotionMatching::Update(float dt) {
   for (int i = 1; i < trajCount; ++i) {
     Math::DamperExp(trajSpeed[i], desiredSpeed, trajInterval * i,
                     speedHalfLife);
-    trajPos[i] = 0.5f * (trajSpeed[i] + trajSpeed[i - 1]) + trajPos[i - 1];
+    trajPos[i] = 0.5f * (trajSpeed[i] + trajSpeed[i - 1]) * trajInterval +
+                 trajPos[i - 1];
   }
 }
 
 void MotionMatching::LateUpdate(float dt) {
-  // database query, update animator motion
-  if (auto animator = entity->GetComponent<Animator>())
-    updateAnimatorMotion(animator);
+  // database query, update animator motion on a fixed frequency
+  auto animator = entity->GetComponent<Animator>();
+  if (animator != nullptr && database.features.size() > 0) {
+    elapsedTime += dt;
+    if (inerJointRotVelocity.size() == 0) {
+      inerRootVelocity = glm::vec3(0.0f);
+      inerJointRotVelocity.resize(animator->SkeletonMap.size(),
+                                  glm::vec4(0.0f));
+    }
+    if (elapsedTime >= fixedUpdateTime) {
+      while (elapsedTime >= fixedUpdateTime) {
+        updateAnimatorMotion(animator);
+        elapsedTime -= fixedUpdateTime;
+      }
+      elapsedTime = 0.0f;
+    }
+  }
+
   // camera adjustment
   if (orbitCamera) {
     EntityID camera;
@@ -82,12 +94,65 @@ void MotionMatching::LateUpdate(float dt) {
   }
 }
 
+void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
+  searchFrameCounter--;
+  if (searchFrameCounter <= 0) {
+    int bestFrameInd = currentFrameInd + 1;
+    glm::vec3 hipvel = database.data[bestFrameInd].velocities[hipIndex];
+    glm::vec3 hippos = database.data[bestFrameInd].positions[hipIndex];
+    std::array<glm::vec3, 2> lfootData{
+        database.data[bestFrameInd].positions[lfootIndex] - hippos,
+        database.data[bestFrameInd].velocities[lfootIndex]};
+    std::array<glm::vec3, 2> rfootData{
+        database.data[bestFrameInd].positions[rfootIndex] - hippos,
+        database.data[bestFrameInd].velocities[rfootIndex]};
+    std::array<glm::vec2, 4> trajData, facingDir;
+    trajData[0] = glm::vec2(0.0f);
+    auto playerPosProj = glm::vec2(playerPosition.x, playerPosition.z);
+    // trajectory relative to root position
+    for (int i = 1; i <= 3; ++i)
+      trajData[i] = glm::vec2(trajPos[i].x, trajPos[i].z) - playerPosProj;
+    // facing directions
+    for (int i = 0; i < 4; ++i)
+      facingDir[i] = glm::vec2(playerFacing.x, playerFacing.z);
+    // compress into a feature
+    auto currentFeature = database.CompressFeature(hipvel, lfootData, rfootData,
+                                                   trajData, facingDir);
+    for (int k = 0; k < database.featureMean.max_size(); ++k)
+      currentFeature[k] = (currentFeature[k] - database.featureMean[k]) /
+                          database.featureStd[k];
+    // query motion database for closest feature
+    currentFrameInd = tree.BruteForceNearestSearch(currentFeature);
+    // reset counter
+    searchFrameCounter = searchFrame;
+  } else {
+    currentFrameInd++;
+  }
+
+  // update character motion, make transition
+  auto motionData = database.data[currentFrameInd];
+  for (auto &jointData : animator->SkeletonMap) {
+    auto jointInd = jointData.second.actorInd;
+    auto currentRot = jointData.second.joint->Rotation();
+    auto nextRot = motionData.rotations[jointInd];
+    // make sure these rotations are in the same hemisphere
+    if (glm::dot(currentRot, nextRot) < 0.0f)
+      nextRot *= -1;
+    currentRot = glm::normalize(0.5f * (currentRot + nextRot));
+    if (jointInd == 0) {
+      glm::vec3 currentPos = glm::vec3(
+          playerPosition.x, motionData.positions[jointInd].y, playerPosition.z);
+      jointData.second.joint->SetGlobalPosition(currentPos);
+    }
+    jointData.second.joint->SetGlobalRotation(currentRot);
+  }
+}
+
 void MotionMatching::DrawToScene() {
   EntityID camera;
   if (GWORLD.GetActiveCamera(camera)) {
     auto cameraComp = GWORLD.GetComponent<Camera>(camera);
     auto vp = cameraComp->VP;
-    VisUtils::DrawWireSphere(playerPosition, vp);
     VisUtils::DrawArrow(playerPosition, playerPosition + playerFacing, vp,
                         VisUtils::Blue);
     VisUtils::DrawLineStrip3D(trajPos, vp, VisUtils::Red);
@@ -106,7 +171,7 @@ void MotionMatching::DrawInspectorGUI() {
       "motionmatchingsourcedir", "Directory Path",
       [&](std::string path) {
         // TODO: make it modifiable in inspector gui
-        buildMotionDatabase(path, database, pfnnLfoot, pfnnRfoot, pfnnHip);
+        buildMotionDatabase(path, database, lfootIndex, rfootIndex, hipIndex);
         tree.Build(database.features);
         return true;
       },
@@ -142,10 +207,24 @@ void MotionMatching::DrawInspectorGUI() {
   ImGui::MenuItem("Player", nullptr, nullptr, false);
   ImGui::SliderFloat("Player Speed", &playerSpeed, 0.5f, 10.0f);
   ImGui::SliderFloat("Speed Half Life", &speedHalfLife, 0.0f, 3.0f);
-  // TODO: hard code trajectory parameters for now
+
   // ImGui::MenuItem("Trajectory", nullptr, nullptr, false);
   // ImGui::SliderInt("Trajectory Count", &trajCount, 1, 9);
   // ImGui::SliderFloat("Trajectory Interval", &trajInterval, 0.1f, 1.0f);
+}
+
+// ---------------------- Helper functions ----------------------
+
+void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
+  std::ofstream output(filepath, std::ios::binary);
+  cereal::PortableBinaryOutputArchive oa(output);
+  oa(db);
+}
+
+void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
+  std::ifstream input(filepath, std::ios::binary);
+  cereal::PortableBinaryInputArchive ia(input);
+  ia(db);
 }
 
 void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
@@ -167,13 +246,15 @@ void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
       mdd.velocities.resize(mdd.positions.size(), glm::vec3(0.0f));
       if (!lastPositions.empty()) {
         for (int i = 0; i < mdd.positions.size(); ++i) {
-          mdd.velocities[i] = mdd.positions[i] - lastPositions[i];
+          mdd.velocities[i] =
+              (mdd.positions[i] - lastPositions[i]) / (float)motion.fps;
         }
       }
       db.data.push_back(mdd);
       lastPositions = mdd.positions;
     }
     int end = db.data.size();
+    db.dataFPS = motion.fps;
     db.range.push_back(std::make_pair(start, end));
   };
   if (fs::exists(filepath) && fs::is_directory(filepath)) {
@@ -194,113 +275,77 @@ void buildMotionDatabase(std::string filepath, MotionDatabase &db, int lfoot,
 
 void MotionDatabase::ComputeFeatures(int lfoot, int rfoot, int hip) {
   int interval = trajInterval * dataFPS;
+  featureMean.fill(0.0f);
   for (int animInd = 0; animInd < range.size(); ++animInd) {
     int start = range[animInd].first;
     int end = range[animInd].second;
     for (int f = start; f < end; ++f) {
-      std::array<glm::vec3, 2> hipData, lfootData, rfootData;
-      hipData[0] = data[f].positions[hip];
-      hipData[1] = data[f].velocities[hip];
-      lfootData[0] = data[f].positions[lfoot];
+      glm::vec3 hipVel = data[f].velocities[hip];
+      std::array<glm::vec3, 2> lfootData, rfootData;
+      lfootData[0] = data[f].positions[lfoot] - data[f].positions[hip];
       lfootData[1] = data[f].velocities[lfoot];
-      rfootData[0] = data[f].positions[rfoot];
+      rfootData[0] = data[f].positions[rfoot] - data[f].positions[hip];
       rfootData[1] = data[f].velocities[rfoot];
-      std::array<glm::vec2, 3> trajData;
+      std::array<glm::vec2, 4> trajData;
+      std::array<glm::vec2, 4> facingDir;
       // sample trajectories
-      for (int i = 1; i <= 3; ++i) {
+      auto rootPosProj =
+          glm::vec2(data[f].positions[hip].x, data[f].positions[hip].z);
+      trajData[0] = glm::vec2(0.0f);
+      facingDir[0] = data[f].facingDir;
+      for (int i = 1; i <= 4; ++i) {
         int sampleF =
             ((end - 1) < (f + i * interval)) ? (end - 1) : (f + i * interval);
         glm::vec3 sampleHip = data[sampleF].positions[hip];
-        trajData[i - 1] = glm::vec2(sampleHip.x, sampleHip.z);
+        trajData[i - 1] = glm::vec2(sampleHip.x, sampleHip.z) - rootPosProj;
       }
-      features.push_back(
-          CompressFeature(hipData, lfootData, rfootData, trajData));
+      for (int i = 1; i <= 4; ++i) {
+        int sampleF =
+            ((end - 1) < (f + i * interval)) ? (end - 1) : (f + i * interval);
+        glm::vec3 sampleFacingDir = data[sampleF].facingDir;
+        facingDir[i - 1] = glm::vec2(sampleFacingDir.x, sampleFacingDir.z);
+      }
+      auto newFeature =
+          CompressFeature(hipVel, lfootData, rfootData, trajData, facingDir);
+      for (int k = 0; k < newFeature.max_size(); ++k)
+        featureMean[k] += newFeature[k];
+      features.push_back(newFeature);
     }
   }
+  for (int i = 0; i < featureMean.max_size(); ++i)
+    featureMean[i] /= features.size();
+  featureStd.fill(0.0f);
+  for (int i = 0; i < features.size(); ++i)
+    for (int k = 0; k < featureMean.max_size(); ++k)
+      featureStd[k] +=
+          (features[i][k] - featureMean[k]) * (features[i][k] - featureMean[k]);
+  for (int i = 0; i < featureStd.max_size(); ++i)
+    featureStd[i] = std::sqrt(featureStd[i] / features.size());
+  for (int i = 0; i < features.size(); ++i)
+    for (int k = 0; k < featureMean.max_size(); ++k)
+      features[i][k] = (features[i][k] - featureMean[k]) / featureStd[k];
 }
 
-void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
-  // create feature from user input
-  auto hipHash = animator->HashString(animator->actor->jointNames[pfnnHip]);
-  auto lfootHash = animator->HashString(animator->actor->jointNames[pfnnLfoot]);
-  auto rfootHash = animator->HashString(animator->actor->jointNames[pfnnRfoot]);
-  auto &hip = animator->SkeletonMap[hipHash];
-  auto &lfoot = animator->SkeletonMap[lfootHash];
-  auto &rfoot = animator->SkeletonMap[rfootHash];
-  std::array<glm::vec3, 2> hipData{hip.joint->Position(),
-                                   hip.joint->Position() - oldHipPos};
-  oldHipPos = hip.joint->Position();
-  std::array<glm::vec3, 2> lfootData{lfoot.joint->Position(),
-                                     lfoot.joint->Position() - oldLfootPos};
-  oldLfootPos = lfoot.joint->Position();
-  std::array<glm::vec3, 2> rfootData{rfoot.joint->Position(),
-                                     rfoot.joint->Position() - oldRfootPos};
-  oldRfootPos = rfoot.joint->Position();
-  std::array<glm::vec2, 3> trajData;
-  for (int i = 1; i <= 3; ++i)
-    trajData[i] = glm::vec2(trajPos[i].x, trajPos[i].z);
-  auto currentFeature =
-      CompressFeature(hipData, lfootData, rfootData, trajData);
-
-  // query motion database for closest feature
-  auto nearestFrameInd = tree.BruteForceNearestSearch(currentFeature);
-  auto bpSearch = [&](int target) {
-    int point = database.range.size() / 2;
-    int first = database.range[point].first;
-    int second = database.range[point].second;
-    while (!(first <= target && second >= target)) {
-      if (target < first) {
-        point = point / 2;
-      } else if (target > second) {
-        point = (point + database.range.size()) / 2;
-      }
-      first = database.range[point].first;
-      second = database.range[point].second;
-    }
-    return point;
-  };
-  int currentClip = bpSearch(currentFrameInd);
-  int nextClip = bpSearch(nearestFrameInd);
-
-  if (currentClip != nextClip) {
-    // transition from current to next
-  } else {
-    // keep playing current motion
-  }
-}
-
-// ---------------------- Helper functions ----------------------
-
-void saveMotionDatabase(std::string filepath, MotionDatabase &db) {
-  std::ofstream output(filepath, std::ios::binary);
-  cereal::PortableBinaryOutputArchive oa(output);
-  oa(db);
-}
-
-void loadMotionDatabase(std::string filepath, MotionDatabase &db) {
-  std::ifstream input(filepath, std::ios::binary);
-  cereal::PortableBinaryInputArchive ia(input);
-  ia(db);
-}
-
-std::array<float, 24> CompressFeature(std::array<glm::vec3, 2> &hip,
-                                      std::array<glm::vec3, 2> &lfoot,
-                                      std::array<glm::vec3, 2> &rfoot,
-                                      std::array<glm::vec2, 3> &traj) {
-  std::array<float, 24> feature;
+std::array<float, 31> MotionDatabase::CompressFeature(
+    glm::vec3 &hipvel, std::array<glm::vec3, 2> &lfoot,
+    std::array<glm::vec3, 2> &rfoot, std::array<glm::vec2, 4> &traj,
+    std::array<glm::vec2, 4> &facingDir) {
+  std::array<float, 31> feature;
   int index = 0;
-  for (int i = 0; i < 2; ++i)
-    for (int j = 0; j < 3; ++j)
-      feature[index++] = hip[i][j];
+  for (int i = 0; i < 3; ++i)
+    feature[index++] = hipvel[i];
   for (int i = 0; i < 2; ++i)
     for (int j = 0; j < 3; ++j)
       feature[index++] = lfoot[i][j];
   for (int i = 0; i < 2; ++i)
     for (int j = 0; j < 3; ++j)
       feature[index++] = rfoot[i][j];
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < 4; ++i)
     for (int j = 0; j < 2; ++j)
       feature[index++] = traj[i][j];
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 2; ++j)
+      feature[index++] = facingDir[i][j];
   return feature;
 }
 

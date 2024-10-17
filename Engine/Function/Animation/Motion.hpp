@@ -118,7 +118,7 @@ struct Motion {
   // the rotation channels can only follow behind the position channels.
   // Be aware that the euler angles in bvh file should
   // be parsed in reversed order, xyz rotation should be quaternion qx*qy*qz.
-  bool LoadFromBVH(std::string filename);
+  bool LoadFromBVH(std::string filename, float scale = 1.0f);
   // The saved bvh file's position channels will always be XYZ,
   // the rotation channels will be ZYX and
   // can only follow behind the position channels.
@@ -129,7 +129,7 @@ struct Motion {
   // f"{parentName}_End", if the parameter `keepJointNames` is set to true,
   // an `End Site` with offset `0 0 0` will be automatically added.
   // Otherwise, this joint itself will be renamed to `End Site`.
-  bool SaveToBVH(std::string filename, bool keepJointNames = true);
+  bool SaveToBVH(std::string filename, bool keepJointNames = true, float scale = 1.0f);
 
   // Takes a float value as paramter, returns the slerp interpolated value.
   // If the frame is not valid (out of [0, nframe) range), returns the first

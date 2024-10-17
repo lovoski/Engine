@@ -85,7 +85,7 @@ quat QuatFromEulers(vec3 angles, int order) {
     return quat(1.0f, vec3(0.0f));
 }
 
-bool Motion::LoadFromBVH(string filename) {
+bool Motion::LoadFromBVH(string filename, float scale) {
   std::ifstream fileInput(filename);
   if (!fileInput.is_open()) {
     printf("failed to open file %s\n", filename.c_str());
@@ -116,9 +116,9 @@ bool Motion::LoadFromBVH(string filename) {
           } else if (lineSeg[0] == "}") {
             s.pop();
           } else if (lineSeg[0] == "OFFSET") {
-            float xOffset = std::stof(lineSeg[1]);
-            float yOffset = std::stof(lineSeg[2]);
-            float zOffset = std::stof(lineSeg[3]);
+            float xOffset = std::stof(lineSeg[1]) * scale;
+            float yOffset = std::stof(lineSeg[2]) * scale;
+            float zOffset = std::stof(lineSeg[3]) * scale;
             skeleton.jointOffset.push_back(vec3(xOffset, yOffset, zOffset));
             // ready to recieve children
             skeleton.jointChildren.push_back(vector<int>());
@@ -163,9 +163,9 @@ bool Motion::LoadFromBVH(string filename) {
             getline(fileInput, line);              // OFFSET
             lineSeg = SplitByWhiteSpace(line);
             if (lineSeg[0] == "OFFSET") {
-              float xOffset = std::stof(lineSeg[1]);
-              float yOffset = std::stof(lineSeg[2]);
-              float zOffset = std::stof(lineSeg[3]);
+              float xOffset = std::stof(lineSeg[1]) * scale;
+              float yOffset = std::stof(lineSeg[2]) * scale;
+              float zOffset = std::stof(lineSeg[3]) * scale;
               skeleton.jointOffset.push_back(vec3(xOffset, yOffset, zOffset));
               skeleton.jointChildren.push_back(vector<int>());
               jointChannels.push_back(0); // 0 for end effector
@@ -210,9 +210,9 @@ bool Motion::LoadFromBVH(string filename) {
                 for (int jointInd = 0; jointInd < jointNumber; ++jointInd) {
                   if (jointChannels[jointInd] == 6) {
                     // set up the positions if exists
-                    float x = std::stof(lineSeg[segInd++]),
-                          y = std::stof(lineSeg[segInd++]),
-                          z = std::stof(lineSeg[segInd++]);
+                    float x = std::stof(lineSeg[segInd++]) * scale,
+                          y = std::stof(lineSeg[segInd++]) * scale,
+                          z = std::stof(lineSeg[segInd++]) * scale;
                     jointPositions[jointInd] = vec3(x, y, z);
                   }
                   if (jointChannels[jointInd] != 0) {
@@ -259,7 +259,7 @@ inline void BVHPadding(std::ostream &out, int depth) {
     out << "\t";
 }
 
-bool Motion::SaveToBVH(string filename, bool keepJointNames) {
+bool Motion::SaveToBVH(string filename, bool keepJointNames, float scale) {
   // apply the initial rotations of skeleton joints
   // the motion data remains unchanged
   auto restPose = skeleton.GetRestPose();
@@ -299,9 +299,9 @@ bool Motion::SaveToBVH(string filename, bool keepJointNames) {
         BVHPadding(fileOutput, depth++);
         fileOutput << "{\n";
         BVHPadding(fileOutput, depth);
-        fileOutput << "OFFSET " << flattenJointOffset[jointInd].x << " "
-                   << flattenJointOffset[jointInd].y << " "
-                   << flattenJointOffset[jointInd].z << "\n";
+        fileOutput << "OFFSET " << flattenJointOffset[jointInd].x * scale << " "
+                   << flattenJointOffset[jointInd].y * scale << " "
+                   << flattenJointOffset[jointInd].z * scale << "\n";
         if (incorrectNamedEE.count(jointInd) != 0) {
           // add an end effector with no offset to the end
           BVHPadding(fileOutput, depth);
@@ -341,9 +341,9 @@ bool Motion::SaveToBVH(string filename, bool keepJointNames) {
         BVHPadding(fileOutput, depth++);
         fileOutput << "{\n";
         BVHPadding(fileOutput, depth);
-        fileOutput << "OFFSET " << flattenJointOffset[jointInd].x << " "
-                   << flattenJointOffset[jointInd].y << " "
-                   << flattenJointOffset[jointInd].z << "\n";
+        fileOutput << "OFFSET " << flattenJointOffset[jointInd].x * scale << " "
+                   << flattenJointOffset[jointInd].y * scale << " "
+                   << flattenJointOffset[jointInd].z * scale << "\n";
         BVHPadding(fileOutput, depth);
         if (skeleton.jointParent[jointInd] != -1) {
           fileOutput << "CHANNELS 3 Zrotation Yrotation Xrotation\n";
@@ -359,9 +359,9 @@ bool Motion::SaveToBVH(string filename, bool keepJointNames) {
     fileOutput << "MOTION\nFrames: " << poses.size() << "\n"
                << "Frame Time: " << 1.0f / fps << "\n";
     for (int frameInd = 0; frameInd < poses.size(); ++frameInd) {
-      fileOutput << poses[frameInd].rootLocalPosition.x << " "
-                 << poses[frameInd].rootLocalPosition.y << " "
-                 << poses[frameInd].rootLocalPosition.z << " ";
+      fileOutput << poses[frameInd].rootLocalPosition.x * scale << " "
+                 << poses[frameInd].rootLocalPosition.y * scale << " "
+                 << poses[frameInd].rootLocalPosition.z * scale << " ";
       vector<quat> frameJointRot(jointNumber, quat(1.0f, vec3(0.0f)));
       vector<quat> newOrien(jointNumber, quat(1.0f, vec3(0.0f)));
       vector<quat> oldOrien;

@@ -98,10 +98,10 @@ float VisMetrics::slideMetricsCurrentPose(std::shared_ptr<Animator> animator) {
 void VisMetrics::DrawToScene() {
   EntityID camera;
   if (GWORLD.GetActiveCamera(camera)) {
-    glDisable(GL_DEPTH_TEST);
     auto cameraComp = GWORLD.GetComponent<Camera>(camera);
     auto vp = cameraComp->VP;
     auto viewport = GWORLD.Context.sceneWindowSize;
+    glDisable(GL_DEPTH_TEST);
     if (showContactJoint) {
       for (auto contactJoint : contactJoints) {
         VisUtils::DrawWireSphere(contactJoint->Position(), vp, 1.0f,

@@ -39,18 +39,26 @@ struct MotionDatabase {
   std::vector<std::pair<int, int>> range;
   // nframes * nfeat_dim
   // 12: left & right foot position, velocity
-  //  6: hip position, velocity
-  //  6: trajectory xz positions (3 future positions)
-  std::vector<std::array<float, 24>> features;
+  //  3: hip velocity
+  //  8: trajectory xz positions (4 positions)
+  //  8: facing directions (4 directions)
+  std::vector<std::array<float, 31>> features;
+  std::array<float, 31> featureMean, featureStd;
 
-  int dataFPS = 30;
+  int dataFPS = 60;
   float trajInterval = 0.2f;
 
   // compute the features based on given joint index
   void ComputeFeatures(int lfoot, int rfoot, int hip);
 
+  std::array<float, 31> CompressFeature(glm::vec3 &hipvel,
+                                        std::array<glm::vec3, 2> &lfoot,
+                                        std::array<glm::vec3, 2> &rfoot,
+                                        std::array<glm::vec2, 4> &traj,
+                                        std::array<glm::vec2, 4> &facingDir);
+
   template <typename Archive> void serialize(Archive &ar) {
-    ar(range, data, features, dataFPS, trajInterval);
+    ar(range, data, features, dataFPS, trajInterval, featureMean, featureStd);
   }
 };
 
@@ -80,7 +88,7 @@ private:
   bool orbitCamera = false;
   float cameraOffset = 8.0f, cameraAngle = -40.0f;
   float cameraSensitivity = 3.0f;
-  float playerSpeed = 3.0f, speedHalfLife = 1.0f;
+  float playerSpeed = 5.0f, speedHalfLife = 1.0f;
   glm::vec3 speed = glm::vec3(0.0f);
   glm::vec3 cameraFacing = Entity::WorldForward;
   // this is the player position projected to xz plane
@@ -94,13 +102,17 @@ private:
   std::vector<glm::vec3> trajSpeed;
 
   // query related
-  KDTree<float, 24> tree;
+  KDTree<float, 31> tree;
   MotionDatabase database;
   // for pfnn mocap only
-  const int pfnnLfoot = 4, pfnnRfoot = 10, pfnnHip = 0;
+  int lfootIndex = 4, rfootIndex = 9, hipIndex = 0;
   glm::vec3 oldHipPos = glm::vec3(0.0f), oldLfootPos = glm::vec3(0.0f),
             oldRfootPos = glm::vec3(0.0f);
-  int currentFrameInd = 0;
+  int currentFrameInd = 0, targetMotionFPS = 60;
+  int searchFrame = 30, searchFrameCounter = 0;
+  float elapsedTime = 0.0f, fixedUpdateTime = 1.0f / targetMotionFPS;
+  glm::vec3 inerRootVelocity;
+  std::vector<glm::vec4> inerJointRotVelocity;
   void updateAnimatorMotion(std::shared_ptr<Animator> &animator);
 };
 

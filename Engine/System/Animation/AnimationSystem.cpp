@@ -121,16 +121,32 @@ void AnimationSystem::Render() {
         else
           glEnable(GL_DEPTH_TEST);
 
-        // if (animator->motion) {
-        //   glm::vec3 rootProjPos = glm::vec3(animator->skeleton->Position());
-        //   rootProjPos.y = 0.5f;
-        //   glm::vec3 targetProjPos =
-        //       20.0f *
-        //       animator->motion->At(SystemCurrentFrame).GetFacingDirection();
-        //   VisUtils::DrawArrow(rootProjPos, rootProjPos + targetProjPos, vp,
-        //                       glm::vec3(1.0f, 0.0f, 0.0f),
-        //                       glm::length(targetProjPos) * 0.2f);
-        // }
+        // draw trajectory for the animation
+        if (animator->ShowTrajectory && animator->motion != nullptr) {
+          int start = 0, end = animator->motion->poses.size();
+          int interval = animator->motion->fps * animator->TrajInterval;
+          int currentF = SystemCurrentFrame;
+          currentF = currentF < 0 ? 0 : currentF;
+          currentF = currentF > animator->motion->poses.size()
+                         ? animator->motion->poses.size()
+                         : currentF;
+          std::vector<glm::vec3> trajPos, trajFacingDir;
+          for (int i = 0; i <= animator->TrajCount; ++i) {
+            int sampleF = ((end - 1) <= (i * interval + currentF))
+                              ? (end - 1)
+                              : (i * interval + currentF);
+            auto rootPos = animator->motion->poses[sampleF].rootLocalPosition;
+            rootPos.y = 0.0f;
+            auto facingDir =
+                animator->motion->poses[sampleF].GetFacingDirection();
+            trajPos.push_back(rootPos);
+            trajFacingDir.push_back(facingDir);
+            VisUtils::DrawWireSphere(rootPos, vp, 0.02f, VisUtils::Red);
+            VisUtils::DrawArrow(rootPos, rootPos + 0.5f * facingDir, vp,
+                                VisUtils::Yellow, 0.02f);
+          }
+          VisUtils::DrawLineStrip3D(trajPos, vp, VisUtils::Red);
+        }
 
         // Draw the bones
         VisUtils::DrawBones(drawQueue, GWORLD.Context.sceneWindowSize, vp,

@@ -201,7 +201,7 @@ void main() {
     float boneLength = length(dir);
     float normalOffset = radius * boneLength;
     vec3 direction = normalize(dir);
-    vec3 up = vec3(0.0, 1.0, 0.0);
+    vec3 up = normalize(vec3(0.0, 1.0, 1e-3));
     vec3 right = normalize(cross(direction, up));
     float dirOffset = 0.17;
     up = cross(right, direction);

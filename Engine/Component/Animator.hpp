@@ -66,7 +66,8 @@ struct Animator : public BaseComponent {
     ar(skeleton->ID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
        SkeletonColor, skeletonName, motionName, jointActive,
        actor == nullptr ? "none" : actor->path, actorJointMap, SkeletonMap,
-       motion == nullptr ? "none" : motion->path);
+       motion == nullptr ? "none" : motion->path, ShowTrajectory, TrajInterval,
+       TrajCount);
   }
   template <typename Archive> void load(Archive &ar) {
     ar(CEREAL_NVP(entityID));
@@ -74,7 +75,8 @@ struct Animator : public BaseComponent {
     std::string actorPath, motionPath;
     ar(skelID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
        SkeletonColor, skeletonName, motionName, jointActive, actorPath,
-       actorJointMap, SkeletonMap, motionPath);
+       actorJointMap, SkeletonMap, motionPath, ShowTrajectory, TrajInterval,
+       TrajCount);
     skeleton = GWORLD.EntityFromID(skelID).get();
     if (actorPath == "none")
       throw std::runtime_error("deserializing an animator without actor");
@@ -111,6 +113,10 @@ struct Animator : public BaseComponent {
 
   // Stores the motion data
   Animation::Motion *motion = nullptr;
+
+  bool ShowTrajectory = false;
+  int TrajCount = 3;
+  float TrajInterval = 0.2f;
 
 private:
   void drawSkeletonHierarchy();

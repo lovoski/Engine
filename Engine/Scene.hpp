@@ -80,7 +80,6 @@ struct SceneContext {
     ar(hasActiveCamera, activeCamera);
     ar(enableDebugDraw);
     ar(sceneFilePath);
-    ar(lastTime, deltaTime, renderTime, updateTime, debugDrawTime, hierarchyUpdateTime);
   }
 };
 

@@ -88,11 +88,6 @@ void Editor::Run(bool release) {
   } else {
     // display the editor gui as usual
     while (engine->Run()) {
-      // the engine will render scene to its framebuffer
-      context.frameBuffer->Bind();
-      engine->Update(); // logic update
-      context.frameBuffer->Unbind();
-
       float currentTime = GWORLD.GetTime();
       context.editorDeltaRender = currentTime - context.editorLastRender;
       context.editorLastRender = currentTime;
@@ -144,6 +139,11 @@ void Editor::Run(bool release) {
       ImGui::EndFrame();
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+      // the engine will render scene to its framebuffer
+      context.frameBuffer->Bind();
+      engine->Update(); // logic update
+      context.frameBuffer->Unbind();
 
       engine->RenderEnd();
     }

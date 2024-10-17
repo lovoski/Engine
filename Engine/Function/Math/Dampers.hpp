@@ -13,8 +13,7 @@ namespace Math {
 // how fast the `position` approaches `target`.
 // This method don't guarantee velocity continuity.
 void DamperExp(float &position, float target, float dt, float halfLife);
-void DamperExp(glm::vec3 &position, glm::vec3 target, float dt,
-                 float halfLife);
+void DamperExp(glm::vec3 &position, glm::vec3 target, float dt, float halfLife);
 
 // Approach `position` to `target`, higher `damping` make the damper less
 // responsive, while higher `stiffness` makes the spring more powerful.

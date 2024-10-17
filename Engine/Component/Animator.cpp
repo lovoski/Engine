@@ -164,6 +164,9 @@ void Animator::drawSkeletonHierarchy() {
 
 void Animator::DrawInspectorGUI() {
   ImGui::MenuItem("Motion", nullptr, nullptr, false);
+  ImGui::Checkbox("Show Trajectory", &ShowTrajectory);
+  ImGui::SliderInt("Trajectory Count", &TrajCount, 1, 5);
+  ImGui::SliderFloat("Trajectory Interval", &TrajInterval, 0.01f, 1.0f);
   ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
   ImGui::TextWrapped("Duration: %d",
                      motion == nullptr ? -1 : motion->poses.size());
