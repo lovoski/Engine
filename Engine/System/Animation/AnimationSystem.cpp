@@ -154,9 +154,10 @@ void AnimationSystem::Render() {
         // Draw the joint positions
         if (animator->ShowJoints) {
           for (auto ele : animator->SkeletonMap) {
-            VisUtils::DrawWireSphere(ele.second.joint->Position(), vp,
-                                     animator->JointVisualSize,
-                                     animator->SkeletonColor);
+            if (ele.second.active)
+              VisUtils::DrawWireSphere(ele.second.joint->Position(), vp,
+                                       animator->JointVisualSize,
+                                       animator->SkeletonColor);
           }
         }
         if (animator->SkeletonOnTop)

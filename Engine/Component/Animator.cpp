@@ -147,13 +147,17 @@ void Animator::drawSkeletonHierarchy() {
         std::queue<int> q;
         q.push(i);
         while (!q.empty()) {
-          auto cur = q.front();
+          auto tmpCur = q.front();
+          // update active status in skeleton map
+          SkeletonMap[HashString(actor->jointNames[tmpCur])].active = false;
           q.pop();
-          for (auto c : actor->jointChildren[cur]) {
+          for (auto c : actor->jointChildren[tmpCur]) {
             jointActive[c] = 0;
             q.push(c);
           }
         }
+      } else {
+        SkeletonMap[HashString(actor->jointNames[i])].active = true;
       }
     }
     ImGui::SameLine();

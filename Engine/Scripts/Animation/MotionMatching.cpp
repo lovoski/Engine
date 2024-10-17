@@ -96,7 +96,7 @@ void MotionMatching::LateUpdate(float dt) {
 
 void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
   searchFrameCounter--;
-  if (searchFrameCounter <= 0) {
+  if (searchFrameCounter <= 0 || (currentFrameInd + 1) >= database.data.size()) {
     int bestFrameInd = currentFrameInd + 1;
     glm::vec3 hipvel = database.data[bestFrameInd].velocities[hipIndex];
     glm::vec3 hippos = database.data[bestFrameInd].positions[hipIndex];
