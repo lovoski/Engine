@@ -204,3 +204,5 @@ Each motion contains one `Skeleton` and an array of `Pose`, we need to apply the
 The `Skeleton` holds information for all joints (parent-child relation, names, relative transforms etc.) and the `Pose` records the relative transform for all joints in one frame.
 
 A simple neural retargeting script for character with varied skeleton is provided in `Scripts/Animation/SAMERetarget`. [Here's a simple demo to it](https://www.bilibili.com/video/BV1hypgeAEBN/?vd_source=bcaf713b6b1c92e7d54cf304c76ff4d2).
+
+A simple motion matching script is also included in `Scripts/Animation/MotionMatching`, thanks to this wonderful [tutorial](https://theorangeduck.com/page/code-vs-data-driven-displacement). Here's the [demo](https://www.bilibili.com/video/BV1cQyKYBEwM/?share_source=copy_web&vd_source=0cb925840feb398743148accc03d1742).
