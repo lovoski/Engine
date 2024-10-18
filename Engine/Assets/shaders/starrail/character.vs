@@ -13,10 +13,10 @@ uniform vec3 ViewDir;
 out vec3 worldNormal;
 out vec3 worldPos;
 out vec2 texCoord;
-out vec3 vertColor;
+out vec4 vertColor;
 
 void main() {
-  vertColor = aColor.rgb;
+  vertColor = aColor;
   texCoord = aTexCoord.xy;
   worldPos = (ModelToWorldPoint * aPos).xyz;
   worldNormal = ModelToWorldDir * (aNormal.xyz);
