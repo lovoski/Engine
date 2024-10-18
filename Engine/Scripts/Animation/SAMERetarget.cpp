@@ -207,7 +207,7 @@ void SAMERetarget::LateUpdate(float dt) {
     auto currentFrame = animSystem->SystemCurrentFrame;
     auto currentPose = motion->At(currentFrame);
     // apply the retarget motion
-    animator->ApplyMotionToSkeleton(currentPose);
+    animator->ApplyPoseToSkeleton(currentPose);
   }
 }
 
@@ -232,7 +232,7 @@ void SAMERetarget::DrawInspectorGUI() {
     // reset skeleton to rest pose
     if (animator != nullptr) {
       auto restPose = animator->actor->GetRestPose();
-      animator->ApplyMotionToSkeleton(restPose);
+      animator->ApplyPoseToSkeleton(restPose);
     }
     // clear variables
     resetMotionVariables();

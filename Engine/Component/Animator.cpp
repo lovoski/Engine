@@ -15,85 +15,87 @@ namespace aEngine {
 
 Animator::Animator(EntityID id, Animation::Skeleton *act)
     : actor(act), BaseComponent(id) {
-  jointActive.resize(actor->GetNumJoints(), 1);
   createSkeletonEntities();
-  BuildSkeletonMap();
+  BuildMappings();
 }
 
 Animator::Animator(EntityID id, Animation::Motion *m)
     : motion(m), BaseComponent(id) {
   actor = &motion->skeleton;
-  jointActive.resize(actor->GetNumJoints(), 1);
   createSkeletonEntities();
-  BuildSkeletonMap();
+  BuildMappings();
 }
 
 Animator::~Animator() {}
 
-void Animator::BuildSkeletonMap() {
-  SkeletonMap.clear();
+void Animator::BuildMappings() {
+  jointEntityMap.clear();
   if (skeleton == nullptr) {
-    LOG_F(ERROR, "can't build SkeletonMap when root entity is nullptr");
+    LOG_F(ERROR, "can't build jointEntityMap when root entity is nullptr");
     return;
   }
   std::stack<EntityID> s;
   s.push(skeleton->ID);
+  int indexForAdditionalJoint = actor->jointNames.size();
   while (!s.empty()) {
     EntityID cur = s.top();
     auto curEnt = GWORLD.EntityFromID(cur).get();
-    SkeletonMapData smd;
-    smd.joint = curEnt;
-    auto curNameHash = HashString(curEnt->name);
-    auto it = actorJointMap.find(curNameHash);
-    smd.actorInd = it == actorJointMap.end() ? -1 : it->second;
-    if (smd.actorInd == -1)
-      smd.active = false;
-    else
-      smd.active = jointActive[smd.actorInd] == 1;
-    SkeletonMap.insert(std::make_pair(curNameHash, smd));
+    auto it1 = jointNameToInd.find(curEnt->name);
+    if (it1 == jointNameToInd.end()) {
+      // this is an additional joint
+      jointEntityMap[indexForAdditionalJoint] = curEnt;
+      jointNameToInd[curEnt->name] = indexForAdditionalJoint;
+      jointActiveMap[indexForAdditionalJoint] = true;
+    } else {
+      // this is an existing joint
+      jointEntityMap[it1->second] = curEnt;
+    }
     s.pop();
     for (auto c : curEnt->children)
       s.push(c->ID);
   }
 }
 
-void Animator::ApplyMotionToSkeleton(Animation::Pose &pose) {
+void Animator::ApplyPoseToSkeleton(Animation::Pose &pose) {
   int motionJointNum = pose.skeleton->GetNumJoints();
   if (skeleton == nullptr) {
     LOG_F(WARNING,
           "actor has no skeleton entity root, can't apply motion to it");
     return;
   }
-  if (SkeletonMap.size() != motionJointNum) {
-    LOG_F(WARNING, "skeleton entity joint num and motion joint num mismatch, "
-                   "motion maybe incorrect.");
-  }
-  auto rootNameHash = HashString(pose.skeleton->jointNames[0]);
-  auto root = SkeletonMap.find(rootNameHash);
-  if (root == SkeletonMap.end()) {
+  auto root = jointNameToInd.find(pose.skeleton->jointNames[0]);
+  if (root == jointNameToInd.end()) {
     LOG_F(ERROR, "root joint %s not found in skeleton, can't apply motion",
           pose.skeleton->jointNames[0].c_str());
     return;
   }
-  root->second.joint->SetLocalPosition(pose.rootLocalPosition);
-  for (int boneInd = 0; boneInd < motionJointNum; ++boneInd) {
-    auto boneName = pose.skeleton->jointNames[boneInd];
-    auto bone = SkeletonMap.find(HashString(boneName));
-    if (bone == SkeletonMap.end()) {
-      LOG_F(WARNING, "joint %s not found in skeleton, can't apply motion",
-            boneName.c_str());
+  int missingJointsFromEntity = 0;
+  std::vector<std::string> missingJointsName;
+  // apply root translation
+  jointEntityMap[root->second]->SetLocalPosition(pose.rootLocalPosition);
+  // apply joint rotations for joints defined in the pose
+  for (int poseJointInd = 0; poseJointInd < motionJointNum; ++poseJointInd) {
+    auto boneName = pose.skeleton->jointNames[poseJointInd];
+    auto jointActorInd = jointNameToInd.find(boneName);
+    if (jointActorInd == jointNameToInd.end()) {
+      missingJointsFromEntity++;
+      missingJointsName.push_back(boneName);
     } else {
-      bone->second.joint->SetLocalRotation(pose.jointRotations[boneInd]);
+      auto jointEntity = jointEntityMap[jointActorInd->second];
+      jointEntity->SetLocalRotation(pose.jointRotations[poseJointInd]);
     }
+  }
+  // output the missing joints
+  if (missingJointsFromEntity > 0) {
+    std::string nameString = "";
+    for (auto &name : missingJointsName)
+      nameString = nameString + ", " + name;
+    LOG_F(WARNING, "%d joints missing from entity skeleton, names: %s",
+          missingJointsFromEntity, nameString.c_str());
   }
 }
 
 void Animator::createSkeletonEntities() {
-  for (int i = 0; i < actor->jointNames.size(); ++i) {
-    auto nameHash = HashString(actor->jointNames[i]);
-    actorJointMap.insert(std::make_pair(nameHash, i));
-  }
-
   std::vector<Entity *> joints;
   for (int i = 0; i < actor->GetNumJoints(); ++i) {
     auto c = GWORLD.AddNewEntity();
@@ -108,6 +110,13 @@ void Animator::createSkeletonEntities() {
       joints[i]->parent = joints[actor->jointParent[i]];
       joints[i]->parent->children.push_back(joints[i]);
     }
+    // cache mappings
+    // 1. name to index
+    jointNameToInd[actor->jointNames[i]] = i;
+    // 2. index to entity
+    jointEntityMap[i] = c.get();
+    // 3. index to active
+    jointActiveMap[i] = true;
   }
   if (joints.size() >= 1)
     skeleton = joints[0];
@@ -120,14 +129,14 @@ void Animator::createSkeletonEntities() {
 }
 
 void Animator::drawSkeletonHierarchy() {
-  if (ImGui::Button("Export BVH Skeleton", {-1, 30})) {
-    actor->ExportAsBVH("export_skeleton.bvh");
-  }
+  if (ImGui::Button("Export Actor Skeleton", {-1, 30}))
+    actor->ExportAsBVH("exported_skeleton.bvh");
   int numActiveJoints = 0;
   for (int i = 0; i < actor->GetNumJoints(); ++i)
-    numActiveJoints += jointActive[i];
+    numActiveJoints += jointActiveMap[i] ? 1 : 0;
   ImGui::MenuItem(("Num Joints: " + std::to_string(numActiveJoints)).c_str(),
                   nullptr, nullptr, false);
+
   ImGui::BeginChild("skeletonhierarchy", {-1, -1});
   for (int i = 0; i < actor->GetNumJoints(); ++i) {
     int depth = 1, cur = i;
@@ -139,26 +148,20 @@ void Animator::drawSkeletonHierarchy() {
     for (int j = 0; j < depth; ++j)
       depthHeader.push_back('-');
     depthHeader.push_back(':');
-    bool active = jointActive[i];
-    if (ImGui::Checkbox(("##" + std::to_string(i)).c_str(), &active)) {
-      jointActive[i] = (int)active;
-      if (!active) {
+    bool currentJointActiveStatus = jointActiveMap[i];
+    if (ImGui::Checkbox(("##" + std::to_string(i)).c_str(), &currentJointActiveStatus)) {
+      if (!currentJointActiveStatus) {
         // disable all children at the disable of parent
         std::queue<int> q;
         q.push(i);
         while (!q.empty()) {
           auto tmpCur = q.front();
-          // update active status in skeleton map
-          SkeletonMap[HashString(actor->jointNames[tmpCur])].active = false;
+          jointActiveMap[tmpCur] = false;
           q.pop();
-          for (auto c : actor->jointChildren[tmpCur]) {
-            jointActive[c] = 0;
+          for (auto c : actor->jointChildren[tmpCur])
             q.push(c);
-          }
         }
-      } else {
-        SkeletonMap[HashString(actor->jointNames[i])].active = true;
-      }
+      } else jointActiveMap[i] = true;
     }
     ImGui::SameLine();
     ImGui::Text("%s %s", depthHeader.c_str(), actor->jointNames[i].c_str());
@@ -188,7 +191,7 @@ void Animator::DrawInspectorGUI() {
   if (ImGui::Button("Clear##animator", {-1, -1})) {
     // reset skeleton to rest pose
     auto restPose = actor->GetRestPose();
-    ApplyMotionToSkeleton(restPose);
+    ApplyPoseToSkeleton(restPose);
     // clear variables
     motion = nullptr;
     motionName = "";
@@ -233,7 +236,7 @@ void Animator::DrawInspectorGUI() {
   ImGui::SameLine();
   if (ImGui::Button("Rest Pose", {-1, -1})) {
     auto restPose = actor->GetRestPose();
-    ApplyMotionToSkeleton(restPose);
+    ApplyPoseToSkeleton(restPose);
   }
   ImGui::EndChild();
   if (ImGui::BeginDragDropTarget()) {
@@ -254,12 +257,12 @@ void Animator::DrawInspectorGUI() {
 std::vector<BoneMatrixBlock> Animator::GetSkeletonTransforms() {
   // capture position, rotation of joints,
   // convert these information into matrices
-  std::vector<BoneMatrixBlock> result(actor->GetNumJoints());
+  std::vector<BoneMatrixBlock> result(jointEntityMap.size());
   if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
-    for (auto &skelData : SkeletonMap) {
-      int jointInd = skelData.second.actorInd;
+    for (auto &entry : jointEntityMap) {
+      int jointInd = entry.first;
       result[jointInd].BoneModelMatrix =
-          skelData.second.joint->GlobalTransformMatrix();
+          entry.second->GlobalTransformMatrix();
       result[jointInd].BoneOffsetMatrix = actor->offsetMatrices[jointInd];
     }
   }

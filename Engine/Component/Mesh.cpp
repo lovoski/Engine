@@ -119,19 +119,19 @@ void Mesh::DrawInspectorGUI() {
     ImGui::TableSetColumnIndex(0);
     ImGui::Text("Identifier");
     ImGui::TableSetColumnIndex(1);
-    ImGui::Text(meshInstance->identifier.c_str());
+    ImGui::Text("%s", meshInstance->identifier.c_str());
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text("Vertices");
     ImGui::TableSetColumnIndex(1);
-    ImGui::Text("%d", meshInstance->vertices.size());
+    ImGui::Text("%ld", meshInstance->vertices.size());
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
     ImGui::Text("Faces");
     ImGui::TableSetColumnIndex(1);
-    ImGui::Text("%d", meshInstance->indices.size() / 3);
+    ImGui::Text("%ld", meshInstance->indices.size() / 3);
 
     ImGui::EndTable();
   }
@@ -175,13 +175,13 @@ void Mesh::DrawInspectorGUI() {
       ImGui::TableSetColumnIndex(0);
       ImGui::Text("Num Leaf Nodes");
       ImGui::TableSetColumnIndex(1);
-      ImGui::Text("%d", bvh.LeafNodes().size());
+      ImGui::Text("%ld", bvh.LeafNodes().size());
 
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
       ImGui::Text("Num Primitives");
       ImGui::TableSetColumnIndex(1);
-      ImGui::Text("%d", bvh.Primitives.size());
+      ImGui::Text("%ld", bvh.Primitives.size());
 
       ImGui::EndTable();
     }

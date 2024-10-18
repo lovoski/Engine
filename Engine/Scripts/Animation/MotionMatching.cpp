@@ -91,14 +91,13 @@ void MotionMatching::LateUpdate(float dt) {
 
 void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
   if (lastRotation.empty()) {
-    lastRotation.resize(animator->SkeletonMap.size());
-    for (auto &jointData : animator->SkeletonMap) {
-      lastRotation[jointData.second.actorInd] =
-          jointData.second.joint->Rotation();
+    lastRotation.resize(animator->jointEntityMap.size());
+    for (auto &joint : animator->jointEntityMap) {
+      lastRotation[joint.first] = joint.second->Rotation();
     }
   }
   if (deltaRotation.empty())
-    deltaRotation.resize(animator->SkeletonMap.size(),
+    deltaRotation.resize(animator->jointEntityMap.size(),
                          glm::quat(1.0f, glm::vec3(0.0f)));
   searchFrameCounter--;
   if (searchFrameCounter <= 0 ||
@@ -130,10 +129,10 @@ void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
     // query motion database for closest feature
     currentFrameInd = tree.BruteForceNearestSearch(currentFeature);
     // update delta rotations
-    for (auto &jointData : animator->SkeletonMap) {
-      auto lrot = lastRotation[jointData.second.actorInd];
-      auto crot = jointData.second.joint->Rotation();
-      deltaRotation[jointData.second.actorInd] = crot * glm::inverse(lrot);
+    for (auto &entry : animator->jointEntityMap) {
+      auto lrot = lastRotation[entry.first];
+      auto crot = entry.second->Rotation();
+      deltaRotation[entry.first] = crot * glm::inverse(lrot);
     }
     // reset counter
     searchFrameCounter = searchFrame;
@@ -145,9 +144,9 @@ void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
 
   // update character motion, make transition
   auto motionData = database.data[currentFrameInd];
-  for (auto &jointData : animator->SkeletonMap) {
-    auto jointInd = jointData.second.actorInd;
-    auto currentRot = jointData.second.joint->Rotation();
+  for (auto &entry : animator->jointEntityMap) {
+    auto jointInd = entry.first;
+    auto currentRot = entry.second->Rotation();
     // update last rotation
     lastRotation[jointInd] = currentRot;
 
@@ -167,9 +166,9 @@ void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
     if (jointInd == 0) {
       glm::vec3 currentPos = glm::vec3(
           playerPosition.x, motionData.positions[jointInd].y, playerPosition.z);
-      jointData.second.joint->SetGlobalPosition(currentPos);
+      entry.second->SetGlobalPosition(currentPos);
     }
-    jointData.second.joint->SetGlobalRotation(currentRot);
+    entry.second->SetGlobalRotation(currentRot);
   }
 }
 

@@ -13,7 +13,7 @@ void AnimationSystem::PreUpdate(float dt) {
   // for (auto id : entities) {
   //   auto entity = GWORLD.EntityFromID(id);
   //   auto animator = entity->GetComponent<Animator>();
-  //   animator->BuildSkeletonMap();
+  //   animator->BuildMappings();
   // }
 }
 
@@ -45,7 +45,7 @@ void AnimationSystem::Update(float dt) {
       if (nFrames != 0) {
         // sample animation from motion data of each animator
         Animation::Pose CurrentPose = animator->motion->At(SystemCurrentFrame);
-        animator->ApplyMotionToSkeleton(CurrentPose);
+        animator->ApplyPoseToSkeleton(CurrentPose);
       }
     }
   }
@@ -54,8 +54,9 @@ void AnimationSystem::Update(float dt) {
 void AnimationSystem::collectSkeletonDrawQueue(
     std::shared_ptr<Animator> animator,
     std::vector<std::pair<glm::vec3, glm::vec3>> &drawQueue) {
+  // only collect joints defined in the actor
   auto actor = animator->actor;
-  int numJoints = actor->GetNumJoints();
+  int numJoints = animator->actor->GetNumJoints();
   std::vector<int> visitsRemains(numJoints, 0), startPoints;
   // collect end effectors as start points
   for (int i = 0; i < numJoints; ++i) {
@@ -65,34 +66,34 @@ void AnimationSystem::collectSkeletonDrawQueue(
   }
   // traverse from start points to root joint
   for (auto startPointInd : startPoints) {
-    int cur = startPointInd, parent;
-    std::string curName = actor->jointNames[cur], parentName;
-    SkeletonMapData curData, parentData;
-    curData = animator->SkeletonMap[animator->HashString(curName)];
+    int current = startPointInd, parent;
+    bool currentActive = animator->jointActiveMap[current],
+         parentActive = false;
+    Entity *currentEntity = animator->jointEntityMap[current],
+           *parentEntity = nullptr;
     int toBeMatched = -1;
-    while (actor->jointParent[cur] != -1) {
-      parent = actor->jointParent[cur];
-      parentName = actor->jointNames[parent];
-      parentData = animator->SkeletonMap[animator->HashString(parentName)];
+    while (actor->jointParent[current] != -1) {
+      parent = actor->jointParent[current];
+      parentEntity = animator->jointEntityMap[parent];
+      parentActive = animator->jointActiveMap[parent];
       if (visitsRemains[parent] > 0) {
-        if (curData.active && parentData.active) {
-          drawQueue.push_back(std::make_pair(parentData.joint->Position(),
-                                             curData.joint->Position()));
+        if (currentActive && parentActive) {
+          drawQueue.push_back(std::make_pair(parentEntity->Position(),
+                                             currentEntity->Position()));
           visitsRemains[parent]--;
-        } else if (curData.active && !parentData.active) {
-          toBeMatched = cur;
-        } else if (!curData.active && parentData.active && toBeMatched != -1) {
-          auto childData = animator->SkeletonMap[animator->HashString(
-              actor->jointNames[toBeMatched])];
-          drawQueue.push_back(std::make_pair(parentData.joint->Position(),
-                                             childData.joint->Position()));
+        } else if (currentActive && !parentActive) {
+          toBeMatched = current;
+        } else if (!currentActive && parentActive && toBeMatched != -1) {
+          Entity *childEntity = animator->jointEntityMap[toBeMatched];
+          drawQueue.push_back(std::make_pair(parentEntity->Position(),
+                                             childEntity->Position()));
           visitsRemains[parent]--;
         }
       } else
         break;
-      cur = parent;
-      curData = parentData;
-      curName = parentName;
+      current = parent;
+      currentActive = parentActive;
+      currentEntity = parentEntity;
     }
   }
 }
@@ -121,6 +122,19 @@ void AnimationSystem::Render() {
         else
           glEnable(GL_DEPTH_TEST);
 
+        // Draw the bones
+        VisUtils::DrawBones(drawQueue, GWORLD.Context.sceneWindowSize, vp,
+                            animator->SkeletonColor);
+        // Draw the joint positions
+        if (animator->ShowJoints) {
+          for (auto entry : animator->jointEntityMap) {
+            if (animator->jointActiveMap[entry.first])
+              VisUtils::DrawWireSphere(entry.second->Position(), vp,
+                                       animator->JointVisualSize,
+                                       animator->SkeletonColor);
+          }
+        }
+
         // draw trajectory for the animation
         if (animator->ShowTrajectory && animator->motion != nullptr) {
           int start = 0, end = animator->motion->poses.size();
@@ -148,18 +162,6 @@ void AnimationSystem::Render() {
           VisUtils::DrawLineStrip3D(trajPos, vp, VisUtils::Red);
         }
 
-        // Draw the bones
-        VisUtils::DrawBones(drawQueue, GWORLD.Context.sceneWindowSize, vp,
-                            animator->SkeletonColor);
-        // Draw the joint positions
-        if (animator->ShowJoints) {
-          for (auto ele : animator->SkeletonMap) {
-            if (ele.second.active)
-              VisUtils::DrawWireSphere(ele.second.joint->Position(), vp,
-                                       animator->JointVisualSize,
-                                       animator->SkeletonColor);
-          }
-        }
         if (animator->SkeletonOnTop)
           glEnable(GL_DEPTH_TEST);
         else

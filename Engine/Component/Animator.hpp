@@ -2,10 +2,9 @@
  * Each animator must bind to one actor containing the description info
  * to the original skeleton, the animator will create a hierarchy of entities
  * matching the names of this actor.
+ *
  * Mismatching between the actor and the skeleton entities is only allowed when
- * the skeleton entities joints is a subset of this actor (so we can set Rest
- * Pose). Motion will be applied to the skeleton entities when the skeleton
- * entities is a subset of the motion actor.
+ * the actor joints is a subset of skeleton entities.
  */
 #pragma once
 
@@ -17,21 +16,6 @@
 #include "Function/Render/Mesh.hpp"
 
 namespace aEngine {
-
-struct SkeletonMapData {
-  bool active;
-  int actorInd;
-  Entity *joint;
-
-  template <typename Archive> void save(Archive &ar) const {
-    ar(active, actorInd, joint->ID);
-  }
-  template <typename Archive> void load(Archive &ar) {
-    EntityID id;
-    ar(active, actorInd, id);
-    joint = GWORLD.EntityFromID(id).get();
-  }
-};
 
 struct BoneMatrixBlock {
   glm::mat4 BoneModelMatrix;
@@ -52,20 +36,22 @@ struct Animator : public BaseComponent {
   std::vector<BoneMatrixBlock> GetSkeletonTransforms();
 
   // Apply the motion to skeleton entities
-  void ApplyMotionToSkeleton(Animation::Pose &pose);
-  // Maintain member variable `SkeletonMap`, the key for this map is the name
-  // of the entity.
-  // The function is rather costly, only call it when the skeleton entity
-  // hierarchy is actually modified.
-  void BuildSkeletonMap();
+  void ApplyPoseToSkeleton(Animation::Pose &pose);
+  // Maintain member variables `jointEntityMap`,
+  // call this function after you made modifications to the joint entities. (add
+  // additional joints, rename joints etc.)
+  void BuildMappings();
 
   std::string getInspectorWindowName() override { return "Animator"; }
 
   template <typename Archive> void save(Archive &ar) const {
     ar(CEREAL_NVP(entityID));
+    std::map<std::size_t, EntityID> jointMapSerialize;
+    for (auto &ele : jointEntityMap)
+      jointMapSerialize.insert(std::make_pair(ele.first, ele.second->ID));
     ar(skeleton->ID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
-       SkeletonColor, skeletonName, motionName, jointActive,
-       actor == nullptr ? "none" : actor->path, actorJointMap, SkeletonMap,
+       SkeletonColor, skeletonName, motionName, jointActiveMap,
+       actor == nullptr ? "none" : actor->path, jointMapSerialize,
        motion == nullptr ? "none" : motion->path, ShowTrajectory, TrajInterval,
        TrajCount);
   }
@@ -73,11 +59,15 @@ struct Animator : public BaseComponent {
     ar(CEREAL_NVP(entityID));
     EntityID skelID;
     std::string actorPath, motionPath;
+    std::map<std::size_t, EntityID> jointMapSerialize;
     ar(skelID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
-       SkeletonColor, skeletonName, motionName, jointActive, actorPath,
-       actorJointMap, SkeletonMap, motionPath, ShowTrajectory, TrajInterval,
-       TrajCount);
+       SkeletonColor, skeletonName, motionName, jointActiveMap, actorPath,
+       jointMapSerialize, motionPath, ShowTrajectory, TrajInterval, TrajCount);
     skeleton = GWORLD.EntityFromID(skelID).get();
+    jointEntityMap.clear();
+    for (auto &ele : jointMapSerialize)
+      jointEntityMap.insert(
+          std::make_pair(ele.first, GWORLD.EntityFromID(ele.second).get()));
     if (actorPath == "none")
       throw std::runtime_error("deserializing an animator without actor");
     else
@@ -98,23 +88,24 @@ struct Animator : public BaseComponent {
   // name info
   std::string skeletonName = "", motionName = "";
 
-  // 0 for inactive, 1 for active
-  std::vector<int> jointActive;
   // The actor is a read only reference, motion is
-  // applied to the skeleton entities created from this actor
+  // applied to the skeleton entities created from this actor,
+  // the entities could have joint that's not in the actor,
+  // but these additional joints won't have overlapping indices with
+  // existing actor joints.
   Animation::Skeleton *actor;
-  // map actor's jointName hash to joint index, this is a static structure
-  // and won't get updated with skeleton entities.
-  // To get the hash of the string, use `HashString("xxx")`
-  std::map<std::size_t, int> actorJointMap;
-  // This map should have the same size as the actor's joints,
-  // map the hash of jointName to skeleton data
-  std::map<std::size_t, SkeletonMapData> SkeletonMap;
-
-  // joint index in actor -> entity of the joint in the scene
-  std::map<std::size_t, Entity *> jointMap;
-  // joint index in actor -> whether the joint is active
+  // joint index -> entity of the joint in the scene.
+  // if there are joints not defined in actor, additional indices will be
+  // assigned
+  std::map<std::size_t, Entity *> jointEntityMap;
+  // joint index -> whether the joint is active.
+  // if there are joints not defined in actor, additional indices will be
+  // assigned
   std::map<std::size_t, bool> jointActiveMap;
+  // joint name -> joint index.
+  // if there are joints not defined in actor, additional indices will be
+  // assigned
+  std::map<std::string, std::size_t> jointNameToInd;
 
   // Stores the motion data
   Animation::Motion *motion = nullptr;
@@ -124,7 +115,9 @@ struct Animator : public BaseComponent {
   float TrajInterval = 0.2f;
 
 private:
+  // only joints defined in actor will be drawn
   void drawSkeletonHierarchy();
+  // create skeleton entities from actor, initialize mappings
   void createSkeletonEntities();
 };
 
