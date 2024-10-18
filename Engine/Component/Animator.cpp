@@ -149,7 +149,8 @@ void Animator::drawSkeletonHierarchy() {
       depthHeader.push_back('-');
     depthHeader.push_back(':');
     bool currentJointActiveStatus = jointActiveMap[i];
-    if (ImGui::Checkbox(("##" + std::to_string(i)).c_str(), &currentJointActiveStatus)) {
+    if (ImGui::Checkbox(("##" + std::to_string(i)).c_str(),
+                        &currentJointActiveStatus)) {
       if (!currentJointActiveStatus) {
         // disable all children at the disable of parent
         std::queue<int> q;
@@ -161,7 +162,8 @@ void Animator::drawSkeletonHierarchy() {
           for (auto c : actor->jointChildren[tmpCur])
             q.push(c);
         }
-      } else jointActiveMap[i] = true;
+      } else
+        jointActiveMap[i] = true;
     }
     ImGui::SameLine();
     ImGui::Text("%s %s", depthHeader.c_str(), actor->jointNames[i].c_str());
@@ -177,47 +179,36 @@ void Animator::DrawInspectorGUI() {
   ImGui::TextWrapped("FPS: %d", motion == nullptr ? -1 : motion->fps);
   ImGui::TextWrapped("Duration: %d",
                      motion == nullptr ? -1 : motion->poses.size());
-  if (ImGui::Button("Export BVH Motion##animator", {-1, 30})) {
+
+  if (ImGui::Button("Export BVH Motion##animator", {-1, 30}))
     if (motion != nullptr)
       motion->SaveToBVH("./save_motion.bvh");
-  }
-  ImGui::BeginChild("choosemotionsourceanimator", {-1, 30});
-  static char motionSequencePath[200] = {0};
-  sprintf(motionSequencePath, motionName.c_str());
-  ImGui::InputTextWithHint("##motionsourceanimator", "Motion Sequence Path",
-                           motionSequencePath, sizeof(motionSequencePath),
-                           ImGuiInputTextFlags_ReadOnly);
-  ImGui::SameLine();
-  if (ImGui::Button("Clear##animator", {-1, -1})) {
-    // reset skeleton to rest pose
-    auto restPose = actor->GetRestPose();
-    ApplyPoseToSkeleton(restPose);
-    // clear variables
-    motion = nullptr;
-    motionName = "";
-    for (int i = 0; i < sizeof(motionSequencePath); ++i)
-      motionSequencePath[i] = 0;
-  }
-  ImGui::EndChild();
-  if (ImGui::BeginDragDropTarget()) {
-    if (const ImGuiPayload *payload =
-            ImGui::AcceptDragDropPayload("ASSET_FILENAME")) {
-      char *assetFilename = (char *)payload->Data;
-      fs::path filepath = fs::path(assetFilename);
-      std::string extension = filepath.extension().string();
-      if (extension == ".bvh" || extension == ".fbx") {
-        motion = Loader.GetMotion(filepath.string());
-        if (!actor) {
-          // assign actor if not exists
-          actor = &motion->skeleton;
+  static std::vector<char> motionPathBuffer(200);
+  if (motion)
+    std::strcpy(motionPathBuffer.data(), motion->path.c_str());
+  GUIUtils::DragableFileTarget(
+      "##motionsequencepath", "Motion Sequence Path",
+      [&](std::string filename) {
+        fs::path filepath(filename);
+        auto extension = filepath.extension().string();
+        if (extension == ".bvh" || extension == ".fbx") {
+          motion = Loader.GetMotion(filename);
+          if (motion != nullptr)
+            return true;
+          else
+            return false;
+        } else {
+          LOG_F(WARNING, "animator only accepts .bvh and .fbx motion");
+          return false;
         }
-        motionName = filepath.string();
-      } else {
-        LOG_F(ERROR, "only .bvh and .fbx motion are supported");
-      }
-    }
-    ImGui::EndDragDropTarget();
-  }
+      },
+      motionPathBuffer,
+      [&]() {
+        motion = nullptr;
+        auto restPose = actor->GetRestPose();
+        ApplyPoseToSkeleton(restPose);
+      });
+
   ImGui::Separator();
   ImGui::MenuItem("Skeleton", nullptr, nullptr, false);
   ImGui::Checkbox("Show Skeleton", &ShowSkeleton);
@@ -225,9 +216,8 @@ void Animator::DrawInspectorGUI() {
   ImGui::SliderFloat("Joint Size", &JointVisualSize, 0.0f, 1.2f);
   ImGui::Checkbox("Helpers On Top", &SkeletonOnTop);
   ImGui::BeginChild("chooseskeletonroot", {-1, 30});
-  if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
+  if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID))
     skeletonName = skeleton->name;
-  }
   char skeletonNameBuf[100];
   sprintf(skeletonNameBuf, skeletonName.c_str());
   ImGui::InputTextWithHint("##skeletonentity", "Skeleton Root Entity",
@@ -261,8 +251,7 @@ std::vector<BoneMatrixBlock> Animator::GetSkeletonTransforms() {
   if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
     for (auto &entry : jointEntityMap) {
       int jointInd = entry.first;
-      result[jointInd].BoneModelMatrix =
-          entry.second->GlobalTransformMatrix();
+      result[jointInd].BoneModelMatrix = entry.second->GlobalTransformMatrix();
       result[jointInd].BoneOffsetMatrix = actor->offsetMatrices[jointInd];
     }
   }

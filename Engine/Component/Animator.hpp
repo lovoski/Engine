@@ -50,7 +50,7 @@ struct Animator : public BaseComponent {
     for (auto &ele : jointEntityMap)
       jointMapSerialize.insert(std::make_pair(ele.first, ele.second->ID));
     ar(skeleton->ID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
-       SkeletonColor, skeletonName, motionName, jointActiveMap,
+       SkeletonColor, skeletonName, jointActiveMap,
        actor == nullptr ? "none" : actor->path, jointMapSerialize,
        motion == nullptr ? "none" : motion->path, ShowTrajectory, TrajInterval,
        TrajCount);
@@ -61,7 +61,7 @@ struct Animator : public BaseComponent {
     std::string actorPath, motionPath;
     std::map<std::size_t, EntityID> jointMapSerialize;
     ar(skelID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
-       SkeletonColor, skeletonName, motionName, jointActiveMap, actorPath,
+       SkeletonColor, skeletonName, jointActiveMap, actorPath,
        jointMapSerialize, motionPath, ShowTrajectory, TrajInterval, TrajCount);
     skeleton = GWORLD.EntityFromID(skelID).get();
     jointEntityMap.clear();
@@ -85,8 +85,7 @@ struct Animator : public BaseComponent {
   // Color for the visualized skeleton
   glm::vec3 SkeletonColor = glm::vec3(0.0f, 1.0f, 0.0f);
 
-  // name info
-  std::string skeletonName = "", motionName = "";
+  std::string skeletonName = "";
 
   // The actor is a read only reference, motion is
   // applied to the skeleton entities created from this actor,

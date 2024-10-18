@@ -189,7 +189,6 @@ void Editor::EntitiesWindow() {
         parent->name = filename.stem().string();
         // set up variables for animator component
         parent->GetComponent<Animator>()->ShowSkeleton = true;
-        parent->GetComponent<Animator>()->motionName = filename.string();
       } else if (extension == ".obj" || extension == ".off") {
         // handle plane model import
         auto modelMeshes = Loader.GetModel(filename.string());
