@@ -46,9 +46,9 @@ struct Animator : public BaseComponent {
 
   template <typename Archive> void save(Archive &ar) const {
     ar(CEREAL_NVP(entityID));
-    std::map<std::size_t, EntityID> jointMapSerialize;
-    for (auto &ele : jointEntityMap)
-      jointMapSerialize.insert(std::make_pair(ele.first, ele.second->ID));
+    std::vector<EntityID> jointMapSerialize;
+    for (auto ele : jointEntityMap)
+      jointMapSerialize.push_back(ele->ID);
     ar(skeleton->ID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
        SkeletonColor, skeletonName, jointActiveMap,
        actor == nullptr ? "none" : actor->path, jointMapSerialize,
@@ -59,15 +59,14 @@ struct Animator : public BaseComponent {
     ar(CEREAL_NVP(entityID));
     EntityID skelID;
     std::string actorPath, motionPath;
-    std::map<std::size_t, EntityID> jointMapSerialize;
+    std::vector<EntityID> jointMapSerialize;
     ar(skelID, ShowSkeleton, ShowJoints, JointVisualSize, SkeletonOnTop,
        SkeletonColor, skeletonName, jointActiveMap, actorPath,
        jointMapSerialize, motionPath, ShowTrajectory, TrajInterval, TrajCount);
     skeleton = GWORLD.EntityFromID(skelID).get();
     jointEntityMap.clear();
     for (auto &ele : jointMapSerialize)
-      jointEntityMap.insert(
-          std::make_pair(ele.first, GWORLD.EntityFromID(ele.second).get()));
+      jointEntityMap.push_back(GWORLD.EntityFromID(ele).get());
     if (actorPath == "none")
       throw std::runtime_error("deserializing an animator without actor");
     else
@@ -94,13 +93,13 @@ struct Animator : public BaseComponent {
   // existing actor joints.
   Animation::Skeleton *actor;
   // joint index -> entity of the joint in the scene.
-  // if there are joints not defined in actor, additional indices will be
-  // assigned
-  std::map<std::size_t, Entity *> jointEntityMap;
+  // the additional joints not defined in actor will be placed after the
+  // original joints
+  std::vector<Entity *> jointEntityMap;
   // joint index -> whether the joint is active.
-  // if there are joints not defined in actor, additional indices will be
-  // assigned
-  std::map<std::size_t, bool> jointActiveMap;
+  // the additional joints not defined in actor will be placed after the
+  // original joints
+  std::vector<bool> jointActiveMap;
   // joint name -> joint index.
   // if there are joints not defined in actor, additional indices will be
   // assigned

@@ -1,14 +1,11 @@
 #pragma once
 
-#include "Global.hpp"
 #include "Function/Animation/Motion.hpp"
+#include "Global.hpp"
 
-namespace aEngine {
 
-namespace Animation {
+namespace aEngine::Animation {
 
 Motion MakeLoopMotion(Motion &motion);
 
-}; // namespace Animation
-
-}; // namespace aEngine
+}; // namespace aEngine::Animation

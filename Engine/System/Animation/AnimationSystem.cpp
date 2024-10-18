@@ -127,11 +127,12 @@ void AnimationSystem::Render() {
                             animator->SkeletonColor);
         // Draw the joint positions
         if (animator->ShowJoints) {
-          for (auto entry : animator->jointEntityMap) {
-            if (animator->jointActiveMap[entry.first])
-              VisUtils::DrawWireSphere(entry.second->Position(), vp,
-                                       animator->JointVisualSize,
-                                       animator->SkeletonColor);
+          for (int jointInd = 0; jointInd < animator->jointEntityMap.size();
+               ++jointInd) {
+            if (animator->jointActiveMap[jointInd])
+              VisUtils::DrawWireSphere(
+                  animator->jointEntityMap[jointInd]->Position(), vp,
+                  animator->JointVisualSize, animator->SkeletonColor);
           }
         }
 

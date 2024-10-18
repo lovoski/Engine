@@ -69,14 +69,15 @@ void VisMetrics::locateHumanoidFoot(std::shared_ptr<Animator> animator) {
   for (auto candidate : candidates) {
     auto left = "left" + candidate;
     auto right = "right" + candidate;
-    for (auto entry : animator->jointEntityMap) {
-      auto jointName = animator->actor->jointNames[entry.first];
+    for (int jointInd = 0; jointInd < animator->jointEntityMap.size();
+         ++jointInd) {
+      auto jointName = animator->actor->jointNames[jointInd];
       auto lMatch = isSubstr(jointName, left);
       auto rMatch = isSubstr(jointName, right);
       if (lMatch)
-        lFoot = entry.second;
+        lFoot = animator->jointEntityMap[jointInd];
       if (rMatch)
-        rFoot = entry.second;
+        rFoot = animator->jointEntityMap[jointInd];
       if (lFoot && rFoot)
         return;
     }
@@ -85,8 +86,8 @@ void VisMetrics::locateHumanoidFoot(std::shared_ptr<Animator> animator) {
 
 float VisMetrics::slideMetricsCurrentPose(std::shared_ptr<Animator> animator) {
   std::vector<glm::vec3> currentPositions;
-  for (auto entry : animator->jointEntityMap) {
-    currentPositions.push_back(entry.second->Position());
+  for (auto joint : animator->jointEntityMap) {
+    currentPositions.push_back(joint->Position());
   }
   if (prevPositions.size() == 0)
     prevPositions = currentPositions;
@@ -156,9 +157,9 @@ void VisMetrics::Update(float dt) {
   contactJoints.clear();
   auto animator = entity->GetComponent<Animator>();
   if (animator) {
-    for (auto entry : animator->jointEntityMap) {
-      if (entry.second->Position().y < heightThreshold) {
-        contactJoints.push_back(entry.second);
+    for (auto joint : animator->jointEntityMap) {
+      if (joint->Position().y < heightThreshold) {
+        contactJoints.push_back(joint);
       }
     }
   }

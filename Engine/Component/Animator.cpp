@@ -30,6 +30,9 @@ Animator::~Animator() {}
 
 void Animator::BuildMappings() {
   jointEntityMap.clear();
+  jointEntityMap.resize(actor->GetNumJoints(), nullptr);
+  jointActiveMap.clear();
+  jointActiveMap.resize(actor->GetNumJoints(), true);
   if (skeleton == nullptr) {
     LOG_F(ERROR, "can't build jointEntityMap when root entity is nullptr");
     return;
@@ -43,12 +46,13 @@ void Animator::BuildMappings() {
     auto it1 = jointNameToInd.find(curEnt->name);
     if (it1 == jointNameToInd.end()) {
       // this is an additional joint
-      jointEntityMap[indexForAdditionalJoint] = curEnt;
-      jointNameToInd[curEnt->name] = indexForAdditionalJoint;
-      jointActiveMap[indexForAdditionalJoint] = true;
+      jointNameToInd[curEnt->name] = indexForAdditionalJoint++;
+      jointEntityMap.push_back(curEnt);
+      jointActiveMap.push_back(true);
     } else {
       // this is an existing joint
       jointEntityMap[it1->second] = curEnt;
+      jointActiveMap[it1->second] = true;
     }
     s.pop();
     for (auto c : curEnt->children)
@@ -97,6 +101,8 @@ void Animator::ApplyPoseToSkeleton(Animation::Pose &pose) {
 
 void Animator::createSkeletonEntities() {
   std::vector<Entity *> joints;
+  jointEntityMap.resize(actor->GetNumJoints(), nullptr);
+  jointActiveMap.resize(actor->GetNumJoints(), true);
   for (int i = 0; i < actor->GetNumJoints(); ++i) {
     auto c = GWORLD.AddNewEntity();
     c->name = actor->jointNames[i];
@@ -249,10 +255,9 @@ std::vector<BoneMatrixBlock> Animator::GetSkeletonTransforms() {
   // convert these information into matrices
   std::vector<BoneMatrixBlock> result(jointEntityMap.size());
   if (skeleton != nullptr && GWORLD.EntityValid(skeleton->ID)) {
-    for (auto &entry : jointEntityMap) {
-      int jointInd = entry.first;
-      result[jointInd].BoneModelMatrix = entry.second->GlobalTransformMatrix();
-      result[jointInd].BoneOffsetMatrix = actor->offsetMatrices[jointInd];
+    for (int i = 0; i < jointEntityMap.size(); ++i) {
+      result[i].BoneModelMatrix = jointEntityMap[i]->GlobalTransformMatrix();
+      result[i].BoneOffsetMatrix = actor->offsetMatrices[i];
     }
   }
   return result;
