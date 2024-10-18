@@ -41,6 +41,11 @@ std::string BasePass::getInspectorWindowName() { return typeid(*this).name(); }
 
 void BasePass::DrawInspectorGUIInternal() {
   ImGui::Checkbox("Enable Pass", &Enabled);
+  std::strcpy(identifierBuffer.data(), identifier.data());
+  if (ImGui::InputText("Identifier##renderpassidentifier",
+                       identifierBuffer.data(), identifierBuffer.size())) {
+    identifier = identifierBuffer.data();
+  }
   ImGui::Separator();
   if (!Enabled)
     ImGui::BeginDisabled();

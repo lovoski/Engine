@@ -10,6 +10,8 @@
 // place this macro outside all namespace inside the source file where the
 // render pass is defined.
 #define REGISTER_RENDER_PASS(Namespace, RenderPassType)                        \
+  CEREAL_SPECIALIZE_FOR_ALL_ARCHIVES(Namespace::RenderPassType,                \
+                                     cereal::specialization::member_serialize) \
   CEREAL_REGISTER_TYPE(Namespace::RenderPassType);                             \
   CEREAL_REGISTER_POLYMORPHIC_RELATION(aEngine::Render::BasePass,              \
                                        Namespace::RenderPassType)
@@ -24,7 +26,9 @@
 #define REGISTER_RENDER_PASS_SL(Namespace, RenderPassType)                     \
   CEREAL_SPECIALIZE_FOR_ALL_ARCHIVES(Namespace::RenderPassType,                \
                                      cereal::specialization::member_load_save) \
-  REGISTER_RENDER_PASS(Namespace, RenderPassType)
+  CEREAL_REGISTER_TYPE(Namespace::RenderPassType);                             \
+  CEREAL_REGISTER_POLYMORPHIC_RELATION(aEngine::Render::BasePass,              \
+                                       Namespace::RenderPassType)
 
 namespace aEngine {
 
@@ -40,8 +44,8 @@ public:
   BasePass() {}
   ~BasePass() {}
 
+  std::vector<char> identifierBuffer = std::vector<char>(200);
   std::string identifier;
-  std::string path;
   bool Enabled = true;
 
   Shader *GetShader() { return shader.get(); }
@@ -65,7 +69,9 @@ public:
   virtual void FinishPass() {}
   virtual std::string getInspectorWindowName();
 
-  template <typename Archive> void serialize(Archive &ar) {}
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(identifier, Enabled);
+  }
 
 protected:
   std::shared_ptr<Shader> shader = nullptr;
@@ -96,8 +102,8 @@ public:
   glm::vec3 WireframeColor = glm::vec3(0.0f);
 
   template <typename Archive> void serialize(Archive &ar) {
-    ar(Enabled, Ambient, Albedo, viewNormal, withWireframe, WireframeWidth,
-       WireframeSmooth, WireframeColor);
+    ar(identifier, Enabled, Ambient, Albedo, viewNormal, withWireframe,
+       WireframeWidth, WireframeSmooth, WireframeColor);
   }
 
   void FinishPass() override;

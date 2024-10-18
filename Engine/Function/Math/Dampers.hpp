@@ -12,6 +12,7 @@ namespace Math {
 // Approach `position` to `target`, the `halfLife` parameter controls
 // how fast the `position` approaches `target`.
 // This method don't guarantee velocity continuity.
+float DamperExpAlpha(float dt, float halfLife);
 void DamperExp(float &position, float target, float dt, float halfLife);
 void DamperExp(glm::vec3 &position, glm::vec3 target, float dt, float halfLife);
 

@@ -453,6 +453,9 @@ bool Scene::Save(std::string path) {
     // 3. Systems
     oa(CEREAL_NVP(registeredSystems));
 
+    // 4. Assets
+    oa(Loader.allMaterials);
+
     return true;
   } else {
     LOG_F(ERROR, "failed to create scene file %s", path.c_str());
@@ -507,6 +510,9 @@ bool Scene::Load(std::string path) {
 
     // 3. Systems
     ia(CEREAL_NVP(registeredSystems));
+
+    // 4. Assets
+    ia(Loader.allMaterials);
 
     return true;
   } else {

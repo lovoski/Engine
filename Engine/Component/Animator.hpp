@@ -113,6 +113,10 @@ struct Animator : public BaseComponent {
   float TrajInterval = 0.2f;
 
 private:
+  bool makeLoopMotion = false;
+  Animation::Motion *motionBackup = nullptr;
+  std::unique_ptr<Animation::Motion> loopMotionBackup = nullptr;
+
   // only joints defined in actor will be drawn
   void drawSkeletonHierarchy();
   // create skeleton entities from actor, initialize mappings

@@ -111,9 +111,7 @@ private:
             oldRfootPos = glm::vec3(0.0f);
   int currentFrameInd = 0, targetMotionFPS = 60;
   int searchFrame = 30, searchFrameCounter = 0;
-  // transition from current motion to next motion in 10 updates
-  int crossFadeWndSize = 10, crossFadeDeltaCount = 0;
-  std::vector<glm::quat> deltaRotation, lastRotation;
+  std::vector<glm::quat> deltaRotation;
   float elapsedTime = 0.0f, fixedUpdateTime = 1.0f / targetMotionFPS;
   void updateAnimatorMotion(std::shared_ptr<Animator> &animator);
 };

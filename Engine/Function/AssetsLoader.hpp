@@ -54,7 +54,6 @@ public:
 
   std::shared_ptr<Entity> LoadAndCreateEntityFromFile(std::string modelPath);
 
-private:
   // path to texture
   std::map<std::string, Texture *> allTextures;
   // path to model, one model could contain multiple meshes
@@ -68,6 +67,7 @@ private:
 
   std::vector<std::shared_ptr<Render::BasePass>> allMaterials;
 
+private:
   void loadFBXModelFile(std::vector<Render::Mesh *> &meshes,
                         std::string modelPath);
   void loadOBJModelFile(std::vector<Render::Mesh *> &meshes,

@@ -26,6 +26,9 @@ inline vec3 Lerp(vec3 &a, vec3 &b, float alpha) {
   return (1.0f - alpha) * a + alpha * b;
 }
 
+float DamperExpAlpha(float dt, float halfLife) {
+  return 1.0f - FastNegExp((0.69314718056f * dt) / (halfLife + 1e-8f));
+}
 void DamperExp(float &position, float target, float dt, float halfLife) {
   float alpha = 1.0f - FastNegExp((0.69314718056f * dt) / (halfLife + 1e-8f));
   position = (1.0f - alpha) * position + alpha * target;

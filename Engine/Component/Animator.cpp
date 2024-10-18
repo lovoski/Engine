@@ -3,6 +3,7 @@
 #include "Component/MeshRenderer.hpp"
 
 #include "Function/Animation/Deform.hpp"
+#include "Function/Animation/Edit.hpp"
 #include "Function/AssetsLoader.hpp"
 #include "Function/AssetsType.hpp"
 #include "Function/GUI/Helpers.hpp"
@@ -214,6 +215,23 @@ void Animator::DrawInspectorGUI() {
         auto restPose = actor->GetRestPose();
         ApplyPoseToSkeleton(restPose);
       });
+  if (ImGui::TreeNode("Motion Edit")) {
+    if (motion == nullptr)
+      ImGui::BeginDisabled();
+    if (ImGui::Checkbox("Make Loop Motion", &makeLoopMotion)) {
+      if (!makeLoopMotion) {
+        motion = motionBackup;
+      } else {
+        motionBackup = motion;
+        loopMotionBackup = std::make_unique<Animation::Motion>(
+            Animation::MakeLoopMotion(*motion));
+        motion = loopMotionBackup.get();
+      }
+    }
+    if (motion == nullptr)
+      ImGui::EndDisabled();
+    ImGui::TreePop();
+  }
 
   ImGui::Separator();
   ImGui::MenuItem("Skeleton", nullptr, nullptr, false);

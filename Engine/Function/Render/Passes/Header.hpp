@@ -23,11 +23,13 @@ public:
   std::string getInspectorWindowName() override;
 
   template <typename Archive> void save(Archive &ar) const {
-    ar(OutlineWidth, OutlineWeight, OutlineColor, OutlineColorMap.path);
+    ar(identifier, Enabled, OutlineWidth, OutlineWeight, OutlineColor,
+       OutlineColorMap.path);
   }
   template <typename Archive> void load(Archive &ar) {
     std::string outlineColorMapPath;
-    ar(OutlineWidth, OutlineWeight, OutlineColor, outlineColorMapPath);
+    ar(identifier, Enabled, OutlineWidth, OutlineWeight, OutlineColor,
+       outlineColorMapPath);
     // initTexture(outlineColorMapPath);
   }
 
@@ -49,7 +51,7 @@ public:
   std::string getInspectorWindowName() override;
 
   template <typename Archive> void serialize(Archive &ar) {
-    ar(wireframeOffset, wireFrameColor);
+    ar(identifier, Enabled, wireframeOffset, wireFrameColor);
   }
 
 private:
@@ -87,16 +89,17 @@ public:
   void FinishPass() override;
 
   template <typename Archive> void save(Archive &ar) const {
-    ar(firstRampStart, firstRampStop, rampOffset, rampShadowWeight,
-       rimLightColor, rimLightSmooth, rimLightWidth, specularGloss,
-       specularWeight, detailWeight, innerLineWeight, base.path, ILM.path,
-       SSS.path, detail.path);
+    ar(identifier, Enabled, firstRampStart, firstRampStop, rampOffset,
+       rampShadowWeight, rimLightColor, rimLightSmooth, rimLightWidth,
+       specularGloss, specularWeight, detailWeight, innerLineWeight, base.path,
+       ILM.path, SSS.path, detail.path);
   }
   template <typename Archive> void load(Archive &ar) {
     std::string p1, p2, p3, p4;
-    ar(firstRampStart, firstRampStop, rampOffset, rampShadowWeight,
-       rimLightColor, rimLightSmooth, rimLightWidth, specularGloss,
-       specularWeight, detailWeight, innerLineWeight, p1, p2, p3, p4);
+    ar(identifier, Enabled, firstRampStart, firstRampStop, rampOffset,
+       rampShadowWeight, rimLightColor, rimLightSmooth, rimLightWidth,
+       specularGloss, specularWeight, detailWeight, innerLineWeight, p1, p2, p3,
+       p4);
     initTexture(p1, p2, p3, p4);
   }
 
@@ -124,14 +127,14 @@ public:
   void FinishPass() override;
 
   template <typename Archive> void save(Archive &ar) const {
-    ar(RoughnessFactor, MetallicFactor, AOFactor, AlbedoFactor, F0,
-       WithNormalMap, Roughness.path, Metallic.path, AO.path, Albedo.path,
-       Normal.path);
+    ar(identifier, Enabled, RoughnessFactor, MetallicFactor, AOFactor,
+       AlbedoFactor, F0, WithNormalMap, Roughness.path, Metallic.path, AO.path,
+       Albedo.path, Normal.path);
   }
   template <typename Archive> void load(Archive &ar) {
     std::string p1, p2, p3, p4, p5;
-    ar(RoughnessFactor, MetallicFactor, AOFactor, AlbedoFactor, F0,
-       WithNormalMap, p1, p2, p3, p4, p5);
+    ar(identifier, Enabled, RoughnessFactor, MetallicFactor, AOFactor,
+       AlbedoFactor, F0, WithNormalMap, p1, p2, p3, p4, p5);
     initTexture(p1, p2, p3, p4, p5);
   }
 
@@ -156,14 +159,14 @@ public:
   void FinishPass() override;
 
   template <typename Archive> void save(Archive &ar) const {
-    ar(WithBar, BarWidth, BarInterval, BarColor, BeginColor, EndColor,
-       ColorBarWidth, ColorBarHeight, Wireframe, WireframeWidth,
-       WireframeSmooth, WireframeColor);
+    ar(identifier, Enabled, WithBar, BarWidth, BarInterval, BarColor,
+       BeginColor, EndColor, ColorBarWidth, ColorBarHeight, Wireframe,
+       WireframeWidth, WireframeSmooth, WireframeColor);
   }
   template <typename Archive> void load(Archive &ar) {
-    ar(WithBar, BarWidth, BarInterval, BarColor, BeginColor, EndColor,
-       ColorBarWidth, ColorBarHeight, Wireframe, WireframeWidth,
-       WireframeSmooth, WireframeColor);
+    ar(identifier, Enabled, WithBar, BarWidth, BarInterval, BarColor,
+       BeginColor, EndColor, ColorBarWidth, ColorBarHeight, Wireframe,
+       WireframeWidth, WireframeSmooth, WireframeColor);
     initTexture();
   }
 

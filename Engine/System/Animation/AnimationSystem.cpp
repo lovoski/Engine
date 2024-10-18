@@ -57,10 +57,10 @@ void AnimationSystem::collectSkeletonDrawQueue(
   // only collect joints defined in the actor
   auto actor = animator->actor;
   int numJoints = animator->actor->GetNumJoints();
-  std::vector<int> visitsRemains(numJoints, 0), startPoints;
+  std::vector<int> startPoints;
+  std::set<std::pair<int, int>> tmpQueue;
   // collect end effectors as start points
   for (int i = 0; i < numJoints; ++i) {
-    visitsRemains[i] = actor->jointChildren[i].size();
     if (actor->jointChildren[i].size() == 0)
       startPoints.push_back(i);
   }
@@ -76,26 +76,22 @@ void AnimationSystem::collectSkeletonDrawQueue(
       parent = actor->jointParent[current];
       parentEntity = animator->jointEntityMap[parent];
       parentActive = animator->jointActiveMap[parent];
-      if (visitsRemains[parent] > 0) {
-        if (currentActive && parentActive) {
-          drawQueue.push_back(std::make_pair(parentEntity->Position(),
-                                             currentEntity->Position()));
-          visitsRemains[parent]--;
-        } else if (currentActive && !parentActive) {
-          toBeMatched = current;
-        } else if (!currentActive && parentActive && toBeMatched != -1) {
-          Entity *childEntity = animator->jointEntityMap[toBeMatched];
-          drawQueue.push_back(std::make_pair(parentEntity->Position(),
-                                             childEntity->Position()));
-          visitsRemains[parent]--;
-        }
-      } else
-        break;
+      if (currentActive && parentActive) {
+        tmpQueue.insert(std::make_pair(parent, current));
+      } else if (currentActive && !parentActive) {
+        toBeMatched = current;
+      } else if (!currentActive && parentActive && toBeMatched != -1) {
+        tmpQueue.insert(std::make_pair(parent, toBeMatched));
+      }
       current = parent;
       currentActive = parentActive;
       currentEntity = parentEntity;
     }
   }
+  for (auto &entry : tmpQueue)
+    drawQueue.push_back(
+        std::make_pair(animator->jointEntityMap[entry.first]->Position(),
+                       animator->jointEntityMap[entry.second]->Position()));
 }
 
 void AnimationSystem::Render() {

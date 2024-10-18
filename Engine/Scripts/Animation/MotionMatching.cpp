@@ -90,11 +90,6 @@ void MotionMatching::LateUpdate(float dt) {
 }
 
 void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
-  if (lastRotation.empty()) {
-    lastRotation.resize(animator->jointEntityMap.size());
-    for (int i = 0; i < animator->jointEntityMap.size(); ++i)
-      lastRotation[i] = animator->jointEntityMap[i]->Rotation();
-  }
   if (deltaRotation.empty())
     deltaRotation.resize(animator->jointEntityMap.size(),
                          glm::quat(1.0f, glm::vec3(0.0f)));
@@ -126,41 +121,38 @@ void MotionMatching::updateAnimatorMotion(std::shared_ptr<Animator> &animator) {
       currentFeature[k] = (currentFeature[k] - database.featureMean[k]) /
                           database.featureStd[k];
     // query motion database for closest feature
+    auto oldFrameInd = currentFrameInd;
     currentFrameInd = tree.BruteForceNearestSearch(currentFeature);
     // update delta rotations
     for (int i = 0; i < animator->jointEntityMap.size(); ++i) {
-      auto lrot = lastRotation[i];
-      auto crot = animator->jointEntityMap[i]->Rotation();
-      deltaRotation[i] = crot * glm::inverse(lrot);
+      auto lrot = database.data[oldFrameInd].rotations[i];
+      auto crot = database.data[currentFrameInd].rotations[i];
+      // from current rotations back to original rotations
+      deltaRotation[i] = lrot * glm::inverse(crot);
     }
     // reset counter
     searchFrameCounter = searchFrame;
-    crossFadeDeltaCount = 0;
   } else {
     currentFrameInd++;
-    crossFadeDeltaCount++;
   }
 
   // update character motion, make transition
   auto motionData = database.data[currentFrameInd];
-  for (int jointInd = 0; jointInd < animator->jointEntityMap.size(); ++jointInd) {
+  for (int jointInd = 0; jointInd < animator->jointEntityMap.size();
+       ++jointInd) {
     auto jointEntity = animator->jointEntityMap[jointInd];
     auto currentRot = jointEntity->Rotation();
-    // update last rotation
-    lastRotation[jointInd] = currentRot;
 
     auto nextRot = motionData.rotations[jointInd];
     // make sure these rotations are in the same hemisphere
     if (glm::dot(currentRot, nextRot) < 0.0f)
       nextRot *= -1;
 
-    // utilize delta rotation to blend the motion
-    float alpha = (float)crossFadeDeltaCount / (float)crossFadeWndSize;
-    if (alpha < 1.0f) {
-      currentRot =
-          glm::normalize((1.0f - alpha) * currentRot + alpha * nextRot);
-    } else
-      currentRot = nextRot;
+    // decay deltaRotation
+    deltaRotation[jointInd] =
+        glm::slerp(deltaRotation[jointInd], glm::quat(1.0f, glm::vec3(0.0f)),
+                   Math::DamperExpAlpha(fixedUpdateTime, 0.2f));
+    currentRot = deltaRotation[jointInd] * nextRot;
 
     if (jointInd == 0) {
       glm::vec3 currentPos = glm::vec3(
@@ -235,7 +227,6 @@ void MotionMatching::DrawInspectorGUI() {
   // ImGui::SliderInt("Trajectory Count", &trajCount, 1, 9);
   // ImGui::SliderFloat("Trajectory Interval", &trajInterval, 0.1f, 1.0f);
 
-  ImGui::SliderInt("Cross Fade Window Size", &crossFadeWndSize, 10, 50);
   ImGui::SliderInt("Search Frames", &searchFrame, 1, 60);
 }
 
