@@ -138,6 +138,44 @@ REGISTER_SCRIPT_SL(::, CameraController)
 
 The library [cereal](https://uscilab.github.io/cereal/) is used to handle the serialization, feel free to check their detailed document if you have more advanced needs.
 
+## Animation System
+
+The animation system is based on the data structure describing the mocap data, you can find it in `Function/Animation/Motion`.
+
+Each motion contains one `Skeleton` and an array of `Pose`, we need to apply the motion data in each `Pose` to specific `Skeleton` to get the final animation.
+
+The `Skeleton` holds information for all joints (parent-child relation, names, relative transforms etc.) and the `Pose` records the relative transform for all joints in one frame.
+
+### Motion Retargeting
+
+A simple neural retargeting script for character with varied skeleton is provided in `Scripts/Animation/SAMERetarget`. Here's the [demo](https://www.bilibili.com/video/BV1hypgeAEBN/?vd_source=bcaf713b6b1c92e7d54cf304c76ff4d2).
+
+### Motion Matching
+
+A simple motion matching script is also included in `Scripts/Animation/MotionMatching`, thanks to this wonderful [tutorial](https://theorangeduck.com/page/code-vs-data-driven-displacement). Here's the [demo](https://www.bilibili.com/video/BV1cQyKYBEwM/?share_source=copy_web&vd_source=0cb925840feb398743148accc03d1742).
+
+So motion matching is a simple but effective method to do character animation. Given a database of motions, we construct a feature representing the current state of the character (user input, previous motion, future trajectories etc.), and query the database for a closest neighbor, the smoothly transition current motion to that neighbor.
+
+Instead of searching the database each frame, I carry out the search every N frames, this variable can be configured with `searchFrame` in my script. From my observation, this is a trade off between responsiveness and performance.
+
+I implemented a kd-tree to perform nearest neighbor search, but latter realised that this kd-tree is actually slower than brute force for my 31 dimensional feature. The reason for that is, when the dimension of our data is really high (much larger than 2 and 3), kd-tree don't have much advantage over brute force (O(n)). And we are accessing the memory more often than simply traverse all data since we need the data structures. So it could be slower. Refer to `Tests/Datastructure/kdtree` for a detailed test.
+
+During my actual implementation, I find the following aspects especially important to create high quality feature:
+
+1. Scale the feature with the database's mean and variance would improve the quality of the search.
+2. Construct the feature based on some data from currentFrame+1 in the database would make the motion smoother.
+
+For the motion transition, I keep record of a delta rotation between current motion and the motion I'm about to transition to. Decay the delta rotation with time, and add the delta back from transitioned motion.
+
+```
+// after one search
+delta_rot = cur_rot * inv(next_rot)
+
+// during update
+delta_rot = slerp(delta_rot, id_rot, alpha)
+cur_rot = delta_rot * next_rot
+```
+
 ## Render System
 
 Here are some screen shots of the rendering from this engine:
@@ -194,15 +232,3 @@ For mesh-mesh collision detection, brute force has `O(n^2)` time complexity, whi
 Here's a screen shot of the bvh data structure:
 
 ![bvh_ds](Doc/bvh_ds_20241004.png)
-
-## Animation System
-
-The animation system is based on the data structure describing the mocap data, you can find it in `Function/Animation/Motion`.
-
-Each motion contains one `Skeleton` and an array of `Pose`, we need to apply the motion data in each `Pose` to specific `Skeleton` to get the final animation.
-
-The `Skeleton` holds information for all joints (parent-child relation, names, relative transforms etc.) and the `Pose` records the relative transform for all joints in one frame.
-
-A simple neural retargeting script for character with varied skeleton is provided in `Scripts/Animation/SAMERetarget`. [Here's a simple demo to it](https://www.bilibili.com/video/BV1hypgeAEBN/?vd_source=bcaf713b6b1c92e7d54cf304c76ff4d2).
-
-A simple motion matching script is also included in `Scripts/Animation/MotionMatching`, thanks to this wonderful [tutorial](https://theorangeduck.com/page/code-vs-data-driven-displacement). Here's the [demo](https://www.bilibili.com/video/BV1cQyKYBEwM/?share_source=copy_web&vd_source=0cb925840feb398743148accc03d1742).
