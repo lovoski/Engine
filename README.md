@@ -66,10 +66,10 @@ entity->GetComponent<NativeScript>()->Bind<CameraController>();
 
 When you no longer want this script to execute, you can either set it to disabled or remove it with:
 ```cpp
-entity->GetComponent<NativeScript>()->Unbind<CameraController>();
+entity->GetComponent<NativeScript>()->Unbind(index);
 ```
 
-Each `NativeScript` component can bind multiple scriptables, but each type of scriptable is only allowed one instance.
+Each `NativeScript` component can bind multiple scriptables, each type of scriptables is also allowed multiple instances.
 
 ```cpp
 entity->GetComponent<NativeScript>()->Bind<CameraController>();

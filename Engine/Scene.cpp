@@ -222,11 +222,6 @@ void Scene::PlotSceneProfile() {
       ImGui::Text("%d:%s", compPair.first,
                   typeid(*compPair.second.get()).name());
     }
-    ImGui::MenuItem("Native Scripts", nullptr, nullptr, false);
-    for (auto &scriptPair : NativeScript::ScriptMap) {
-      ImGui::Text("%d:%s", scriptPair.first,
-                  typeid(*scriptPair.second.get()).name());
-    }
   }
 }
 

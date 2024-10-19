@@ -17,8 +17,8 @@ void NativeScriptSystem::Update(float dt) {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
     for (auto &instance : nsc->instances) {
-      if (instance.second != nullptr && instance.second->Enabled) {
-        instance.second->Update(dt);
+      if (instance != nullptr && instance->Enabled) {
+        instance->Update(dt);
       }
     }
   }
@@ -30,8 +30,8 @@ void NativeScriptSystem::LateUpdate(float dt) {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
     for (auto &instance : nsc->instances) {
-      if (instance.second != nullptr && instance.second->Enabled) {
-        instance.second->LateUpdate(dt);
+      if (instance != nullptr && instance->Enabled) {
+        instance->LateUpdate(dt);
       }
     }
   }
@@ -42,8 +42,8 @@ void NativeScriptSystem::DrawToScene() {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();
     for (auto &instance : nsc->instances) {
-      if (instance.second != nullptr && instance.second->Enabled) {
-        instance.second->DrawToScene();
+      if (instance != nullptr && instance->Enabled) {
+        instance->DrawToScene();
       }
     }
   }

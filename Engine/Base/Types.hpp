@@ -20,7 +20,6 @@ const size_t MAX_COMPONENT_COUNT = 128;
 using EntityID = size_t;
 using SystemTypeID = size_t;
 using ComponentTypeID = size_t;
-using ScriptableTypeID = size_t;
 using EntitySignature = std::set<ComponentTypeID>;
 
 inline ComponentTypeID GetRuntimeComponentTypeID() {
@@ -30,11 +29,6 @@ inline ComponentTypeID GetRuntimeComponentTypeID() {
 
 inline SystemTypeID GetRuntimeSystemTypeID() {
   static SystemTypeID typeID = 0u;
-  return typeID++;
-}
-
-inline ScriptableTypeID GetRuntimeScriptableTypeID() {
-  static ScriptableTypeID typeID = 0u;
   return typeID++;
 }
 
@@ -54,17 +48,6 @@ template <typename T> inline SystemTypeID SystemType() noexcept {
                  !std::is_same<BaseSystem, T>::value),
                 "Invalid template type");
   static const SystemTypeID typeID = GetRuntimeSystemTypeID();
-  return typeID;
-}
-
-class Scriptable;
-
-// attach type id to scriptable class and return it
-template <typename T> inline ScriptableTypeID ScriptableType() noexcept {
-  static_assert((std::is_base_of<Scriptable, T>::value &&
-                 !std::is_same<Scriptable, T>::value),
-                "Invalid template type");
-  static const ScriptableTypeID typeID = GetRuntimeScriptableTypeID();
   return typeID;
 }
 

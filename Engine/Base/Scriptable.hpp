@@ -14,9 +14,11 @@
 
 // refer to REGISTER_RENDER_PASS_SL
 #define REGISTER_SCRIPT_SL(Namespace, ScriptType)                              \
-  CEREAL_SPECIALIZE_FOR_ALL_ARCHIVES(aEngine::Scriptable,                      \
+  CEREAL_SPECIALIZE_FOR_ALL_ARCHIVES(aEngine::ScriptType,                      \
                                      cereal::specialization::member_load_save) \
-  REGISTER_SCRIPT(Namespace, ScriptType)
+  CEREAL_REGISTER_TYPE(Namespace::ScriptType);                                 \
+  CEREAL_REGISTER_POLYMORPHIC_RELATION(aEngine::Scriptable,                    \
+                                       Namespace::ScriptType)
 
 namespace aEngine {
 

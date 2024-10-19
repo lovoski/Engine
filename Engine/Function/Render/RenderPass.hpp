@@ -69,9 +69,7 @@ public:
   virtual void FinishPass() {}
   virtual std::string getInspectorWindowName();
 
-  template <typename Archive> void serialize(Archive &ar) {
-    ar(identifier, Enabled);
-  }
+  template <typename Archive> void serialize(Archive &ar) {}
 
 protected:
   std::shared_ptr<Shader> shader = nullptr;
@@ -102,8 +100,8 @@ public:
   glm::vec3 WireframeColor = glm::vec3(0.0f);
 
   template <typename Archive> void serialize(Archive &ar) {
-    ar(identifier, Enabled, Ambient, Albedo, viewNormal, withWireframe,
-       WireframeWidth, WireframeSmooth, WireframeColor);
+    ar(Ambient, Albedo, viewNormal, withWireframe, WireframeWidth,
+       WireframeSmooth, WireframeColor);
   }
 
   void FinishPass() override;

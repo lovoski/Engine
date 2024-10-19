@@ -60,9 +60,25 @@ struct MeshRenderer : public aEngine::BaseComponent {
 
   std::string getInspectorWindowName() override { return "Mesh Renderer"; }
 
-  template <typename Archive> void serialize(Archive &ar) {
+  template <typename Archive> void save(Archive &ar) const {
     ar(CEREAL_NVP(entityID));
-    ar(castShadow, receiveShadow, passes);
+    std::vector<bool> enableStatus;
+    std::vector<std::string> identifiers;
+    for (auto &pass : passes) {
+      enableStatus.push_back(pass->Enabled);
+      identifiers.push_back(pass->identifier);
+    }
+    ar(castShadow, receiveShadow, passes, enableStatus, identifiers);
+  }
+  template <typename Archive> void load(Archive &ar) {
+    ar(CEREAL_NVP(entityID));
+    std::vector<bool> enableStatus;
+    std::vector<std::string> identifiers;
+    ar(castShadow, receiveShadow, passes, enableStatus, identifiers);
+    for (int i = 0; i < passes.size(); ++i) {
+      passes[i]->Enabled = enableStatus[i];
+      passes[i]->identifier = identifiers[i];
+    }
   }
 
   bool castShadow = true;

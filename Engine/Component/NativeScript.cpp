@@ -5,12 +5,9 @@
 #include "Scripts/Animation/VisMetrics.hpp"
 #include "Scripts/Geometry/SelfIntersection.hpp"
 #include "Scripts/Geometry/PolygonMeshProcessing.hpp"
+#include "Scripts/Animation/IK/TwoBoneIK.hpp"
 
 namespace aEngine {
-
-std::map<ScriptableTypeID, std::unique_ptr<Scriptable>>
-    NativeScript::ScriptMap =
-        std::map<ScriptableTypeID, std::unique_ptr<Scriptable>>();
 
 NativeScript::~NativeScript() {
   // free all scriptable instance
@@ -29,6 +26,8 @@ void NativeScript::drawAddScriptPopup() {
       Bind<VisMetrics>();
     if (ImGui::MenuItem("Motion Matching"))
       Bind<MotionMatching>();
+    if (ImGui::MenuItem("Two Bone IK"))
+      Bind<TwoBoneIK>();
 
     // geometry scripts
     ImGui::Separator();
@@ -45,12 +44,12 @@ void NativeScript::DrawInspectorGUI() {
     ImGui::OpenPopup("addscriptpanelpopup");
   drawAddScriptPopup();
   for (auto &instance : instances) {
-    if (instance.second != nullptr) {
+    if (instance != nullptr) {
       // if this is a valid scriptable
       bool nodeOpen =
-          ImGui::TreeNodeEx(instance.second->getInspectorWindowName().c_str());
+          ImGui::TreeNodeEx(instance->getInspectorWindowName().c_str());
       if (nodeOpen) {
-        instance.second->DrawInspectorGUIInternal();
+        instance->DrawInspectorGUIInternal();
         ImGui::TreePop();
       }
     }
