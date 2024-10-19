@@ -5,6 +5,10 @@
  */
 #pragma once
 
+#if WIN32
+#define NOMINMAX
+#endif
+
 #include <tinyfiledialogs.h>
 
 #include <algorithm>

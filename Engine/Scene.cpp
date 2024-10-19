@@ -49,7 +49,13 @@ void Scene::Start() {
     sys.second->Start();
 }
 
+void Scene::resetVariables() {
+  // clear rotation update events
+  Entity::InternalRotationUpdate.clear();
+}
+
 void Scene::Update() {
+  resetVariables();
   // tick the timer
   Context.Tick();
   float t0 = GetTime();
@@ -424,7 +430,8 @@ bool Scene::Save(std::string path) {
     oa(CEREAL_NVP(Context));
     // 1. Entities
     // the parent-child relation is not serialized here
-    oa(CEREAL_NVP(entityCount), CEREAL_NVP(entities), CEREAL_NVP(entitiesSignatures));
+    oa(CEREAL_NVP(entityCount), CEREAL_NVP(entities),
+       CEREAL_NVP(entitiesSignatures));
     // collect parent-child relation for all entities
     std::map<EntityID, EntityID> parentSerialize;
     std::map<EntityID, std::vector<EntityID>> childrenSerialize;
@@ -472,7 +479,8 @@ bool Scene::Load(std::string path) {
     cereal::JSONInputArchive ia(input);
     ia(CEREAL_NVP(Context));
     // 1. Entities
-    ia(CEREAL_NVP(entityCount), CEREAL_NVP(entities), CEREAL_NVP(entitiesSignatures));
+    ia(CEREAL_NVP(entityCount), CEREAL_NVP(entities),
+       CEREAL_NVP(entitiesSignatures));
     while (!availableEntities.empty())
       availableEntities.pop();
     for (EntityID entID = 1; entID <= MAX_ENTITY_COUNT; ++entID)

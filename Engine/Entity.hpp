@@ -4,11 +4,14 @@
 #include "Global.hpp"
 #include "Scene.hpp"
 
+class Editor;
+
 namespace aEngine {
 
 class Entity {
 public:
   friend class Scene;
+  friend class Editor;
   // default constructor for serialization only
   Entity() {}
   Entity(EntityID id) : ID(id) {
@@ -32,18 +35,9 @@ public:
   const glm::quat LocalRotation() { return localRotation; }
   const glm::vec3 LocalScale() { return localScale; }
 
-  void SetLocalPosition(glm::vec3 p) {
-    localPosition = p;
-    transformDirty = true;
-  }
-  void SetLocalRotation(glm::quat q) {
-    localRotation = q;
-    transformDirty = true;
-  }
-  void SetLocalScale(glm::vec3 s) {
-    localScale = s;
-    transformDirty = true;
-  }
+  void SetLocalPosition(glm::vec3 p);
+  void SetLocalRotation(glm::quat q);
+  void SetLocalScale(glm::vec3 s);
 
   static glm::vec3 WorldUp, WorldLeft, WorldForward;
 
@@ -88,8 +82,7 @@ public:
     return GWORLD.GetComponent<T>(ID);
   }
 
-  template <typename Archive>
-  void serialize(Archive &ar) {
+  template <typename Archive> void serialize(Archive &ar) {
     // don't serialize parent child relation
     ar(ID, name, Enabled);
     ar(LocalUp, LocalLeft, LocalForward);
@@ -117,6 +110,11 @@ public:
   std::string name = "New Entity ";
   Entity *parent = nullptr;
   std::vector<Entity *> children;
+
+  // keep record of the internal modification for rotation each frame,
+  // this variable will be constantly cleared and filled each frame.
+  // only `SetGlobalRotation` and `SetLocalRotation` triggers the filling.
+  static std::set<EntityID> InternalRotationUpdate;
 
 protected:
   bool transformDirty = true;

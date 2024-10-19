@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Engine.hpp"
+#include "Scene.hpp"
+#include "Entity.hpp"
 #include "Function/Render/Shader.hpp"
 #include "Function/Render/FrameBuffer.hpp"
 #include "Function/AssetsLoader.hpp"
@@ -74,7 +76,8 @@ private:
   void MainMenuBar();
   void EntitiesWindow();
   void AssetsWindow();
-  void InspectorWindow();
   void DrawGizmos(float x, float y, float width, float height, bool enable = true);
+  void InspectorWindow();
+  void DrawTransformGUI(EntityID selectedEntity);
 
 };

@@ -328,11 +328,13 @@ private:
     return id; // this entity can now access some components
   }
 
-  // the first
   void recomputeLocalAxis();
 
   // The HierarchyRoot variable will get clear and updated by this function
   void rebuildHierarchyStructure();
+
+  // Reset relative variables at the start of each frame
+  void resetVariables();
 
   // how many entities have been created
   EntityID entityCount;

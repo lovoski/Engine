@@ -1,6 +1,3 @@
-#include "Scripts/Animation/SAMERetarget.hpp"
-#include "Scripts/Animation/VisMetrics.hpp"
-
 #include "../Editor.hpp"
 #include <limits>
 
@@ -24,7 +21,9 @@ using std::vector;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
-inline void DrawTransformGUI(EntityID selectedEntity) {
+static std::map<EntityID, glm::vec3> EulerAnglesCache;
+
+inline void Editor::DrawTransformGUI(EntityID selectedEntity) {
   auto transform = GWORLD.EntityFromID(selectedEntity);
   if (ImGui::CollapsingHeader("Transform")) {
     ImGui::MenuItem("Global Properties", nullptr, nullptr, false);
@@ -34,13 +33,31 @@ inline void DrawTransformGUI(EntityID selectedEntity) {
     if (ImGui::DragFloat3("Position", &position.x, 0.01f, -MAX_FLOAT,
                           MAX_FLOAT))
       transform->SetGlobalPosition(position);
+
+    // gimbal lock free rotation manipulation
+    auto it = EulerAnglesCache.find(selectedEntity);
+    glm::vec3 angles;
+    if (it == EulerAnglesCache.end()) {
+      // cache new rotations
+      angles = glm::degrees(glm::eulerAngles(transform->Rotation()));
+      EulerAnglesCache.insert(std::make_pair(selectedEntity, angles));
+    } else {
+      angles = it->second;
+    }
+    if (ImGui::DragFloat3("Rotation", &angles.x, 0.1f, -180.0f, 180.0f)) {
+      // if user modify the rotation, don't trigger the internal update function
+      EulerAnglesCache[selectedEntity] = angles; // update cache
+      auto q = glm::quat(glm::radians(angles));
+      transform->m_rotation = q;
+      // update local rotation
+      glm::quat transformParentOrien = transform->GetParentOrientation();
+      transform->localRotation = glm::inverse(transformParentOrien) * q;
+      transform->UpdateLocalAxis();
+      transform->transformDirty = true;
+    }
+
     if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.0f, MAX_FLOAT))
       transform->SetGlobalScale(scale);
-    // glm::vec3 rotation =
-    // glm::degrees(glm::eulerAngles(transform->Rotation())); if
-    // (ImGui::InputFloat3("Rotation", &rotation.x)) {
-    //   transform->SetGlobalRotation(glm::quat(glm::radians(rotation)));
-    // }
   }
 }
 
@@ -61,6 +78,22 @@ void InspectorRightClickMenu(EntityID entity) {
 }
 
 void Editor::InspectorWindow() {
+  // update rotation cache each frame if needed
+  for (auto id : Entity::InternalRotationUpdate) {
+    if (GWORLD.EntityValid(id)) {
+      EulerAnglesCache[id] =
+          glm::degrees(glm::eulerAngles(GWORLD.EntityFromID(id)->Rotation()));
+    } else {
+      Entity::InternalRotationUpdate.erase(id);
+    }
+  }
+  // check whether there's invalid entity inside our cache
+  for (auto &id : EulerAnglesCache) {
+    EntityID entID = id.first;
+    if (!GWORLD.EntityValid(entID))
+      EulerAnglesCache.erase(entID);
+  }
+
   ImGui::Begin("Components", &showInspectorWindow);
   // Right-click context menu for the parent window
   if (!ImGui::IsAnyItemHovered() &&
