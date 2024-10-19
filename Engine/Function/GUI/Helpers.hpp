@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Global.hpp"
-
+#include "Entity.hpp"
 #include "Function/AssetsType.hpp"
+#include "Global.hpp"
 
 namespace aEngine {
 
@@ -30,6 +30,11 @@ void DragableFileTarget(
     std::function<bool(std::string)> handleLoad,
     std::vector<char> &filenameBuffer,
     std::function<void(void)> handleClear = []() {});
+// Load an entity from entity window, similar usage to `DragableFileTarget`.
+void DragableEntityTarget(std::string label, std::string hint,
+                          std::function<bool(Entity *)> handleLoad,
+                          std::vector<char> &nameBuffer,
+                          std::function<void(void)> handleClear);
 
 }; // namespace GUIUtils
 

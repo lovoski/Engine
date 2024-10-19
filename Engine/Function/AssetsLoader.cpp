@@ -312,6 +312,8 @@ Render::Mesh *AssetsLoader::GetMesh(string modelPath, string identifier) {
       LOG_F(ERROR, "the file %s has no mesh", modelPath.c_str());
       return nullptr;
     }
+    // cache the model
+    allMeshes.insert(std::make_pair(modelPath, modelMeshes));
     for (auto mesh : modelMeshes) {
       if (mesh->identifier == identifier) {
         LOG_F(INFO, "load model at %s, get mesh named %s", modelPath.c_str(),

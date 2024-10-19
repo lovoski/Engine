@@ -60,7 +60,7 @@ void DragableTextureTarget(std::string label, Texture &texture,
 
 void Combo(std::string label, std::vector<std::string> &names, int &augInd,
            std::function<void(int)> handleCurrent) {
-  std::vector<std::string> augNames {"None:-1"};
+  std::vector<std::string> augNames{"None:-1"};
   augNames.insert(augNames.end(), names.begin(), names.end());
   if (augInd >= augNames.size())
     augInd = 0; // set current to null when index out of range
@@ -110,6 +110,33 @@ void DragableFileTarget(std::string label, std::string hint,
       fs::path filepath = fs::path((char *)payload->Data);
       if (handleLoad(filepath.string())) {
         sprintf(filenameBuffer.data(), filepath.string().c_str());
+      }
+    }
+    ImGui::EndDragDropTarget();
+  }
+}
+
+void DragableEntityTarget(std::string label, std::string hint,
+                          std::function<bool(Entity *)> handleLoad,
+                          std::vector<char> &nameBuffer,
+                          std::function<void(void)> handleClear) {
+  ImGui::BeginChild((label + "##children" + label).c_str(), {-1, 30});
+  ImGui::InputTextWithHint(("##inputwithhint" + label).c_str(), hint.c_str(),
+                           nameBuffer.data(), nameBuffer.size(),
+                           ImGuiInputTextFlags_ReadOnly);
+  ImGui::SameLine();
+  if (ImGui::Button(("Clear##clear" + label).c_str(), {-1, -1})) {
+    handleClear();
+    for (int i = 0; i < nameBuffer.size(); ++i)
+      nameBuffer[i] = 0;
+  }
+  ImGui::EndChild();
+  if (ImGui::BeginDragDropTarget()) {
+    if (const ImGuiPayload *payload =
+            ImGui::AcceptDragDropPayload("ENTITYID_DATA")) {
+      auto entity = *(Entity **)payload->Data;
+      if (handleLoad(entity)) {
+        sprintf(nameBuffer.data(), "%s", entity->name.c_str());
       }
     }
     ImGui::EndDragDropTarget();

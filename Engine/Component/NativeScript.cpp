@@ -1,11 +1,11 @@
 #include "Component/NativeScript.hpp"
 
+#include "Scripts/Animation/IK/TwoBoneIK.hpp"
 #include "Scripts/Animation/MotionMatching.hpp"
 #include "Scripts/Animation/SAMERetarget.hpp"
 #include "Scripts/Animation/VisMetrics.hpp"
-#include "Scripts/Geometry/SelfIntersection.hpp"
 #include "Scripts/Geometry/PolygonMeshProcessing.hpp"
-#include "Scripts/Animation/IK/TwoBoneIK.hpp"
+#include "Scripts/Geometry/SelfIntersection.hpp"
 
 namespace aEngine {
 
@@ -43,11 +43,13 @@ void NativeScript::DrawInspectorGUI() {
   if (ImGui::Button("Add Script", {-1, 30}))
     ImGui::OpenPopup("addscriptpanelpopup");
   drawAddScriptPopup();
+  int labelIndex = 0;
   for (auto &instance : instances) {
     if (instance != nullptr) {
       // if this is a valid scriptable
-      bool nodeOpen =
-          ImGui::TreeNodeEx(instance->getInspectorWindowName().c_str());
+      bool nodeOpen = ImGui::TreeNodeEx((instance->getInspectorWindowName() +
+                                         "##" + std::to_string(labelIndex++))
+                                            .c_str());
       if (nodeOpen) {
         instance->DrawInspectorGUIInternal();
         ImGui::TreePop();
