@@ -16,7 +16,7 @@ public:
   void Update(float dt) override;
 
   // Render debug utils related to geometry
-  void Render();
+  void DebugRender() override;
 
   template <typename Archive>
   void serialize(Archive &ar) {

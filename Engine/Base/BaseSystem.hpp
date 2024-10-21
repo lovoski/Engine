@@ -44,6 +44,8 @@ public:
   virtual void Destroy() {}
   // Reset local variables of the system.
   virtual void Reset() {}
+  // Debug related rendering
+  virtual void DebugRender() {}
 
   const int GetNumEntities() const { return entities.size(); }
 

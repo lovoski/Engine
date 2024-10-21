@@ -14,6 +14,7 @@
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
 #include "System/Spatial/SpatialSystem.hpp"
+#include "System/Physics/RigidDynamics.hpp"
 
 #include "Scripts/CameraController.hpp"
 
@@ -43,6 +44,7 @@ void Scene::Start() {
   RegisterSystem<NativeScriptSystem>();
   RegisterSystem<SpatialSystem>();
   RegisterSystem<AudioSystem>();
+  RegisterSystem<RigidDynamics>();
 
   // start all the systems
   for (auto &sys : registeredSystems)
@@ -77,9 +79,6 @@ void Scene::Update() {
   Context.hierarchyUpdateTime = t1 - t0;
   Context.updateTime = t2 - t1;
 
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    LOG_F(ERROR, "Framebuffer is not complete");
-
   // do the rendering
   ForceRender();
 }
@@ -89,12 +88,10 @@ void Scene::ForceRender() {
   GetSystemInstance<RenderSystem>()->Render();
   // enable the scripts to draw something in the scene
   float t4 = GetTime();
-  GetSystemInstance<AudioSystem>()->Render();
-  GetSystemInstance<CameraSystem>()->Render();
-  GetSystemInstance<LightSystem>()->Render();
-  GetSystemInstance<AnimationSystem>()->Render();
-  GetSystemInstance<SpatialSystem>()->Render();
-  GetSystemInstance<NativeScriptSystem>()->DrawToScene();
+
+  for (auto &sys : registeredSystems)
+    sys.second->DebugRender();
+
   float t5 = GetTime();
 
   Context.renderTime = t4 - t3;
@@ -126,15 +123,8 @@ void Scene::Reset() {
   // reset entities
   for (auto root : HierarchyRoots)
     DestroyEntity(root->ID);
-  GetComponentList<Camera>()->data.clear();
-  GetComponentList<DirectionalLight>()->data.clear();
-  GetComponentList<PointLight>()->data.clear();
-  GetComponentList<EnvironmentLight>()->data.clear();
-  GetComponentList<Animator>()->data.clear();
-  GetComponentList<DeformRenderer>()->data.clear();
-  GetComponentList<MeshRenderer>()->data.clear();
-  GetComponentList<NativeScript>()->data.clear();
-  GetComponentList<Mesh>()->data.clear();
+  for (auto &compList : componentsArrays)
+    compList.second->Clear();
   HierarchyRoots.clear();
   entitiesSignatures.clear();
   entities.clear();
@@ -144,84 +134,6 @@ void Scene::Reset() {
   // reset system context
   for (auto system : registeredSystems) {
     system.second->Reset();
-  }
-}
-
-void Scene::PlotSceneProfile() {
-  static float timeCounter = 0.0f;
-  static float mainRenderTime = 0.0f, displayMainRenderTime = 0.0f;
-  static float mainUpdateTime = 0.0f, displayMainUpdateTime = 0.0f;
-  static float debugRenderTime = 0.0f, displayDebugRenderTime = 0.0f;
-  static float hierarchyUpdateTime = 0.0f, displayHierarchyUpdateTime = 0.0f;
-  static int frameCounter = 0, displayFPS = 0;
-  timeCounter += Context.deltaTime;
-  mainUpdateTime += Context.updateTime;
-  mainRenderTime += Context.renderTime;
-  debugRenderTime += Context.debugDrawTime;
-  hierarchyUpdateTime += Context.hierarchyUpdateTime;
-  frameCounter++;
-  if (timeCounter >= 0.5f) {
-    displayFPS = frameCounter * 2;
-    displayMainRenderTime = mainRenderTime / frameCounter;
-    displayMainUpdateTime = mainUpdateTime / frameCounter;
-    displayDebugRenderTime = debugRenderTime / frameCounter;
-    displayHierarchyUpdateTime = hierarchyUpdateTime / frameCounter;
-    mainRenderTime = 0.0f;
-    mainUpdateTime = 0.0f;
-    debugRenderTime = 0.0f;
-    hierarchyUpdateTime = 0.0f;
-    frameCounter = 0;
-    timeCounter = 0.0f;
-  }
-  ImGui::SeparatorText("Time");
-  ImGui::MenuItem("Frames Per Second:", nullptr, nullptr, false);
-  ImGui::Text("%d", displayFPS);
-  ImGui::MenuItem("Hierarchy Update:", nullptr, nullptr, false);
-  ImGui::Text("%.4f ms", displayHierarchyUpdateTime * 1000);
-  ImGui::MenuItem("Main Update:", nullptr, nullptr, false);
-  ImGui::Text("%.4f ms", displayMainUpdateTime * 1000);
-  ImGui::MenuItem("Main Render:", nullptr, nullptr, false);
-  ImGui::Text("%.4f ms", displayMainRenderTime * 1000);
-  ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
-  ImGui::Text("%.4f ms", displayDebugRenderTime * 1000);
-  ImGui::MenuItem("Delta Time:", nullptr, nullptr, false);
-  ImGui::Text("%.4f ms", 1000.0f / displayFPS);
-
-  ImGui::SeparatorText("Objects");
-  ImGui::MenuItem("Active Camera:", nullptr, nullptr, false);
-  ImGui::Text("Entity ID: %d",
-              Context.hasActiveCamera ? Context.activeCamera : -1);
-  ImGui::Text("Entity Name: %s",
-              !Context.hasActiveCamera
-                  ? "None"
-                  : EntityFromID(Context.activeCamera)->name.c_str());
-
-  ImGui::MenuItem("Entities", nullptr, nullptr, false);
-  ImGui::Text("Entity Counter: %d", entityCount);
-  ImGui::Text("Animation Entities: %d",
-              GetSystemInstance<AnimationSystem>()->GetNumEntities());
-  ImGui::Text("Render Entities: %d",
-              GetSystemInstance<RenderSystem>()->GetNumEntities());
-  ImGui::Text("Camera Entities: %d",
-              GetSystemInstance<CameraSystem>()->GetNumEntities());
-  ImGui::Text("Lights Entities: %d",
-              GetSystemInstance<LightSystem>()->GetNumEntities());
-  ImGui::Text("Script Entities: %d",
-              GetSystemInstance<NativeScriptSystem>()->GetNumEntities());
-
-  ImGui::SeparatorText("Registered Types");
-  static bool queryRegisteredTypes = false;
-  ImGui::Checkbox("Enable Query", &queryRegisteredTypes);
-  if (queryRegisteredTypes) {
-    ImGui::MenuItem("Systems", nullptr, nullptr, false);
-    for (auto &system : registeredSystems) {
-      ImGui::Text("%s", typeid(*system.second.get()).name());
-    }
-    ImGui::MenuItem("Components", nullptr, nullptr, false);
-    for (auto &compPair : BaseSystem::CompMap) {
-      ImGui::Text("%d:%s", compPair.first,
-                  typeid(*compPair.second.get()).name());
-    }
   }
 }
 
@@ -521,6 +433,84 @@ bool Scene::Load(std::string path) {
   } else {
     LOG_F(ERROR, "failed to load scene from %s", path.c_str());
     return false;
+  }
+}
+
+void Scene::PlotSceneProfile() {
+  static float timeCounter = 0.0f;
+  static float mainRenderTime = 0.0f, displayMainRenderTime = 0.0f;
+  static float mainUpdateTime = 0.0f, displayMainUpdateTime = 0.0f;
+  static float debugRenderTime = 0.0f, displayDebugRenderTime = 0.0f;
+  static float hierarchyUpdateTime = 0.0f, displayHierarchyUpdateTime = 0.0f;
+  static int frameCounter = 0, displayFPS = 0;
+  timeCounter += Context.deltaTime;
+  mainUpdateTime += Context.updateTime;
+  mainRenderTime += Context.renderTime;
+  debugRenderTime += Context.debugDrawTime;
+  hierarchyUpdateTime += Context.hierarchyUpdateTime;
+  frameCounter++;
+  if (timeCounter >= 0.5f) {
+    displayFPS = frameCounter * 2;
+    displayMainRenderTime = mainRenderTime / frameCounter;
+    displayMainUpdateTime = mainUpdateTime / frameCounter;
+    displayDebugRenderTime = debugRenderTime / frameCounter;
+    displayHierarchyUpdateTime = hierarchyUpdateTime / frameCounter;
+    mainRenderTime = 0.0f;
+    mainUpdateTime = 0.0f;
+    debugRenderTime = 0.0f;
+    hierarchyUpdateTime = 0.0f;
+    frameCounter = 0;
+    timeCounter = 0.0f;
+  }
+  ImGui::SeparatorText("Time");
+  ImGui::MenuItem("Frames Per Second:", nullptr, nullptr, false);
+  ImGui::Text("%d", displayFPS);
+  ImGui::MenuItem("Hierarchy Update:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayHierarchyUpdateTime * 1000);
+  ImGui::MenuItem("Main Update:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayMainUpdateTime * 1000);
+  ImGui::MenuItem("Main Render:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayMainRenderTime * 1000);
+  ImGui::MenuItem("Debug Render:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", displayDebugRenderTime * 1000);
+  ImGui::MenuItem("Delta Time:", nullptr, nullptr, false);
+  ImGui::Text("%.4f ms", 1000.0f / displayFPS);
+
+  ImGui::SeparatorText("Objects");
+  ImGui::MenuItem("Active Camera:", nullptr, nullptr, false);
+  ImGui::Text("Entity ID: %d",
+              Context.hasActiveCamera ? Context.activeCamera : -1);
+  ImGui::Text("Entity Name: %s",
+              !Context.hasActiveCamera
+                  ? "None"
+                  : EntityFromID(Context.activeCamera)->name.c_str());
+
+  ImGui::MenuItem("Entities", nullptr, nullptr, false);
+  ImGui::Text("Entity Counter: %d", entityCount);
+  ImGui::Text("Animation Entities: %d",
+              GetSystemInstance<AnimationSystem>()->GetNumEntities());
+  ImGui::Text("Render Entities: %d",
+              GetSystemInstance<RenderSystem>()->GetNumEntities());
+  ImGui::Text("Camera Entities: %d",
+              GetSystemInstance<CameraSystem>()->GetNumEntities());
+  ImGui::Text("Lights Entities: %d",
+              GetSystemInstance<LightSystem>()->GetNumEntities());
+  ImGui::Text("Script Entities: %d",
+              GetSystemInstance<NativeScriptSystem>()->GetNumEntities());
+
+  ImGui::SeparatorText("Registered Types");
+  static bool queryRegisteredTypes = false;
+  ImGui::Checkbox("Enable Query", &queryRegisteredTypes);
+  if (queryRegisteredTypes) {
+    ImGui::MenuItem("Systems", nullptr, nullptr, false);
+    for (auto &system : registeredSystems) {
+      ImGui::Text("%s", typeid(*system.second.get()).name());
+    }
+    ImGui::MenuItem("Components", nullptr, nullptr, false);
+    for (auto &compPair : BaseSystem::CompMap) {
+      ImGui::Text("%d:%s", compPair.first,
+                  typeid(*compPair.second.get()).name());
+    }
   }
 }
 

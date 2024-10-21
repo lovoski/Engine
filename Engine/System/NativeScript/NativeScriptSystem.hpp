@@ -12,7 +12,7 @@ public:
   void Update(float dt) override;
   void LateUpdate(float dt);
 
-  void DrawToScene();
+  void DebugRender();
 
   template <typename Archive>
   void serialize(Archive &ar) {

@@ -19,12 +19,12 @@ public:
 
   // If the animator's ShowSkeleton is true,
   // draw its skeleton onto the scene.
-  void Render();
+  void DebugRender() override;
 
   void Reset() override {
     SystemFPS = 30;
     EnableAutoPlay = false;
-    ShowSequencer = true;
+    ShowSequencer = false;
     SystemStartFrame = 0;
     SystemEndFrame = 1000;
     SystemCurrentFrame = 0.0f;
@@ -35,7 +35,7 @@ public:
   int SystemStartFrame, SystemEndFrame;
   // automatically increase systemCurrentFrame according to dt and systemFPS
   bool EnableAutoPlay = false;
-  bool ShowSequencer = true;
+  bool ShowSequencer = false;
 
   void DrawSequencer();
 

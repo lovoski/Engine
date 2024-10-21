@@ -21,6 +21,8 @@ public:
   // Returns true if the entity has this component
   virtual bool Has(const EntityID entity) { return false; }
 
+  virtual void Clear() {}
+
   virtual std::string getInspectorWindowName() { return ""; }
 
   template <typename Archive> void serialize(Archive &ar) {}
@@ -85,6 +87,8 @@ public:
     } else
       return false;
   }
+
+  void Clear() override { data.clear(); }
 
   std::string getInspectorWindowName() override {
     auto it = BaseSystem::CompMap.find(ComponentType<T>());

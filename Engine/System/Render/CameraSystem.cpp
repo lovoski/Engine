@@ -12,7 +12,7 @@ void CameraSystem::PreUpdate(float dt) {
   }
 }
 
-void CameraSystem::Render() {
+void CameraSystem::DebugRender() {
   EntityID camera;
   if (GWORLD.GetActiveCamera(camera)) {
     auto activeCameraEntity = GWORLD.EntityFromID(camera);

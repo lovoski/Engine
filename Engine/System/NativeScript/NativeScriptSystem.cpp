@@ -37,7 +37,7 @@ void NativeScriptSystem::LateUpdate(float dt) {
   }
 }
 
-void NativeScriptSystem::DrawToScene() {
+void NativeScriptSystem::DebugRender() {
   for (auto entity : entities) {
     auto entityObject = GWORLD.EntityFromID(entity);
     auto nsc = entityObject->GetComponent<NativeScript>();

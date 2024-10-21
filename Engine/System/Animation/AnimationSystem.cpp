@@ -94,7 +94,7 @@ void AnimationSystem::collectSkeletonDrawQueue(
                        animator->jointEntityMap[entry.second]->Position()));
 }
 
-void AnimationSystem::Render() {
+void AnimationSystem::DebugRender() {
   EntityID camera;
   if (GWORLD.GetActiveCamera(camera)) {
     auto cameraObject = GWORLD.EntityFromID(camera);

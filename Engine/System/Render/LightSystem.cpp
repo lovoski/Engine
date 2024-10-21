@@ -48,7 +48,7 @@ void LightSystem::Update(float dt) {
   renderSystem->LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
 }
 
-void LightSystem::Render() {
+void LightSystem::DebugRender() {
   EntityID camera;
   if (GWORLD.GetActiveCamera(camera)) {
     auto cameraEntity = GWORLD.EntityFromID(camera);

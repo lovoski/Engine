@@ -10,7 +10,7 @@ void AudioSystem::PreUpdate(float dt) {}
 
 void AudioSystem::Update(float dt) {}
 
-void AudioSystem::Render() {}
+void AudioSystem::DebugRender() {}
 
 void AudioSystem::queryAviableDevice() {
   ma_result result;

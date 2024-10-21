@@ -45,7 +45,7 @@ public:
   }
 
   // Draw visualizations for light sources
-  void Render();
+  void DebugRender();
 
   // The enabled global skylight
   std::vector<std::shared_ptr<EnvironmentLight>> skyLights;

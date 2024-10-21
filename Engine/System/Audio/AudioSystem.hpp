@@ -15,7 +15,7 @@ public:
 
   void Reset() override {}
 
-  void Render();
+  void DebugRender() override;
 
   template <typename Archive>
   void serialize(Archive &ar) {

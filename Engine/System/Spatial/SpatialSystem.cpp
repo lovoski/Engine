@@ -59,7 +59,7 @@ void SpatialSystem::PreUpdate(float dt) {
 
 void SpatialSystem::Update(float dt) {}
 
-void SpatialSystem::Render() {
+void SpatialSystem::DebugRender() {
   EntityID camera;
   if (GWORLD.GetActiveCamera(camera)) {
     auto cameraComp = GWORLD.GetComponent<Camera>(camera);

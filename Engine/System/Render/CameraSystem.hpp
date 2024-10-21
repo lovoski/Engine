@@ -19,7 +19,7 @@ public:
   // Maintain the transform matrices for all cameras
   void PreUpdate(float dt) override;
 
-  void Render();
+  void DebugRender() override;
 
   std::vector<std::shared_ptr<Entity>> GetAvailableCamera();
 
