@@ -16,7 +16,7 @@ glm::vec3 Grey = glm::vec3(0.5f);
 glm::vec3 Black = glm::vec3(0.0f);
 
 std::string lineVS = R"(
-#version 460 core
+#version 430 core
 layout (location = 0) in vec3 aPos;
 uniform mat4 mvp;
 void main() {
@@ -24,7 +24,7 @@ void main() {
 }
 )";
 std::string lineFS = R"(
-#version 460 core
+#version 430 core
 uniform vec3 color;
 out vec4 FragColor;
 void main() {
@@ -118,7 +118,7 @@ void DrawGrid(unsigned int gridSize, unsigned int gridSpacing, glm::mat4 mvp,
 }
 
 std::string squareVS = R"(
-#version 460 core
+#version 430 core
 layout (location = 0) in vec3 aPos;
 uniform mat4 mvp;
 void main() {
@@ -126,7 +126,7 @@ void main() {
 }
 )";
 std::string squareGS = R"(
-#version 460 core
+#version 430 core
 layout (points) in;
 layout (triangle_strip, max_vertices = 4) out;
 uniform vec2 viewportSize;

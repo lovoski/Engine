@@ -6,6 +6,6 @@ RigidBody::RigidBody(EntityID id) : BaseComponent(id) {}
 
 RigidBody::~RigidBody() {}
 
-};
+}; // namespace aEngine
 
 REGISTER_COMPONENT(aEngine, RigidBody);

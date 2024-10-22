@@ -9,7 +9,7 @@ namespace Render {
 
 // the default diffuse shader
 const std::string basicVS = R"(
-#version 460 core
+#version 430 core
 layout (location = 0) in vec4 aPos;
 layout (location = 1) in vec4 aNormal;
 layout (location = 2) in vec4 aTexCoord;
@@ -30,7 +30,7 @@ void main() {
 }
 )";
 const std::string basicGS = R"(
-#version 460
+#version 430 core
 layout (triangles) in;
 layout (triangle_strip) out;
 layout (max_vertices = 3) out;
@@ -94,8 +94,7 @@ void main() {
 }
 )";
 const std::string basicFS = R"(
-#version 460
-#extension GL_ARB_bindless_texture : require
+#version 430 core
 
 struct LightData {
   int meta[4];
@@ -104,7 +103,6 @@ struct LightData {
   vec4 position; // for point light
   vec4 direction; // for directional light
   mat4 lightMatrix; // light space transform matrix
-  uvec4 shadowMap; // xy -> shadow map
 };
 layout(std430, binding = 0) buffer Lights {
   LightData lights[];
@@ -137,27 +135,6 @@ vec3 LightAttenuate(vec3 color, float distance, float intensity) {
   return color * atten;
 }
 
-int pcfKernelSize = 2;
-float ShadowAtten(int lightIndex, float bias) {
-  vec3 projCoords = (lights[lightIndex].lightMatrix * vec4(worldPos, 1.0)).xyz;
-  projCoords = projCoords * 0.5 + 0.5;
-  sampler2D shadowMap = sampler2D(lights[lightIndex].shadowMap.xy);
-  float closestDepth = texture(shadowMap, projCoords.xy).r;
-  float currentDepth = projCoords.z;
-  float shadow = 0.0;
-  vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-  for(int x = -pcfKernelSize; x <= pcfKernelSize; ++x) {
-    for(int y = -pcfKernelSize; y <= pcfKernelSize; ++y) {
-      float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-      shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;
-    }
-  }
-  shadow /= pcfKernelSize * pcfKernelSize * 4;
-  if (currentDepth > 1.0)
-    shadow = 1.0;
-  return 1.0 - shadow;
-}
-
 vec3 LitSurface() {
   vec3 Diffuse = vec3(0.0, 0.0, 0.0);
   vec3 Normal = normalize(worldNormal);
@@ -174,8 +151,8 @@ vec3 LitSurface() {
     float lambert = (dot(Normal, LightDir) + 1.0) * 0.5;
     vec3 LightEffect = lambert * LightColor;
     if (lights[i].meta[1] == 1 && ReceiveShadow != 0) {
-      float bias = max(0.05 * (1.0 - dot(Normal, LightDir)), 0.005);
-      LightEffect *= ShadowAtten(i, bias);
+      // float bias = max(0.05 * (1.0 - dot(Normal, LightDir)), 0.005);
+      // LightEffect *= ShadowAtten(i, bias);
     }
     Diffuse = Diffuse + LightEffect;
   }

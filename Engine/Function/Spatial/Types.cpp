@@ -1,9 +1,9 @@
 #include "Function/Spatial/Types.hpp"
 #include "Function/Spatial/Library.hpp"
 
-namespace aEngine {
+namespace aEngine::Spatial {
 
-namespace Spatial {
+const float eps = 1e-8f;
 
 using glm::mat3;
 using glm::mat4;
@@ -116,6 +116,4 @@ bool Triangle::Test(Ray &ray, glm::vec3 &point) {
 
 glm::vec3 Triangle::Barycenter() { return (V[0] + V[1] + V[2]) / 3.0f; }
 
-}; // namespace Spatial
-
-}; // namespace aEngine
+}; // namespace aEngine::Spatial

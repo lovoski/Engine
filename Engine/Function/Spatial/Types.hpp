@@ -1,24 +1,21 @@
 #pragma once
 
-#include <cmath>
-#include <string>
-#include <array>
-#include <vector>
-#include <stack>
-#include <queue>
-#include <iostream>
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <iostream>
+#include <queue>
+#include <stack>
+#include <string>
+#include <vector>
+
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace aEngine {
-
-namespace Spatial {
-
-const float eps = 1e-8f;
+namespace aEngine::Spatial {
 
 struct Plane;
 struct Line;
@@ -80,6 +77,4 @@ struct Triangle {
   bool Test(Ray &ray, glm::vec3 &point);
 };
 
-}; // namespace Spatial
-
-}; // namespace aEngine
+}; // namespace aEngine::Spatial

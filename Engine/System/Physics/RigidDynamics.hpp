@@ -16,7 +16,13 @@ public:
   void PreUpdate(float dt) override;
   void Update(float dt) override;
 
+  void Reset() override {}
+
   void DebugRender() override;
+
+  template <typename Archive> void serialize(Archive &ar) {
+    ar(cereal::base_class<BaseSystem>(this));
+  }
 };
 
-};
+}; // namespace aEngine

@@ -211,8 +211,8 @@ void Editor::MainMenuBar() {
         auto cameraSystem = GWORLD.GetSystemInstance<CameraSystem>();
         auto lightSystem = GWORLD.GetSystemInstance<LightSystem>();
         ImGui::PushItemWidth(180);
-        ImGui::MenuItem("Shadows", nullptr, nullptr, false);
-        ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMap);
+        // ImGui::MenuItem("Shadows", nullptr, nullptr, false);
+        // ImGui::Checkbox("Enable Shadow", &renderSystem->EnableShadowMap);
         // std::vector<const char *> shadowMapSizeSlectable{
         //     "64", "128", "256", "512", "1024", "2048", "4096"};
         // static int currentShadowMapSizeSlectableIndex = 4;
@@ -290,6 +290,7 @@ void Editor::MainMenuBar() {
         ImGui::PushItemWidth(120);
         ImGui::InputInt("System FPS", &animationSystem->SystemFPS);
         ImGui::Checkbox("Auto Play", &animationSystem->EnableAutoPlay);
+        ImGui::Checkbox("Show Sequencer", &animationSystem->ShowSequencer);
         ImGui::PopItemWidth();
         ImGui::EndMenu();
       }

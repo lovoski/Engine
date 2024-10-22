@@ -8,7 +8,7 @@ namespace aEngine {
 namespace Render {
 
 const std::string pbrVS = R"(
-#version 460 core
+#version 430 core
 layout (location = 0) in vec4 aPos;
 layout (location = 1) in vec4 aNormal;
 layout (location = 2) in vec4 aTexCoord;
@@ -34,8 +34,7 @@ void main() {
 )";
 
 const std::string pbrFS = R"(
-#version 460 core
-#extension GL_ARB_bindless_texture : require
+#version 430 core
 
 struct LightData {
   int meta[4];
@@ -44,7 +43,6 @@ struct LightData {
   vec4 position;
   vec4 direction;
   mat4 lightMatrix;
-  uvec4 shadowMap;
 };
 layout(std430, binding = 0) buffer Lights {
   LightData lights[];

@@ -2,7 +2,10 @@
 
 namespace aEngine {
 
-RigidDynamics::RigidDynamics() {}
+RigidDynamics::RigidDynamics() {
+  Reset();
+  AddComponentSignatureRequireAll<RigidBody>();
+}
 
 RigidDynamics::~RigidDynamics() {}
 
@@ -13,3 +16,5 @@ void RigidDynamics::PreUpdate(float dt) {}
 void RigidDynamics::DebugRender() {}
 
 }; // namespace aEngine
+
+REGISTER_SYSTEM(aEngine, RigidDynamics)

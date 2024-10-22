@@ -18,47 +18,47 @@ RenderSystem::RenderSystem() {
 }
 
 void RenderSystem::bakeShadowMap() {
-  auto lightSystem = GWORLD.GetSystemInstance<LightSystem>();
-  // point light shadows
-  auto &dlights = lightSystem->dlights;
-  LightsBuffer.BindAs(GL_SHADER_STORAGE_BUFFER);
-  for (int i = 0; i < dlights.size(); ++i) {
-    auto dlight = dlights[i];
-    dlight->StartShadow();
-    shadowMapDirLight->Use();
-    auto lightMatrix = dlight->GetLightSpaceMatrix();
-    shadowMapDirLight->SetMat4("LightSpaceMatrix", lightMatrix);
-    auto offset =
-        i * sizeof(LightData) + offsetof(LightData, meta) + 1 * sizeof(int);
-    // this light will cast shadow
-    LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, 1, offset);
-    offset = i * sizeof(LightData) + offsetof(LightData, lightMatrix);
-    // setup light matrix
-    LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, lightMatrix, offset);
-    for (auto id : entities) {
-      auto entity = GWORLD.EntityFromID(id);
-      auto mesh = entity->GetComponent<Mesh>();
-      std::shared_ptr<MeshRenderer> renderer;
-      if (auto r = entity->GetComponent<MeshRenderer>()) {
-        renderer = r;
-      } else if (auto d = entity->GetComponent<DeformRenderer>()) {
-        renderer = d->renderer;
-        d->DeformMesh(mesh);
-      }
-      if (renderer->castShadow) {
-        renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
-                                     entity->GlobalTransformMatrix());
-      }
-    }
-    // bindless texture setup
-    auto shadowMapHandle = glGetTextureHandleARB(dlight->ShadowMap);
-    glMakeTextureHandleResidentARB(shadowMapHandle);
-    offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
-    LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, shadowMapHandle,
-                              offset);
-    dlight->EndShadow();
-  }
-  LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
+  // auto lightSystem = GWORLD.GetSystemInstance<LightSystem>();
+  // // point light shadows
+  // auto &dlights = lightSystem->dlights;
+  // LightsBuffer.BindAs(GL_SHADER_STORAGE_BUFFER);
+  // for (int i = 0; i < dlights.size(); ++i) {
+  //   auto dlight = dlights[i];
+  //   dlight->StartShadow();
+  //   shadowMapDirLight->Use();
+  //   auto lightMatrix = dlight->GetLightSpaceMatrix();
+  //   shadowMapDirLight->SetMat4("LightSpaceMatrix", lightMatrix);
+  //   auto offset =
+  //       i * sizeof(LightData) + offsetof(LightData, meta) + 1 * sizeof(int);
+  //   // this light will cast shadow
+  //   LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, 1, offset);
+  //   offset = i * sizeof(LightData) + offsetof(LightData, lightMatrix);
+  //   // setup light matrix
+  //   LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, lightMatrix, offset);
+  //   for (auto id : entities) {
+  //     auto entity = GWORLD.EntityFromID(id);
+  //     auto mesh = entity->GetComponent<Mesh>();
+  //     std::shared_ptr<MeshRenderer> renderer;
+  //     if (auto r = entity->GetComponent<MeshRenderer>()) {
+  //       renderer = r;
+  //     } else if (auto d = entity->GetComponent<DeformRenderer>()) {
+  //       renderer = d->renderer;
+  //       d->DeformMesh(mesh);
+  //     }
+  //     if (renderer->castShadow) {
+  //       renderer->DrawMeshShadowPass(*shadowMapDirLight, mesh,
+  //                                    entity->GlobalTransformMatrix());
+  //     }
+  //   }
+  //   // bindless texture setup
+  //   auto shadowMapHandle = glGetTextureHandleARB(dlight->ShadowMap);
+  //   glMakeTextureHandleResidentARB(shadowMapHandle);
+  //   offset = i * sizeof(LightData) + offsetof(LightData, shadowMapHandle);
+  //   LightsBuffer.UpdateDataAs(GL_SHADER_STORAGE_BUFFER, shadowMapHandle,
+  //                             offset);
+  //   dlight->EndShadow();
+  // }
+  // LightsBuffer.UnbindAs(GL_SHADER_STORAGE_BUFFER);
 }
 
 void RenderSystem::Render() {
