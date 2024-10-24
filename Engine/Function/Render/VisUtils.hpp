@@ -22,6 +22,9 @@ void DrawLineStrip3D(std::vector<glm::vec3> &lineStrip,
                      glm::mat4 vp = glm::mat4(1.0f),
                      glm::vec3 color = glm::vec3(1.0f), float thickness = 1.0f);
 
+void DrawLines(std::vector<std::pair<glm::vec3, glm::vec3>> &lines,
+               glm::mat4 vp, glm::vec3 color = White);
+
 void DrawGrid(unsigned int gridSize, unsigned int gridSpacing,
               glm::mat4 mvp = glm::mat4(1.0f),
               glm::vec3 color = glm::vec3(1.0f));

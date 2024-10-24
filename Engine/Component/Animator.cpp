@@ -114,8 +114,10 @@ void Animator::createSkeletonEntities() {
     if (i == 0)
       joints[i]->parent = nullptr;
     else {
-      joints[i]->parent = joints[actor->jointParent[i]];
-      joints[i]->parent->children.push_back(joints[i]);
+      joints[i]->parent =
+          actor->jointParent[i] == -1 ? nullptr : joints[actor->jointParent[i]];
+      if (joints[i]->parent)
+        joints[i]->parent->children.push_back(joints[i]);
     }
     // cache mappings
     // 1. name to index

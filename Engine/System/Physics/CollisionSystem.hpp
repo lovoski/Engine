@@ -1,14 +1,15 @@
 #pragma once
 
 #include "Base/BaseSystem.hpp"
-#include "Global.hpp"
+#include "Entity.hpp"
+#include "Scene.hpp"
 
 namespace aEngine {
 
-class SpatialSystem : public BaseSystem {
+class CollisionSystem : public BaseSystem {
 public:
-  SpatialSystem();
-  ~SpatialSystem();
+  CollisionSystem();
+  ~CollisionSystem();
 
   void Reset() override {}
 
@@ -18,8 +19,7 @@ public:
   // Render debug utils related to geometry
   void DebugRender() override;
 
-  template <typename Archive>
-  void serialize(Archive &ar) {
+  template <typename Archive> void serialize(Archive &ar) {
     ar(cereal::base_class<BaseSystem>(this));
   }
 };

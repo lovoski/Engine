@@ -7,17 +7,15 @@
 #include "Function/Render/Shader.hpp"
 #include "Global.hpp"
 
-namespace aEngine {
-
-namespace Render {
+namespace aEngine::Render {
 
 // Each mesh object holds a initial opengl buffer object
 class Mesh {
 public:
-  // mesh Data
   std::vector<Vertex> vertices;
   std::vector<unsigned int> indices;
-  // buffers
+
+  std::vector<BlendShape> blendShapes;
   Buffer vbo, ebo;
 
   std::string identifier;
@@ -35,7 +33,5 @@ private:
   // initializes all the buffer objects/arrays
   void setupMesh();
 };
-
-}; // namespace Render
 
 }; // namespace aEngine

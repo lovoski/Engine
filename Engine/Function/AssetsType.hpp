@@ -4,17 +4,24 @@
 
 namespace aEngine {
 
-constexpr int MAX_BONES = 4;
+struct BlendShapeVertex {
+  glm::vec3 BlendShapeOffset;
+  glm::vec3 BlendShapeNormal;
+};
+struct BlendShape {
+  float weight = 0.0f;
+  std::string name;
+  std::vector<BlendShapeVertex> data;
+};
+const int MAX_BONES = 4;
+const int MAX_BLEND_SHAPES = 52;
 struct Vertex {
-  // Info related to rendering
   glm::vec4 Position;
   glm::vec4 Normal;
-  // xy: uv1
-  // zw: uv2 (if any)
+  // uv1, uv2
   glm::vec4 TexCoords;
-  // vertex color
   glm::vec4 Color;
-  // Info related to skeleton animation
+
   int BoneId[MAX_BONES];
   float BoneWeight[MAX_BONES];
 };

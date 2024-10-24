@@ -5,7 +5,6 @@
 #include "Scripts/Animation/SAMERetarget.hpp"
 #include "Scripts/Animation/VisMetrics.hpp"
 #include "Scripts/Geometry/PolygonMeshProcessing.hpp"
-#include "Scripts/Geometry/SelfIntersection.hpp"
 
 namespace aEngine {
 
@@ -31,8 +30,6 @@ void NativeScript::drawAddScriptPopup() {
 
     // geometry scripts
     ImGui::Separator();
-    if (ImGui::MenuItem("Self Intersection"))
-      Bind<SelfIntersection>();
     if (ImGui::MenuItem("Polygon Mesh Processing"))
       Bind<PolygonMeshProcessing>();
     ImGui::EndPopup();

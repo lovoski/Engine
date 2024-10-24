@@ -10,11 +10,12 @@
 #include "System/Animation/AnimationSystem.hpp"
 #include "System/Audio/AudioSystem.hpp"
 #include "System/NativeScript/NativeScriptSystem.hpp"
+#include "System/Physics/CollisionSystem.hpp"
+#include "System/Physics/RigidDynamics.hpp"
 #include "System/Render/CameraSystem.hpp"
 #include "System/Render/LightSystem.hpp"
 #include "System/Render/RenderSystem.hpp"
-#include "System/Spatial/SpatialSystem.hpp"
-#include "System/Physics/RigidDynamics.hpp"
+
 
 #include "Scripts/CameraController.hpp"
 
@@ -42,7 +43,7 @@ void Scene::Start() {
   RegisterSystem<LightSystem>();
   RegisterSystem<AnimationSystem>();
   RegisterSystem<NativeScriptSystem>();
-  RegisterSystem<SpatialSystem>();
+  RegisterSystem<CollisionSystem>();
   RegisterSystem<AudioSystem>();
   RegisterSystem<RigidDynamics>();
 
@@ -428,6 +429,12 @@ bool Scene::Load(std::string path) {
 
     // 4. Assets
     ia(Loader.allMaterials);
+
+    // 5. Perform some component specific caching
+    //   a. Compute the blend shape data for <DeformRenderer> if any
+    auto &deformRenderers = GetComponentList<DeformRenderer>();
+    for (const auto &deformRenderer : deformRenderers->data)
+      deformRenderer->FillBlendShapeDataBuffer();
 
     return true;
   } else {

@@ -21,6 +21,10 @@ struct DeformRenderer : public aEngine::BaseComponent {
   EntityID animator;
   std::shared_ptr<MeshRenderer> renderer;
   Render::Buffer skeletonMatrices;
+  // This buffer gets updated per frame
+  Render::Buffer blendShapeWeightsBuffer;
+  // This buffer only gets updated when blend shape itself changes
+  Render::Buffer blendShapeDataBuffer;
 
   std::string getInspectorWindowName() override { return "Deform Renderer"; }
 
@@ -33,7 +37,12 @@ struct DeformRenderer : public aEngine::BaseComponent {
 
   void DeformMesh(std::shared_ptr<Mesh> mesh);
 
+  void FillBlendShapeDataBuffer();
+
   void DrawInspectorGUI() override;
+
+private:
+  bool enableBlendShape = false;
 };
 
 }; // namespace aEngine

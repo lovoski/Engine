@@ -30,10 +30,6 @@ struct Mesh : public BaseComponent {
   // Unbind vao, finish rendering
   void Unbind();
 
-  // Setup bvh with member variable meshInstance, this function
-  // will rebuild instead of updating the bvh.
-  void BuildBVH(glm::mat4 &transform);
-
   void SetMeshInstance(Render::Mesh *mesh);
   // The mesh instance is not allowed to be nullptr,
   // this function should be safe to use.
@@ -61,26 +57,9 @@ struct Mesh : public BaseComponent {
   // Mark whether the mesh is deformed
   bool Deformed = false;
 
-  // When set to false, the bvh will be cleared, the object 
-  // won't be considered in collision as well.
-  bool AsCollider = false;
-  // When set to false, the bvh will gets updated in each 
-  // PreUpdate of SpatialSystem.
-  bool StaticCollider = true;
-
-  // bounding volumn hierarchy
-  Spatial::BVH bvh;
-
-  // Visualize only the bvh leaf nodes
-  bool DrawLeafNodeOnly = true;
-
 private:
   friend class cereal::access;
   Render::Mesh *meshInstance = nullptr;
-
-  void buildBVHDeformed();
-  void buildBVHOriginal(glm::mat4 transform);
-
 };
 
 }; // namespace aEngine

@@ -60,7 +60,7 @@ void Editor::Start() {
   context.io->IniFilename = context.layoutFileName;
 
   ImGui_ImplGlfw_InitForOpenGL(GWORLD.Context.window, true);
-  ImGui_ImplOpenGL3_Init("#version 460");
+  ImGui_ImplOpenGL3_Init("#version 430");
 
   ImPlot::CreateContext();
 

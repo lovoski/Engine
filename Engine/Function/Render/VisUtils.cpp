@@ -55,6 +55,34 @@ void DrawLineStrip3D(std::vector<glm::vec3> &lineStrip, glm::mat4 vp,
   vbo.UnbindAs(GL_ARRAY_BUFFER);
 }
 
+void DrawLines(std::vector<std::pair<glm::vec3, glm::vec3>> &lines,
+               glm::mat4 vp, glm::vec3 color) {
+  static Render::VAO vao;
+  static Render::Buffer vbo;
+  static Render::Shader lineShader;
+  static bool shaderLoaded = false;
+  if (!shaderLoaded) {
+    lineShader.LoadAndRecompileShaderSource(lineVS, lineFS);
+    shaderLoaded = true;
+  }
+  // update data in buffer every time
+  vao.Bind();
+  vbo.BindAs(GL_ARRAY_BUFFER);
+  std::vector<glm::vec3> linePoints;
+  for (auto &pointPair : lines) {
+    linePoints.push_back(pointPair.first);
+    linePoints.push_back(pointPair.second);
+  }
+  vbo.SetDataAs(GL_ARRAY_BUFFER, linePoints, GL_STATIC_DRAW);
+  vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, sizeof(glm::vec3), (void *)0);
+  lineShader.Use();
+  lineShader.SetMat4("mvp", vp);
+  lineShader.SetVec3("color", color);
+  glDrawArrays(GL_LINES, 0, linePoints.size());
+  vao.Unbind();
+  vbo.UnbindAs(GL_ARRAY_BUFFER);
+}
+
 template <typename T> struct PlainVertex {
   T x, y, z;
   PlainVertex(T X, T Y, T Z) : x(X), y(Y), z(Z) {}
