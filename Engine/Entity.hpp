@@ -4,20 +4,18 @@
 #include "Global.hpp"
 #include "Scene.hpp"
 
-class Editor;
-
 namespace aEngine {
 
 class Entity {
 public:
   friend class Scene;
-  friend class Editor;
   // default constructor for serialization only
   Entity() {}
   Entity(EntityID id) : ID(id) {
     m_scale = glm::vec3(1.0f);
     m_position = glm::vec3(0.0f);
     m_rotation = glm::quat(1.0f, glm::vec3(0.0f));
+    m_eulerAngles = glm::vec3(0.0f);
   }
   ~Entity();
 
@@ -25,7 +23,7 @@ public:
   const glm::vec3 Scale() { return m_scale; };
   // global rotation (pitch, yaw, roll) = (x, y, z)
   // in radians
-  const glm::vec3 EulerAngles() { return glm::eulerAngles(m_rotation); }
+  const glm::vec3 LocalEulerAngles() { return m_eulerAngles; }
   // global rotation
   const glm::quat Rotation() { return m_rotation; }
   // position under world axis
@@ -38,6 +36,7 @@ public:
   void SetLocalPosition(glm::vec3 p);
   void SetLocalRotation(glm::quat q);
   void SetLocalScale(glm::vec3 s);
+  void SetLocalEulerAngles(glm::vec3 angle);
 
   static glm::vec3 WorldUp, WorldLeft, WorldForward;
 
@@ -111,11 +110,6 @@ public:
   Entity *parent = nullptr;
   std::vector<Entity *> children;
 
-  // keep record of the internal modification for rotation each frame,
-  // this variable will be constantly cleared and filled each frame.
-  // only `SetGlobalRotation` and `SetLocalRotation` triggers the filling.
-  static std::set<EntityID> InternalRotationUpdate;
-
 protected:
   bool transformDirty = true;
 
@@ -130,6 +124,7 @@ protected:
   glm::vec3 m_position;
   glm::vec3 m_scale;
   glm::quat m_rotation;
+  glm::vec3 m_eulerAngles;
 
   glm::mat4 globalTransform;
 };

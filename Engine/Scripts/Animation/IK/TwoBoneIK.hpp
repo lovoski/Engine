@@ -38,6 +38,8 @@ private:
                     targetNameBuffer = std::vector<char>(200);
   Entity *joint0 = nullptr, *joint1 = nullptr, *joint2 = nullptr;
   Entity *pole = nullptr, *target = nullptr;
+
+  float visRadius = 0.1f, l01, l12;
 };
 
 }; // namespace aEngine

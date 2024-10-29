@@ -52,19 +52,12 @@ void Scene::Start() {
     sys.second->Start();
 }
 
-void Scene::resetVariables() {
-  // clear rotation update events
-  Entity::InternalRotationUpdate.clear();
-}
-
 void Scene::Update() {
-  resetVariables();
   // tick the timer
   Context.Tick();
   float t0 = GetTime();
   // update the transforms first
-  recomputeLocalAxis();
-  rebuildHierarchyStructure();
+  refreshEntities();
   float t1 = GetTime();
 
   // pre-update the readonly variables for Update
@@ -293,13 +286,7 @@ bool Scene::BelongToSystem(const EntityID entity,
   return true;
 }
 
-void Scene::recomputeLocalAxis() {
-  for (auto entity : entities) {
-    entity.second->UpdateLocalAxis();
-  }
-}
-
-void Scene::rebuildHierarchyStructure() {
+void Scene::refreshEntities() {
   // clear HierarchyRoots at the start
   HierarchyRoots.clear();
   std::queue<std::pair<Entity *, bool>> q;
@@ -325,6 +312,7 @@ void Scene::rebuildHierarchyStructure() {
       ent->m_rotation = ent->GetParentOrientation() * ent->localRotation;
       ent->m_scale = ent->GetParentScale() * ent->localScale;
       ent->UpdateGlobalTransform();
+      ent->UpdateLocalAxis();
       ent->transformDirty = false;
     }
   }

@@ -1,4 +1,5 @@
 #include "Editor.hpp"
+#include <tinyfiledialogs.h>
 
 #include "Component/MeshRenderer.hpp"
 #include "Component/NativeScript.hpp"
@@ -8,26 +9,6 @@
 #include "System/Render/RenderSystem.hpp"
 
 #include "Function/GUI/Helpers.hpp"
-
-void BuildTestScene(Engine *engine) {
-  GWORLD.SetupDefaultScene();
-
-  auto sphere = GWORLD.AddNewEntity();
-  sphere->name = "Sphere";
-  sphere->SetGlobalPosition({0.0f, 1.0f, 0.0f});
-  sphere->AddComponent<Mesh>(Loader.GetMesh("::spherePrimitive", ""));
-  sphere->AddComponent<MeshRenderer>();
-  sphere->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(
-      nullptr, "Diffuse Sphere");
-
-  auto plane = GWORLD.AddNewEntity();
-  plane->name = "Ground";
-  plane->SetGlobalScale({10.0f, 1.0f, 10.0f});
-  plane->AddComponent<Mesh>(Loader.GetMesh("::planePrimitive", ""));
-  plane->AddComponent<MeshRenderer>();
-  plane->GetComponent<MeshRenderer>()->AddPass<Render::Basic>(nullptr,
-                                                              "Ground Mat");
-}
 
 Editor::Editor(int width, int height) {
   engine = new Engine(width, height);
@@ -64,8 +45,7 @@ void Editor::Start() {
 
   ImPlot::CreateContext();
 
-  // TODO: remove this in final version
-  BuildTestScene(engine);
+  GWORLD.SetupDefaultScene();
 }
 
 void Editor::Run(bool release) {
@@ -168,8 +148,7 @@ void Editor::MainMenuBar() {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
       ImGui::Separator();
       if (ImGui::MenuItem("Open Folder")) {
-        auto result = tinyfd_selectFolderDialog(
-            "Select Base Folder", context.activeBaseFolder.c_str());
+        auto result = tinyfd_selectFolderDialog("Select Base Folder", ".");
         if (result != NULL) {
           context.activeBaseFolder = result;
         }

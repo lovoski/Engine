@@ -5,11 +5,10 @@
  */
 #pragma once
 
-#if WIN32
+#if _WIN32
 #define NOMINMAX
+#define _WIN32_WINNT 0x0601
 #endif
-
-#include <tinyfiledialogs.h>
 
 #include <algorithm>
 #include <cassert>

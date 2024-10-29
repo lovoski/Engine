@@ -21,8 +21,6 @@ using std::vector;
 
 #define MAX_FLOAT std::numeric_limits<float>::max()
 
-static std::map<EntityID, glm::vec3> EulerAnglesCache;
-
 inline void Editor::DrawTransformGUI(EntityID selectedEntity) {
   auto transform = GWORLD.EntityFromID(selectedEntity);
   if (ImGui::CollapsingHeader("Transform")) {
@@ -35,25 +33,9 @@ inline void Editor::DrawTransformGUI(EntityID selectedEntity) {
       transform->SetGlobalPosition(position);
 
     // gimbal lock free rotation manipulation
-    auto it = EulerAnglesCache.find(selectedEntity);
-    glm::vec3 angles;
-    if (it == EulerAnglesCache.end()) {
-      // cache new rotations
-      angles = glm::degrees(glm::eulerAngles(transform->Rotation()));
-      EulerAnglesCache.insert(std::make_pair(selectedEntity, angles));
-    } else {
-      angles = it->second;
-    }
+    glm::vec3 angles = transform->LocalEulerAngles();
     if (ImGui::DragFloat3("Rotation", &angles.x, 0.1f, -180.0f, 180.0f)) {
-      // if user modify the rotation, don't trigger the internal update function
-      EulerAnglesCache[selectedEntity] = angles; // update cache
-      auto q = glm::quat(glm::radians(angles));
-      transform->m_rotation = q;
-      // update local rotation
-      glm::quat transformParentOrien = transform->GetParentOrientation();
-      transform->localRotation = glm::inverse(transformParentOrien) * q;
-      transform->UpdateLocalAxis();
-      transform->transformDirty = true;
+      transform->SetLocalEulerAngles(angles);
     }
 
     if (ImGui::DragFloat3("Scale", &scale.x, 0.01f, 0.0f, MAX_FLOAT))
@@ -78,22 +60,6 @@ void InspectorRightClickMenu(EntityID entity) {
 }
 
 void Editor::InspectorWindow() {
-  // update rotation cache each frame if needed
-  for (auto id : Entity::InternalRotationUpdate) {
-    if (GWORLD.EntityValid(id)) {
-      EulerAnglesCache[id] =
-          glm::degrees(glm::eulerAngles(GWORLD.EntityFromID(id)->Rotation()));
-    } else {
-      Entity::InternalRotationUpdate.erase(id);
-    }
-  }
-  // check whether there's invalid entity inside our cache
-  for (auto &id : EulerAnglesCache) {
-    EntityID entID = id.first;
-    if (!GWORLD.EntityValid(entID))
-      EulerAnglesCache.erase(entID);
-  }
-
   ImGui::Begin("Components", &showInspectorWindow);
   // Right-click context menu for the parent window
   if (!ImGui::IsAnyItemHovered() &&

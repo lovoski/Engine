@@ -3,8 +3,6 @@
 
 namespace aEngine {
 
-std::set<EntityID> Entity::InternalRotationUpdate = std::set<EntityID>();
-
 glm::vec3 Entity::WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 Entity::WorldLeft = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 Entity::WorldForward = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -80,8 +78,13 @@ void Entity::SetLocalPosition(glm::vec3 p) {
 }
 void Entity::SetLocalRotation(glm::quat q) {
   localRotation = q;
+  m_eulerAngles = glm::degrees(glm::eulerAngles(localRotation));
   transformDirty = true;
-  InternalRotationUpdate.insert(ID);
+}
+void Entity::SetLocalEulerAngles(glm::vec3 angle) {
+  m_eulerAngles = angle;
+  localRotation = glm::quat(glm::radians(angle));
+  transformDirty = true;
 }
 void Entity::SetLocalScale(glm::vec3 s) {
   localScale = s;
@@ -102,9 +105,9 @@ void Entity::SetGlobalRotation(glm::quat q) {
   // update local rotation
   glm::quat parentOrien = GetParentOrientation();
   localRotation = glm::inverse(parentOrien) * q;
+  m_eulerAngles = glm::degrees(glm::eulerAngles(localRotation));
   UpdateLocalAxis();
   transformDirty = true;
-  InternalRotationUpdate.insert(ID);
 }
 
 void Entity::SetGlobalScale(glm::vec3 s) {
