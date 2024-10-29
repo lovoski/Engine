@@ -18,9 +18,12 @@ In each main loop, all components are maintained by corresponding systems. For e
 
 ## How To Compile
 
-The project depends on OpenGL 4.6, CGAL and boost. It's recommended to use [vcpkg](https://github.com/microsoft/vcpkg) to fetch CGAL and boost as these two packages are added with `find_package` in cmake.
+The project depends on OpenGL 4.3, CGAL and boost. It's recommended to use [vcpkg](https://github.com/microsoft/vcpkg) to fetch CGAL and boost as these two packages are added with `find_package` in cmake.
 
 You need to have `cmake >= 3.20` to properly execute the cmake scripts. C++17 compatible compiler is also required.
+
+This engine also make use of some OpenGL extensions:
+1. `GLAD_GL_ARB_bindless_texture`: This extension should be supported on most of the nvidia and amd drivers, update your gpu driver if there's any problems.
 
 ## Scripting System
 

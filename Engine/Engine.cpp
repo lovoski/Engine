@@ -26,9 +26,9 @@ Engine::Engine(int width, int height)
     return;
   }
 
-  // // activate opengl extensions
-  // if (!GLAD_GL_ARB_bindless_texture)
-  //   LOG_F(ERROR, "Platform don't support GL_ARB_bindless_texture extension");
+  // activate opengl extensions
+  if (!GLAD_GL_ARB_bindless_texture)
+    LOG_F(ERROR, "Platform don't support GL_ARB_bindless_texture extension");
   // // if (!GLAD_GL_ARB_shading_language_include)
   // //   LOG_F(ERROR, "Platform don't support GL_ARB_shading_language_include extension");
 
