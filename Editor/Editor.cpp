@@ -148,7 +148,7 @@ void Editor::MainMenuBar() {
       ImGui::MenuItem("Project", nullptr, nullptr, false);
       ImGui::Separator();
       if (ImGui::MenuItem("Open Folder")) {
-        auto result = tinyfd_selectFolderDialog("Select Base Folder", ".");
+        auto result = tinyfd_selectFolderDialog("Select Base Folder", "./");
         if (result != NULL) {
           context.activeBaseFolder = result;
         }
@@ -164,7 +164,7 @@ void Editor::MainMenuBar() {
         if (sceneFilePath == "::defaultScene") {
           const char *filters[] = {"*.scene"};
           auto result = tinyfd_saveFileDialog(
-              "Save Scene", (context.activeBaseFolder + "/").c_str(), 1,
+              "Save Scene", "./", 1,
               filters, "Scene File");
           if (result != NULL) {
             GWORLD.Save(result);
@@ -176,7 +176,7 @@ void Editor::MainMenuBar() {
       if (ImGui::MenuItem("Load Scene")) {
         const char *filters[] = {"*.scene"};
         auto result = tinyfd_openFileDialog(
-            "Load Scene", (context.activeBaseFolder + "/").c_str(), 1, filters,
+            "Load Scene", "./", 1, filters,
             "Scene File", 0);
         if (result != NULL) {
           GWORLD.Load(result);
