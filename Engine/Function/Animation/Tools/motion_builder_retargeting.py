@@ -1,13 +1,10 @@
-"""
-Batched motion retargeting with motion builder, supports mixamo characters and custom bvh skeleton character.
-"""
-
 # -*- coding: utf-8 -*-
 import os
+import json
 from pyfbsdk import *
 
 mobuMap = {
-    "Reference": "reference",
+    # "Reference": "reference",
     "Hips": "Hips",
     "LeftUpLeg": "LeftUpLeg",
     "LeftLeg": "LeftLeg",
@@ -114,20 +111,6 @@ mobuMap = {
     "RightForeArmRoll": "RightForeArmRoll",
 }
 
-candidateMixamoNamespace = [
-    "mixamorig:",
-    "mixamorig1:",
-    "mixamorig2:",
-    "mixamorig3:",
-    "mixamorig4:",
-    "mixamorig5:",
-    "mixamorig6:",
-    "mixamorig7:",
-    "mixamorig8:",
-    "mixamorig9:",
-]
-
-
 # -------------- start utils ---------------
 def listFiles(directory, extension=".bvh"):
     results = []
@@ -136,7 +119,6 @@ def listFiles(directory, extension=".bvh"):
             if file.endswith(extension):
                 results.append(file)
     return results
-
 
 def deselectAll():
     modelList = FBModelList()
@@ -154,7 +136,8 @@ def addJointToCharacter(characterObject, slot, jointName):
 
 def characterizeBiped(namespace, boneMap):
     app = FBApplication()
-    character = FBCharacter(namespace)
+    characterName = namespace + "bipedCharacter"
+    character = FBCharacter(characterName)
     app.CurrentCharacter = character
 
     # assign Biped to Character Mapping.
@@ -209,18 +192,27 @@ def setCurrentTake(desiredName):
             return
     print(f"No take named {desiredName} found")
 
+def is_end_effector(model):
+    # Simple check if the model has no children (you can customize this)
+    return len(model.Children) == 0
+
+def traverse_and_collect_end_effectors(model, models_to_delete):
+    for child in model.Children:
+        if is_end_effector(child):
+            models_to_delete.append(child)
+        else:
+            traverse_and_collect_end_effectors(child, models_to_delete)
 
 # -------------- end utils ---------------
 
 skeletonsDirectory = (
-    "C:\\Users\\liuwe\\Downloads\\MotionBuilderRetargetingTest\\characters"
+    "D:\\Dataset\\arfriend\\remos_skel_processed\\character"
 )
 sourceMotionDirectory = (
-    "C:\\Users\\liuwe\\Downloads\\MotionBuilderRetargetingTest\\motions"
+    "D:\\Dataset\\arfriend\\remos_skel_processed\\motion"
 )
-retargetDirectory = (
-    "C:\\Users\\liuwe\\Downloads\\MotionBuilderRetargetingTest\\retarget"
-)
+retargetDirectory = "D:\\Dataset\\arfriend\\remos_skel_processed\\retarget"
+
 if not os.path.exists(retargetDirectory):
     os.mkdir(retargetDirectory)
 
@@ -228,23 +220,39 @@ app = FBApplication()
 scene = FBSystem().Scene
 
 sourceMotionFiles = listFiles(sourceMotionDirectory)
-targetSkeletonFiles = listFiles(skeletonsDirectory, ".fbx")
-globalBVHCounter = 0
+targetSkeletonFiles = listFiles(skeletonsDirectory, ".bvh")
+
+dummyFileNameToFinalFileName = {}
 
 # retarget all source motions to all target skeletons
 for targetFile in targetSkeletonFiles:
+    app.FileNew()
+    globalBVHCounter = 0
+    app.FileImport(os.path.join(skeletonsDirectory, targetFile), False)
+    # remove end effectors
+    scene_root = FBSystem().Scene.RootModel
+    # Start traversal from the scene's root model
+    referenceNode = FBFindModelByLabelName("BVH:reference")
+    if referenceNode:
+        referenceNode.FBDelete()
+    # models_to_delete = []
+    # traverse_and_collect_end_effectors(scene_root, models_to_delete)
+    # for model in models_to_delete:
+    #     model.FBDelete()
+    character = characterizeBiped("BVH:", mobuMap)
+    globalBVHCounter += 1
+
     for motionFile in sourceMotionFiles:
-        app.FileNew()
-        app.FileMerge(os.path.join(skeletonsDirectory, targetFile), False)
-        # select a possible mixamo namespace from candidates
-        mixamoNamespace = "mixamorig:"
-        for mixamoCandidate in candidateMixamoNamespace:
-            candidateHipName = mixamoCandidate + "Hips"
-            if FBFindModelByLabelName(candidateHipName):
-                mixamoNamespace = mixamoCandidate
-                break
-        print(f"Use mixamo namespace {mixamoNamespace}")
-        character = characterizeBiped(mixamoNamespace, mobuMap)
+        # app.FileMerge(os.path.join(skeletonsDirectory, targetFile), False)
+        # # select a possible mixamo namespace from candidates
+        # mixamoNamespace = "mixamorig:"
+        # for mixamoCandidate in candidateMixamoNamespace:
+        #     candidateHipName = mixamoCandidate + "Hips"
+        #     if FBFindModelByLabelName(candidateHipName):
+        #         mixamoNamespace = mixamoCandidate
+        #         break
+        # print(f"Use mixamo namespace {mixamoNamespace}")
+        # character = characterizeBiped(mixamoNamespace, mobuMap)
 
         deselectAll()
         newTake = FBTake(motionFile)
@@ -252,13 +260,13 @@ for targetFile in targetSkeletonFiles:
         setCurrentTake(motionFile)
         newTake.ClearAllProperties(False)
         app.FileImport(os.path.join(sourceMotionDirectory, motionFile), False)
-        # set playback fps to 60
-        FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
+        # set playback fps to 30
+        FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode30Frames)
         if globalBVHCounter == 0:
             characterNamespace = "BVH:"
         else:
-            globalBVHCounter += 1
             characterNamespace = f"BVH {globalBVHCounter}:"
+            globalBVHCounter += 1
         motionCharacter = characterizeBiped(characterNamespace, mobuMap)
 
         # key all frames for bvh to prevent unwanted interpolation between frames
@@ -280,13 +288,11 @@ for targetFile in targetSkeletonFiles:
 
         plotAnim(character, motionCharacter)
 
-        finalFileName = motionFile + "_" + os.path.splitext(targetFile)[0]
-        exportPath = os.path.join(retargetDirectory, finalFileName)
-        print(f"Retarget motion {motionFile} to {finalFileName} on {targetFile}")
+        dummyFileName = os.path.splitext(motionFile)[0] + "_dummy_" + targetFile
+        finalFileName = os.path.splitext(motionFile)[0] + "_" + targetFile
+        dummyFileNameToFinalFileName[dummyFileName] = finalFileName
+        exportPath = os.path.join(retargetDirectory, dummyFileName)
+        print(f"Retarget motion {motionFile} to {dummyFileName} on {targetFile}")
         character.SelectModels(True, True, True, True)
         app.FileExport(exportPath)
         deselectAll()
-
-    # character.FBDelete()
-    # for animCharacter in motionCharacters:
-    #     animCharacter.FBDelete()
